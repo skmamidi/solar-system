@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Umbriel — Interactive Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#020617', 800: '#0f172a', 700: '#1e293b', 500: '#334155', 100: '#f8fafc' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        umbriel: { base: '#475569', dark: '#1e293b', light: '#94a3b8', frost: '#f1f5f9', crater: '#0f172a' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 120s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(71, 85, 105, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(148, 163, 184, 0.4)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #020617;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #475569 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #94a3b8 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #1e293b 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(2, 6, 23, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(241, 245, 249, 0.6);
+            box-shadow: 0 0 20px rgba(241, 245, 249, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Umbriel Graphic - Dark gray with the bright Wunda crater ring */
+        .orb-umbriel {
+            background: radial-gradient(circle at 35% 35%, #64748b, #475569, #334155, #1e293b, #020617);
+            box-shadow: inset -20px -20px 40px rgba(0,0,0,0.9), 0 0 30px rgba(71, 85, 105, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* The Wunda Crater (Bright Frost Ring) */
+        .orb-umbriel::before {
+            content: '';
+            position: absolute;
+            top: 25%; left: 35%;
+            width: 25%; height: 25%;
+            border: 4px solid rgba(248, 250, 252, 0.9);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255,255,255,0.6), inset 0 0 15px rgba(0,0,0,0.8);
+            background: rgba(15, 23, 42, 0.5);
+            transform: rotate(-15deg);
+            z-index: 3;
+        }
+
+        /* General Craters (Very dark, heavily cratered surface) */
+        .orb-umbriel::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 70% 30%, rgba(2, 6, 23, 0.7) 0%, transparent 12%),
+                radial-gradient(circle at 20% 70%, rgba(15, 23, 42, 0.8) 0%, transparent 15%),
+                radial-gradient(circle at 80% 80%, rgba(2, 6, 23, 0.6) 0%, transparent 10%);
+            border-radius: 50%;
+            mix-blend-mode: multiply;
+            z-index: 1;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(71, 85, 105, 0.3);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-umbriel-base shadow-[0_0_40px_rgba(71,85,105,0.4)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-umbriel-light text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-umbriel-light">🌑</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="uranus.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-cyan">
+                <span class="text-xl">🪩</span>
+                <span class="font-display font-bold text-lg">Back to Uranus</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-umbriel-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <!-- Progress/Gamification Bar -->
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-umbriel-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Umbriel Mission Progress</span>
+                    <span id="progressText" class="text-umbriel-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-umbriel-dark to-umbriel-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Frost Surveyor</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-umbriel-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-umbriel-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-umbriel-light animate-ping"></span> Moon of Uranus
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Umbriel</h1>
+                <p class="text-2xl text-umbriel-light font-body italic mb-6">"The Darkest Uranian"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    A dark, ancient, and deeply cratered world of ice and rock. It reflects less than half as much light as its sister moon Ariel, and hides a mysterious, glaringly bright ring of frost directly on its equator.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-umbriel-light text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(148,163,184,0.5)]">
+                    Explore the Darkness 👇
+                </button>
+            </div>
+            
+            <!-- Animated 3D-ish Moon -->
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-umbriel animate-spin-slow animate-pulse-glow"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Dashboard -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-cyan text-space-900 text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">🌑</div>
+                <div class="text-umbriel-light font-mono text-xs uppercase mb-1">Albedo</div>
+                <div class="font-bold text-xl text-star-cyan">Darkest</div>
+                <div class="text-[10px] text-space-100 mt-1">Reflects only ~21% light</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-umbriel-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">1,169 km</div>
+                <div class="text-[10px] text-space-100 mt-1">3rd largest of Uranus</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🥶</div>
+                <div class="text-umbriel-light font-mono text-xs uppercase mb-1">Temperature</div>
+                <div class="font-bold text-xl">-198°C</div>
+                <div class="text-[10px] text-space-100 mt-1">Slightly warmer (darker)</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">⏱️</div>
+                <div class="text-umbriel-light font-mono text-xs uppercase mb-1">Orbital Period</div>
+                <div class="font-bold text-xl">4.1 Days</div>
+                <div class="text-[10px] text-space-100 mt-1">Tidally locked</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Umbriel data.</p>
+                </div>
+                <div class="hidden md:block text-umbriel-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Discovery & Naming -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'um1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📖</div>
+                            <h3 class="font-display text-xl text-umbriel-light">Discovery & Naming</h3>
+                            <p class="text-space-100 text-xs mt-2">The Melancholy Sprite</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-umbriel-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-umbriel-dark pb-1 w-full">William Lassell</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>Discovered in <strong>1851</strong> by William Lassell, alongside Ariel.</li>
+                                <li>Because it was so much darker than Ariel, it was named after Umbriel, the "dusky melancholy sprite" from Alexander Pope's poem <em>The Rape of the Lock</em>.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: The Darkest Moon -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'um2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌑</div>
+                            <h3 class="font-display text-xl text-umbriel-light">Albedo</h3>
+                            <p class="text-space-100 text-xs mt-2">Why so dark?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-umbriel-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-cyan mb-2 border-b border-umbriel-dark pb-1 w-full">Absorbing Light</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Umbriel is the <strong>darkest</strong> of Uranus's major moons.</li>
+                                <li>It reflects only 21% of the sunlight that hits it (its sister Ariel reflects 39%).</li>
+                                <li>Because it absorbs more sunlight, it is slightly warmer than the other moons!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: The Wunda Crater -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'um3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⭕</div>
+                            <h3 class="font-display text-xl text-umbriel-light">Wunda Crater</h3>
+                            <p class="text-space-100 text-xs mt-2">The bright anomaly</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-umbriel-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-umbriel-dark pb-1 w-full">The Glowing Ring</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>The most famous feature on the dark moon is a glaringly bright ring resting on its equator.</li>
+                                <li>It is a massive crater named <strong>Wunda</strong>, measuring 131 km across. The bright ring is likely caused by a fresh layer of highly reflective frost or ice!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Ancient Surface -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'um4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">☄️</div>
+                            <h3 class="font-display text-xl text-umbriel-light">Ancient Surface</h3>
+                            <p class="text-space-100 text-xs mt-2">Geologically dead</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-umbriel-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-umbriel-dark pb-1 w-full">Heavy Bombardment</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Unlike Ariel, Umbriel shows almost zero signs of tectonic activity or recent ice volcanoes.</li>
+                                <li>It is the <strong>most heavily cratered</strong> of the Uranian moons, meaning its surface has been "dead" and unchanging for billions of years.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Internal Structure -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'um5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧊</div>
+                            <h3 class="font-display text-2xl text-umbriel-light">Composition</h3>
+                            <p class="text-space-100 mt-2">What is beneath the dark dust?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-umbriel-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-cyan mb-3 border-b border-umbriel-dark pb-2 w-full">A Frozen Slushy</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-umbriel-light font-mono font-bold block mb-1">Ice & Rock:</span>
+                                    It is composed of roughly equal amounts of water ice and dense rock.
+                                </div>
+                                <div>
+                                    <span class="text-umbriel-light font-mono font-bold block mb-1">Undifferentiated:</span>
+                                    Unlike Titania, Umbriel's interior may not be cleanly separated into a core and mantle. The rock and ice are likely mixed uniformly together!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Extreme Seasons -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'um6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">❄️</div>
+                            <h3 class="font-display text-2xl text-umbriel-light">Extreme Seasons</h3>
+                            <p class="text-space-100 mt-2">The side effects of a sideways planet</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-umbriel-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-gold mb-3 border-b border-umbriel-dark pb-2 w-full">42-Year Winters</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    Because Uranus rolls on its side (98° tilt), its moons orbit along its equator perpendicular to the sun.
+                                </div>
+                                <div>
+                                    This means Umbriel's poles spend <strong>42 Earth years</strong> in continuous sunlight, followed by 42 Earth years of total, freezing darkness!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Voyager 2 Mission -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'um7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-umbriel-light">Voyager 2</h3>
+                            <p class="text-space-100 mt-2">The only visitor</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-umbriel-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-umbriel-dark pb-2 w-full">A Brief Encounter</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>NASA's <strong>Voyager 2</strong> is the only spacecraft to have ever visited Umbriel, making a brief flyby in January 1986.</li>
+                                <li>It passed by at a distance of 325,000 km. Because the northern hemisphere was pitched in a 42-year winter, Voyager 2 could only map about 40% of the moon's surface!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Craters of Darkness -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'um8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🕳️</div>
+                            <h3 class="font-display text-2xl text-umbriel-light">Craters of Darkness</h3>
+                            <p class="text-space-100 mt-2">What else is on the surface?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-umbriel-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-umbriel-light mb-2 border-b border-umbriel-dark pb-2 w-full">Goblin Names</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Besides Wunda, the moon features other massive impact craters, but they lack the bright frost rays seen on other moons.</li>
+                                <li>Keeping with the "dark sprite" theme, all geological features on Umbriel are named after dark or evil spirits from mythology! (e.g., Malingee, Skynd).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-umbriel-dark border-2 shadow-[0_0_30px_rgba(71,85,105,0.4)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-umbriel-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Voyager Dark Surveyor</h2>
+                        <p class="text-space-100 mb-6">Pilot Voyager 2 low over the incredibly dark, ancient surface of Umbriel! Use your thrusters to fly down into the darkness, dodging the massive <span class="text-white font-bold">Crater Peaks</span>, and scan 3 bright <span class="text-star-cyan font-bold">Wunda Frost Rings</span> to earn the <span class="text-umbriel-light font-bold">Shadow Surveyor Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-umbriel-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Start Flyby
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-umbriel-dark/30">
+                            <div class="text-5xl mb-2">🛰️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Targeting Wunda</h3>
+                            <p class="text-umbriel-light text-sm">Click Start to survey</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#020617] via-[#0f172a] to-[#1e293b] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-umbriel-dark"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-umbriel-dark/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Umbriel module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="dynamicQuizArea" class="space-y-4">
+                    <!-- Dynamic quiz content will be injected here -->
+                </div>
+
+                <!-- Quiz Results -->
+                <div class="quiz-q hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold">0/20</span></p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Umbriel Module Complete!", "You have unlocked the 'Shadow Surveyor' badge. Excellent exploration!", "🌑");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Umbriel files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    const moonColor = 'umbriel-light';
+    const quizData = [
+        { q: "Umbriel is known for being the ____________ of Uranus's major moons.", options: [{text: "Brightest and most geologically active", isCorrect: false}, {text: "Darkest and least geologically active", isCorrect: true}, {text: "Fastest rotating", isCorrect: false}, {text: "Smallest and farthest", isCorrect: false}], explanation: "Umbriel has the lowest albedo (is the darkest) of Uranus's major moons and its heavily cratered surface shows almost no signs of geological activity." },
+        { q: "What is the albedo (reflectivity) of Umbriel?", options: [{text: "About 5%", isCorrect: false}, {text: "About 21%", isCorrect: true}, {text: "About 39%", isCorrect: false}, {text: "About 99%", isCorrect: false}], explanation: "Umbriel reflects only about 21% of the sunlight that hits it, making it significantly darker than its neighboring moons." },
+        { q: "What is the most famous and glaringly obvious feature on Umbriel's extremely dark surface?", options: [{text: "The Wunda Crater, a bright ring of frost", isCorrect: true}, {text: "A massive shield volcano named Mommur", isCorrect: false}, {text: "A glowing red ocean of liquid methane", isCorrect: false}, {text: "A massive chasma (canyon) that splits the moon in half", isCorrect: false}], explanation: "The Wunda Crater stands out dramatically against the dark surface because it consists of a highly reflective, bright ring of frost or ice." },
+        { q: "Umbriel's surface is heavily cratered with almost no smooth plains. What does this tell scientists about its history?", options: [{text: "It was recently formed", isCorrect: false}, {text: "It has a thick atmosphere that protects it", isCorrect: false}, {text: "It has been geologically 'dead' for billions of years", isCorrect: true}, {text: "It is covered in liquid water", isCorrect: false}], explanation: "A heavily cratered surface with no smooth plains indicates that no recent geological processes (like lava flows or cryovolcanism) have occurred to pave over older craters." },
+        { q: "Who discovered Umbriel, and what other moon was discovered on the same day?", options: [{text: "William Herschel discovered it with Titania", isCorrect: false}, {text: "William Lassell discovered it alongside Ariel in 1851", isCorrect: true}, {text: "Galileo discovered it with Miranda", isCorrect: false}, {text: "Gerard Kuiper discovered it with Oberon", isCorrect: false}], explanation: "Astronomer William Lassell discovered both Ariel and Umbriel on October 24, 1851." },
+        { q: "In literature, who is Umbriel?", options: [{text: "A heroic knight from King Arthur's court", isCorrect: false}, {text: "A 'dusky melancholy sprite' from Alexander Pope's 'The Rape of the Lock'", isCorrect: true}, {text: "The King of the Fairies in Shakespeare", isCorrect: false}, {text: "A mermaid from Hans Christian Andersen", isCorrect: false}], explanation: "Because the moon was so remarkably dark, it was fittingly named after the 'dusky melancholy sprite' from Pope's famous poem." },
+        { q: "Why is Umbriel's surface temperature slightly warmer than Ariel's, despite being further from the Sun?", options: [{text: "It has active volcanoes generating heat", isCorrect: false}, {text: "Its dark surface absorbs more solar radiation instead of reflecting it", isCorrect: true}, {text: "It has a thick greenhouse gas atmosphere", isCorrect: false}, {text: "Tidal friction from Uranus heats it constantly", isCorrect: false}], explanation: "Darker objects absorb more light and heat, while lighter objects (like the bright moon Ariel) reflect it away. This makes Umbriel's surface slightly warmer." },
+        { q: "What is the estimated composition of Umbriel?", options: [{text: "100% frozen methane", isCorrect: false}, {text: "Pure silicate rock", isCorrect: false}, {text: "Roughly equal parts water ice and dense silicate rock", isCorrect: true}, {text: "A hollow core filled with gas", isCorrect: false}], explanation: "Based on its density, planetary scientists believe Umbriel is composed of roughly half water ice and half dense rock." },
+        { q: "Unlike Titania or Oberon, scientists suspect Umbriel may be 'undifferentiated.' What does that mean?", options: [{text: "Its rock and ice are mixed uniformly rather than separated into a core and mantle", isCorrect: true}, {text: "It does not have an orbit", isCorrect: false}, {text: "It is exactly the same as all other moons", isCorrect: false}, {text: "It changes its shape randomly over time", isCorrect: false}], explanation: "If a moon is undifferentiated, it never got hot enough during its formation for the heavy rock to sink to the center and the lighter ice to float to the top." },
+        { q: "What is the diameter of Wunda crater, the bright ring on Umbriel?", options: [{text: "10 km", isCorrect: false}, {text: "131 km across", isCorrect: true}, {text: "500 km across", isCorrect: false}, {text: "1,500 km across", isCorrect: false}], explanation: "The striking Wunda crater is approximately 131 kilometers in diameter." },
+        { q: "In keeping with its dark theme, all geological features on Umbriel are named after what?", options: [{text: "Greek gods of the sky", isCorrect: false}, {text: "Dark or evil spirits from various global mythologies", isCorrect: true}, {text: "Famous astronomers", isCorrect: false}, {text: "Rivers on Earth", isCorrect: false}], explanation: "Features on Umbriel, such as the craters Malingee and Skynd, are named after dark, evil, or mischievous spirits from different cultures." },
+        { q: "What is a leading theory for how the bright ring of the Wunda crater was formed?", options: [{text: "An impact excavated fresh, bright ice from below the dark surface layer", isCorrect: true}, {text: "A volcano erupted white lava", isCorrect: false}, {text: "Aliens painted it", isCorrect: false}, {text: "Uranus's rings cast a permanent shadow there", isCorrect: false}], explanation: "It is believed that the dark material on Umbriel is relatively thin, and a large meteor impact punched through it, throwing up a ring of fresh, bright subsurface ice." },
+        { q: "How long does it take Umbriel to complete one orbit around Uranus?", options: [{text: "1.4 Earth days", isCorrect: false}, {text: "4.1 Earth days", isCorrect: true}, {text: "28 Earth days", isCorrect: false}, {text: "365 Earth days", isCorrect: false}], explanation: "Umbriel orbits at a distance of about 266,000 km from Uranus, taking approximately 4.1 Earth days to make a complete revolution." },
+        { q: "Like Uranus's other moons, Umbriel experiences extreme seasons. How long does continuous sunlight or darkness last at its poles?", options: [{text: "1 Earth month", isCorrect: false}, {text: "1 Earth year", isCorrect: false}, {text: "42 Earth years", isCorrect: true}, {text: "84 Earth years", isCorrect: false}], explanation: "Because Uranus is tilted 98 degrees on its side, the poles of its moons spend 42 years facing the sun, followed by 42 years facing deep space." },
+        { q: "Voyager 2 mapped about 40% of Umbriel. Why couldn't it see the rest?", options: [{text: "The moon was spinning too fast", isCorrect: false}, {text: "Uranus's 98-degree axial tilt plunged the northern hemisphere into a decades-long winter night", isCorrect: true}, {text: "Voyager 2 ran out of battery power", isCorrect: false}, {text: "Umbriel's dark surface absorbed the camera's flash", isCorrect: false}], explanation: "During Voyager 2's 1986 flyby, the entire northern hemisphere of Umbriel was experiencing its 42-year winter, leaving it in total darkness and unmappable." },
+        { q: "How large is Umbriel compared to the other Uranian moons?", options: [{text: "It is the 1st largest", isCorrect: false}, {text: "It is the 3rd largest", isCorrect: true}, {text: "It is the 5th largest", isCorrect: false}, {text: "It is the smallest", isCorrect: false}], explanation: "With a diameter of 1,169 km, Umbriel is slightly larger than Ariel, making it the 3rd largest moon of Uranus (behind Titania and Oberon)." },
+        { q: "What process is primarily responsible for the dark material coating Umbriel's surface?", options: [{text: "Space weathering, where radiation darkens methane and other organics in the ice", isCorrect: true}, {text: "Ash from constant volcanic eruptions", isCorrect: false}, {text: "Shadows cast by Uranus", isCorrect: false}, {text: "Soot from a recent massive forest fire", isCorrect: false}], explanation: "Over billions of years, solar wind and cosmic radiation interact with organic compounds (like methane) trapped in the ice, turning them into a dark, carbon-rich sludge." },
+        { q: "Which spacecraft holds the record as the *only* one to visit Umbriel?", options: [{text: "Cassini", isCorrect: false}, {text: "Galileo", isCorrect: false}, {text: "Voyager 2", isCorrect: true}, {text: "Juno", isCorrect: false}], explanation: "NASA's Voyager 2 probe is the only human-made object to have ever explored the Uranian system, flying past in January 1986." },
+        { q: "Umbriel's orbit is 'tidally locked.' What does this mean?", options: [{text: "It cannot move from its exact position", isCorrect: false}, {text: "It always shows the exact same face to Uranus", isCorrect: true}, {text: "It spins incredibly fast", isCorrect: false}, {text: "It constantly crashes into other moons", isCorrect: false}], explanation: "Like Earth's moon, tidal forces have locked Umbriel's rotation to its orbit, meaning its orbital period and rotational period are the exact same length (4.1 days)." },
+        { q: "Besides Wunda, Umbriel has other large craters like Malingee and Skynd. How do they differ from Wunda?", options: [{text: "They are filled with liquid water", isCorrect: false}, {text: "They lack the highly reflective bright frost rings and blend into the dark terrain", isCorrect: true}, {text: "They are perfectly square", isCorrect: false}, {text: "They emit their own light", isCorrect: false}], explanation: "While Malingee and Skynd are massive craters, they lack the distinctive, freshly exposed bright ice ring seen at Wunda, making them harder to spot." }
+    ];
+
+    let currentQ = 0;
+    let score = 0;
+    let shuffledQuestions = [];
+
+    function shuffleArray(arr) {
+        let array = [...arr];
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function initQuiz() {
+        shuffledQuestions = shuffleArray(quizData).map(q => ({
+            ...q,
+            options: shuffleArray(q.options)
+        }));
+        currentQ = 0;
+        score = 0;
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('dynamicQuizArea').classList.remove('hidden');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const qData = shuffledQuestions[currentQ];
+        const container = document.getElementById('dynamicQuizArea');
+        
+        let html = `
+            <div class="quiz-q block">
+                <h3 class="text-xl font-bold mb-4 text-${moonColor}">Question ${currentQ + 1} of 20: <br/><span class="text-white mt-2 block">${qData.q}</span></h3>
+                <div class="space-y-3" id="optionsContainer">
+                    ${qData.options.map((opt, idx) => `
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-${moonColor} transition-all opt-btn" onclick="answer(${idx}, ${opt.isCorrect}, this)">${opt.text}</button>
+                    `).join('')}
+                </div>
+                <div id="explanationArea" class="hidden mt-6 p-4 rounded-xl bg-space-800 border border-space-500">
+                    <p class="text-sm text-space-100"><strong class="text-white">Explanation:</strong> ${qData.explanation}</p>
+                </div>
+                <button id="nextQBtn" onclick="nextQuestion()" class="hidden mt-6 w-full bg-space-700 text-white font-bold py-3 rounded-xl hover:bg-space-500 transition-colors">Next Question ▶</button>
+            </div>
+        `;
+        container.innerHTML = html;
+    }
+
+    function answer(optIdx, isCorrect, btnEl) {
+        const qData = shuffledQuestions[currentQ];
+        const buttons = document.querySelectorAll('.opt-btn');
+        
+        buttons.forEach((btn, idx) => {
+            btn.disabled = true;
+            btn.classList.remove('hover:bg-space-700', `hover:border-${moonColor}`);
+            if (qData.options[idx].isCorrect) {
+                btn.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            } else {
+                btn.classList.add('opacity-50');
+            }
+        });
+
+        if (isCorrect) {
+            score++;
+            addXP(5);
+        } else {
+            btnEl.classList.remove('opacity-50', 'bg-space-800');
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+        }
+
+        document.getElementById('explanationArea').classList.remove('hidden');
+        document.getElementById('nextQBtn').classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        currentQ++;
+        if (currentQ < 20) {
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('dynamicQuizArea').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('q-result').classList.add('block');
+        document.getElementById('scoreText').innerText = `${score}/20`;
+        
+        document.getElementById('scoreText').classList.remove('text-star-green', 'text-star-red', `text-${moonColor}`);
+
+        if(score >= 15) {
+            document.getElementById('scoreText').classList.add('text-star-green');
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Olympiad Scholar!", "Excellent performance! You passed the rigorous SciOly Quiz! +100 XP", "🧠");
+            }
+            document.getElementById('retryQuizBtn').classList.add('hidden');
+        } else {
+            document.getElementById('scoreText').classList.add('text-star-red');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        initQuiz();
+    }
+
+    window.addEventListener('DOMContentLoaded', initQuiz);
+
+    /* MINI GAME: Voyager Dark Surveyor (Vertical Downward Scroller) */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    // Player (Voyager Probe) - Fixed high Y, moves left/right
+    const player = {
+        x: 200, 
+        y: 80, 
+        width: 30,
+        height: 40,
+        speed: 6,
+        color: '#f8fafc' 
+    };
+
+    let obstacles = []; // Crater peaks
+    let collectibles = []; // Wunda rings
+    
+    let bgStars = [];
+
+    // Inputs
+    let keys = { ArrowLeft: false, ArrowRight: false };
+    let isTouching = false;
+    let touchTargetX = 0;
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(['ArrowLeft', 'ArrowRight'].includes(e.code)) {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(['ArrowLeft', 'ArrowRight'].includes(e.code)) keys[e.code] = false; 
+    });
+    
+    // Touch/Mouse Support
+    function handlePointerMove(e) {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        touchTargetX = (clientX - rect.left) * (canvas.width / rect.width);
+        isTouching = true;
+        if(e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+    }
+    function handlePointerUp() { isTouching = false; }
+
+    canvas.addEventListener('touchstart', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchend', handlePointerUp);
+    canvas.addEventListener('mousedown', handlePointerMove);
+    canvas.addEventListener('mousemove', (e) => { if(isTouching) handlePointerMove(e); });
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerUp);
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        obstacles = [];
+        collectibles = [];
+        dataCollected = 0;
+        isTouching = false;
+
+        // Init background lines (parallax effect)
+        bgStars = Array.from({length: 20}).map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 1,
+            speed: Math.random() * 3 + 2
+        }));
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Flying...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity() {
+        let speedMult = 1 + (scoreFrames / 2000); 
+        let globalSpeedY = (Math.random() * 2 + 6) * speedMult; // Scroll speed UP (illusion of falling)
+        
+        // Wunda Frost Ring (30% chance)
+        if (Math.random() > 0.7 && collectibles.length < 2) {
+            collectibles.push({
+                x: Math.random() * (canvas.width - 40) + 20,
+                y: canvas.height + 20, // Spawn at bottom
+                width: 30, // Diameter of ring
+                height: 30,
+                speedY: globalSpeedY,
+                pulse: 0
+            });
+            return;
+        }
+
+        // Dark Crater Peaks (Mountains jutting up)
+        let isLeft = Math.random() > 0.5;
+        let w = Math.random() * (canvas.width * 0.4) + 50; // up to ~50% width
+        let h = Math.random() * 40 + 30;
+
+        obstacles.push({ 
+            x: isLeft ? 0 : canvas.width - w, 
+            y: canvas.height + 10, 
+            width: w, 
+            height: h, 
+            speedY: globalSpeedY,
+            isLeft: isLeft
+        });
+        
+        // Occasionally spawn floating middle dark peak
+        if(Math.random() > 0.7) {
+             obstacles.push({ 
+                x: Math.random() * (canvas.width - 60) + 30, 
+                y: canvas.height + 60, 
+                width: 40, 
+                height: 40, 
+                speedY: globalSpeedY,
+                isLeft: null
+            });
+        }
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        // Tilt slightly based on movement
+        let tilt = 0;
+        if(keys.ArrowLeft || (isTouching && touchTargetX < player.x)) tilt = -0.2;
+        if(keys.ArrowRight || (isTouching && touchTargetX > player.x)) tilt = 0.2;
+        ctx.rotate(tilt);
+
+        // Body (Probe)
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.moveTo(0, player.height/2); // point at bottom
+        ctx.lineTo(-player.width/2, -player.height/2);
+        ctx.lineTo(player.width/2, -player.height/2);
+        ctx.closePath();
+        ctx.fill();
+
+        // Dish / Antenna
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.ellipse(0, -player.height/2, player.width/1.5, 5, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Thrusters firing UP (to slow down / move laterally)
+        ctx.fillStyle = '#38bdf8';
+        if(tilt < 0) { // moving left, right thruster fires
+            ctx.fillRect(player.width/2 + 2, -player.height/2, 4, 15 + Math.random()*5);
+        } else if (tilt > 0) { // moving right, left thruster fires
+            ctx.fillRect(-player.width/2 - 6, -player.height/2, 4, 15 + Math.random()*5);
+        }
+
+        ctx.restore();
+    }
+
+    function drawEntities() {
+        // Collectibles (Wunda Rings)
+        for (let i = 0; i < collectibles.length; i++) {
+            let c = collectibles[i];
+            c.pulse += 0.1;
+            let glow = 8 + Math.sin(c.pulse) * 4;
+            
+            ctx.strokeStyle = '#f1f5f9'; // Bright frost white
+            ctx.lineWidth = 4;
+            ctx.shadowBlur = glow;
+            ctx.shadowColor = '#6ef0ff'; // Cyan scan glow
+            
+            ctx.beginPath();
+            ctx.arc(c.x + c.width/2, c.y + c.height/2, c.width/2, 0, Math.PI*2);
+            ctx.stroke();
+            
+            ctx.shadowBlur = 0;
+        }
+
+        // Obstacles (Dark Peaks)
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            
+            let gradient = ctx.createLinearGradient(o.x, o.y, o.x, o.y + o.height);
+            gradient.addColorStop(0, '#0f172a'); // Very dark peak
+            gradient.addColorStop(1, '#1e293b'); 
+            
+            ctx.fillStyle = gradient; 
+            
+            // Triangle/Jagged shape
+            ctx.beginPath();
+            if(o.isLeft === true) {
+                ctx.moveTo(0, o.y + o.height);
+                ctx.lineTo(o.width, o.y + o.height/2);
+                ctx.lineTo(0, o.y);
+            } else if (o.isLeft === false) {
+                ctx.moveTo(canvas.width, o.y + o.height);
+                ctx.lineTo(o.x, o.y + o.height/2);
+                ctx.lineTo(canvas.width, o.y);
+            } else {
+                // Floating middle peak
+                ctx.moveTo(o.x + o.width/2, o.y);
+                ctx.lineTo(o.x + o.width, o.y + o.height);
+                ctx.lineTo(o.x, o.y + o.height);
+            }
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+
+    function drawBackground() {
+        // Deep shadow gradient (Dark Moon)
+        let grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+        grad.addColorStop(0, '#020617'); // Pitch black edges
+        grad.addColorStop(0.5, '#0f172a'); // Slightly lighter center
+        grad.addColorStop(1, '#020617'); 
+        
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Speed lines moving UP
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        bgStars.forEach(s => {
+            ctx.fillRect(s.x, s.y, s.size, s.size * 5);
+            s.y -= s.speed + (scoreFrames/1000);
+            if(s.y + (s.size*5) < 0) {
+                s.y = canvas.height;
+                s.x = Math.random() * canvas.width;
+            }
+        });
+    }
+
+    function checkCollisionRect(r1, r2) {
+        return !(r2.x > r1.x + r1.width || 
+                 r2.x + r2.width < r1.x || 
+                 r2.y > r1.y + r1.height ||
+                 r2.y + r2.height < r1.y);
+    }
+
+    function updatePhysics() {
+        // Player Movement (Horizontal only)
+        if (keys.ArrowLeft) player.x -= player.speed;
+        if (keys.ArrowRight) player.x += player.speed;
+
+        if (isTouching) {
+            let dx = touchTargetX - (player.x + player.width/2);
+            if (Math.abs(dx) > player.speed) {
+                player.x += (dx / Math.abs(dx)) * player.speed;
+            }
+        }
+
+        // Clamp to screen
+        if(player.x < 0) player.x = 0;
+        if(player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+
+        // Hitbox
+        let pRect = { x: player.x + 5, y: player.y + 5, width: player.width - 10, height: player.height - 10 };
+
+        // Spawning
+        let spawnRate = Math.max(20, 45 - Math.floor(scoreFrames/100)); 
+        if (frames % spawnRate === 0) spawnEntity();
+
+        // Update Collectibles
+        for (let i = collectibles.length - 1; i >= 0; i--) {
+            collectibles[i].y -= collectibles[i].speedY; // Move UP
+            
+            if (checkCollisionRect(pRect, collectibles[i])) {
+                dataCollected++;
+                addXP(10);
+                ctx.fillStyle = 'rgba(110, 240, 255, 0.4)'; // Cyan flash
+                ctx.fillRect(0,0, canvas.width, canvas.height);
+                collectibles.splice(i, 1);
+                continue;
+            }
+
+            if (collectibles[i].y + collectibles[i].height < 0) {
+                collectibles.splice(i, 1);
+            }
+        }
+
+        // Update Obstacles
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].y -= obstacles[i].speedY; // Move UP
+            
+            // Triangle/Slant collision rough approximation
+            let oRect = {x: obstacles[i].x, y: obstacles[i].y, width: obstacles[i].width, height: obstacles[i].height};
+            if(obstacles[i].isLeft === true) { oRect.width -= 10; }
+            else if(obstacles[i].isLeft === false) { oRect.x += 10; oRect.width -= 10; }
+
+            if (checkCollisionRect(pRect, oRect)) {
+                gameOver("Crashed into a Dark Peak!");
+                return;
+            }
+
+            if (obstacles[i].y + obstacles[i].height < 0) {
+                obstacles.splice(i, 1);
+            }
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        drawBackground();
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawEntities();
+        drawPlayer();
+
+        // HUD
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let dist = Math.floor(secondsAlive * 5); 
+        
+        ctx.fillStyle = "rgba(15, 23, 42, 0.8)";
+        ctx.fillRect(5, 5, 150, 60);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Distance: ${dist} km`, 10, 25);
+        ctx.fillStyle = "#6ef0ff"; // Cyan
+        ctx.fillText(`⭕ Scanned: ${dataCollected}/3`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && dataCollected >= 3 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Shadow Surveyor Badge Unlocked!", "You survived the dark peaks and scanned the frost! +100 XP", "🌑");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Flyby";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 3);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You flew for ${secondsAlive}s.</p>
+            <p class="text-star-cyan mb-4 text-sm font-bold">⭕ Scanned ${dataCollected} Rings</p>
+            ${!achievements.playedGame ? `<p class="text-umbriel-light text-sm mb-4 text-center px-2">Survive 20s AND scan 3 rings for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

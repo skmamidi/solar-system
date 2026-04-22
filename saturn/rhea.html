@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rhea — Interactive Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#03050a', 800: '#0a0d1c', 700: '#141a33', 500: '#232c4d', 100: '#fcfaf2' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        rhea: { base: '#cbd5e1', dark: '#64748b', light: '#f1f5f9', ice: '#e2e8f0', crater: '#475569' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 80s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(203, 213, 225, 0.2)' },
+                            '100%': { boxShadow: '0 0 50px rgba(241, 245, 249, 0.4)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #03050a;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #e2e8f0 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #94a3b8 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #64748b 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(20, 26, 51, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(203, 213, 225, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(10, 13, 28, 0.8), rgba(20, 26, 51, 0.9));
+            border: 1px solid rgba(203, 213, 225, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(241, 245, 249, 0.6);
+            box-shadow: 0 0 20px rgba(241, 245, 249, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Rhea Graphic - Icy, cratered with wispy lines */
+        .orb-rhea {
+            background: radial-gradient(circle at 30% 30%, #f1f5f9, #e2e8f0, #cbd5e1, #94a3b8, #475569);
+            box-shadow: inset -20px -20px 40px rgba(0,0,0,0.7), 0 0 30px rgba(203, 213, 225, 0.3);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* Craters */
+        .orb-rhea::before {
+            content: '';
+            position: absolute;
+            top: 20%; left: 25%;
+            width: 20%; height: 20%;
+            background: radial-gradient(circle, rgba(71, 85, 105, 0.6) 0%, transparent 70%);
+            border-radius: 50%;
+            box-shadow: inset 2px 2px 4px rgba(0,0,0,0.4);
+            z-index: 1;
+        }
+
+        /* Wispy Terrain (Ice cliffs/fractures) */
+        .orb-rhea::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(255,255,255,0.4) 15px, rgba(255,255,255,0.4) 18px),
+                repeating-linear-gradient(-30deg, transparent, transparent 25px, rgba(241, 245, 249, 0.3) 25px, rgba(241, 245, 249, 0.3) 27px);
+            border-radius: 50%;
+            mix-blend-mode: overlay;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); /* Restrict to one hemisphere visually */
+            opacity: 0.8;
+            z-index: 2;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(203, 213, 225, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #03050a; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-rhea-base shadow-[0_0_40px_rgba(203,213,225,0.4)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-rhea-light text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-rhea-light">🧊</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="saturn.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-gold">
+                <span class="text-xl">🪐</span>
+                <span class="font-display font-bold text-lg">Back to Saturn</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-rhea-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-rhea-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Rhea Mission Progress</span>
+                    <span id="progressText" class="text-rhea-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-rhea-dark to-rhea-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Skim Cliffs</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-rhea-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-rhea-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-rhea-light animate-ping"></span> Saturn's Second Largest
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Rhea</h1>
+                <p class="text-2xl text-rhea-light font-body italic mb-6">"The Cratered Snowball"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    A cold, ancient world composed almost entirely of water ice. It is famous for its heavily cratered surface, enormous tectonic ice cliffs, and the lingering mystery of whether it once had its very own ring system!
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-rhea-light text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(241,245,249,0.5)]">
+                    Explore the Ice 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center pt-6">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-rhea animate-spin-slow animate-pulse-glow"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-rhea-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">1,527 km</div>
+                <div class="text-[10px] text-space-100 mt-1">9th largest in Solar System</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🧊</div>
+                <div class="text-rhea-light font-mono text-xs uppercase mb-1">Composition</div>
+                <div class="font-bold text-xl">75% Ice</div>
+                <div class="text-[10px] text-space-100 mt-1">25% Rock. A dirty snowball.</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🥶</div>
+                <div class="text-rhea-light font-mono text-xs uppercase mb-1">Temperature</div>
+                <div class="font-bold text-xl">-174°C</div>
+                <div class="text-[10px] text-space-100 mt-1">Down to -220°C in shade</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-cyan text-space-900 text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">MYSTERY!</div>
+                <div class="text-3xl mb-2">🪐</div>
+                <div class="text-rhea-light font-mono text-xs uppercase mb-1">Ring System</div>
+                <div class="font-bold text-xl text-star-cyan">Unproven</div>
+                <div class="text-[10px] text-space-100 mt-1">Thought to have rings in 2008</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Rhea data.</p>
+                </div>
+                <div class="hidden md:block text-rhea-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Size & Position -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'r1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📍</div>
+                            <h3 class="font-display text-xl text-rhea-light">Size & Position</h3>
+                            <p class="text-space-100 text-xs mt-2">Saturn's #2</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-rhea-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-rhea-dark pb-1 w-full">The Second Largest</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>Rhea is the second-largest moon of Saturn (after Titan) and the 9th largest moon in the entire solar system.</li>
+                                <li>It orbits Saturn at a distance of 527,000 km, taking about 4.5 Earth days to complete one orbit.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Composition -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'r2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⛄</div>
+                            <h3 class="font-display text-xl text-rhea-light">Composition</h3>
+                            <p class="text-space-100 text-xs mt-2">A giant dirty snowball</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-rhea-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-cyan mb-2 border-b border-rhea-dark pb-1 w-full">Low Density Ice</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Rhea has a very low density (1.23 g/cm³).</li>
+                                <li>This tells scientists it is composed of roughly <strong>75% water ice and 25% rock</strong>. It is basically a giant, frozen, dirty snowball floating in space.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Surface Craters -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'r3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🕳️</div>
+                            <h3 class="font-display text-xl text-rhea-light">The Surface</h3>
+                            <p class="text-space-100 text-xs mt-2">Ancient scars</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-rhea-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-rhea-light mb-2 border-b border-rhea-dark pb-1 w-full">Heavily Cratered</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>Like Callisto, Rhea's leading hemisphere is extremely heavily cratered, meaning it hasn't had any geological activity to erase them for billions of years.</li>
+                                <li>It features two massive impact basins named <strong>Tirawa</strong> and <strong>Mamaldi</strong>.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Wispy Terrain -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'r4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚡</div>
+                            <h3 class="font-display text-xl text-rhea-light">Wispy Terrain</h3>
+                            <p class="text-space-100 text-xs mt-2">What are those bright lines?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-rhea-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-cyan mb-2 border-b border-rhea-dark pb-1 w-full">Giant Ice Cliffs</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Voyager 1 photographed bright, "wispy" lines on Rhea's trailing hemisphere.</li>
+                                <li>The Cassini probe later flew close enough to reveal these aren't clouds or paint—they are <strong>massive tectonic fault lines and ice cliffs</strong> (chasmata) created when the moon cooled and cracked!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: The Ring Mystery -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'r5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🪐</div>
+                            <h3 class="font-display text-2xl text-rhea-light">The Ring Mystery</h3>
+                            <p class="text-space-100 mt-2">Did a moon have its own rings?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-rhea-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-gold mb-3 border-b border-rhea-dark pb-2 w-full">A False Alarm</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-rhea-light font-mono font-bold block mb-1">The 2008 Claim:</span>
+                                    Cassini sensors detected a weird drop in electrons around Rhea, leading scientists to announce it might be the <strong>first moon to have a ring system!</strong>
+                                </div>
+                                <div>
+                                    <span class="text-rhea-light font-mono font-bold block mb-1">The 2010 Truth:</span>
+                                    Cassini did a targeted flyby specifically to photograph these rings... but found absolutely nothing. The electron drop remains a mystery, but there are no rings.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: The Oxygen Atmosphere -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'r6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">💨</div>
+                            <h3 class="font-display text-2xl text-rhea-light">Oxygen Atmosphere!</h3>
+                            <p class="text-space-100 mt-2">Wait, can we breathe there?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-rhea-dark flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-star-green mb-2 border-b border-rhea-dark pb-1 w-full">Radiation-Created Air</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>In 2010, NASA confirmed Rhea has a very thin exosphere made of <strong>Oxygen and Carbon Dioxide</strong>.</li>
+                                <li>No, you can't breathe it—it is trillions of times thinner than Earth's.</li>
+                                <li>It isn't from plants! It is created by <strong>radiolysis</strong>: Saturn's radiation bombards Rhea's surface, literally splitting the water ice molecules apart into oxygen and hydrogen!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Discovery -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'r7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔭</div>
+                            <h3 class="font-display text-2xl text-rhea-light">Discovery</h3>
+                            <p class="text-space-100 mt-2">The Stars of Louis</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-rhea-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-rhea-dark pb-2 w-full">Giovanni Cassini</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Discovered in <strong>1672</strong> by Giovanni Domenico Cassini.</li>
+                                <li>He originally named it and three other moons the <em>Sidera Lodoicea</em> ("Stars of Louis") to flatter King Louis XIV of France. The name Rhea was adopted much later!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Missions -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'r8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-rhea-light">Missions</h3>
+                            <p class="text-space-100 mt-2">Up close and personal</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-rhea-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-rhea-light mb-2 border-b border-rhea-dark pb-2 w-full">The Grand Tour</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>First photographed by the <strong>Voyager 1 and 2</strong> probes in 1980 and 1981, which discovered the "wispy terrain".</li>
+                                <li>The <strong>Cassini</strong> spacecraft performed several targeted close flybys between 2005 and 2015, solving the mystery of the ice cliffs and detecting the oxygen atmosphere!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MINI GAME SECTION -->
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-rhea-dark border-2 shadow-[0_0_30px_rgba(71,85,105,0.4)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-rhea-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Wispy Cliff Skimmer</h2>
+                        <p class="text-space-100 mb-6">Pilot the Cassini probe down the massive tectonic ice cliffs of Rhea! Dodge the jutting <span class="text-white font-bold">ice outcroppings</span> and use your sensors to collect 5 <span class="text-star-green font-bold">Oxygen/CO2 Samples</span> from the thin exosphere to earn the <span class="text-rhea-light font-bold">Atmospheric Chemist Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-rhea-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Start Descent
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-rhea-dark/30">
+                            <div class="text-5xl mb-2">🛰️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Targeting Chasmata</h3>
+                            <p class="text-rhea-light text-sm">Click Start to descend</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#020617] via-[#0f172a] to-[#1e293b] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-rhea-dark"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUIZ SECTION -->
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-rhea-dark/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Rhea module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="quizActiveArea">
+                    <h3 id="questionText" class="text-xl font-bold mb-4 text-rhea-light"></h3>
+                    <div id="optionsContainer" class="space-y-3 mb-6"></div>
+                    <div id="explanationBox" class="hidden p-4 rounded-xl border border-space-500 bg-space-800 text-sm mb-6 text-space-100"></div>
+                    <button id="nextQuestionBtn" onclick="nextQuestion()" class="hidden w-full bg-rhea-light text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Next Question</button>
+                </div>
+
+                <div class="hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold text-rhea-light">0/20</span></p>
+                    <button id="retryQuizBtn" onclick="initQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Rhea Module Complete!", "You have unlocked the 'Atmospheric Chemist' badge. Excellent exploration!", "🧊");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Rhea files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    const quizQuestions = [
+        {
+            q: "Rhea is the second largest moon of Saturn. Which moon is the largest?",
+            options: [
+                { text: "Titan", isCorrect: true },
+                { text: "Enceladus", isCorrect: false },
+                { text: "Iapetus", isCorrect: false },
+                { text: "Ganymede", isCorrect: false }
+            ],
+            explanation: "Titan is the largest moon of Saturn by a wide margin, making Rhea the second largest."
+        },
+        {
+            q: "What is the primary composition of Rhea's interior, given its very low density?",
+            options: [
+                { text: "Roughly 75% water ice and 25% rock", isCorrect: true },
+                { text: "Almost entirely solid iron", isCorrect: false },
+                { text: "A mix of liquid methane and ethane", isCorrect: false },
+                { text: "Mostly silicate rock with a thin ice crust", isCorrect: false }
+            ],
+            explanation: "With a density of only 1.23 g/cm³, Rhea is essentially a giant 'dirty snowball' composed mostly of water ice with some rock mixed in."
+        },
+        {
+            q: "What are the bright \"wispy\" lines seen primarily on Rhea's trailing hemisphere?",
+            options: [
+                { text: "Massive tectonic ice cliffs and fractures (chasmata)", isCorrect: true },
+                { text: "Clouds of ammonia gas blowing in the wind", isCorrect: false },
+                { text: "Trails left by ancient, dried-up rivers", isCorrect: false },
+                { text: "Shadows cast by Saturn's outermost rings", isCorrect: false }
+            ],
+            explanation: "Cassini's close flybys revealed that the 'wisps' are actually bright, exposed ice cliffs created by tectonic fracturing when the moon's surface cracked."
+        },
+        {
+            q: "In 2008, scientists mistakenly thought Rhea was the first moon to have what unique feature?",
+            options: [
+                { text: "Its own ring system", isCorrect: true },
+                { text: "Active volcanoes shooting magma", isCorrect: false },
+                { text: "A magnetic field stronger than Earth's", isCorrect: false },
+                { text: "A breathable oxygen atmosphere", isCorrect: false }
+            ],
+            explanation: "An unexplained depletion of electrons around Rhea led scientists to hypothesize it had debris rings, but a later targeted flyby proved they didn't exist."
+        },
+        {
+            q: "Why did scientists initially suspect Rhea had rings?",
+            options: [
+                { text: "Cassini detected an unexplained drop in electrons around the moon.", isCorrect: true },
+                { text: "They took blurry photos that looked like rings.", isCorrect: false },
+                { text: "Rhea's gravity was pulling Saturn's rings toward it.", isCorrect: false },
+                { text: "Asteroids were constantly orbiting it in a perfect circle.", isCorrect: false }
+            ],
+            explanation: "The Cassini spacecraft observed a symmetrical drop in electron flow on both sides of Rhea, which usually implies solid material blocking the path."
+        },
+        {
+            q: "In 2010, the Cassini spacecraft detected a very thin exosphere (atmosphere) around Rhea. What two gases primarily make it up?",
+            options: [
+                { text: "Oxygen and Carbon Dioxide", isCorrect: true },
+                { text: "Nitrogen and Methane", isCorrect: false },
+                { text: "Helium and Hydrogen", isCorrect: false },
+                { text: "Sulfur Dioxide and Argon", isCorrect: false }
+            ],
+            explanation: "Rhea was the first world identified by Cassini to have a direct oxygen-carbon dioxide exosphere, though it is incredibly thin."
+        },
+        {
+            q: "How is the oxygen in Rhea's thin atmosphere created?",
+            options: [
+                { text: "Radiolysis: radiation from Saturn splits the surface water ice molecules.", isCorrect: true },
+                { text: "Photosynthesis from microscopic algae in the ice.", isCorrect: false },
+                { text: "It is vented from active cryovolcanoes.", isCorrect: false },
+                { text: "It was captured from Earth's atmosphere millions of years ago.", isCorrect: false }
+            ],
+            explanation: "Intense radiation from Saturn's magnetosphere bombards Rhea's icy surface, breaking the H2O molecules apart into hydrogen and oxygen (a process called radiolysis)."
+        },
+        {
+            q: "Who discovered Rhea in 1672?",
+            options: [
+                { text: "Giovanni Domenico Cassini", isCorrect: true },
+                { text: "Galileo Galilei", isCorrect: false },
+                { text: "Christiaan Huygens", isCorrect: false },
+                { text: "William Herschel", isCorrect: false }
+            ],
+            explanation: "Cassini discovered Rhea along with Iapetus, Dione, and Tethys using his refractor telescope in Paris."
+        },
+        {
+            q: "Cassini originally named Rhea and three other moons the \"Sidera Lodoicea.\" What does this translate to?",
+            options: [
+                { text: "The Stars of Louis", isCorrect: true },
+                { text: "The Moons of Saturn", isCorrect: false },
+                { text: "The Icy Spheres", isCorrect: false },
+                { text: "The Dancing Lights", isCorrect: false }
+            ],
+            explanation: "He named them the 'Stars of Louis' to honor and flatter his patron, King Louis XIV of France."
+        },
+        {
+            q: "Why does the leading hemisphere of Rhea have significantly more craters than the trailing hemisphere?",
+            options: [
+                { text: "It constantly plows into orbital debris because the moon is tidally locked.", isCorrect: true },
+                { text: "Volcanoes erased the craters on the trailing side.", isCorrect: false },
+                { text: "The sun melted the ice on the trailing side.", isCorrect: false },
+                { text: "Saturn's gravity protects the trailing side from meteors.", isCorrect: false }
+            ],
+            explanation: "Because Rhea always shows the same face to Saturn, the front (leading) side acts like a windshield, sweeping up and getting struck by more debris."
+        },
+        {
+            q: "The two largest impact basins on Rhea are located on its leading side. What are they called?",
+            options: [
+                { text: "Tirawa and Mamaldi", isCorrect: true },
+                { text: "Herschel and Stickney", isCorrect: false },
+                { text: "Caloris and Hellas", isCorrect: false },
+                { text: "Sputnik and Tombaugh", isCorrect: false }
+            ],
+            explanation: "Tirawa and Mamaldi are massive, ancient impact basins that resemble the large craters found on our own Moon."
+        },
+        {
+            q: "What does Rhea's heavily cratered surface tell planetary geologists about its internal heat?",
+            options: [
+                { text: "It has been geologically dead and frozen solid for billions of years.", isCorrect: true },
+                { text: "It currently has a highly active, molten core.", isCorrect: false },
+                { text: "It is constantly being melted by Saturn's gravity.", isCorrect: false },
+                { text: "Its surface is only a few thousand years old.", isCorrect: false }
+            ],
+            explanation: "A high density of craters implies that no geological processes (like volcanoes or shifting tectonic plates) have happened recently to pave over the surface."
+        },
+        {
+            q: "How does the surface temperature of Rhea compare in direct sunlight vs the shade?",
+            options: [
+                { text: "-174°C in the sun, dropping to -220°C in the shade", isCorrect: true },
+                { text: "It is exactly 0°C across the entire moon", isCorrect: false },
+                { text: "It is boiling hot in the sun, freezing in the shade", isCorrect: false },
+                { text: "It remains a constant -50°C globally", isCorrect: false }
+            ],
+            explanation: "Rhea is incredibly cold, but the lack of a thick atmosphere means it can't trap heat, causing massive temperature drops when you step into the shadows."
+        },
+        {
+            q: "What process likely created the massive tectonic ice cliffs (wispy terrain) on Rhea?",
+            options: [
+                { text: "The moon cooling and expanding or contracting, cracking the crust.", isCorrect: true },
+                { text: "Massive rivers of liquid water carving canyons.", isCorrect: false },
+                { text: "Asteroids scraping across the surface.", isCorrect: false },
+                { text: "Saturn's rings cutting into the ice.", isCorrect: false }
+            ],
+            explanation: "As the interior of Rhea slowly cooled and froze completely early in its history, the ice expanded, causing the surface crust to fracture and form massive tectonic faults."
+        },
+        {
+            q: "Rhea is in a \"synchronous rotation\" with Saturn. What does this mean?",
+            options: [
+                { text: "It takes the exact same amount of time to rotate once as it does to orbit Saturn.", isCorrect: true },
+                { text: "It orbits Saturn in the exact opposite direction of the other moons.", isCorrect: false },
+                { text: "It does not rotate on its axis at all.", isCorrect: false },
+                { text: "Its orbit perfectly matches the orbit of Earth's Moon.", isCorrect: false }
+            ],
+            explanation: "Synchronous rotation (or tidal locking) means one side of Rhea permanently faces Saturn, just like our Moon faces Earth."
+        },
+        {
+            q: "Like many icy moons, Rhea has an incredibly high albedo. What does \"albedo\" measure?",
+            options: [
+                { text: "The proportion of sunlight that the surface reflects.", isCorrect: true },
+                { text: "The density of the core.", isCorrect: false },
+                { text: "The speed at which it orbits a planet.", isCorrect: false },
+                { text: "The thickness of its atmosphere.", isCorrect: false }
+            ],
+            explanation: "Albedo is a measure of reflectivity. Because Rhea is covered in relatively clean water ice, it reflects a large percentage of incoming sunlight."
+        },
+        {
+            q: "Is there any evidence of a liquid subsurface ocean currently existing inside Rhea?",
+            options: [
+                { text: "No, its shape and lack of activity suggest it is completely frozen.", isCorrect: true },
+                { text: "Yes, it shoots massive geysers of liquid water into space.", isCorrect: false },
+                { text: "Yes, radar has mapped an ocean larger than Earth's.", isCorrect: false },
+                { text: "No, because the entire moon is made of solid iron.", isCorrect: false }
+            ],
+            explanation: "Unlike Titan or Enceladus, Rhea's gravity profile indicates it is likely a uniform mix of ice and rock that has been completely frozen for eons."
+        },
+        {
+            q: "Which space probes were the first to provide close-up images of Rhea in 1980 and 1981?",
+            options: [
+                { text: "Voyager 1 and Voyager 2", isCorrect: true },
+                { text: "Pioneer 10 and 11", isCorrect: false },
+                { text: "Hubble and James Webb", isCorrect: false },
+                { text: "Curiosity and Perseverance", isCorrect: false }
+            ],
+            explanation: "During their 'Grand Tour' of the outer solar system, the twin Voyager probes took the first clear photos of Rhea, discovering the wispy terrain."
+        },
+        {
+            q: "If you were standing on the surface of Rhea, what would the \"rocky\" terrain beneath your feet actually be made of?",
+            options: [
+                { text: "Solid, super-chilled water ice.", isCorrect: true },
+                { text: "Granite and basalt.", isCorrect: false },
+                { text: "Solidified methane gas.", isCorrect: false },
+                { text: "Pure titanium.", isCorrect: false }
+            ],
+            explanation: "At the extreme cold of the outer solar system, water ice acts exactly like rock does on Earth, forming hard mountains, craters, and cliffs."
+        },
+        {
+            q: "Why can't the thin oxygen atmosphere of Rhea support human life?",
+            options: [
+                { text: "It is trillions of times thinner than Earth's atmosphere and lacks pressure.", isCorrect: true },
+                { text: "It is mixed with deadly sulfuric acid.", isCorrect: false },
+                { text: "It is constantly on fire.", isCorrect: false },
+                { text: "It is moving too fast to breathe in.", isCorrect: false }
+            ],
+            explanation: "While it technically contains oxygen, the exosphere is essentially a vacuum. There are so few molecules that they rarely even collide with each other."
+        }
+    ];
+
+    let currentQIndex = 0;
+    let score = 0;
+    let randomizedQuestions = [];
+
+    function initQuiz() {
+        randomizedQuestions = [...quizQuestions].sort(() => Math.random() - 0.5);
+        randomizedQuestions.forEach(q => {
+            q.options.sort(() => Math.random() - 0.5);
+        });
+        currentQIndex = 0;
+        score = 0;
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('quizActiveArea').classList.remove('hidden');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = randomizedQuestions[currentQIndex];
+        document.getElementById('questionText').innerText = `${currentQIndex + 1}. ${q.q}`;
+        const optionsContainer = document.getElementById('optionsContainer');
+        optionsContainer.innerHTML = '';
+        
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-rhea-light transition-all";
+            btn.innerHTML = opt.text;
+            btn.dataset.isCorrect = opt.isCorrect;
+            btn.onclick = () => handleAnswer(opt.isCorrect, btn, q);
+            optionsContainer.appendChild(btn);
+        });
+        
+        document.getElementById('explanationBox').classList.add('hidden');
+        document.getElementById('nextQuestionBtn').classList.add('hidden');
+    }
+
+    function handleAnswer(isCorrect, btnEl, q) {
+        const siblings = btnEl.parentElement.children;
+        for(let s of siblings) {
+            s.disabled = true;
+            s.classList.remove('hover:bg-space-700', 'hover:border-rhea-light');
+            s.classList.add('opacity-50');
+            if(s.dataset.isCorrect === 'true') {
+                 s.classList.remove('opacity-50', 'border-space-500');
+                 s.classList.add('border-star-green', 'text-star-green');
+            }
+        }
+        btnEl.classList.remove('opacity-50', 'bg-space-800', 'border-star-green', 'text-star-green');
+        
+        if(isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            score++;
+            addXP(10);
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+        }
+
+        const expBox = document.getElementById('explanationBox');
+        expBox.innerHTML = `<strong class="${isCorrect ? 'text-star-green' : 'text-star-red'}">${isCorrect ? 'Correct!' : 'Incorrect.'}</strong> <br/> ${q.explanation}`;
+        expBox.classList.remove('hidden');
+        
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        currentQIndex++;
+        if(currentQIndex < randomizedQuestions.length) {
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('quizActiveArea').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('scoreText').innerText = `${score}/20`;
+        
+        if(score === 20) {
+            document.getElementById('scoreText').className = 'font-bold text-star-green';
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(200);
+                showMsgBox("Perfect Knowledge", "Perfect score on the Rhea Quiz! +200 XP", "🧠");
+            }
+            document.getElementById('retryQuizBtn').classList.add('hidden');
+        } else {
+            document.getElementById('scoreText').className = 'font-bold text-star-red';
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', initQuiz);
+
+    /* MINI GAME: Wispy Cliff Skimmer (Vertical Downward Scroller) */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    // Player (Cassini Probe) - Moves left/right, fixed Y near top (falling down)
+    const player = {
+        x: 200, 
+        y: 80, 
+        width: 30,
+        height: 40,
+        speed: 6,
+        color: '#f8fafc' 
+    };
+
+    let obstacles = []; // Ice walls/chunks
+    let collectibles = []; // O2/CO2 molecules
+    
+    // Background wisps
+    let bgWisps = [];
+
+    // Inputs
+    let keys = { ArrowLeft: false, ArrowRight: false };
+    let isTouching = false;
+    let touchTargetX = 0;
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(['ArrowLeft', 'ArrowRight'].includes(e.code)) {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(['ArrowLeft', 'ArrowRight'].includes(e.code)) keys[e.code] = false; 
+    });
+    
+    // Touch/Mouse Support
+    function handlePointerMove(e) {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        touchTargetX = (clientX - rect.left) * (canvas.width / rect.width);
+        isTouching = true;
+        if(e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+    }
+    function handlePointerUp() { isTouching = false; }
+
+    canvas.addEventListener('touchstart', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchend', handlePointerUp);
+    canvas.addEventListener('mousedown', handlePointerMove);
+    canvas.addEventListener('mousemove', (e) => { if(isTouching) handlePointerMove(e); });
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerUp);
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width/2;
+        obstacles = [];
+        collectibles = [];
+        dataCollected = 0;
+        isTouching = false;
+
+        // Init background wisps
+        bgWisps = Array.from({length: 15}).map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            width: Math.random() * 4 + 2,
+            height: Math.random() * 50 + 50,
+            speed: Math.random() * 2 + 1
+        }));
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Scanning...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let globalSpeedY = (Math.random() * 2 + 5) * speedMult; // Scroll speed UP (gives illusion of falling)
+        
+        // Oxygen Molecule (30% chance)
+        if (Math.random() > 0.7 && collectibles.length < 3) {
+            collectibles.push({
+                x: Math.random() * (canvas.width - 20),
+                y: canvas.height + 20, // Spawn at bottom
+                width: 20,
+                height: 20,
+                speedY: globalSpeedY,
+                pulse: 0
+            });
+            return;
+        }
+
+        // Scripted terrain: Giant jagged ice cliffs extending from left or right
+        let isLeft = Math.random() > 0.5;
+        let w = Math.random() * (canvas.width * 0.4) + 40; // 40 to ~40% width
+        let h = Math.random() * 50 + 30;
+
+        obstacles.push({ 
+            x: isLeft ? 0 : canvas.width - w, 
+            y: canvas.height + 10, 
+            width: w, 
+            height: h, 
+            speedY: globalSpeedY,
+            isLeft: isLeft
+        });
+        
+        // Sometimes spawn a floating ice chunk in the middle
+        if(Math.random() > 0.6) {
+             obstacles.push({ 
+                x: Math.random() * (canvas.width - 40) + 20, 
+                y: canvas.height + 100, 
+                width: 30, 
+                height: 30, 
+                speedY: globalSpeedY * 1.2, // Slightly faster
+                isChunk: true
+            });
+        }
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        // Tilt slightly based on movement
+        let tilt = 0;
+        if(keys.ArrowLeft || (isTouching && touchTargetX < player.x)) tilt = -0.2;
+        if(keys.ArrowRight || (isTouching && touchTargetX > player.x)) tilt = 0.2;
+        ctx.rotate(tilt);
+
+        // Thruster (points UP since we are falling down, thruster breaks the fall)
+        ctx.fillStyle = '#38bdf8'; // Cyan flame
+        ctx.beginPath();
+        ctx.moveTo(-player.width/4, -player.height/2);
+        ctx.lineTo(0, -player.height/2 - 15 - Math.random()*5);
+        ctx.lineTo(player.width/4, -player.height/2);
+        ctx.fill();
+
+        // Main body (Cassini)
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(-player.width/2, -player.height/2, player.width, player.height);
+        
+        // Dish (pointing down/forward)
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.ellipse(0, player.height/2, player.width/1.5, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    function drawEntities() {
+        // Collectibles (Oxygen/CO2)
+        for (let i = 0; i < collectibles.length; i++) {
+            let c = collectibles[i];
+            c.pulse += 0.1;
+            let glow = 8 + Math.sin(c.pulse) * 4;
+            
+            ctx.fillStyle = '#4ef0a8'; // Greenish data
+            ctx.shadowBlur = glow;
+            ctx.shadowColor = '#4ef0a8';
+            
+            // Draw double-molecule (O2)
+            ctx.beginPath();
+            ctx.arc(c.x + c.width/2 - 4, c.y + c.height/2, c.width/3, 0, Math.PI*2);
+            ctx.arc(c.x + c.width/2 + 4, c.y + c.height/2, c.width/3, 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.shadowBlur = 0;
+        }
+
+        // Obstacles (Ice Cliffs)
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            
+            let gradient = ctx.createLinearGradient(o.x, o.y, o.x + o.width, o.y);
+            if(o.isLeft) {
+                gradient.addColorStop(0, '#1e293b');
+                gradient.addColorStop(1, '#94a3b8');
+            } else if (!o.isChunk) {
+                gradient.addColorStop(0, '#94a3b8');
+                gradient.addColorStop(1, '#1e293b');
+            } else {
+                gradient.addColorStop(0, '#64748b');
+                gradient.addColorStop(1, '#94a3b8');
+            }
+            
+            ctx.fillStyle = gradient; 
+            
+            if(o.isChunk) {
+                // Floating diamond/chunk
+                ctx.beginPath();
+                ctx.moveTo(o.x + o.width/2, o.y);
+                ctx.lineTo(o.x + o.width, o.y + o.height/2);
+                ctx.lineTo(o.x + o.width/2, o.y + o.height);
+                ctx.lineTo(o.x, o.y + o.height/2);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                // Jagged cliff face
+                ctx.beginPath();
+                if(o.isLeft) {
+                    ctx.moveTo(0, o.y);
+                    ctx.lineTo(o.width, o.y + o.height/3);
+                    ctx.lineTo(o.width - 10, o.y + o.height/2);
+                    ctx.lineTo(o.width, o.y + o.height);
+                    ctx.lineTo(0, o.y + o.height);
+                } else {
+                    ctx.moveTo(canvas.width, o.y);
+                    ctx.lineTo(o.x, o.y + o.height/3);
+                    ctx.lineTo(o.x + 10, o.y + o.height/2);
+                    ctx.lineTo(o.x, o.y + o.height);
+                    ctx.lineTo(canvas.width, o.y + o.height);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+    }
+
+    function drawBackground() {
+        // Deep ice canyon gradient
+        let grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        grad.addColorStop(0, '#020617'); // Dark top
+        grad.addColorStop(1, '#0f172a'); // Slightly lighter bottom
+        
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Wispy vertical lines scrolling UP
+        ctx.fillStyle = 'rgba(241, 245, 249, 0.15)';
+        bgWisps.forEach(w => {
+            ctx.fillRect(w.x, w.y, w.width, w.height);
+            w.y -= w.speed + (scoreFrames/1000);
+            if(w.y + w.height < 0) {
+                w.y = canvas.height;
+                w.x = Math.random() * canvas.width;
+            }
+        });
+    }
+
+    function checkCollisionRect(r1, r2) {
+        return !(r2.x > r1.x + r1.width || 
+                 r2.x + r2.width < r1.x || 
+                 r2.y > r1.y + r1.height ||
+                 r2.y + r2.height < r1.y);
+    }
+
+    function updatePhysics() {
+        // Player Movement (Horizontal only)
+        if (keys.ArrowLeft) player.x -= player.speed;
+        if (keys.ArrowRight) player.x += player.speed;
+
+        if (isTouching) {
+            let dx = touchTargetX - (player.x + player.width/2);
+            if (Math.abs(dx) > player.speed) {
+                player.x += (dx / Math.abs(dx)) * player.speed;
+            }
+        }
+
+        // Clamp to screen
+        if(player.x < 0) player.x = 0;
+        if(player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+
+        // Forgiving hitbox
+        let pRect = { x: player.x + 5, y: player.y + 5, width: player.width - 10, height: player.height - 10 };
+
+        // Spawning
+        let spawnRate = Math.max(20, 50 - Math.floor(scoreFrames/100));
+        if (frames % spawnRate === 0) spawnEntity();
+
+        // Update Collectibles
+        for (let i = collectibles.length - 1; i >= 0; i--) {
+            collectibles[i].y -= collectibles[i].speedY; // Move UP
+            
+            if (checkCollisionRect(pRect, collectibles[i])) {
+                dataCollected++;
+                addXP(10);
+                ctx.fillStyle = 'rgba(78, 240, 168, 0.4)'; // Green flash
+                ctx.fillRect(0,0, canvas.width, canvas.height);
+                collectibles.splice(i, 1);
+                continue;
+            }
+
+            if (collectibles[i].y + collectibles[i].height < 0) {
+                collectibles.splice(i, 1);
+            }
+        }
+
+        // Update Obstacles
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].y -= obstacles[i].speedY; // Move UP
+            
+            // Approximate collision for jagged cliffs
+            let oRect = {x: obstacles[i].x, y: obstacles[i].y, width: obstacles[i].width, height: obstacles[i].height};
+            if(obstacles[i].isLeft) oRect.width -= 5;
+            else if(!obstacles[i].isChunk) { oRect.x += 5; oRect.width -= 5; }
+
+            if (checkCollisionRect(pRect, oRect)) {
+                gameOver("Crashed into the Ice Cliffs!");
+                return;
+            }
+
+            if (obstacles[i].y + obstacles[i].height < 0) {
+                obstacles.splice(i, 1);
+            }
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        drawBackground();
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawEntities();
+        drawPlayer();
+
+        // HUD
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let dist = Math.floor(secondsAlive * 8.5); // Depth descent
+        
+        ctx.fillStyle = "rgba(15, 23, 42, 0.8)";
+        ctx.fillRect(5, 5, 150, 60);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Depth: ${dist} km`, 10, 25);
+        ctx.fillStyle = "#4ef0a8"; // Green
+        ctx.fillText(`🧪 Samples: ${dataCollected}/5`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && dataCollected >= 5 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Atmospheric Chemist Badge Unlocked!", "You survived the cliffs and gathered the oxygen! +100 XP", "💨");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Descent";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 5);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You descended for ${secondsAlive}s.</p>
+            <p class="text-star-green mb-4 text-sm font-bold">🧪 Collected ${dataCollected} Samples</p>
+            ${!achievements.playedGame ? `<p class="text-rhea-light text-sm mb-4 text-center px-2">Survive 20s AND collect 5 samples for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

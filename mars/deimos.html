@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Deimos — Interactive Solar System Explorer</title>
+    
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#050404', 800: '#140c0c', 700: '#2b1717', 500: '#4a2424', 100: '#f3e8e8' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        deimos: { base: '#9ca3af', dark: '#4b5563', light: '#d1d5db', dust: '#78716c', crater: '#292524' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'tumble': 'tumble 40s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(156, 163, 175, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(156, 163, 175, 0.5)' },
+                        },
+                        tumble: {
+                            '0%': { transform: 'rotate(0deg)' },
+                            '100%': { transform: 'rotate(360deg)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #050404;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #ef4444 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #9ca3af 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #78716c 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(20, 12, 12, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(156, 163, 175, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(5, 4, 4, 0.8), rgba(20, 12, 12, 0.9));
+            border: 1px solid rgba(156, 163, 175, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(156, 163, 175, 0.6);
+            box-shadow: 0 0 20px rgba(156, 163, 175, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Deimos Graphic - Lumpy, dusty, non-spherical */
+        .orb-deimos {
+            background: radial-gradient(circle at 35% 35%, #d1d5db, #9ca3af, #78716c, #4b5563, #292524);
+            box-shadow: inset -15px -15px 30px rgba(0,0,0,0.8), 0 0 30px rgba(156, 163, 175, 0.3);
+            /* Potato/Lumpy shape! */
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* Smooth, dust-filled craters */
+        .orb-deimos::before {
+            content: '';
+            position: absolute;
+            top: 20%; left: 20%;
+            width: 20%; height: 20%;
+            background: radial-gradient(circle, rgba(41, 37, 36, 0.5) 0%, rgba(120, 113, 108, 0.1) 100%);
+            border-radius: 50%;
+            filter: blur(2px); /* Blurred to show it's filled with dust */
+            box-shadow: inset 1px 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .orb-deimos::after {
+            content: '';
+            position: absolute;
+            bottom: 25%; right: 15%;
+            width: 15%; height: 15%;
+            background: radial-gradient(circle, rgba(41, 37, 36, 0.6) 0%, rgba(120, 113, 108, 0.1) 100%);
+            border-radius: 50%;
+            filter: blur(1.5px);
+            box-shadow: inset 1px 1px 2px rgba(0,0,0,0.4);
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(156, 163, 175, 0.15);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #050404; }
+        ::-webkit-scrollbar-thumb { background: #2b1717; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-deimos-base shadow-[0_0_40px_rgba(156,163,175,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-deimos-base text-space-900 font-bold py-3 rounded-xl hover:bg-deimos-light transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-deimos-light">☄️</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="mars.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-red">
+                <span class="text-xl">🔴</span>
+                <span class="font-display font-bold text-lg">Back to Mars</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-deimos-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-deimos-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Deimos Mission Progress</span>
+                    <span id="progressText" class="text-deimos-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-deimos-dark to-deimos-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Gravity Jump</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-deimos-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-deimos-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-star-red animate-ping"></span> The Outer Martian Moon
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Deimos</h1>
+                <p class="text-2xl text-deimos-base font-body italic mb-6">"The Lumpy Asteroid"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    The smaller and outermost of Mars' two moons. It is a tiny, lumpy, non-spherical rock smothered in deep dust. Its gravity is so weak that a fast runner jumping off a ramp would launch themselves into deep space!
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-deimos-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-deimos-light transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(156,163,175,0.5)]">
+                    Explore the Moon 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-deimos animate-tumble"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🌡️</div>
+                <div class="text-deimos-base font-mono text-xs uppercase mb-1">Temperature</div>
+                <div class="font-bold text-xl">~ -40°C</div>
+                <div class="text-xs text-space-100 mt-1">Freezing cold rock</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-deimos-base font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">12.4 km</div>
+                <div class="text-xs text-space-100 mt-1">Size of a small city</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🚀</div>
+                <div class="text-deimos-base font-mono text-xs uppercase mb-1">Escape Velocity</div>
+                <div class="font-bold text-xl">5.6 m/s</div>
+                <div class="text-xs text-star-cyan mt-1">You can jump off it!</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">⏱️</div>
+                <div class="text-deimos-base font-mono text-xs uppercase mb-1">Orbital Period</div>
+                <div class="font-bold text-xl">30.3 Hours</div>
+                <div class="text-xs text-space-100 mt-1">Tidally locked to Mars</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Deimos data.</p>
+                </div>
+                <div class="hidden md:block text-deimos-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Card 1 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'd1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔄</div>
+                            <h3 class="font-display text-xl text-deimos-light">Orbit & Fate</h3>
+                            <p class="text-space-100 text-xs mt-2">Where is it going?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-deimos-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-deimos-dark pb-1 w-full">Drifting Away</h3>
+                            <p class="text-sm text-left font-body">
+                                Deimos orbits 23,460 km above Mars. While its twin brother Phobos is doomed to crash into Mars, Deimos is actually slowly drifting <strong>further away</strong> from the planet, just like Earth's moon!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'd2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🥔</div>
+                            <h3 class="font-display text-xl text-deimos-light">Size & Shape</h3>
+                            <p class="text-space-100 text-xs mt-2">Why isn't it round?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-deimos-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-deimos-dark pb-1 w-full">The Space Potato</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>It is only about <strong>12.4 km</strong> across. You could walk around it in an afternoon.</li>
+                                <li>Because it is so incredibly small, it doesn't have enough gravity to pull itself into a sphere, leaving it lumpy!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'd3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🪶</div>
+                            <h3 class="font-display text-xl text-deimos-light">Extreme Gravity</h3>
+                            <p class="text-space-100 text-xs mt-2">Jumping into space</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-deimos-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-cyan mb-2 border-b border-deimos-dark pb-1 w-full">Escape Velocity</h3>
+                            <p class="text-sm text-left font-body mb-2">Gravity on Deimos is just 0.0003 times Earth's.</p>
+                            <p class="text-sm text-left font-body">
+                                The escape velocity is <strong>5.6 m/s (12.5 mph)</strong>. If you sprinted and jumped off a small ramp, you would leave the moon and float into deep space forever!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'd4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧹</div>
+                            <h3 class="font-display text-xl text-deimos-light">The Surface</h3>
+                            <p class="text-space-100 text-xs mt-2">Why is it so smooth?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-deimos-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-deimos-dark pb-1 w-full">Smothered in Dust</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>Unlike Phobos, Deimos looks very smooth.</li>
+                                <li>Because gravity is so weak, dust knocked up by meteor impacts (regolith) takes a long time to fall back, slowly hiding all craters over millions of years!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'd5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🪨</div>
+                            <h3 class="font-display text-2xl text-deimos-light">Composition & Origin</h3>
+                            <p class="text-space-100 mt-2">Where did it come from?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-deimos-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-3 border-b border-deimos-dark pb-2 w-full">The Great Debate</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-deimos-light font-mono font-bold block mb-1">Captured Asteroid?</span>
+                                    Made of carbon-rich rock (C-type), which led scientists to believe it was an asteroid from Jupiter's belt captured by Mars.
+                                </div>
+                                <div>
+                                    <span class="text-deimos-light font-mono font-bold block mb-1">Or Martian Chunk?</span>
+                                    New data suggests it isn't an asteroid! It may have formed from a giant impact that blasted chunks of Mars itself into orbit.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'd6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌑</div>
+                            <h3 class="font-display text-2xl text-deimos-light">Solar Eclipses</h3>
+                            <p class="text-space-100 mt-2">Can Deimos block the Sun?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-deimos-base flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-star-gold mb-2 border-b border-deimos-dark pb-1 w-full">A Tiny Black Dot</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Deimos is so incredibly small and far away from the surface that it cannot cover the Sun like our Moon does.</li>
+                                <li>When it passes in front of the Sun, it looks like a tiny, lumpy black dot crossing the sky. This is called a <strong>Transit</strong>.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'd7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-deimos-light">Space Missions</h3>
+                            <p class="text-space-100 mt-2">Who is visiting Deimos?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-deimos-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-deimos-dark pb-2 w-full">Exploring the Twins</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-star-gold">UAE Hope Probe (2023):</strong> Flew within 100km of Deimos, taking the highest resolution photos ever.</li>
+                                <li><strong class="text-star-cyan">Upcoming MMX Mission:</strong> Japan (JAXA) is planning to launch a mission to do a close flyby of Deimos to finally solve its origin!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'd8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🏛️</div>
+                            <h3 class="font-display text-2xl text-deimos-light">Mythology</h3>
+                            <p class="text-space-100 mt-2">What does the name mean?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-deimos-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-red mb-2 border-b border-deimos-dark pb-2 w-full">Dread and Terror</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Mars is named after the Roman god of war (Ares in Greek mythology).</li>
+                                <li>In the myths, Ares was accompanied into battle by his twin sons.</li>
+                                <li>The moons are named after them: <strong>Phobos</strong> (Fear) and <strong>Deimos</strong> (Dread and Terror).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-deimos-base border-2 shadow-[0_0_30px_rgba(156,163,175,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-deimos-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Escape Velocity Leaper</h2>
+                        <p class="text-space-100 mb-6">Deimos has a tiny escape velocity of 5.6 m/s. Help the astronaut jump over the dusty craters to collect rock samples! <span class="text-star-red font-bold">WARNING:</span> If you charge your jump into the RED ZONE, you will jump too hard and float off into deep space! Collect 5 samples to earn the <span class="text-deimos-light font-bold">Low-G Hopper Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-deimos-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> <kbd class="bg-space-700 px-2 rounded">Hold Spacebar</kbd> to charge jump, release to jump.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Touch and hold the game screen to charge, release to jump.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Start Running
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-deimos-base/30">
+                            <div class="text-5xl mb-2">👨‍🚀</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Airlock Ready</h3>
+                            <p class="text-deimos-light text-sm">Click Start to enter</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#050404] via-[#140c0c] to-[#292524] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-deimos-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-deimos-base/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your advanced knowledge to earn final XP and complete the Deimos module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="dynamicQuizArea">
+                    <!-- Questions will be injected here via JS -->
+                </div>
+
+                <!-- Quiz Results (Hidden by default) -->
+                <div class="hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold text-deimos-light">0/20</span></p>
+                    <button id="retryQuizBtn" onclick="initDynamicQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.planetCompleteAlerted) {
+            window.planetCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Deimos Module Complete!", "You have unlocked the 'Lumpy Rock' badge. You conquered the outer moon!", "🥔");
+            }, 500);
+        }
+    }
+
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Deimos files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    const deimosQuizData = [
+        {
+            q: "Who is credited with discovering Deimos in 1877?",
+            correct: "Asaph Hall",
+            incorrect: ["Galileo Galilei", "Percival Lowell", "Christian Huygens"],
+            exp: "Asaph Hall discovered Deimos on August 12, 1877, using the 26-inch refractor telescope at the US Naval Observatory."
+        },
+        {
+            q: "In Greek mythology, what does the name 'Deimos' translate to?",
+            correct: "Dread and Terror",
+            incorrect: ["Fear and Panic", "War and Destruction", "Night and Darkness"],
+            exp: "Deimos represents dread and terror, fitting for a companion of Ares (Mars), the god of war. Its twin, Phobos, represents fear and panic."
+        },
+        {
+            q: "Which theory regarding the origin of Deimos suggests it is NOT a captured asteroid?",
+            correct: "It formed from ejecta after a giant impact on Mars.",
+            incorrect: ["It was pulled from the Oort Cloud.", "It broke off from Earth's moon.", "It was formed from a comet trapped by gravity."],
+            exp: "Recent spectral data suggests Deimos might have formed from the debris ring created when a massive object struck Mars billions of years ago."
+        },
+        {
+            q: "What is the approximate escape velocity of Deimos?",
+            correct: "5.6 m/s",
+            incorrect: ["11.2 km/s", "1.2 km/s", "500 m/s"],
+            exp: "Because of its incredibly small mass, the escape velocity is only 5.6 meters per second (about 12.5 mph). A fast runner could jump off it into space!"
+        },
+        {
+            q: "Relative to Phobos, where is the orbit of Deimos located?",
+            correct: "Farther from Mars than Phobos.",
+            incorrect: ["Closer to Mars than Phobos.", "It shares the exact same orbit.", "It orbits the Sun independently."],
+            exp: "Deimos orbits at an average distance of 23,460 km from Mars, making it the outermost of the two Martian moons."
+        },
+        {
+            q: "What is the ultimate fate of Deimos due to tidal forces?",
+            correct: "It is slowly drifting further away from Mars.",
+            incorrect: ["It will eventually crash into Mars.", "It is on a collision course with Phobos.", "It will be torn apart into a planetary ring."],
+            exp: "Because Deimos orbits outside of Mars' synchronous orbital radius, tidal forces are accelerating it, causing it to slowly spiral outward into space."
+        },
+        {
+            q: "Why does Deimos always show the same face to Mars?",
+            correct: "It is tidally locked.",
+            incorrect: ["It does not rotate at all.", "Its magnetic field aligns with Mars.", "It is perfectly spherical."],
+            exp: "Like Earth's Moon, Deimos is tidally locked to Mars, meaning its orbital period and rotational period are exactly the same."
+        },
+        {
+            q: "Why does the surface of Deimos appear much smoother than Phobos?",
+            correct: "Weak gravity allows impact dust (regolith) to slowly settle and fill in craters.",
+            incorrect: ["It is composed of smooth ice.", "Lava flows filled in the surface recently.", "It has never been hit by meteorites."],
+            exp: "Meteor impacts throw up dust (regolith). Deimos' gravity is so weak that this dust takes a long time to fall back down, slowly smothering and hiding the craters."
+        },
+        {
+            q: "Based on its very low albedo and spectral type, Deimos is most similar to which class of asteroid?",
+            correct: "C-type or D-type (Carbonaceous)",
+            incorrect: ["S-type (Silicaceous)", "M-type (Metallic)", "V-type (Vestoid)"],
+            exp: "Deimos is a very dark, carbon-rich body, sharing characteristics with C-type and D-type asteroids found in the outer asteroid belt."
+        },
+        {
+            q: "How many named geological features (craters) currently exist on Deimos?",
+            correct: "Only two (Swift and Voltaire).",
+            incorrect: ["Dozens", "None", "Over a hundred"],
+            exp: "Only two craters have been officially named on Deimos: Swift and Voltaire, named after authors who predicted Mars had moons before they were discovered."
+        },
+        {
+            q: "Why is Deimos shaped like a lumpy, irregular potato rather than a sphere?",
+            correct: "It lacks sufficient mass to achieve hydrostatic equilibrium.",
+            incorrect: ["A giant asteroid cracked it in half.", "Its rapid spin stretches it out.", "Mars' gravity pulled it into that shape."],
+            exp: "Planets and large moons become spherical because their own gravity pulls them into that shape (hydrostatic equilibrium). Deimos is too small and light for this to happen."
+        },
+        {
+            q: "When Deimos passes exactly between Mars and the Sun, what visual event occurs on Mars?",
+            correct: "An annular transit (a small black dot crossing the Sun).",
+            incorrect: ["A total solar eclipse.", "A total lunar eclipse.", "The sky turns completely black."],
+            exp: "Because Deimos is so tiny and orbits far from Mars, its angular diameter is much smaller than the Sun's, so it only appears as a small dot transiting the star."
+        },
+        {
+            q: "If you were standing on the surface of Mars, what would Deimos look like to the naked eye?",
+            correct: "A bright, star-like point of light.",
+            incorrect: ["A large crescent moon.", "A giant red disk.", "It would be completely invisible."],
+            exp: "Deimos has an angular diameter of only about 2.5 arcminutes when viewed from Mars, making it look more like a very bright star than a distinct moon."
+        },
+        {
+            q: "Which moon is larger in terms of physical dimensions?",
+            correct: "Phobos is larger than Deimos.",
+            incorrect: ["Deimos is larger than Phobos.", "They are exactly the same size.", "Deimos is the size of Earth's moon."],
+            exp: "Deimos has a mean radius of about 6.2 km, making it significantly smaller than Phobos, which has a mean radius of about 11.26 km."
+        },
+        {
+            q: "What was the specific instrument used to first observe Deimos?",
+            correct: "The US Naval Observatory 26-inch refractor.",
+            incorrect: ["The Hubble Space Telescope.", "Galileo's homemade spyglass.", "The Mount Wilson 100-inch telescope."],
+            exp: "In 1877, the USNO's 26-inch 'Great Equatorial' refracting telescope was the largest of its kind and allowed Asaph Hall to spot the tiny moons."
+        },
+        {
+            q: "What does the low density of Deimos (approx. 1.47 g/cm³) suggest about its internal structure?",
+            correct: "It is highly porous and likely a 'rubble pile'.",
+            incorrect: ["It has a solid iron core.", "It is made entirely of liquid water.", "It is a solid chunk of diamond."],
+            exp: "Its density is far lower than solid rock, suggesting it is a 'rubble pile'—a collection of loose rocks and dust held together by weak gravity, with lots of empty space inside."
+        },
+        {
+            q: "Approximately how long does it take Deimos to complete one orbit around Mars?",
+            correct: "About 30.3 hours.",
+            incorrect: ["24 hours exactly.", "7 hours and 39 minutes.", "365 days."],
+            exp: "Deimos takes roughly 30.3 hours to orbit Mars. Because this is longer than Mars' rotational period (24.6 hours), Deimos rises in the East and sets in the West, but very slowly."
+        },
+        {
+            q: "Why is the orbital fate of Deimos moving outward while Phobos is moving inward?",
+            correct: "Deimos is outside Mars' synchronous orbital altitude; Phobos is inside it.",
+            incorrect: ["Deimos is repelled by solar wind.", "Phobos has reverse gravity.", "Mars is actively pushing Deimos away."],
+            exp: "Moons orbiting inside the synchronous altitude (where orbital period matches planet's rotation) are pulled inward by tidal forces. Moons outside, like Deimos and Earth's Moon, are pushed outward."
+        },
+        {
+            q: "Which space agency is leading the upcoming Martian Moons eXploration (MMX) mission?",
+            correct: "JAXA (Japan Aerospace Exploration Agency)",
+            incorrect: ["NASA", "ESA", "Roscosmos"],
+            exp: "JAXA's MMX mission aims to conduct close flybys of Deimos, land on Phobos, and return samples to Earth to solve the mystery of their origins."
+        },
+        {
+            q: "Because Deimos orbits relatively close to Mars' equatorial plane, from which Martian latitudes is it invisible?",
+            correct: "From latitudes greater than about 82.7 degrees (near the poles).",
+            incorrect: ["From the equator.", "From the southern hemisphere only.", "It is visible from everywhere on Mars."],
+            exp: "Because of its close proximity to Mars and equatorial orbit, the curvature of the planet blocks Deimos from view if you are standing near the Martian north or south poles."
+        }
+    ];
+
+    let currentQuizIndex = 0;
+    let quizScore = 0;
+    let shuffledQuestions = [];
+
+    // Fisher-Yates Shuffle
+    function shuffleArray(array) {
+        let curId = array.length;
+        while (0 !== curId) {
+            let randId = Math.floor(Math.random() * curId);
+            curId -= 1;
+            let tmp = array[curId];
+            array[curId] = array[randId];
+            array[randId] = tmp;
+        }
+        return array;
+    }
+
+    function initDynamicQuiz() {
+        // Reset state
+        quizScore = 0;
+        currentQuizIndex = 0;
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        document.getElementById('dynamicQuizArea').classList.remove('hidden');
+        
+        // Deep copy and shuffle questions
+        shuffledQuestions = shuffleArray(JSON.parse(JSON.stringify(deimosQuizData)));
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const quizArea = document.getElementById('dynamicQuizArea');
+        quizArea.innerHTML = ''; // Clear previous
+
+        if (currentQuizIndex >= shuffledQuestions.length) {
+            showQuizResults();
+            return;
+        }
+
+        const qData = shuffledQuestions[currentQuizIndex];
+        
+        // Prepare answer buttons array
+        let answers = [
+            { text: qData.correct, isCorrect: true },
+            { text: qData.incorrect[0], isCorrect: false },
+            { text: qData.incorrect[1], isCorrect: false },
+            { text: qData.incorrect[2], isCorrect: false }
+        ];
+        
+        // Shuffle answers
+        answers = shuffleArray(answers);
+
+        // Build HTML
+        let html = `
+            <div class="mb-4 flex justify-between items-center">
+                <span class="text-space-100 font-mono text-sm">Question ${currentQuizIndex + 1} of ${shuffledQuestions.length}</span>
+                <span class="text-star-gold font-mono text-sm">Score: ${quizScore}</span>
+            </div>
+            <h3 class="text-xl font-bold mb-6 text-deimos-light">${qData.q}</h3>
+            <div class="space-y-3" id="answerButtonsContainer">
+        `;
+
+        answers.forEach((ans, idx) => {
+            html += `<button class="quiz-btn w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-deimos-base transition-all" 
+                onclick="handleAnswerClick(${ans.isCorrect}, this)">${ans.text}</button>`;
+        });
+
+        html += `</div>
+            <div id="explanationBox" class="hidden mt-6 p-4 rounded-xl bg-space-700/50 border-l-4 border-star-cyan">
+                <h4 class="font-bold text-white mb-1 flex items-center gap-2"><span id="expIcon"></span> Explanation</h4>
+                <p class="text-space-100 text-sm leading-relaxed">${qData.exp}</p>
+            </div>
+            <button id="nextQBtn" onclick="nextQuestion()" class="hidden w-full mt-6 bg-star-cyan text-space-900 font-bold py-3 rounded-full hover:bg-white transition-colors transform hover:scale-[1.02]">
+                Next Question ➡
+            </button>
+        `;
+
+        quizArea.innerHTML = html;
+    }
+
+    window.handleAnswerClick = function(isCorrect, btnEl) {
+        const container = document.getElementById('answerButtonsContainer');
+        const btns = container.querySelectorAll('.quiz-btn');
+        
+        // Disable all buttons and show colors
+        btns.forEach(b => {
+            b.disabled = true;
+            b.classList.remove('hover:bg-space-700', 'hover:border-deimos-base');
+            
+            // Reconstruct logic to find correct button
+            if (b.getAttribute('onclick').includes('true')) {
+                b.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+                b.classList.remove('bg-space-800', 'opacity-50');
+            } else {
+                b.classList.add('opacity-40');
+            }
+        });
+
+        // Highlight chosen incorrectly
+        if (!isCorrect) {
+            btnEl.classList.remove('opacity-40', 'bg-space-800');
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+            document.getElementById('expIcon').innerText = "❌";
+            document.getElementById('expIcon').classList.add('text-star-red');
+        } else {
+            quizScore++;
+            addXP(20);
+            document.getElementById('expIcon').innerText = "✅";
+            document.getElementById('expIcon').classList.add('text-star-green');
+        }
+
+        // Show Explanation & Next Button
+        document.getElementById('explanationBox').classList.remove('hidden');
+        document.getElementById('nextQBtn').classList.remove('hidden');
+    };
+
+    window.nextQuestion = function() {
+        currentQuizIndex++;
+        renderQuestion();
+    };
+
+    function showQuizResults() {
+        document.getElementById('dynamicQuizArea').classList.add('hidden');
+        const resDiv = document.getElementById('q-result');
+        resDiv.classList.remove('hidden');
+        
+        const scoreSpan = document.getElementById('scoreText');
+        scoreSpan.innerText = `${quizScore}/${shuffledQuestions.length}`;
+        
+        if(quizScore >= 18) { // 90% for standard SciOly mastery
+            scoreSpan.classList.add('text-star-green');
+            scoreSpan.classList.remove('text-star-red');
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(200);
+                showMsgBox("Scientific Mastermind", `Incredible score (${quizScore}/20) on the Deimos Quiz! +200 XP`, "🧠");
+            }
+        } else {
+            scoreSpan.classList.add('text-star-red');
+            scoreSpan.classList.remove('text-star-green');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    // Initialize the new dynamic quiz on load
+    document.addEventListener("DOMContentLoaded", () => {
+        initDynamicQuiz();
+    });
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let gameLoopReq;
+    let samplesCollected = 0;
+
+    const player = {
+        x: 50, y: 0, width: 24, height: 36, vy: 0,
+        gravity: 0.15, isJumping: false, charging: false,
+        chargeLevel: 0, maxCharge: 12, escaped: false
+    };
+
+    let groundY = 0;
+    let groundSpeed = 4;
+    let obstacles = []; 
+    let samples = []; 
+
+    function startCharge(e) {
+        if(!gameActive) return;
+        if(e.type === 'keydown' && e.code !== 'Space') return;
+        if(e.type === 'keydown') e.preventDefault();
+        if(!player.isJumping && !player.escaped) player.charging = true;
+    }
+
+    function releaseCharge(e) {
+        if(!gameActive) return;
+        if(e.type === 'keyup' && e.code !== 'Space') return;
+        if(e.type === 'keyup') e.preventDefault();
+
+        if(player.charging) {
+            player.charging = false;
+            player.isJumping = true;
+            player.vy = -player.chargeLevel;
+            if(player.chargeLevel > player.maxCharge * 0.85) player.escaped = true; 
+            player.chargeLevel = 0; 
+        }
+    }
+
+    window.addEventListener('keydown', startCharge);
+    window.addEventListener('keyup', releaseCharge);
+    canvas.addEventListener('mousedown', startCharge);
+    canvas.addEventListener('mouseup', releaseCharge);
+    canvas.addEventListener('touchstart', startCharge, {passive: false});
+    canvas.addEventListener('touchend', releaseCharge);
+    canvas.addEventListener('mouseleave', releaseCharge);
+
+    function initGame() {
+        resizeCanvas();
+        groundY = canvas.height - 80;
+        player.y = groundY - player.height;
+        player.vy = 0; player.isJumping = false; player.charging = false;
+        player.chargeLevel = 0; player.escaped = false;
+        obstacles = []; samples = []; samplesCollected = 0; frames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Running...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnTerrain() {
+        if (frames % 120 === 0) {
+            let width = Math.random() * 60 + 60; 
+            obstacles.push({ x: canvas.width, y: groundY, width: width, height: 80 });
+            samples.push({ x: canvas.width + width/2 - 10, y: groundY - 60 - Math.random() * 40, width: 20, height: 20, collected: false });
+        }
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        ctx.fillStyle = '#f3f4f6'; 
+        ctx.fillRect(-8, -5, 16, 18);
+        ctx.beginPath(); ctx.arc(0, -12, 10, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#f59e0b'; ctx.fillRect(-4, -16, 10, 8);
+        ctx.fillStyle = '#9ca3af'; ctx.fillRect(-12, -5, 4, 15);
+        ctx.fillStyle = '#f3f4f6';
+        let legOffset = (!player.isJumping && !player.escaped) ? Math.sin(frames * 0.2) * 5 : 0;
+        ctx.fillRect(-6, 13, 6, 10 + legOffset);
+        ctx.fillRect(2, 13, 6, 10 - legOffset);
+        ctx.restore();
+    }
+
+    function drawTerrain() {
+        ctx.fillStyle = '#4b5563'; 
+        ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+        for(let i=0; i<obstacles.length; i++) {
+            let o = obstacles[i];
+            ctx.fillStyle = '#140c0c'; 
+            ctx.beginPath(); ctx.ellipse(o.x + o.width/2, o.y, o.width/2, 20, 0, 0, Math.PI); ctx.fill();
+            ctx.fillStyle = '#292524';
+            ctx.beginPath(); ctx.ellipse(o.x + o.width/2, o.y + 5, o.width/2.2, 15, 0, 0, Math.PI); ctx.fill();
+        }
+        for(let i=0; i<samples.length; i++) {
+            let s = samples[i];
+            if(!s.collected) {
+                ctx.fillStyle = '#6ef0ff'; ctx.shadowBlur = 10; ctx.shadowColor = '#6ef0ff';
+                ctx.beginPath(); ctx.moveTo(s.x + s.width/2, s.y); ctx.lineTo(s.x + s.width, s.y + s.height/2);
+                ctx.lineTo(s.x + s.width/2, s.y + s.height); ctx.lineTo(s.x, s.y + s.height/2); ctx.closePath(); ctx.fill();
+                ctx.shadowBlur = 0; 
+            }
+        }
+    }
+
+    function drawHUD() {
+        ctx.fillStyle = "white"; ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Samples: ${samplesCollected}/5`, 10, 25);
+        
+        let barWidth = 150, barHeight = 15, barX = canvas.width/2 - barWidth/2, barY = 20;
+        ctx.fillStyle = '#374151'; ctx.fillRect(barX, barY, barWidth, barHeight);
+        
+        let fillPct = player.chargeLevel / player.maxCharge;
+        if(fillPct > 1) fillPct = 1;
+        
+        ctx.fillStyle = (fillPct < 0.85) ? '#4ef0a8' : '#ff6b6b';
+        ctx.fillRect(barX, barY, barWidth * fillPct, barHeight);
+        ctx.fillStyle = 'white'; ctx.fillRect(barX + (barWidth * 0.85), barY - 5, 2, barHeight + 10);
+        
+        ctx.font = "10px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("JUMP POWER", canvas.width/2, barY + 28);
+        ctx.textAlign = "left"; 
+        
+        if (player.escaped) {
+            ctx.fillStyle = '#ff6b6b'; ctx.font = "bold 20px 'Fredoka', sans-serif";
+            ctx.fillText("ESCAPE VELOCITY REACHED!", canvas.width/2 - 120, canvas.height/2 - 50);
+        }
+    }
+
+    function updatePhysics() {
+        if(player.charging) {
+            player.chargeLevel += 0.2; 
+            if(player.chargeLevel > player.maxCharge) player.chargeLevel = player.maxCharge;
+        }
+        
+        if(player.isJumping || player.escaped) {
+            player.y += player.vy;
+            if(!player.escaped) player.vy += player.gravity;
+        }
+        
+        if(!player.escaped && player.y + player.height >= groundY) {
+            let inCrater = false;
+            for(let o of obstacles) {
+                let playerCenter = player.x + player.width/2;
+                if(playerCenter > o.x && playerCenter < o.x + o.width) { inCrater = true; break; }
+            }
+            if(inCrater) {
+                player.y += player.vy;
+                if(player.y > canvas.height) gameOver("Fell into a Crater!");
+            } else {
+                player.y = groundY - player.height;
+                player.vy = 0; player.isJumping = false;
+            }
+        }
+        
+        if(!player.escaped) { 
+            for(let i = obstacles.length - 1; i >= 0; i--) {
+                obstacles[i].x -= groundSpeed;
+                if(obstacles[i].x + obstacles[i].width < 0) obstacles.splice(i, 1);
+            }
+            for(let i = samples.length - 1; i >= 0; i--) {
+                samples[i].x -= groundSpeed;
+                if(!samples[i].collected) {
+                    let hitX = player.x < samples[i].x + samples[i].width && player.x + player.width > samples[i].x;
+                    let hitY = player.y < samples[i].y + samples[i].height && player.y + player.height > samples[i].y;
+                    if(hitX && hitY) { samples[i].collected = true; samplesCollected++; addXP(5); }
+                }
+                if(samples[i].x + samples[i].width < 0) samples.splice(i, 1);
+            }
+        }
+
+        if(player.escaped && player.y + player.height < -50) gameOver("Exceeded Escape Velocity. Floated into Deep Space!");
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+        ctx.fillStyle = '#140c0c'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        for(let i=0; i<10; i++) {
+            let px = (i * 73 + frames * 0.5) % canvas.width;
+            let py = (i * 41) % (canvas.height/2);
+            ctx.fillRect(px, py, 2, 2);
+        }
+
+        spawnTerrain(); updatePhysics();
+        if(!gameActive) return; 
+        
+        drawTerrain(); drawPlayer(); drawHUD();
+
+        if (samplesCollected >= 5 && !achievements.playedGame) {
+            achievements.playedGame = true; addXP(100);
+            showMsgBox("Low-G Hopper Badge Unlocked!", "You collected the samples without floating away! +100 XP", "👨‍🚀");
+            updateProgress();
+            gameOver("Mission Accomplished!"); 
+            return;
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Mission"; startBtn.disabled = false; startBtn.classList.remove('opacity-50');
+        let win = samplesCollected >= 5;
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">${win ? '👨‍🚀' : '💥'}</div>
+            <h3 class="font-display text-2xl ${win ? 'text-star-green' : 'text-star-red'} mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-4">Samples Collected: ${samplesCollected}/5</p>
+            ${!win ? `<p class="text-deimos-light text-sm mb-4">Don't charge into the red zone!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        if(!win && samplesCollected > 0) addXP(5);
+    }
+
+    startBtn.addEventListener('click', initGame);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ganymede — Interactive Solar System Explorer</title>
+    
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#03050a', 800: '#0b1021', 700: '#151d38', 500: '#283663', 100: '#f1f5f9' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        ganymede: { base: '#94a3b8', dark: '#475569', light: '#e2e8f0', sulci: '#cbd5e1', crater: '#334155' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 80s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(148, 163, 184, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(148, 163, 184, 0.5)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #03050a;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #6ef0ff 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #94a3b8 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #475569 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(11, 16, 33, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(3, 5, 10, 0.8), rgba(21, 29, 56, 0.9));
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(148, 163, 184, 0.6);
+            box-shadow: 0 0 20px rgba(148, 163, 184, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Ganymede Graphic - Mixed dark cratered and light grooved terrain */
+        .orb-ganymede {
+            background: radial-gradient(circle at 35% 35%, #e2e8f0, #94a3b8, #475569, #1e293b);
+            box-shadow: inset -20px -20px 40px rgba(0,0,0,0.8), 0 0 30px rgba(148, 163, 184, 0.3);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* Dark ancient terrain (Galileo Regio representation) */
+        .orb-ganymede::before {
+            content: '';
+            position: absolute;
+            top: 15%; left: 10%;
+            width: 45%; height: 40%;
+            background: radial-gradient(ellipse at center, rgba(51, 65, 85, 0.8) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(2px);
+            transform: rotate(-15deg);
+        }
+
+        /* Sulci (Light Grooved Terrain) */
+        .orb-ganymede::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(226, 232, 240, 0.2) 10px, rgba(226, 232, 240, 0.2) 12px),
+                repeating-linear-gradient(-30deg, transparent, transparent 20px, rgba(203, 213, 225, 0.15) 20px, rgba(203, 213, 225, 0.15) 23px);
+            border-radius: 50%;
+            mix-blend-mode: overlay;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(148, 163, 184, 0.15);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #03050a; }
+        ::-webkit-scrollbar-thumb { background: #283663; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6ef0ff; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<!-- Custom Message Box -->
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-ganymede-base shadow-[0_0_40px_rgba(148,163,184,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-ganymede-light text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-ganymede-light">🌑</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="jupiter.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-gold">
+                <span class="text-xl">🪐</span>
+                <span class="font-display font-bold text-lg">Back to Jupiter</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-ganymede-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <!-- Progress/Gamification Bar -->
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-ganymede-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Ganymede Mission Progress</span>
+                    <span id="progressText" class="text-ganymede-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-ganymede-dark to-ganymede-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Pilot JUICE</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-ganymede-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-ganymede-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-star-gold animate-ping"></span> Galilean Moon
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Ganymede</h1>
+                <p class="text-2xl text-star-cyan font-body italic mb-6">"The Magnetic Giant"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    The largest moon in the entire solar system—so massive that it is bigger than the planet Mercury! It is the only moon known to generate its own magnetic field, and hides a vast saltwater ocean beneath its icy, grooved crust.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-ganymede-light text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(148,163,184,0.5)]">
+                    Explore the Giant 👇
+                </button>
+            </div>
+            
+            <!-- Animated 3D-ish Moon -->
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-ganymede animate-spin-slow"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Dashboard -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-ganymede-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">5,268 km</div>
+                <div class="text-xs text-star-red mt-1 font-bold">Larger than Mercury</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🌊</div>
+                <div class="text-ganymede-light font-mono text-xs uppercase mb-1">Subsurface Ocean</div>
+                <div class="font-bold text-xl">Yes</div>
+                <div class="text-xs text-space-100 mt-1">More water than Earth</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">🧲</div>
+                <div class="text-ganymede-light font-mono text-xs uppercase mb-1">Magnetic Field</div>
+                <div class="font-bold text-xl">Intrinsic</div>
+                <div class="text-xs text-star-cyan mt-1">Only moon with one</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">⏱️</div>
+                <div class="text-ganymede-light font-mono text-xs uppercase mb-1">Orbital Period</div>
+                <div class="font-bold text-xl">7.15 Days</div>
+                <div class="text-xs text-space-100 mt-1">Tidally locked</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Ganymede data.</p>
+                </div>
+                <div class="hidden md:block text-ganymede-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Absolute Size -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'g1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">👑</div>
+                            <h3 class="font-display text-xl text-ganymede-light">King of Moons</h3>
+                            <p class="text-space-100 text-xs mt-2">How big is it really?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ganymede-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-ganymede-dark pb-1 w-full">Planet-Sized</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>It is the largest and most massive moon in the solar system.</li>
+                                <li>With a radius of 2,634 km, it is actually <strong>8% larger than the planet Mercury!</strong></li>
+                                <li>(However, Mercury is made of dense iron, so Mercury is still heavier).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: The Magnetic Shield -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'g2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧲</div>
+                            <h3 class="font-display text-xl text-ganymede-light">Magnetic Shield</h3>
+                            <p class="text-space-100 text-xs mt-2">A unique phenomenon</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ganymede-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-cyan mb-2 border-b border-ganymede-dark pb-1 w-full">The Only One</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Ganymede is the <strong>only moon</strong> in the solar system known to have an intrinsic magnetic field.</li>
+                                <li>It is created by convection within its liquid iron core, working just like Earth's magnetic dynamo!</li>
+                                <li>This field creates beautiful glowing auroras at its poles.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Internal Structure -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'g3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧅</div>
+                            <h3 class="font-display text-xl text-ganymede-light">Internal Structure</h3>
+                            <p class="text-space-100 text-xs mt-2">Layers like an onion</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ganymede-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-ganymede-dark pb-1 w-full">Fully Differentiated</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>Unlike some moons which are just mixed slush, Ganymede is "fully differentiated" (separated into distinct layers).</li>
+                                <li>1. A metallic iron core.</li>
+                                <li>2. A rocky silicate mantle.</li>
+                                <li>3. A thick outer shell of mostly water ice and liquid oceans.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Surface Terrain -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'g4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌗</div>
+                            <h3 class="font-display text-xl text-ganymede-light">Surface Terrain</h3>
+                            <p class="text-space-100 text-xs mt-2">Dark and Light</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ganymede-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-ganymede-dark pb-1 w-full">Two Worlds in One</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong>Dark Regions:</strong> Very old, highly cratered areas making up about a third of the moon (e.g., Galileo Regio).</li>
+                                <li><strong>Light Regions:</strong> Younger terrain covered in extensive grooves and ridges called <strong>Sulci</strong>, likely formed by tectonic faulting.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: The Ocean -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'g5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌊</div>
+                            <h3 class="font-display text-2xl text-ganymede-light">The Subsurface Ocean</h3>
+                            <p class="text-space-100 mt-2">The "Club Sandwich" Model</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ganymede-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-cyan mb-3 border-b border-ganymede-dark pb-2 w-full">Massive Hidden Waters</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    Scientists believe Ganymede hosts a massive saltwater ocean buried ~150 km beneath its icy crust. It contains more liquid water than all of Earth's oceans combined!
+                                </div>
+                                <div>
+                                    <span class="text-ganymede-light font-mono font-bold block mb-1">Club Sandwich:</span>
+                                    Extreme pressure might cause the ocean to exist in stacked layers separated by different phases of exotic, dense ice (Ice III, Ice V).
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Orbital Resonance -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'g6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🎼</div>
+                            <h3 class="font-display text-2xl text-ganymede-light">Orbital Dance</h3>
+                            <p class="text-space-100 mt-2">The Laplace Resonance</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ganymede-base flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-star-gold mb-2 border-b border-ganymede-dark pb-1 w-full">The 1:2:4 Harmony</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Ganymede is locked in a perfect gravitational dance with its sister moons Europa and Io.</li>
+                                <li>For every <strong>1 orbit</strong> Ganymede makes around Jupiter:</li>
+                                <li>Europa makes exactly <strong>2 orbits</strong>.</li>
+                                <li>Io makes exactly <strong>4 orbits</strong>.</li>
+                                <li>This "Laplace Resonance" constantly flexes the moons, generating the heat needed to melt their internal oceans!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Missions -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'g7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-ganymede-light">Space Missions</h3>
+                            <p class="text-space-100 mt-2">Past and Future</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ganymede-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-ganymede-dark pb-2 w-full">Focus of ESA's JUICE</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-space-100">Past:</strong> Voyager 1 & 2 mapped it during flybys. The Galileo probe orbited Jupiter and made the shocking discovery of Ganymede's magnetic field.</li>
+                                <li><strong class="text-star-cyan">The Future:</strong> The European Space Agency (ESA) launched the <strong>JUICE</strong> (JUpiter Icy Moons Explorer) mission. In 2034, it will become the first spacecraft to ever orbit a moon other than our own!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Atmosphere -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'g8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">💨</div>
+                            <h3 class="font-display text-2xl text-ganymede-light">Atmosphere</h3>
+                            <p class="text-space-100 mt-2">Wait, it has air?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ganymede-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-ganymede-dark pb-2 w-full">A Whisper of Oxygen</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Yes! Ganymede has an extremely thin atmosphere (an exosphere).</li>
+                                <li>It is composed primarily of Oxygen ($O$, $O_2$, and maybe $O_3$ ozone).</li>
+                                <li>However, this oxygen isn't from plant life! It's created when Jupiter's intense radiation hits Ganymede's icy surface, splitting the water ($H_2O$) into hydrogen and oxygen.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mini-Game Section -->
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-ganymede-base border-2 shadow-[0_0_30px_rgba(148,163,184,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-ganymede-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">JUICE Magnetic Mapper</h2>
+                        <p class="text-space-100 mb-6">Pilot the ESA JUICE spacecraft in orbit around Ganymede! Collect 5 glowing <span class="text-star-cyan font-bold">Magnetic Data Nodes</span> while dodging Jupiter's massive <span class="text-purple-400 font-bold">Radiation Pulses</span> to earn the <span class="text-ganymede-light font-bold">Magnetic Surveyor Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-ganymede-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Use <kbd class="bg-space-700 px-2 rounded">↑</kbd><kbd class="bg-space-700 px-2 rounded">↓</kbd><kbd class="bg-space-700 px-2 rounded">←</kbd><kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys to fly.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Touch and drag anywhere on the canvas to steer the probe.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Launch JUICE
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-ganymede-base/30">
+                            <div class="text-5xl mb-2">🛰️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Orbital Insertion Ready</h3>
+                            <p class="text-ganymede-light text-sm">Click Launch to map the field</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-br from-[#0b1021] via-[#151d38] to-[#03050a] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-ganymede-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Section -->
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-ganymede-base/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Ganymede module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <!-- Quiz rendered dynamically by JavaScript -->
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Ganymede Module Complete!", "You have unlocked the 'Magnetic Giant' badge. Excellent exploration!", "🧲");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Ganymede files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* ── QUIZ ──────────────────────────────────────────────────────── */
+    /* ── QUIZ DATA ────────────────────────────────────────────────────── */
+    const QUIZ_BANK = [
+        {"q": "Ganymede holds an impressive title — what is it?", "choices": ["The largest moon in the entire solar system, bigger than the planet Mercury", "The most volcanically active moon in the solar system", "The only moon with confirmed liquid water on its surface", "The fastest-orbiting moon of any planet"], "correct": 0, "explanation": "Ganymede has a diameter of ~5,268 km, making it the largest moon in the solar system — even larger than the planet Mercury (4,879 km diameter), though Mercury is more massive because it's denser. Ganymede is larger than Mercury but smaller than Earth. If Ganymede orbited the Sun instead of Jupiter, it would likely be classified as a planet."},
+        {"q": "Ganymede is the only moon in the solar system known to have its own intrinsic magnetic field. Why is this scientifically significant?", "choices": ["It implies Ganymede has a liquid iron or iron-sulfide core actively generating a magnetic dynamo, making Ganymede more planet-like than any other moon", "It means Ganymede captures solar wind and stores energy in its crust", "It was generated by Jupiter's magnetic field permanently magnetizing Ganymede's surface", "It helps protect Ganymede from meteorite impacts"], "correct": 0, "explanation": "Ganymede's magnetic field is generated by a liquid iron core through the same dynamo process that creates Earth's magnetic field. This is extraordinary for a moon — no other moon in the solar system is known to have an internally generated magnetic field today. The Galileo spacecraft discovered this in 1996. Ganymede's magnetosphere creates a mini-magnetosphere embedded within Jupiter's much larger one, producing distinctive aurora ribbons."},
+        {"q": "Ganymede has two distinct types of terrain on its surface. What are they, and which is older?", "choices": ["Dark, heavily cratered ancient terrain (older) and bright, grooved terrain called 'sulci' (younger, formed by tectonic stretching)", "Bright icy regions (older) and dark rocky regions (younger, from more recent volcanic eruptions)", "Polar frost caps (older) and equatorial basalt plains (younger)", "High mountainous terrain (older) and low-lying smooth valleys (younger)"], "correct": 0, "explanation": "Ganymede's surface is divided into two terrain types: (1) Dark terrain — ancient, heavily cratered regions similar to the lunar highlands, representing the original crust from ~4 billion years ago; (2) Bright terrain — younger, grooved regions called sulci, created 1–2 billion years ago when the crust stretched, cracked, and fresh water ice welled up and refroze. The grooved terrain resembles tectonic activity similar to Earth's rift zones."},
+        {"q": "Based on data from the Galileo spacecraft and Hubble Space Telescope, Ganymede is believed to have a saltwater ocean beneath its surface. Where is this ocean located in Ganymede's interior?", "choices": ["Sandwiched between layers of ice deep in the interior (~800 km below the surface), not directly under the icy crust", "Directly beneath a thin icy crust, like Europa", "At the surface, in permanently shadowed polar craters", "Deep in the core, surrounding the iron center"], "correct": 0, "explanation": "Unlike Europa's ocean which may be relatively close to the surface, Ganymede's ocean is buried deep — sandwiched between layers of ice at enormous pressure (~800 km below the surface). Hubble observed Ganymede's auroral activity oscillating due to tidal interactions with Jupiter's magnetic field, and the pattern was best explained by a saltwater ocean dampening the auroral swing. The 2014 study estimated the ocean could contain more water than all of Earth's surface water."},
+        {"q": "What is the Laplace resonance, and which three Galilean moons participate in it?", "choices": ["A 4:2:1 orbital resonance where Io completes 4 orbits, Europa completes 2, and Ganymede completes 1 in the same time period — generating tidal heating in all three", "A magnetic resonance between all four Galilean moons and Jupiter", "A resonance where Ganymede, Callisto, and Io have synchronized rotation periods", "A 1:2:3 resonance between Europa, Ganymede, and Callisto"], "correct": 0, "explanation": "The Laplace resonance (named after mathematician Pierre-Simon Laplace) means: for every one orbit Ganymede completes (~7.15 days), Europa makes exactly two orbits (~3.55 days), and Io makes exactly four orbits (~1.77 days). The gravitational tugs at conjunction points keep all three orbits slightly elliptical, maintaining tidal heating in all three — though Io, being closest to Jupiter, experiences by far the most heating."},
+        {"q": "What is ESA's JUICE mission, and why is it focused on Ganymede?", "choices": ["Jupiter Icy Moons Explorer, launched 2023 — will orbit Ganymede to study its ocean, magnetic field, and potential habitability; first mission to orbit a moon other than our own", "Joint International Underwater Cryo Explorer — a mission to drill through Ganymede's ice", "Jupiter Ice-crust Underground Cryosphere Explorer — a NASA mission to land on Ganymede", "JUICE stands for Jupiter United International Coordination of Exploration — a communication satellite"], "correct": 0, "explanation": "ESA's JUICE (Jupiter Icy Moons Explorer), launched April 2023, will arrive at Jupiter in 2031. After flybys of Europa and Callisto, JUICE will enter orbit around Ganymede in 2034 — making it the first spacecraft to orbit a moon other than Earth's Moon. JUICE will study Ganymede's magnetic field, subsurface ocean, atmospheric composition, and surface geology in unprecedented detail to assess its potential habitability."},
+        {"q": "Ganymede has a very thin atmosphere. What is it composed of, and how does it form?", "choices": ["Atomic oxygen and ozone (O₃), produced when Jupiter's radiation breaks apart water ice molecules on the surface", "Sulfur dioxide and nitrogen, outgassed from Ganymede's interior", "Water vapor evaporated from icy surface regions", "Carbon dioxide and methane from possible organic deposits"], "correct": 0, "explanation": "Ganymede has an extremely tenuous exosphere composed primarily of atomic oxygen (O) with some ozone (O₃). These form through a process called radiolysis: high-energy particles from Jupiter's radiation belt split water molecules (H₂O) on Ganymede's icy surface into hydrogen (which escapes) and oxygen (which remains). The Hubble Space Telescope first detected Ganymede's oxygen atmosphere in 1996."},
+        {"q": "Ganymede is fully differentiated — it has distinct layers of different materials. From surface to center, what are these layers?", "choices": ["Outer water ice crust → possible liquid water ocean layer → ice mantle → silicate (rocky) mantle → liquid iron/iron-sulfide outer core → solid iron inner core", "Rocky surface → water ocean → iron core", "Ice crust → silicate mantle → carbon core", "Outer sulfur layer → ice layer → rocky mantle → metallic hydrogen core"], "correct": 0, "explanation": "Ganymede is the most complex moon in terms of interior layering: it has an outer water ice shell, a possible buried saltwater ocean, deep ice layers (water ice under extreme pressure takes different crystal forms), a silicate (rocky) mantle, a liquid outer iron core, and likely a solid inner iron core. This fully differentiated structure — each layer sorted by density — makes Ganymede more structurally similar to the terrestrial planets than any other moon."},
+        {"q": "What are the large, dark areas on Ganymede's surface called, and what do they represent geologically?", "choices": ["Regiones (like Galileo Regio) — ancient, heavily cratered dark terrain representing Ganymede's original crust, ~4 billion years old", "Maria — ancient lava plains like those on Earth's Moon", "Paterae — volcanic calderas connected to Ganymede's hot interior", "Fossae — deep rifts carved by ancient glaciers"], "correct": 0, "explanation": "The large dark regions on Ganymede are called regiones (singular: regio), with Galileo Regio being the largest. These represent the ancient, original surface crust of Ganymede, heavily cratered over ~4 billion years. The dark color is thought to come from silicate dust and rocky material mixed with the ice, or from gradual darkening of ice by space weathering. These ancient terrains were not resurfaced like the brighter grooved sulci regions."},
+        {"q": "Ganymede's grooved terrain (sulci) was created by a process resembling plate tectonics on Earth. What mechanism is thought to have created the grooves?", "choices": ["Extensional tectonics: the icy crust was pulled apart by internal convection, forming parallel ridges and troughs as fresh ice welled up in the cracks", "Compressional tectonics: the crust folded and wrinkled as Ganymede cooled and shrank", "Volcanic eruptions forcing lava through linear fissures", "Meteorite bombardment creating linear impact chains"], "correct": 0, "explanation": "Ganymede's grooved terrain formed when the icy crust stretched (extensional tectonics) — similar to Earth's continental rift zones like the East African Rift. As internal heat (possibly from early tidal heating) convected, it pulled the crust apart; fresher, brighter water ice welled up from below and refroze in parallel ridges and troughs. This happened 1–2 billion years ago and appears to have ceased, making Ganymede tectonically inactive today."},
+        {"q": "How does Ganymede's subsurface ocean compare to Earth's oceans in terms of volume?", "choices": ["Ganymede's ocean may contain more liquid water than all of Earth's oceans combined, due to its enormous depth (hundreds of km)", "Earth's oceans contain about 50 times more water than Ganymede's thin ocean layer", "Ganymede has roughly the same amount of water as Earth's oceans", "Ganymede's ocean has never been confirmed and may not exist"], "correct": 0, "explanation": "If Ganymede's subsurface ocean exists as models suggest, its enormous volume (hundreds of kilometers deep across a large fraction of Ganymede) could contain more liquid water than all of Earth's oceans. Earth's oceans are ~1.335 billion km³, but they are spread thin (~3.7 km average depth) over Earth's surface. Ganymede's ocean could be ~800 km deep in places. This vast amount of water makes Ganymede one of the solar system's most water-rich bodies."},
+        {"q": "Ganymede's magnetic field creates auroras around its poles. What makes Ganymede's auroras special compared to auroras on other moons?", "choices": ["Ganymede's intrinsic magnetic field creates permanent, rocking aurora ovals — similar to Earth's auroras — visible to the Hubble Telescope; other moons lack such internal magnetic auroras", "Ganymede's auroras are powered by volcanic eruptions unlike Earth's solar-wind-powered auroras", "Ganymede's auroras are visible to the naked eye from Jupiter's surface", "Ganymede's auroras are the brightest in the solar system, outshining Jupiter's own"], "correct": 0, "explanation": "Ganymede's own magnetic field creates aurora ribbons around its polar regions — a unique phenomenon for a moon. These auroras were crucial to the discovery of Ganymede's subsurface ocean: Hubble observed the auroras oscillating (rocking) by about 2° as Jupiter's magnetic field changed, but they rocked only half as much as expected. A salty, electrically conductive ocean beneath the surface was the best explanation — acting as a brake dampening the response to Jupiter's changing field."},
+        {"q": "What is the approximate orbital period of Ganymede around Jupiter, and what is the significance of this period relative to Io and Europa?", "choices": ["~7.15 Earth days; this is exactly double Europa's period (~3.55 days) and quadruple Io's period (~1.77 days) — the Laplace orbital resonance", "~14 Earth days; twice the period of Europa", "~3.55 Earth days; the same as Europa (they orbit together)", "~30 Earth days; completing one orbit per Earth month"], "correct": 0, "explanation": "Ganymede orbits Jupiter in ~7.15 Earth days (~171.6 hours) at a distance of ~1.07 million km. This is the longest orbital period of the four Galilean moons. The 1:2:4 ratio with Europa and Io (1 Ganymede orbit : 2 Europa orbits : 4 Io orbits) is the Laplace resonance, which maintains the orbital eccentricities of all three moons, keeping them slightly non-circular and sustaining tidal heating."},
+        {"q": "Ganymede's density is 1.94 g/cm³, much lower than Earth's density (5.5 g/cm³). What does this low density tell us about Ganymede's composition?", "choices": ["Ganymede is roughly 50% rock and 50% water ice by mass, making water ice a major structural component unlike the rocky terrestrial planets", "Ganymede is mostly hollow, explaining its low density", "Ganymede is composed primarily of light gases like hydrogen and helium", "Ganymede has a very large iron core that offsets less dense surface material"], "correct": 0, "explanation": "Ganymede's density of 1.94 g/cm³ falls between pure water ice (0.92 g/cm³) and typical silicate rock (~3.3 g/cm³), indicating it's roughly half rock, half water ice by mass. This makes water a fundamental structural component — not just a surface layer. By contrast, Earth's Moon (3.34 g/cm³) and Io (3.53 g/cm³) are primarily rocky. The outer Galilean moons formed beyond Jupiter's frost line, where water ice was abundant."},
+        {"q": "The Galileo spacecraft discovered Ganymede's magnetic field in 1996. What type of magnetic field does Ganymede have, and how strong is it?", "choices": ["An intrinsic dipole magnetic field generated by a liquid iron core — about 1% as strong as Earth's, but 6 times stronger than Mercury's magnetic field at the surface", "A remanent (fossil) magnetic field from ancient iron minerals, no longer actively generated", "Ganymede's field is induced by Jupiter's magnetic field, not internally generated", "An extremely strong field equivalent to Earth's, making it the strongest of any moon"], "correct": 0, "explanation": "Ganymede has an intrinsic dipole magnetic field — actively generated by a liquid iron core in a dynamo process — with a surface field strength of about 719 nT (nanotesla). Earth's surface field is ~50,000 nT, making Ganymede's ~70 times weaker than Earth's. However, compared to its small size and the fact that it's a moon, this is remarkable. Mercury's surface field is ~300 nT, making Ganymede's (relative to its radius) stronger in effect."},
+        {"q": "Ganymede's surface shows 'palimpsests' — round, bright, barely-visible patches. What are palimpsests and what caused them?", "choices": ["Ancient, very large impact craters that have been mostly obliterated: the icy crust flowed and relaxed ('isostatic relaxation') after impact, erasing the crater topography but leaving a bright circular patch", "Regions where bright frost recently deposited over old dark terrain", "Ancient volcanic eruption sites that have cooled", "Footprints of ancient glaciers"], "correct": 0, "explanation": "Palimpsests (named for ancient manuscripts scraped clean and reused) are large, shallow, ghost-like circular features on Ganymede's surface. They represent ancient impact craters from 4+ billion years ago that formed when Ganymede's ice was warmer and softer. The impact created a crater, but the warm, ductile ice slowly flowed and relaxed over millions of years, eliminating topographic relief. Only a faint bright patch remains from the excavated fresher ice."},
+        {"q": "What was the major discovery made by the Hubble Space Telescope regarding Ganymede's subsurface ocean in 2015?", "choices": ["Hubble observed Ganymede's auroras rocking less than expected as Jupiter's magnetic field changed — best explained by an electrically conductive saltwater ocean dampening the magnetic response", "Hubble directly photographed water plumes erupting from Ganymede's surface", "Hubble detected water vapor in Ganymede's atmosphere at high concentrations", "Hubble measured gravitational waves from Ganymede confirming a large liquid interior"], "correct": 0, "explanation": "In 2015, a Hubble Space Telescope team led by Joachim Saur observed that Ganymede's auroral bands rocked back and forth by about 2° as Jupiter's magnetic field changed, but only half as much as models predicted for a purely rocky interior. A conductive saltwater ocean beneath the surface (estimated 800 km deep, up to 800 km thick) would create a countervailing magnetic field that dampens the rocking. This was the strongest indirect evidence for Ganymede's ocean."},
+        {"q": "Ganymede is the third of Jupiter's Galilean moons in order from Jupiter. It is much larger than the inner moons Io and Europa. Why did the outer Galilean moons (Ganymede and Callisto) form larger and more ice-rich than the inner ones (Io and Europa)?", "choices": ["They formed beyond Jupiter's frost line (snow line), where water ice could condense and be incorporated into building blocks, providing more material and lighter ice rather than dense rock/metal", "Jupiter's gravity was weaker at greater distances, allowing more material to accumulate", "The outer moons captured passing comets and incorporated their ice", "Solar radiation drove water ice to the outer moons during Jupiter's formation"], "correct": 0, "explanation": "During Jupiter's formation, the frost line (snow line) — the distance where water vapor condenses into ice — sat between the orbits of Europa and Ganymede. Inside the frost line (Io, Europa), only rocky and metallic materials could condense; outside (Ganymede, Callisto), water ice could also solidify, providing additional building material. This explains why Ganymede and Callisto are larger, less dense, and ice-rich compared to rocky Io and slightly-icy Europa."},
+        {"q": "What is the difference between Ganymede's and Callisto's interior structures, even though they are nearly the same size and composition?", "choices": ["Ganymede is fully differentiated (iron core, rocky mantle, ice shell separated by density) while Callisto is largely undifferentiated (rock and ice mixed together) — suggesting Ganymede experienced stronger heating early in its history", "Ganymede is mostly rocky while Callisto is mostly icy", "Callisto has a larger magnetic field than Ganymede", "Ganymede has an atmosphere while Callisto has none"], "correct": 0, "explanation": "This is one of the great mysteries in planetary science: Ganymede and Callisto are almost the same size (~5,268 km vs ~4,821 km) and have similar bulk compositions (~50% rock, ~50% ice), yet Ganymede is fully differentiated (layers separated by density: iron core, rock mantle, ice shell) while Callisto appears to be an undifferentiated rock-ice mixture throughout. The leading explanation: Ganymede's early orbital resonance with Io caused brief but intense tidal heating that differentiated it, while Callisto — outside the resonance — never heated enough to separate."},
+        {"q": "Ganymede has been observed to have polar ice caps. What causes Ganymede's polar regions to appear brighter and more ice-rich than its equatorial regions?", "choices": ["Ganymede's own magnetic field deflects charged particles toward the poles, causing sputtering that converts darker material to brighter ice; simultaneously, polar regions are colder, allowing more ice to accumulate", "Ganymede's poles receive more sunlight due to its axial tilt, melting dark material and revealing ice underneath", "Tidal heating concentrates at the equator, evaporating equatorial ice and leaving the poles ice-rich", "Jupiter's shadow permanently covers Ganymede's poles, allowing ice to condense there"], "correct": 0, "explanation": "Ganymede's magnetic field channels energetic charged particles toward the polar regions (like Earth's Aurora zones), where they bombard the surface. This sputtering (ion-surface interaction) and the lower polar temperatures both contribute to polar ice concentration. The particles convert some dark surface material and the cold temperatures prevent sublimation of water ice, keeping the poles brighter and icier than the warmer, more radiation-processed equatorial regions."}
+    ];
+
+    /* ── QUIZ STATE ──────────────────────────────────────────────────── */
+    let quizState = { questions: [], current: 0, score: 0, answered: false };
+
+    function shuffleArr(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    function initQuiz() {
+        quizState.questions = shuffleArr(QUIZ_BANK).map(q => {
+            // Shuffle choices while tracking the correct answer
+            const idxArr = shuffleArr([0, 1, 2, 3]);
+            const shuffledChoices = idxArr.map(i => q.choices[i]);
+            const newCorrect = idxArr.indexOf(q.correct);
+            return { ...q, choices: shuffledChoices, correct: newCorrect };
+        });
+        quizState.current = 0;
+        quizState.score   = 0;
+        quizState.answered = false;
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const container = document.getElementById('quizContainer');
+        const qData = quizState.questions[quizState.current];
+        const total = quizState.questions.length;
+        const pct   = Math.round((quizState.current / total) * 100);
+
+        container.innerHTML = `
+            <div class="mb-6">
+                <div class="flex justify-between text-sm font-mono mb-1">
+                    <span class="text-ganymede-light">Question ${quizState.current + 1} of ${total}</span>
+                    <span class="text-space-100">Score: ${quizState.score}/${quizState.current}</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-2 border border-space-500 overflow-hidden">
+                    <div class="bg-ganymede-light h-2 rounded-full transition-all duration-500" style="width:${pct}%"></div>
+                </div>
+            </div>
+            <h3 class="text-xl font-bold mb-5 text-ganymede-light leading-snug">${qData.q}</h3>
+            <div class="space-y-3" id="choiceArea">
+                ${qData.choices.map((c, i) => `
+                    <button id="choice-${i}"
+                        class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-ganymede-base transition-all"
+                        onclick="answerQ(${i}, ${qData.correct}, ${quizState.current})">${c}</button>
+                `).join('')}
+            </div>
+            <div id="explanationBox" class="hidden mt-5 p-4 rounded-xl border"></div>
+            <div class="mt-5 flex justify-end">
+                <button id="nextBtn"
+                    class="hidden bg-ganymede-base text-space-900 px-7 py-2.5 rounded-full font-bold text-sm hover:opacity-90 transition-all"
+                    onclick="nextQuestion()">
+                    ${quizState.current < total - 1 ? 'Next Question →' : 'See Results →'}
+                </button>
+            </div>
+        `;
+        quizState.answered = false;
+    }
+
+    function answerQ(selected, correct, qIdx) {
+        if (quizState.answered || qIdx !== quizState.current) return;
+        quizState.answered = true;
+
+        const buttons = document.querySelectorAll('#choiceArea button');
+        buttons.forEach((b, i) => {
+            b.disabled = true;
+            b.classList.remove('hover:bg-space-700', 'hover:border-ganymede-base');
+            if (i === correct) {
+                b.classList.remove('bg-space-800');
+                b.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            } else if (i === selected && selected !== correct) {
+                b.classList.remove('bg-space-800');
+                b.classList.add('bg-star-red', 'text-white', 'border-star-red');
+            } else {
+                b.classList.add('opacity-40');
+            }
+        });
+
+        const isCorrect = selected === correct;
+        if (isCorrect) { quizState.score++; addXP(20); }
+
+        const qData = quizState.questions[qIdx];
+        const expBox = document.getElementById('explanationBox');
+        expBox.classList.remove('hidden');
+        expBox.className = `mt-5 p-4 rounded-xl border ${isCorrect
+            ? 'border-star-green bg-star-green/10'
+            : 'border-star-red bg-star-red/10'}`;
+        expBox.innerHTML = `
+            <div class="flex items-start gap-3">
+                <span class="text-2xl flex-shrink-0">${isCorrect ? '✅' : '❌'}</span>
+                <div>
+                    <p class="font-bold mb-1 ${isCorrect ? 'text-star-green' : 'text-star-red'}">
+                        ${isCorrect ? 'Correct!' : 'Incorrect — the right answer is highlighted in green.'}
+                    </p>
+                    <p class="text-sm text-space-100 leading-relaxed">${qData.explanation}</p>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('nextBtn').classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        quizState.current++;
+        if (quizState.current >= quizState.questions.length) {
+            showQuizResults();
+        } else {
+            renderQuestion();
+        }
+    }
+
+    function showQuizResults() {
+        const container = document.getElementById('quizContainer');
+        const total = quizState.questions.length;
+        const pct = Math.round((quizState.score / total) * 100);
+        const passed = quizState.score >= 14;
+        const perfect = quizState.score >= 18;
+        let grade, emoji;
+        if (pct >= 90)      { grade = 'State Champion Level! 🏆'; emoji = '🥇'; }
+        else if (pct >= 80) { grade = 'Competition Ready! 🎖️'; emoji = '🏅'; }
+        else if (pct >= 70) { grade = 'Almost There — Keep Studying! 📚'; emoji = '🔬'; }
+        else                { grade = 'Keep Exploring! 🚀'; emoji = '🔭'; }
+
+        container.innerHTML = `
+            <div class="text-center py-8">
+                <div class="text-7xl mb-4">${emoji}</div>
+                <h3 class="text-3xl font-display text-star-gold mb-3">Quiz Complete!</h3>
+                <p class="text-5xl font-bold mb-2 ${passed ? 'text-star-green' : 'text-star-red'}">${quizState.score}/${total}</p>
+                <p class="text-xl text-ganymede-light mb-2">${pct}%</p>
+                <p class="text-lg text-white mb-8">${grade}</p>
+                <button onclick="initQuiz()"
+                    class="bg-space-700 border border-space-500 text-white px-8 py-3 rounded-full font-bold hover:bg-space-500 transition">
+                    🔄 Retake Quiz (New Order)
+                </button>
+            </div>
+        `;
+
+        if (passed && !achievements.passedQuiz) {
+            achievements.passedQuiz = true;
+            addXP(100);
+            showMsgBox("Planetary Scientist badge unlocked!", `${quizState.score}/${total} correct! +100 XP`, "🪐");
+            updateProgress();
+        }
+        if (perfect && !window.perfectQuizAlerted) {
+            window.perfectQuizAlerted = true;
+            addXP(50);
+            showMsgBox("Science Olympiad Champion!", `Near-perfect score on Ganymede! +50 Bonus XP`, "🏆");
+        }
+    }
+
+    /* ── QUIZ START ON LOAD ──────────────────────────────────────── */
+    window.addEventListener('DOMContentLoaded', () => { initQuiz(); });
+
+    /* MINI GAME: JUICE Magnetic Mapper */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let nodesCollected = 0;
+
+    // Player (JUICE Probe) - Omni-directional movement
+    const player = {
+        x: 0, 
+        y: 0, 
+        width: 30,
+        height: 30,
+        speed: 6,
+        color: '#f8fafc' 
+    };
+
+    let obstacles = []; // Jupiter Radiation waves
+    let collectibles = []; // Magnetic nodes
+    let bgParticles = [];
+
+    // Inputs
+    let keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false };
+    let isTouching = false;
+    let touchTarget = {x: 0, y: 0};
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) keys[e.code] = false; 
+    });
+    
+    // Touch/Mouse Support (Steer towards pointer)
+    function handlePointerMove(e) {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        touchTarget.x = (clientX - rect.left) * (canvas.width / rect.width);
+        touchTarget.y = (clientY - rect.top) * (canvas.height / rect.height);
+        isTouching = true;
+        if(e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+    }
+    function handlePointerUp() { isTouching = false; }
+
+    canvas.addEventListener('touchstart', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchend', handlePointerUp);
+    
+    canvas.addEventListener('mousedown', handlePointerMove);
+    canvas.addEventListener('mousemove', (e) => { if(isTouching) handlePointerMove(e); });
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerUp);
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2;
+        player.y = canvas.height * 0.8;
+        obstacles = [];
+        collectibles = [];
+        nodesCollected = 0;
+        isTouching = false;
+
+        // Background stars/ice
+        bgParticles = Array.from({length: 30}).map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2,
+            speed: Math.random() * 1 + 0.5
+        }));
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Mapping...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        
+        // Spawn Collectible (Magnetic Node) - 25% chance
+        if (Math.random() > 0.75 && collectibles.length < 2) {
+            collectibles.push({
+                x: Math.random() * (canvas.width - 20) + 10,
+                y: -20, 
+                radius: 12,
+                speedY: (Math.random() * 2 + 2) * speedMult,
+                pulse: 0
+            });
+            return;
+        }
+
+        // Spawn Obstacle (Radiation Wave)
+        let w = Math.random() * 100 + 50; 
+        let h = 20; 
+        let xPos = Math.random() * (canvas.width - w);
+        
+        obstacles.push({
+            x: xPos,
+            y: -h, 
+            width: w,
+            height: h, 
+            speedY: (Math.random() * 4 + 4) * speedMult,
+        });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        
+        // JUICE Cross Solar Panels
+        ctx.fillStyle = '#1e3a8a'; // Dark blue panels
+        ctx.fillRect(-20, -4, 40, 8); // Horizontal
+        ctx.fillRect(-4, -20, 8, 40); // Vertical
+        
+        // Panel grid lines
+        ctx.strokeStyle = '#60a5fa';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-20, -4, 40, 8);
+        ctx.strokeRect(-4, -20, 8, 40);
+
+        // Main Body
+        ctx.fillStyle = player.color;
+        ctx.beginPath();
+        ctx.arc(0, 0, 8, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Magnetometer boom
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(15, -15);
+        ctx.stroke();
+        // Sensor tip
+        ctx.fillStyle = (frames % 20 < 10) ? '#6ef0ff' : '#0284c7';
+        ctx.beginPath();
+        ctx.arc(15, -15, 3, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    function drawEntities() {
+        // Collectibles (Magnetic Nodes)
+        for (let i = 0; i < collectibles.length; i++) {
+            let c = collectibles[i];
+            c.pulse += 0.1;
+            let glow = 10 + Math.sin(c.pulse) * 5;
+            
+            ctx.fillStyle = '#6ef0ff';
+            ctx.shadowBlur = glow;
+            ctx.shadowColor = '#6ef0ff';
+            
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, c.radius, 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, c.radius/2, 0, Math.PI*2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        // Obstacles (Radiation Waves)
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            
+            // Purple/Red translucent waves
+            let grad = ctx.createLinearGradient(o.x, o.y, o.x, o.y + o.height);
+            grad.addColorStop(0, 'rgba(168, 85, 247, 0)');
+            grad.addColorStop(0.5, 'rgba(217, 70, 239, 0.8)');
+            grad.addColorStop(1, 'rgba(168, 85, 247, 0)');
+            
+            ctx.fillStyle = grad;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#d946ef'; // Fuchsia
+            
+            ctx.beginPath();
+            ctx.roundRect(o.x, o.y, o.width, o.height, 10);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    function drawBackground() {
+        bgParticles.forEach(p => {
+            ctx.fillStyle = 'rgba(203, 213, 225, 0.5)';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+            ctx.fill();
+            p.y += p.speed;
+            if(p.y > canvas.height) {
+                p.y = 0;
+                p.x = Math.random() * canvas.width;
+            }
+        });
+    }
+
+    function checkCollisionRect(r1, r2) {
+        return !(r2.x > r1.x + r1.width || 
+                 r2.x + r2.width < r1.x || 
+                 r2.y > r1.y + r1.height ||
+                 r2.y + r2.height < r1.y);
+    }
+    
+    function checkCollisionCircle(rect, circle) {
+        // Find closest point on rect to circle center
+        let cx = Math.max(rect.x, Math.min(circle.x, rect.x + rect.width));
+        let cy = Math.max(rect.y, Math.min(circle.y, rect.y + rect.height));
+        
+        let dx = circle.x - cx;
+        let dy = circle.y - cy;
+        return (dx*dx + dy*dy) < (circle.radius * circle.radius);
+    }
+
+    function updatePhysics() {
+        // Player Movement (Keyboard)
+        if (keys.ArrowLeft) player.x -= player.speed;
+        if (keys.ArrowRight) player.x += player.speed;
+        if (keys.ArrowUp) player.y -= player.speed;
+        if (keys.ArrowDown) player.y += player.speed;
+
+        // Player Movement (Pointer/Touch) - move towards target smoothly
+        if (isTouching) {
+            let dx = touchTarget.x - player.x;
+            let dy = touchTarget.y - player.y;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist > player.speed) {
+                player.x += (dx / dist) * player.speed;
+                player.y += (dy / dist) * player.speed;
+            }
+        }
+
+        // Clamp to screen
+        // Player is drawn from center (0,0) with panels out to 20px
+        const padding = 20; 
+        if(player.x < padding) player.x = padding;
+        if(player.x > canvas.width - padding) player.x = canvas.width - padding;
+        if(player.y < padding) player.y = padding;
+        if(player.y > canvas.height - padding) player.y = canvas.height - padding;
+
+        // Player Hitbox (approximate square around core)
+        let pRect = { x: player.x - 15, y: player.y - 15, width: 30, height: 30 };
+
+        // Spawning
+        let spawnRate = Math.max(15, 45 - Math.floor(scoreFrames/100));
+        if (frames % spawnRate === 0) spawnEntity();
+
+        // Update Collectibles
+        for (let i = collectibles.length - 1; i >= 0; i--) {
+            collectibles[i].y += collectibles[i].speedY;
+            
+            if (checkCollisionCircle(pRect, collectibles[i])) {
+                nodesCollected++;
+                addXP(10);
+                
+                // Flash screen cyan
+                ctx.fillStyle = 'rgba(110, 240, 255, 0.3)';
+                ctx.fillRect(0,0, canvas.width, canvas.height);
+                
+                collectibles.splice(i, 1);
+                continue;
+            }
+            if (collectibles[i].y > canvas.height + 20) collectibles.splice(i, 1);
+        }
+
+        // Update Obstacles
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].y += obstacles[i].speedY;
+            
+            if (checkCollisionRect(pRect, obstacles[i])) {
+                gameOver("Systems Fried by Radiation!");
+                return;
+            }
+            if (obstacles[i].y > canvas.height) obstacles.splice(i, 1);
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        // Clear canvas with dark space background
+        ctx.fillStyle = '#0b1021';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        drawBackground();
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawEntities();
+        drawPlayer();
+
+        // Draw HUD
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Orbit Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillStyle = "#6ef0ff"; 
+        ctx.fillText(`💠 Data: ${nodesCollected}/5`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check (Needs time AND data)
+        if (secondsAlive >= 20 && nodesCollected >= 5 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Magnetic Surveyor Badge Unlocked!", "You mapped the field and dodged the radiation! +100 XP", "🧲");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Mission";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && nodesCollected >= 5);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You survived for ${secondsAlive}s.</p>
+            <p class="text-star-cyan mb-4 text-sm font-bold">💠 Collected ${nodesCollected} Data Nodes</p>
+            ${!achievements.playedGame ? `<p class="text-ganymede-light text-sm mb-4 text-center px-2">Survive 20s AND collect 5 nodes for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

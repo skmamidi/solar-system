@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Titania — Interactive Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#020617', 800: '#0f172a', 700: '#1e293b', 500: '#334155', 100: '#f8fafc' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        titania: { base: '#94a3b8', dark: '#475569', light: '#e2e8f0', fault: '#1e293b', ice: '#cbd5e1' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 80s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(148, 163, 184, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(226, 232, 240, 0.5)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #020617;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #67e8f9 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #94a3b8 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #e2e8f0 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(2, 6, 23, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(226, 232, 240, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(248, 250, 252, 0.6);
+            box-shadow: 0 0 20px rgba(248, 250, 252, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Titania Graphic - Icy gray with massive fault lines (Messina Chasma) */
+        .orb-titania {
+            background: radial-gradient(circle at 35% 35%, #e2e8f0, #cbd5e1, #94a3b8, #475569, #1e293b);
+            box-shadow: inset -20px -20px 40px rgba(0,0,0,0.8), 0 0 30px rgba(148, 163, 184, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* Messina Chasma (Giant Fault Line) */
+        .orb-titania::after {
+            content: '';
+            position: absolute;
+            top: 20%; left: -10%;
+            width: 120%; height: 10%;
+            background: linear-gradient(to bottom, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.6));
+            transform: rotate(25deg);
+            box-shadow: 0 -2px 5px rgba(255,255,255,0.4), 0 2px 5px rgba(0,0,0,0.6);
+            border-top: 1px solid rgba(248, 250, 252, 0.5);
+            border-bottom: 2px solid #020617;
+            border-radius: 50%;
+        }
+
+        /* Additional smaller fault and craters */
+        .orb-titania::before {
+            content: '';
+            position: absolute;
+            bottom: 30%; right: 10%;
+            width: 60%; height: 5%;
+            background: rgba(15, 23, 42, 0.7);
+            transform: rotate(-15deg);
+            box-shadow: 0 -1px 3px rgba(255,255,255,0.3), 0 1px 3px rgba(0,0,0,0.5);
+            border-top: 1px solid rgba(248, 250, 252, 0.4);
+            border-radius: 50%;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(148, 163, 184, 0.15);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-titania-base shadow-[0_0_40px_rgba(148,163,184,0.4)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-titania-light text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-titania-light">🔘</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="uranus.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-cyan">
+                <span class="text-xl">🪩</span>
+                <span class="font-display font-bold text-lg">Back to Uranus</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-titania-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-titania-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Titania Mission Progress</span>
+                    <span id="progressText" class="text-titania-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-titania-dark to-titania-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Chasma Glider</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-titania-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-titania-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-titania-light animate-ping"></span> Moon of Uranus
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Titania</h1>
+                <p class="text-2xl text-titania-light font-body italic mb-6">"The Largest Uranian"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    The largest of Uranus's moons and the eighth largest moon in the solar system. It is a dirty iceball covered in craters and scarred by an enormous, continuous canyon system that dwarfs the Grand Canyon.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-titania-light text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(226,232,240,0.5)]">
+                    Explore the Canyons 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-titania animate-spin-slow animate-pulse-glow"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-cyan text-space-900 text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">👑</div>
+                <div class="text-titania-light font-mono text-xs uppercase mb-1">Rank</div>
+                <div class="font-bold text-xl text-star-cyan">Largest</div>
+                <div class="text-[10px] text-space-100 mt-1">Uranus's biggest moon</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-titania-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">1,577 km</div>
+                <div class="text-[10px] text-space-100 mt-1">8th largest in solar system</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🥶</div>
+                <div class="text-titania-light font-mono text-xs uppercase mb-1">Temperature</div>
+                <div class="font-bold text-xl">-203°C</div>
+                <div class="text-[10px] text-space-100 mt-1">Freezing cold</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">⚖️</div>
+                <div class="text-titania-light font-mono text-xs uppercase mb-1">Gravity</div>
+                <div class="font-bold text-xl">0.038g</div>
+                <div class="text-[10px] text-space-100 mt-1">~3.8% of Earth's pull</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Titania data.</p>
+                </div>
+                <div class="hidden md:block text-titania-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Discovery & Naming -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 't1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">👑</div>
+                            <h3 class="font-display text-xl text-titania-light">Discovery & Naming</h3>
+                            <p class="text-space-100 text-xs mt-2">Queen of the Fairies</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-titania-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-titania-dark pb-1 w-full">William Herschel</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>Discovered in <strong>1787</strong> by William Herschel, on the very same day he discovered Oberon!</li>
+                                <li>It is named after Titania, the mythical <strong>Queen of the Fairies</strong> in William Shakespeare's play <em>A Midsummer Night's Dream</em>.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Size & Scale -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 't2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📏</div>
+                            <h3 class="font-display text-xl text-titania-light">Size & Scale</h3>
+                            <p class="text-space-100 text-xs mt-2">How big is it?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-titania-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-cyan mb-2 border-b border-titania-dark pb-1 w-full">The Largest Uranian</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Titania is the largest of Uranus's 28 known moons.</li>
+                                <li>At 1,577 km in diameter, it ranks as the <strong>8th largest moon</strong> in the entire solar system.</li>
+                                <li>It is slightly smaller than Earth's moon (about 45% the size).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Composition -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 't3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧊</div>
+                            <h3 class="font-display text-xl text-titania-light">Composition</h3>
+                            <p class="text-space-100 text-xs mt-2">What is inside?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-titania-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-titania-light mb-2 border-b border-titania-dark pb-1 w-full">Differentiated Iceball</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>It consists of roughly equal parts <strong>water ice</strong> and dense <strong>rock</strong>.</li>
+                                <li>Scientists believe it is fully differentiated, meaning the heavy rock sank to form a solid rocky core, surrounded by an icy mantle and crust.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Messina Chasma -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 't4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚡</div>
+                            <h3 class="font-display text-xl text-titania-light">Messina Chasma</h3>
+                            <p class="text-space-100 text-xs mt-2">The giant scar</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-titania-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-titania-dark pb-1 w-full">A Massive Canyon</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Titania is scarred by an enormous system of fault lines and canyons.</li>
+                                <li>The largest is <strong>Messina Chasma</strong>. It is nearly <strong>1,500 kilometers long</strong>—long enough to stretch from New York to Florida!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Surface Features -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 't5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🪨</div>
+                            <h3 class="font-display text-2xl text-titania-light">Surface Evolution</h3>
+                            <p class="text-space-100 mt-2">Cracking the crust</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-titania-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-cyan mb-3 border-b border-titania-dark pb-2 w-full">Expansion Tectonics</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-titania-light font-mono font-bold block mb-1">Craters:</span>
+                                    Like Oberon, the surface is heavily cratered. However, there are very few massive impact basins, suggesting the surface was resurfaced early in its history.
+                                </div>
+                                <div>
+                                    <span class="text-titania-light font-mono font-bold block mb-1">The Cracks:</span>
+                                    The massive canyons likely formed when Titania's interior cooled and expanded, literally bursting the outer icy crust open!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Extreme Seasons -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 't6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">❄️</div>
+                            <h3 class="font-display text-2xl text-titania-light">Extreme Seasons</h3>
+                            <p class="text-space-100 mt-2">A long, dark winter</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-titania-dark flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-star-gold mb-2 border-b border-titania-dark pb-1 w-full">Sideways Orbit</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Because Uranus is tilted 98 degrees on its side, its moons orbit in its equatorial plane.</li>
+                                <li>This means Titania's poles experience extreme seasons. The north pole will see <strong>42 Earth years of continuous sunlight</strong>, followed by 42 Earth years of complete, freezing darkness!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Voyager 2 Mission -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 't7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-titania-light">Voyager 2 Flyby</h3>
+                            <p class="text-space-100 mt-2">The only close look</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-titania-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-titania-dark pb-2 w-full">A Half-Seen World</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>NASA's <strong>Voyager 2</strong> is the only spacecraft to have ever visited Titania, passing by in January 1986 at a distance of 365,200 km.</li>
+                                <li>Because of the 42-year seasons, the northern hemisphere was pitched in total darkness. Voyager 2 could only map about <strong>40% of the moon's surface</strong>!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Atmosphere -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 't8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">💨</div>
+                            <h3 class="font-display text-2xl text-titania-light">Atmosphere</h3>
+                            <p class="text-space-100 mt-2">Does it have air?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-titania-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-titania-light mb-2 border-b border-titania-dark pb-2 w-full">A Seasonal Whisper</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>While mostly a vacuum, scientists suspect Titania might have an incredibly thin, transient atmosphere of <strong>Carbon Dioxide (CO₂)</strong>.</li>
+                                <li>During its 42-year summer, the sun might heat the ice just enough to sublimate some CO₂ into a faint gas, which immediately freezes back to the ground when winter returns!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-titania-dark border-2 shadow-[0_0_30px_rgba(148,163,184,0.4)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-titania-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Chasma Glider</h2>
+                        <p class="text-space-100 mb-6">Pilot a drone deep into the massive <span class="text-white font-bold">Messina Chasma</span> fault line! Use your thrusters to glide left and right, dodging the jagged ice walls of the canyon. Collect 5 <span class="text-star-cyan font-bold">Geologic Data Nodes</span> to earn the <span class="text-titania-light font-bold">Chasma Pilot Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-titania-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Enter Canyon
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-titania-dark/30">
+                            <div class="text-5xl mb-2">🚁</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Targeting Chasma</h3>
+                            <p class="text-titania-light text-sm">Click Enter to glide</p>
+                        </div>
+                        <!-- Vertical scrolling tunnel game canvas -->
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#020617] via-[#0f172a] to-[#1e293b] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-titania-dark"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-titania-dark/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Titania module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="dynamicQuizArea" class="space-y-4">
+                    <!-- Dynamic quiz content will be injected here -->
+                </div>
+
+                <!-- Quiz Results -->
+                <div class="quiz-q hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold">0/20</span></p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Titania Module Complete!", "You have unlocked the 'Chasma Pilot' badge. Excellent exploration!", "👑");
+            }, 500);
+        }
+    }
+
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Titania files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    const moonColor = 'titania-light';
+    const quizData = [
+        { q: "Titania is the largest moon of Uranus. What is its rank in size among all moons in the solar system?", options: [{text: "3rd", isCorrect: false}, {text: "5th", isCorrect: false}, {text: "8th", isCorrect: true}, {text: "12th", isCorrect: false}], explanation: "With a diameter of 1,577 km, Titania ranks as the 8th largest moon in the entire solar system." },
+        { q: "Titania's surface is covered with a massive network of canyons. What is the name of the longest one?", options: [{text: "Kachina Chasmata", isCorrect: false}, {text: "Messina Chasma", isCorrect: true}, {text: "Ithaca Chasma", isCorrect: false}, {text: "Verona Rupes", isCorrect: false}], explanation: "Messina Chasma is the longest canyon system on Titania, stretching nearly 1,500 kilometers across the moon's surface." },
+        { q: "Messina Chasma is an enormous fault valley. What geologic process likely created it?", options: [{text: "Expansion of the moon's interior as it froze", isCorrect: true}, {text: "A glancing blow from a massive asteroid", isCorrect: false}, {text: "Powerful rivers of liquid methane", isCorrect: false}, {text: "Extreme tidal heating from Neptune", isCorrect: false}], explanation: "Scientists believe that as Titania cooled early in its history, the liquid water in its interior froze and expanded, bursting the icy crust open to form massive rift valleys." },
+        { q: "What is the primary composition of Titania's interior?", options: [{text: "Pure frozen water ice", isCorrect: false}, {text: "Solid metallic iron", isCorrect: false}, {text: "Roughly equal parts water ice and dense silicate rock", isCorrect: true}, {text: "A slushy mix of ammonia and methane", isCorrect: false}], explanation: "Titania's density indicates that it is made of roughly 50% water ice and 50% dense silicate rock." },
+        { q: "Titania is believed to be fully differentiated. What does this mean for its internal structure?", options: [{text: "It has a dense rocky core surrounded by an icy mantle", isCorrect: true}, {text: "Its rock and ice are mixed together randomly", isCorrect: false}, {text: "It is completely hollow inside", isCorrect: false}, {text: "It changes shape depending on its orbit", isCorrect: false}], explanation: "Differentiation is the process where heavier materials sink to the center during formation, meaning Titania likely has a solid rocky core covered by a mantle of ice." },
+        { q: "Voyager 2 was only able to map about 40% of Titania. Why?", options: [{text: "Titania's rotation is too fast to capture on camera", isCorrect: false}, {text: "Uranus's 98-degree axial tilt caused the northern hemisphere to be in a 42-year winter darkness", isCorrect: true}, {text: "A solar flare temporarily blinded the spacecraft", isCorrect: false}, {text: "Thick clouds obscured the northern hemisphere", isCorrect: false}], explanation: "Because Uranus rotates on its side, Titania's poles experience extreme 42-year seasons of continuous sunlight or darkness. During the 1986 flyby, the northern half was in the dark." },
+        { q: "Who discovered Titania, and in what year?", options: [{text: "William Lassell in 1851", isCorrect: false}, {text: "Galileo Galilei in 1610", isCorrect: false}, {text: "William Herschel in 1787", isCorrect: true}, {text: "Gerard Kuiper in 1948", isCorrect: false}], explanation: "William Herschel discovered both Titania and Oberon on the same day in 1787, shortly after his discovery of Uranus itself." },
+        { q: "Where does the name 'Titania' come from?", options: [{text: "A Greek goddess of the sea", isCorrect: false}, {text: "The Queen of the Fairies in Shakespeare's 'A Midsummer Night's Dream'", isCorrect: true}, {text: "A mythical Norse giant", isCorrect: false}, {text: "William Herschel's wife", isCorrect: false}], explanation: "Like most of Uranus's moons, it is named after an English literary character. Titania is the Queen of the Fairies in Shakespeare's play." },
+        { q: "Titania's surface lacks large impact basins compared to Oberon. What does this suggest to planetary geologists?", options: [{text: "It has a powerful magnetic shield", isCorrect: false}, {text: "Its thick atmosphere burned up large meteors", isCorrect: false}, {text: "The surface was resurfaced early in its history, erasing older, larger craters", isCorrect: true}, {text: "It is a newly formed moon", isCorrect: false}], explanation: "A lack of large, ancient impact basins suggests that Titania experienced a period of global resurfacing (likely from internal heat and cryovolcanism) that wiped away the oldest scars." },
+        { q: "Scientists suspect Titania might have an incredibly thin, transient atmosphere. What gas would likely make up this atmosphere?", options: [{text: "Oxygen", isCorrect: false}, {text: "Nitrogen", isCorrect: false}, {text: "Carbon Dioxide (CO₂)", isCorrect: true}, {text: "Helium", isCorrect: false}], explanation: "Infrared observations suggest Titania might have a tenuous, seasonal atmosphere composed of Carbon Dioxide." },
+        { q: "Why would Titania's thin atmosphere be considered 'transient' or seasonal?", options: [{text: "CO₂ sublimates during the 42-year summer and freezes back to the surface during winter", isCorrect: true}, {text: "Solar winds blow it away every few days", isCorrect: false}, {text: "It is absorbed into the rocky core", isCorrect: false}, {text: "Volcanoes only erupt it during eclipses", isCorrect: false}], explanation: "During its long, 42-year summer, sunlight may heat the ice just enough to cause frozen CO₂ to sublimate into gas. When winter returns, the gas freezes back onto the surface." },
+        { q: "How does Titania's albedo (reflectivity) compare to Ariel and Umbriel?", options: [{text: "It is the brightest moon, reflecting 99% of light", isCorrect: false}, {text: "It is the darkest moon, absorbing almost all light", isCorrect: false}, {text: "It is intermediate, darker than Ariel but brighter than Umbriel", isCorrect: true}, {text: "It changes completely depending on its distance from Uranus", isCorrect: false}], explanation: "Titania has an intermediate albedo; it reflects about 27% of sunlight, making it darker than the bright Ariel but lighter than the dark Umbriel." },
+        { q: "Titania's surface shows signs of past cryovolcanism. What erupts from a cryovolcano?", options: [{text: "Molten silicate rock", isCorrect: false}, {text: "A cold, slushy mixture of water, ammonia, and methane", isCorrect: true}, {text: "Superheated steam and ash", isCorrect: false}, {text: "Liquid nitrogen", isCorrect: false}], explanation: "Cryovolcanoes, or ice volcanoes, erupt volatiles like water, ammonia, or methane, which behave like magma in the extremely cold environment of the outer solar system." },
+        { q: "Which spacecraft is the *only* one to have flown past Titania?", options: [{text: "Cassini", isCorrect: false}, {text: "New Horizons", isCorrect: false}, {text: "Galileo", isCorrect: false}, {text: "Voyager 2", isCorrect: true}], explanation: "NASA's Voyager 2 probe is the only spacecraft to have ever visited the Uranian system, completing its flyby in January 1986." },
+        { q: "Titania has a slight reddish tint. What process is likely responsible for this coloration over billions of years?", options: [{text: "Iron rusting on the surface", isCorrect: false}, {text: "Space weathering from solar wind and radiation affecting surface organics", isCorrect: true}, {text: "Red dust blowing off Uranus", isCorrect: false}, {text: "Reflections from distant red giant stars", isCorrect: false}], explanation: "Space weathering occurs when high-energy radiation from space bombards ice containing organic compounds, slowly breaking them down and leaving a reddish, carbon-rich residue." },
+        { q: "If Titania's interior was once warm enough to have liquid water, what was the most likely heat source?", options: [{text: "Nuclear fusion", isCorrect: false}, {text: "Tidal heating from ancient orbital resonances", isCorrect: true}, {text: "Friction from its rapid rotation", isCorrect: false}, {text: "A collision with Miranda", isCorrect: false}], explanation: "Planetary scientists believe Titania may have once been in an orbital resonance with other moons, causing Uranus's gravity to stretch and squeeze it, generating internal heat." },
+        { q: "What is the approximate surface gravity on Titania compared to Earth?", options: [{text: "About equal to Earth", isCorrect: false}, {text: "Twice as strong as Earth", isCorrect: false}, {text: "About 0.038g, less than 4% of Earth's gravity", isCorrect: true}, {text: "It has zero gravity", isCorrect: false}], explanation: "Because of its small mass compared to a planet, Titania's surface gravity is incredibly weak, only about 0.038 times that of Earth." },
+        { q: "Titania's orbit is almost perfectly situated on Uranus's equator. How long does it take to complete one orbit around Uranus?", options: [{text: "8.7 Earth days", isCorrect: true}, {text: "24 Earth hours", isCorrect: false}, {text: "27.3 Earth days", isCorrect: false}, {text: "84 Earth years", isCorrect: false}], explanation: "Titania completes one full orbit around Uranus in approximately 8.7 Earth days." },
+        { q: "What are 'grabens', which make up the Chasmata on Titania?", options: [{text: "Towering, jagged ice mountains", isCorrect: false}, {text: "Rift valleys formed where the crust drops down between parallel fault lines", isCorrect: true}, {text: "Perfectly circular impact craters", isCorrect: false}, {text: "Underground caves filled with liquid water", isCorrect: false}], explanation: "A graben is a depressed block of a planet's crust bordered by parallel faults, created when tectonic forces pull the crust apart." },
+        { q: "How wide is Titania in diameter?", options: [{text: "471 km", isCorrect: false}, {text: "1,159 km", isCorrect: false}, {text: "1,577 km", isCorrect: true}, {text: "3,474 km", isCorrect: false}], explanation: "Titania has a diameter of roughly 1,577 kilometers, making it the largest moon of Uranus." }
+    ];
+
+    let currentQ = 0;
+    let score = 0;
+    let shuffledQuestions = [];
+
+    function shuffleArray(arr) {
+        let array = [...arr];
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function initQuiz() {
+        shuffledQuestions = shuffleArray(quizData).map(q => ({
+            ...q,
+            options: shuffleArray(q.options)
+        }));
+        currentQ = 0;
+        score = 0;
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('dynamicQuizArea').classList.remove('hidden');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const qData = shuffledQuestions[currentQ];
+        const container = document.getElementById('dynamicQuizArea');
+        
+        let html = `
+            <div class="quiz-q block">
+                <h3 class="text-xl font-bold mb-4 text-${moonColor}">Question ${currentQ + 1} of 20: <br/><span class="text-white mt-2 block">${qData.q}</span></h3>
+                <div class="space-y-3" id="optionsContainer">
+                    ${qData.options.map((opt, idx) => `
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-${moonColor} transition-all opt-btn" onclick="answer(${idx}, ${opt.isCorrect}, this)">${opt.text}</button>
+                    `).join('')}
+                </div>
+                <div id="explanationArea" class="hidden mt-6 p-4 rounded-xl bg-space-800 border border-space-500">
+                    <p class="text-sm text-space-100"><strong class="text-white">Explanation:</strong> ${qData.explanation}</p>
+                </div>
+                <button id="nextQBtn" onclick="nextQuestion()" class="hidden mt-6 w-full bg-space-700 text-white font-bold py-3 rounded-xl hover:bg-space-500 transition-colors">Next Question ▶</button>
+            </div>
+        `;
+        container.innerHTML = html;
+    }
+
+    function answer(optIdx, isCorrect, btnEl) {
+        const qData = shuffledQuestions[currentQ];
+        const buttons = document.querySelectorAll('.opt-btn');
+        
+        buttons.forEach((btn, idx) => {
+            btn.disabled = true;
+            btn.classList.remove('hover:bg-space-700', `hover:border-${moonColor}`);
+            if (qData.options[idx].isCorrect) {
+                btn.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            } else {
+                btn.classList.add('opacity-50');
+            }
+        });
+
+        if (isCorrect) {
+            score++;
+            addXP(5);
+        } else {
+            btnEl.classList.remove('opacity-50', 'bg-space-800');
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+        }
+
+        document.getElementById('explanationArea').classList.remove('hidden');
+        document.getElementById('nextQBtn').classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        currentQ++;
+        if (currentQ < 20) {
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('dynamicQuizArea').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('q-result').classList.add('block');
+        document.getElementById('scoreText').innerText = `${score}/20`;
+        
+        document.getElementById('scoreText').classList.remove('text-star-green', 'text-star-red', `text-${moonColor}`);
+
+        if(score >= 15) {
+            document.getElementById('scoreText').classList.add('text-star-green');
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Olympiad Scholar!", "Excellent performance! You passed the rigorous SciOly Quiz! +100 XP", "🧠");
+            }
+            document.getElementById('retryQuizBtn').classList.add('hidden');
+        } else {
+            document.getElementById('scoreText').classList.add('text-star-red');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        initQuiz();
+    }
+
+    window.addEventListener('DOMContentLoaded', initQuiz);
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    // Player (Drone) - Fixed Y near top, moves left/right
+    const player = {
+        x: 200, 
+        y: 80, 
+        width: 30,
+        height: 40,
+        speed: 6,
+        color: '#f8fafc' 
+    };
+
+    let obstacles = []; // Left and right canyon walls
+    let collectibles = []; // Data nodes
+    let gapWidth = 200;
+    let gapCenter = 200;
+
+    // Inputs
+    let keys = { ArrowLeft: false, ArrowRight: false };
+    let isTouching = false;
+    let touchTargetX = 0;
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(['ArrowLeft', 'ArrowRight'].includes(e.code)) {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(['ArrowLeft', 'ArrowRight'].includes(e.code)) keys[e.code] = false; 
+    });
+    
+    // Touch/Mouse Support
+    function handlePointerMove(e) {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        touchTargetX = (clientX - rect.left) * (canvas.width / rect.width);
+        isTouching = true;
+        if(e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+    }
+    function handlePointerUp() { isTouching = false; }
+
+    canvas.addEventListener('touchstart', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchend', handlePointerUp);
+    canvas.addEventListener('mousedown', handlePointerMove);
+    canvas.addEventListener('mousemove', (e) => { if(isTouching) handlePointerMove(e); });
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerUp);
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        gapCenter = canvas.width / 2;
+        gapWidth = 220;
+        
+        obstacles = [];
+        collectibles = [];
+        dataCollected = 0;
+        isTouching = false;
+        
+        // Seed initial walls filling the screen
+        for(let i=0; i<canvas.height/20 + 2; i++) {
+            obstacles.push({
+                y: i * 20,
+                leftWidth: gapCenter - gapWidth/2,
+                rightX: gapCenter + gapWidth/2,
+                rightWidth: canvas.width - (gapCenter + gapWidth/2)
+            });
+        }
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Flying...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntities() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let globalSpeedY = (Math.random() * 2 + 5) * speedMult; // Scroll speed UP
+        
+        // --- WALL GENERATION ---
+        // Drift gap center
+        gapCenter += (Math.random() * 20 - 10);
+        
+        // Restrict gap bounds
+        if(gapCenter - gapWidth/2 < 10) gapCenter = gapWidth/2 + 10;
+        if(gapCenter + gapWidth/2 > canvas.width - 10) gapCenter = canvas.width - gapWidth/2 - 10;
+        
+        // Shrink gap slowly
+        gapWidth -= 0.05;
+        if(gapWidth < 80) gapWidth = 80; // Minimum width
+
+        let newWall = {
+            y: canvas.height + 20,
+            leftWidth: gapCenter - gapWidth/2,
+            rightX: gapCenter + gapWidth/2,
+            rightWidth: canvas.width - (gapCenter + gapWidth/2)
+        };
+        obstacles.push(newWall);
+
+        // --- COLLECTIBLE GENERATION ---
+        if (Math.random() > 0.85 && collectibles.length < 2) {
+            // Spawn safely inside the current gap
+            let safeX = gapCenter + (Math.random() * (gapWidth - 40) - (gapWidth/2 - 20));
+            
+            collectibles.push({
+                x: safeX,
+                y: canvas.height + 40,
+                width: 20,
+                height: 20,
+                speedY: globalSpeedY,
+                pulse: 0
+            });
+        }
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        // Tilt slightly based on movement
+        let tilt = 0;
+        if(keys.ArrowLeft || (isTouching && touchTargetX < player.x)) tilt = -0.2;
+        if(keys.ArrowRight || (isTouching && touchTargetX > player.x)) tilt = 0.2;
+        ctx.rotate(tilt);
+
+        // Drone Body (Arrowhead shape)
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.moveTo(0, -player.height/2);
+        ctx.lineTo(player.width/2, player.height/2);
+        ctx.lineTo(-player.width/2, player.height/2);
+        ctx.closePath();
+        ctx.fill();
+
+        // Wing highlights
+        ctx.fillStyle = '#94a3b8';
+        ctx.beginPath();
+        ctx.moveTo(0, -player.height/2 + 10);
+        ctx.lineTo(player.width/2 - 5, player.height/2 - 5);
+        ctx.lineTo(-player.width/2 + 5, player.height/2 - 5);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Thrusters firing UP (to slow down/hover in canyon)
+        ctx.fillStyle = '#6ef0ff';
+        if(tilt < 0) { // moving left
+            ctx.fillRect(player.width/2 - 10, player.height/2, 6, 15 + Math.random()*5);
+        } else if (tilt > 0) { // moving right
+            ctx.fillRect(-player.width/2 + 4, player.height/2, 6, 15 + Math.random()*5);
+        } else {
+            // Both
+            ctx.fillRect(player.width/2 - 12, player.height/2, 4, 10 + Math.random()*5);
+            ctx.fillRect(-player.width/2 + 8, player.height/2, 4, 10 + Math.random()*5);
+        }
+
+        ctx.restore();
+    }
+
+    function drawEntities() {
+        // Collectibles (Data Nodes)
+        for (let i = 0; i < collectibles.length; i++) {
+            let c = collectibles[i];
+            c.pulse += 0.1;
+            let glow = 8 + Math.sin(c.pulse) * 4;
+            
+            ctx.fillStyle = '#ffd166'; // Gold
+            ctx.shadowBlur = glow;
+            ctx.shadowColor = '#ffd166';
+            
+            // Diamond shape
+            ctx.beginPath();
+            ctx.moveTo(c.x + c.width/2, c.y);
+            ctx.lineTo(c.x + c.width, c.y + c.height/2);
+            ctx.lineTo(c.x + c.width/2, c.y + c.height);
+            ctx.lineTo(c.x, c.y + c.height/2);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.shadowBlur = 0;
+        }
+
+        // Draw Walls (Messina Chasma Ice Walls)
+        ctx.fillStyle = '#1e293b'; // Dark ice/rock
+        
+        // Left Wall Polygon
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height);
+        for(let i=0; i<obstacles.length; i++) {
+            ctx.lineTo(obstacles[i].leftWidth, obstacles[i].y);
+        }
+        ctx.lineTo(0, 0);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Right Wall Polygon
+        ctx.beginPath();
+        ctx.moveTo(canvas.width, canvas.height);
+        for(let i=0; i<obstacles.length; i++) {
+            ctx.lineTo(obstacles[i].rightX, obstacles[i].y);
+        }
+        ctx.lineTo(canvas.width, 0);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Edge highlights (Snow/Frost)
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 3;
+        
+        ctx.beginPath();
+        for(let i=0; i<obstacles.length; i++) {
+            if(i===0) ctx.moveTo(obstacles[i].leftWidth, obstacles[i].y);
+            else ctx.lineTo(obstacles[i].leftWidth, obstacles[i].y);
+        }
+        ctx.stroke();
+        
+        ctx.beginPath();
+        for(let i=0; i<obstacles.length; i++) {
+            if(i===0) ctx.moveTo(obstacles[i].rightX, obstacles[i].y);
+            else ctx.lineTo(obstacles[i].rightX, obstacles[i].y);
+        }
+        ctx.stroke();
+    }
+
+    function drawBackground() {
+        // Deep canyon darkness
+        ctx.fillStyle = '#020617';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function checkCollisionRect(r1, r2) {
+        return !(r2.x > r1.x + r1.width || 
+                 r2.x + r2.width < r1.x || 
+                 r2.y > r1.y + r1.height ||
+                 r2.y + r2.height < r1.y);
+    }
+
+    function updatePhysics() {
+        // Player Movement (Horizontal only)
+        if (keys.ArrowLeft) player.x -= player.speed;
+        if (keys.ArrowRight) player.x += player.speed;
+
+        if (isTouching) {
+            let dx = touchTargetX - (player.x + player.width/2);
+            if (Math.abs(dx) > player.speed) {
+                player.x += (dx / Math.abs(dx)) * player.speed;
+            }
+        }
+
+        // Clamp to screen (though walls should kill you first)
+        if(player.x < 0) player.x = 0;
+        if(player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+
+        let pRect = { x: player.x + 5, y: player.y + 5, width: player.width - 10, height: player.height - 10 };
+
+        // Scroll speed increases over time
+        let globalSpeedY = 5 + (scoreFrames / 1500); 
+
+        // Update Walls
+        for(let i=obstacles.length-1; i>=0; i--) {
+            obstacles[i].y -= globalSpeedY;
+            
+            // Wall Collision Check (Only check walls roughly at player's Y height)
+            if(obstacles[i].y <= player.y + player.height && obstacles[i].y + 20 >= player.y) {
+                if(player.x + 5 < obstacles[i].leftWidth || player.x + player.width - 5 > obstacles[i].rightX) {
+                    gameOver("Smashed into the Chasma Walls!");
+                    return;
+                }
+            }
+            
+            if(obstacles[i].y < -20) obstacles.splice(i, 1);
+        }
+
+        // Keep walls filled
+        if(obstacles.length === 0 || obstacles[obstacles.length-1].y < canvas.height) {
+            spawnEntities();
+        }
+
+        // Update Collectibles
+        for (let i = collectibles.length - 1; i >= 0; i--) {
+            collectibles[i].y -= globalSpeedY; // Move UP
+            
+            if (checkCollisionRect(pRect, collectibles[i])) {
+                dataCollected++;
+                addXP(10);
+                ctx.fillStyle = 'rgba(255, 209, 102, 0.4)'; // Gold flash
+                ctx.fillRect(0,0, canvas.width, canvas.height);
+                collectibles.splice(i, 1);
+                continue;
+            }
+
+            if (collectibles[i].y + collectibles[i].height < 0) {
+                collectibles.splice(i, 1);
+            }
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        drawBackground();
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawEntities();
+        drawPlayer();
+
+        // HUD
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let dist = Math.floor(secondsAlive * 8); 
+        
+        ctx.fillStyle = "rgba(15, 23, 42, 0.8)";
+        ctx.fillRect(5, 5, 150, 60);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Distance: ${dist} km`, 10, 25);
+        ctx.fillStyle = "#6ef0ff"; // Cyan
+        ctx.fillText(`⚡ Data: ${dataCollected}/5`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && dataCollected >= 5 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Chasma Pilot Badge Unlocked!", "You survived the giant fault line! +100 XP", "🚁");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Glider";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 5);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You flew for ${secondsAlive}s.</p>
+            <p class="text-star-cyan mb-4 text-sm font-bold">⚡ Collected ${dataCollected} Nodes</p>
+            ${!achievements.playedGame ? `<p class="text-titania-light text-sm mb-4 text-center px-2">Survive 20s AND collect 5 nodes for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

@@ -1,0 +1,230 @@
+/* =========================================================================
+   Solar System Explorer — Shared Design System
+   Used by every page. Tailwind handles utilities; this file owns custom
+   components, animations, and the planet orbs.
+   ========================================================================= */
+
+body {
+    background-color: #05060f;
+    color: white;
+    overflow-x: hidden;
+    user-select: none;
+}
+
+/* ---------- Panels & Surfaces ---------- */
+.glass-panel {
+    background: rgba(15, 20, 48, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(110, 240, 255, 0.2);
+    border-radius: 1rem;
+}
+
+/* ---------- Hyperspace Transition ---------- */
+#hyperspace {
+    position: fixed;
+    inset: 0;
+    background: #05060f;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+#hyperspace.active {
+    opacity: 1;
+    pointer-events: all;
+}
+.warp-lines {
+    width: 200vw;
+    height: 200vh;
+    background: radial-gradient(circle, transparent 20%, #05060f 70%),
+                repeating-conic-gradient(from 0deg, transparent 0deg, #6ef0ff 1deg, transparent 2deg, transparent 10deg);
+    animation: warp 1s infinite linear;
+}
+@keyframes warp {
+    0% { transform: scale(1) rotate(0deg); }
+    100% { transform: scale(2) rotate(45deg); }
+}
+
+/* ---------- Planet Orbs ---------- */
+.planet-orb {
+    border-radius: 50%;
+    box-shadow: inset -10px -10px 20px rgba(0, 0, 0, 0.7), 0 0 15px rgba(255, 255, 255, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    position: relative;
+}
+.planet-orb:hover {
+    transform: scale(1.1);
+    box-shadow: inset -10px -10px 20px rgba(0, 0, 0, 0.7), 0 0 30px var(--hover-color, #6ef0ff);
+}
+.planet-orb.visited::after {
+    content: '✓';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #4ef0a8;
+    color: #05060f;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+.planet-orb.badged::after {
+    background: #ffd166;
+    content: '★';
+}
+
+/* Per-planet orb colors. Add new ones here when new worlds ship. */
+.orb-sun      { background: radial-gradient(circle at 30% 30%, #ffd166, #ff6b6b); box-shadow: 0 0 50px #ff6b6b; animation: pulse 4s infinite alternate; }
+.orb-mercury  { background: radial-gradient(circle at 30% 30%, #d4d4d4, #4a4a4a); --hover-color: #d4d4d4; }
+.orb-venus    { background: radial-gradient(circle at 30% 30%, #f6d365, #fda085); --hover-color: #fda085; }
+.orb-earth    { background: radial-gradient(circle at 30% 30%, #4facfe, #0f1430); --hover-color: #4facfe; }
+.orb-mars     { background: radial-gradient(circle at 30% 30%, #ff758c, #6b1414); --hover-color: #ff758c; }
+.orb-jupiter  { background: radial-gradient(circle at 30% 30%, #f3c88a, #8b5a2b); --hover-color: #f3c88a; }
+.orb-saturn   { background: radial-gradient(circle at 30% 30%, #f5deb3, #b8860b); --hover-color: #f5deb3; }
+.orb-uranus   { background: radial-gradient(circle at 30% 30%, #a6e3e9, #1b9aaa); --hover-color: #a6e3e9; }
+.orb-neptune  { background: radial-gradient(circle at 30% 30%, #4c9dff, #1a237e); --hover-color: #4c9dff; }
+.orb-pluto    { background: radial-gradient(circle at 30% 30%, #d8c5a8, #6d5244); --hover-color: #d8c5a8; }
+.orb-moon     { background: radial-gradient(circle at 30% 30%, #e0e0e0, #4a4a4a); --hover-color: #e0e0e0; }
+.orb-asteroid { background: radial-gradient(circle at 30% 30%, #a08775, #3a2d24); --hover-color: #a08775; }
+.orb-kuiper   { background: radial-gradient(circle at 30% 30%, #b8e1ff, #2a4d6e); --hover-color: #b8e1ff; }
+.orb-dwarf    { background: radial-gradient(circle at 30% 30%, #e0bfa0, #6b4f3a); --hover-color: #e0bfa0; }
+
+@keyframes pulse {
+    0%   { box-shadow: 0 0 40px #ff6b6b; }
+    100% { box-shadow: 0 0 80px #ffd166; }
+}
+
+/* Optional Saturn ring decoration */
+.orb-saturn-ringed {
+    position: relative;
+}
+.orb-saturn-ringed::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -20%;
+    width: 140%;
+    height: 12%;
+    background: linear-gradient(to bottom, transparent, #e0c070 40%, #b8860b 60%, transparent);
+    border-radius: 50%;
+    transform: translateY(-50%) rotate(-20deg);
+    pointer-events: none;
+}
+
+/* ---------- Flip Cards ---------- */
+.flip-card {
+    background-color: transparent;
+    height: 180px;
+    perspective: 1000px;
+    cursor: pointer;
+}
+.flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+.flip-card.flipped .flip-card-inner {
+    transform: rotateY(180deg);
+}
+.flip-card-front,
+.flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 1rem;
+    border: 2px solid rgba(110, 240, 255, 0.3);
+}
+.flip-card-front {
+    background: #0f1430;
+}
+.flip-card-back {
+    background: #1a234d;
+    transform: rotateY(180deg);
+    border-color: #6ef0ff;
+}
+
+/* ---------- Interactions ---------- */
+.btn-press {
+    transition: transform 0.12s;
+}
+.btn-press:active {
+    transform: scale(0.96);
+}
+.shake {
+    animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+}
+@keyframes shake {
+    10%, 90% { transform: translate3d(-2px, 0, 0); }
+    20%, 80% { transform: translate3d(3px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-5px, 0, 0); }
+    40%, 60% { transform: translate3d(5px, 0, 0); }
+}
+
+/* ---------- Starfield ---------- */
+#starfield {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+}
+
+/* ---------- Utilities ---------- */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ---------- Toasts ---------- */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    z-index: 1000;
+}
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+/* ---------- Coming-Soon stub page ---------- */
+.stub-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+@media (min-width: 768px) {
+    .stub-preview-grid { grid-template-columns: repeat(4, 1fr); }
+}
+.stub-preview-cell {
+    background: rgba(15, 20, 48, 0.5);
+    border: 1px dashed rgba(110, 240, 255, 0.3);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    text-align: center;
+    opacity: 0.75;
+}
+
+/* Reduced-motion respect */
+@media (prefers-reduced-motion: reduce) {
+    .warp-lines { animation: none; }
+    .shake { animation: none; }
+    .orb-sun { animation: none; }
+    .planet-orb { transition: none; }
+}

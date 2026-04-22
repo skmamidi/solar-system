@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Io — Interactive Solar System Explorer</title>
+    
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#05060f', 800: '#0f1430', 700: '#1a234d', 500: '#2c3b73', 100: '#fef3c7' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        io: { base: '#eab308', dark: '#b45309', light: '#fef08a', crust: '#f97316', lava: '#ef4444' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 80s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(234, 179, 8, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(234, 179, 8, 0.6)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #05060f;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #fef08a 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #eab308 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #ef4444 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(15, 20, 48, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(234, 179, 8, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(5, 6, 15, 0.8), rgba(15, 20, 48, 0.9));
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(234, 179, 8, 0.6);
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Io Graphic - The Pizza Moon! Yellow, orange, red sulfur pockmarks */
+        .orb-io {
+            background: radial-gradient(circle at 30% 30%, #fef08a, #eab308, #f97316, #b45309, #78350f);
+            box-shadow: inset -20px -20px 40px rgba(0,0,0,0.8), 0 0 30px rgba(234, 179, 8, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* Calderas (Paterae) and sulfur deposits */
+        .orb-io::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(239, 68, 68, 0.6) 0%, transparent 15%), /* Red lava */
+                radial-gradient(circle at 70% 60%, rgba(153, 27, 27, 0.8) 0%, transparent 20%), /* Dark caldera */
+                radial-gradient(circle at 40% 80%, rgba(234, 88, 12, 0.7) 0%, transparent 15%), /* Orange sulfur */
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.4) 0%, transparent 10%); /* White SO2 frost */
+            border-radius: 50%;
+            filter: blur(1px);
+            mix-blend-mode: multiply;
+        }
+
+        .orb-io::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.8) 0%, transparent 8%), /* Pele volcano */
+                radial-gradient(circle at 15% 70%, rgba(180, 83, 9, 0.7) 0%, transparent 12%);
+            border-radius: 50%;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(234, 179, 8, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #05060f; }
+        ::-webkit-scrollbar-thumb { background: #b45309; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #eab308; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-io-base shadow-[0_0_40px_rgba(234,179,8,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-io-base text-space-900 font-bold py-3 rounded-xl hover:bg-io-light transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-io-light">🍕</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="jupiter.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-gold">
+                <span class="text-xl">🪐</span>
+                <span class="font-display font-bold text-lg">Back to Jupiter</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-io-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-io-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Io Mission Progress</span>
+                    <span id="progressText" class="text-io-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-io-dark to-io-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Surveyor Drone</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-io-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-io-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-io-lava animate-ping"></span> Galilean Moon
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Io</h1>
+                <p class="text-2xl text-io-light font-body italic mb-6">"The Pizza Moon"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    Caught in a violent gravitational tug-of-war, Io is the most volcanically active body in the entire solar system. Its surface is constantly repaved by hundreds of volcanoes spewing molten sulfur and lava!
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-io-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-io-light transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(234,179,8,0.5)]">
+                    Explore the Volcanoes 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-io animate-spin-slow"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-io-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">3,642 km</div>
+                <div class="text-xs text-space-100 mt-1">Slightly larger than Earth's Moon</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">🌋</div>
+                <div class="text-io-light font-mono text-xs uppercase mb-1">Volcanism</div>
+                <div class="font-bold text-xl text-io-lava">Most Active</div>
+                <div class="text-xs text-space-100 mt-1">400+ active volcanoes</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">⏱️</div>
+                <div class="text-io-light font-mono text-xs uppercase mb-1">Orbital Period</div>
+                <div class="font-bold text-xl">1.77 Days</div>
+                <div class="text-xs text-space-100 mt-1">Fastest Galilean moon</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🌡️</div>
+                <div class="text-io-light font-mono text-xs uppercase mb-1">Temperature Extremes</div>
+                <div class="font-bold text-xl text-io-crust">Lava vs Frost</div>
+                <div class="text-xs text-space-100 mt-1">-130°C frost, 1600°C lava</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Io data.</p>
+                </div>
+                <div class="hidden md:block text-io-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Position -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'io1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📍</div>
+                            <h3 class="font-display text-xl text-io-light">The Inner Galilean</h3>
+                            <p class="text-space-100 text-xs mt-2">Where does it orbit?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-io-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-io-dark pb-1 w-full">Extremely Close</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>It is the innermost of Jupiter's four large Galilean moons.</li>
+                                <li>It orbits at a distance of 422,000 km, zipping around the massive gas giant in just 42.5 hours!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Craters -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'io2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🍕</div>
+                            <h3 class="font-display text-xl text-io-light">The Pizza Moon</h3>
+                            <p class="text-space-100 text-xs mt-2">Why does it look like that?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-io-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-io-crust mb-2 border-b border-io-dark pb-1 w-full">Zero Craters!</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Unlike our Moon, Io has <strong>almost zero impact craters!</strong></li>
+                                <li>The surface is constantly repaved by fresh lava.</li>
+                                <li>The vibrant yellow, orange, and red colors come from sulfur and sulfur dioxide frost covering the surface.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Tidal Heating -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'io3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔥</div>
+                            <h3 class="font-display text-xl text-io-light">Tidal Heating</h3>
+                            <p class="text-space-100 text-xs mt-2">What causes the volcanoes?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-io-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-red mb-2 border-b border-io-dark pb-1 w-full">The Great Squish</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>Io is caught in a gravitational tug-of-war between massive Jupiter on one side, and Europa/Ganymede on the other.</li>
+                                <li>This constant pulling flexes the solid crust of Io up and down by up to <strong>100 meters</strong>! This intense friction melts the interior rock.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Most Volcanic -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'io4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌋</div>
+                            <h3 class="font-display text-xl text-io-light">Most Volcanic</h3>
+                            <p class="text-space-100 text-xs mt-2">A record-breaking world</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-io-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-io-lava mb-2 border-b border-io-dark pb-1 w-full">A Hellish Landscape</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Io is the most volcanically active body in the solar system.</li>
+                                <li>It has over 400 active volcanoes. Some plumes blast sulfur dioxide gas up to 500 km (300 miles) into space!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Lava Lakes -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'io5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌊</div>
+                            <h3 class="font-display text-2xl text-io-light">Loki Patera</h3>
+                            <p class="text-space-100 mt-2">The largest volcano on Io</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-io-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-io-crust mb-3 border-b border-io-dark pb-2 w-full">A Giant Lava Lake</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-io-light font-mono font-bold block mb-1">Massive Size:</span>
+                                    Loki Patera is a volcanic depression (caldera) over 200 km across!
+                                </div>
+                                <div>
+                                    <span class="text-io-light font-mono font-bold block mb-1">Overturning Crust:</span>
+                                    It is an active lava lake where the solid crust frequently founders and sinks, exposing brilliant fresh magma underneath.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Plasma Torus -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'io6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚡</div>
+                            <h3 class="font-display text-2xl text-io-light">The Plasma Torus</h3>
+                            <p class="text-space-100 mt-2">Feeding Jupiter's radiation belts</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-io-base flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-star-cyan mb-2 border-b border-io-dark pb-1 w-full">Electric Donut</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>As Io's volcanoes erupt, Jupiter's massive magnetic field sweeps past the moon, stripping away 1 ton of sulfur and oxygen ions every single second!</li>
+                                <li>This material forms a giant, glowing, donut-shaped ring of lethal radiation around Jupiter called the <strong>Io Plasma Torus</strong>.</li>
+                                <li>This radiation makes it incredibly dangerous for spacecraft to fly near Io.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Atmosphere -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'io7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">💨</div>
+                            <h3 class="font-display text-2xl text-io-light">Atmosphere</h3>
+                            <p class="text-space-100 mt-2">The collapsing sky</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-io-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-io-dark pb-2 w-full">Freezing in the Dark</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Io has an extremely thin atmosphere composed almost entirely of Sulfur Dioxide gas ($SO_2$) belched from volcanoes.</li>
+                                <li>Every day, when Io passes into Jupiter's cold shadow (an eclipse), the temperature drops so low that the <strong>entire atmosphere freezes solid and falls to the ground!</strong> When the sun returns, it sublimates back into gas.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Missions -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'io8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🚀</div>
+                            <h3 class="font-display text-2xl text-io-light">Space Missions</h3>
+                            <p class="text-space-100 mt-2">The great discovery</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-io-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-gold mb-2 border-b border-io-dark pb-2 w-full">Voyager's Shock</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-star-gold">Voyager 1 (1979):</strong> Before Voyager, scientists thought moons were dead, cratered rocks. Navigational engineer Linda Morabito noticed a weird bump on the edge of Io in a photo... it was a 300km high volcanic plume!</li>
+                                <li><strong class="text-white">Juno (2023-2024):</strong> The Juno spacecraft recently performed incredibly close flybys, capturing stunning high-resolution images of fresh lava lakes and rugged mountains.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-io-base border-2 shadow-[0_0_30px_rgba(234,179,8,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-io-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Volcanic Plume Surveyor</h2>
+                        <p class="text-space-100 mb-6">Pilot an armored drone over the dangerous surface of Io! Use your thrusters to dodge the massive <span class="text-io-lava font-bold">lava plumes</span> erupting from below, and collect 3 <span class="text-io-light font-bold">Sulfur Data Packets</span> to earn the <span class="text-io-base font-bold">Volcanologist Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-io-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys to fly sideways.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Launch Drone
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-io-base/30">
+                            <div class="text-5xl mb-2">🚁</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Pele Patera Flyover</h3>
+                            <p class="text-io-light text-sm">Click Launch to survey</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#2e1005] via-[#450a0a] to-[#7f1d1d] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-io-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-io-base/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Io module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <!-- Question 1 -->
+                <div class="quiz-q block" id="q1">
+                    <h3 class="text-xl font-bold mb-4 text-io-light">1. Why does Io have almost zero impact craters on its surface?</h3>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-io-base transition-all" onclick="answer(1, false, this)">Jupiter's gravity pulls all the asteroids away.</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-io-base transition-all" onclick="answer(1, true, this)">Continuous volcanic eruptions pave over old craters with fresh lava.</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-io-base transition-all" onclick="answer(1, false, this)">It has an incredibly thick atmosphere that burns them up.</button>
+                    </div>
+                </div>
+
+                <!-- Question 2 -->
+                <div class="quiz-q hidden" id="q2">
+                    <h3 class="text-xl font-bold mb-4 text-io-light">2. What causes the extreme volcanic activity on Io?</h3>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-io-base transition-all" onclick="answer(2, false, this)">Intense heat from the Sun.</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-io-base transition-all" onclick="answer(2, false, this)">Radioactive decay of uranium in its core.</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-io-base transition-all" onclick="answer(2, true, this)">Tidal heating (friction) from being stretched by Jupiter and other moons.</button>
+                    </div>
+                </div>
+
+                <!-- Question 3 -->
+                <div class="quiz-q hidden" id="q3">
+                    <h3 class="text-xl font-bold mb-4 text-io-light">3. Which spacecraft was the first to photograph an active volcanic eruption on Io in 1979?</h3>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-io-base transition-all" onclick="answer(3, true, this)">Voyager 1</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-io-base transition-all" onclick="answer(3, false, this)">Galileo</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-io-base transition-all" onclick="answer(3, false, this)">Cassini</button>
+                    </div>
+                </div>
+
+                <!-- Quiz Results -->
+                <div class="quiz-q hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold text-io-light">0/3</span></p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Io Module Complete!", "You have unlocked the 'Volcanologist' badge. Excellent exploration!", "🌋");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Io files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    let currentQ = 1;
+    let score = 0;
+
+    function answer(qNum, isCorrect, btnEl) {
+        let siblings = btnEl.parentElement.children;
+        for(let s of siblings) {
+            s.disabled = true;
+            s.classList.remove('hover:bg-space-700', 'hover:border-io-base');
+            s.classList.add('opacity-50');
+        }
+        btnEl.classList.remove('opacity-50', 'bg-space-800');
+        
+        if(isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            score++;
+            addXP(20);
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+        }
+
+        setTimeout(() => {
+            document.getElementById(`q${qNum}`).classList.add('hidden');
+            if(qNum < 3) {
+                document.getElementById(`q${qNum+1}`).classList.remove('hidden');
+                document.getElementById(`q${qNum+1}`).classList.add('block');
+            } else {
+                showResults();
+            }
+        }, 1000);
+    }
+
+    function showResults() {
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('q-result').classList.add('block');
+        document.getElementById('scoreText').innerText = `${score}/3`;
+        
+        if(score === 3) {
+            document.getElementById('scoreText').classList.add('text-star-green');
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Perfect Knowledge", "Perfect score on the Io Quiz! +100 XP", "🧠");
+            }
+        } else {
+            document.getElementById('scoreText').classList.add('text-star-red');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        score = 0;
+        currentQ = 1;
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        
+        for(let i=1; i<=3; i++) {
+            let qDiv = document.getElementById(`q${i}`);
+            qDiv.classList.add('hidden');
+            qDiv.classList.remove('block');
+            
+            let btns = qDiv.querySelectorAll('button');
+            btns.forEach(b => {
+                b.disabled = false;
+                b.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-io-base transition-all";
+            });
+        }
+        document.getElementById('q1').classList.remove('hidden');
+        document.getElementById('q1').classList.add('block');
+    }
+
+    /* MINI GAME: Volcanic Plume Surveyor */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    // Player (Drone) - Moves left/right near the top
+    const player = {
+        x: 0, 
+        y: 60, 
+        width: 36,
+        height: 24,
+        speed: 6,
+        color: '#f8fafc' 
+    };
+
+    let obstacles = []; // Lava Plumes
+    let bgParticles = [];
+
+    // Inputs
+    let keys = { ArrowLeft: false, ArrowRight: false };
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(['ArrowLeft', 'ArrowRight'].includes(e.code)) {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(['ArrowLeft', 'ArrowRight'].includes(e.code)) keys[e.code] = false; 
+    });
+    
+    // Touch/Mouse Support
+    function handlePointerMove(e) {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let relativeX = clientX - rect.left;
+        if(relativeX < canvas.width/2) {
+            keys.ArrowLeft = true; keys.ArrowRight = false;
+        } else {
+            keys.ArrowRight = true; keys.ArrowLeft = false;
+        }
+        if(e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+    }
+    function handlePointerUp() { keys.ArrowLeft = false; keys.ArrowRight = false; }
+
+    canvas.addEventListener('touchstart', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchend', handlePointerUp);
+    canvas.addEventListener('mousedown', handlePointerMove);
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerUp);
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        obstacles = [];
+        dataCollected = 0;
+
+        // Background ash/sulfur
+        bgParticles = Array.from({length: 40}).map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 1,
+            speed: Math.random() * 2 + 1,
+            color: Math.random() > 0.5 ? '#fef08a' : '#f97316'
+        }));
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Surveying...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let isData = Math.random() > 0.75; // 25% chance of sulfur data
+        
+        let w = isData ? 20 : Math.random() * 30 + 40; // Data is small, plumes are wide
+        let xPos = Math.random() * (canvas.width - w);
+        
+        obstacles.push({
+            x: xPos,
+            y: canvas.height, // Spawn at bottom (surface)
+            width: w,
+            height: isData ? w : Math.random() * 100 + 50, // Plumes are tall
+            speedY: (Math.random() * 4 + 4) * speedMult, // Shoot UP
+            isData: isData,
+            pulse: 0
+        });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        // Thrusters (Bottom)
+        ctx.fillStyle = '#6ef0ff';
+        ctx.beginPath();
+        ctx.moveTo(-player.width/4, player.height/2);
+        ctx.lineTo(-player.width/4 - 4, player.height/2 + 10 + Math.random()*5);
+        ctx.lineTo(-player.width/4 + 4, player.height/2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(player.width/4, player.height/2);
+        ctx.lineTo(player.width/4 - 4, player.height/2 + 10 + Math.random()*5);
+        ctx.lineTo(player.width/4 + 4, player.height/2);
+        ctx.fill();
+
+        // Drone body
+        ctx.fillStyle = '#cbd5e1';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, player.width/2, player.height/2, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Sensor Array (Bottom)
+        ctx.fillStyle = '#eab308';
+        ctx.fillRect(-6, player.height/2 - 4, 12, 6);
+
+        // Cockpit/Eye
+        ctx.fillStyle = '#1e3a8a';
+        ctx.beginPath();
+        ctx.arc(0, -2, 5, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    function drawEntities() {
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            
+            if (o.isData) {
+                // Sulfur Data Packet
+                o.pulse += 0.1;
+                let glow = 8 + Math.sin(o.pulse) * 4;
+                
+                ctx.fillStyle = '#fef08a'; // Yellow
+                ctx.shadowBlur = glow;
+                ctx.shadowColor = '#eab308';
+                
+                // Diamond shape
+                ctx.beginPath();
+                ctx.moveTo(o.x + o.width/2, o.y);
+                ctx.lineTo(o.x + o.width, o.y + o.height/2);
+                ctx.lineTo(o.x + o.width/2, o.y + o.height);
+                ctx.lineTo(o.x, o.y + o.height/2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            } else {
+                // Lava Plume
+                ctx.fillStyle = '#ef4444'; // Red base
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#f97316';
+                
+                ctx.beginPath();
+                // Flame-like shape
+                ctx.moveTo(o.x, o.y + o.height);
+                ctx.lineTo(o.x + o.width/2, o.y);
+                ctx.lineTo(o.x + o.width, o.y + o.height);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Inner core
+                ctx.fillStyle = '#fef08a';
+                ctx.beginPath();
+                ctx.moveTo(o.x + o.width*0.2, o.y + o.height);
+                ctx.lineTo(o.x + o.width/2, o.y + o.height*0.3);
+                ctx.lineTo(o.x + o.width*0.8, o.y + o.height);
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+            }
+        }
+    }
+
+    function drawBackground() {
+        // Reddish dark atmosphere
+        ctx.fillStyle = 'rgba(69, 10, 10, 0.4)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Ash particles blowing UP
+        bgParticles.forEach(p => {
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+            ctx.fill();
+            p.y -= p.speed;
+            if(p.y < 0) {
+                p.y = canvas.height;
+                p.x = Math.random() * canvas.width;
+            }
+        });
+        
+        // Ground representation at bottom
+        ctx.fillStyle = '#78350f';
+        ctx.beginPath();
+        ctx.ellipse(canvas.width/2, canvas.height + 20, canvas.width, 40, 0, 0, Math.PI*2);
+        ctx.fill();
+    }
+
+    function checkCollisionRect(r1, r2) {
+        return !(r2.x > r1.x + r1.width || 
+                 r2.x + r2.width < r1.x || 
+                 r2.y > r1.y + r1.height ||
+                 r2.y + r2.height < r1.y);
+    }
+
+    function updatePhysics() {
+        // Player Movement
+        if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
+        if (keys.ArrowRight && player.x + player.width < canvas.width) player.x += player.speed;
+
+        let pRect = { x: player.x + 5, y: player.y + 5, width: player.width - 10, height: player.height - 10 };
+
+        // Spawning
+        let spawnRate = Math.max(20, 50 - Math.floor(scoreFrames/80));
+        if (frames % spawnRate === 0) spawnEntity();
+
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].y -= obstacles[i].speedY; // Move UP
+            
+            if (checkCollisionRect(pRect, obstacles[i])) {
+                if (obstacles[i].isData) {
+                    dataCollected++;
+                    addXP(10);
+                    ctx.fillStyle = 'rgba(254, 240, 138, 0.3)'; // Yellow flash
+                    ctx.fillRect(0,0, canvas.width, canvas.height);
+                    obstacles.splice(i, 1);
+                    continue;
+                } else {
+                    gameOver("Melted by Lava Plume!");
+                    return;
+                }
+            }
+
+            if (obstacles[i].y + obstacles[i].height < 0) {
+                obstacles.splice(i, 1);
+            }
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        drawBackground();
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawEntities();
+        drawPlayer();
+
+        // HUD
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Flight Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillStyle = "#fef08a"; 
+        ctx.fillText(`🟡 Sulfur Data: ${dataCollected}/3`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && dataCollected >= 3 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Volcanologist Badge Unlocked!", "You survived the plumes and collected data! +100 XP", "🌋");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Flight";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 3);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You survived for ${secondsAlive}s.</p>
+            <p class="text-io-light mb-4 text-sm font-bold">🟡 Collected ${dataCollected} Packets</p>
+            ${!achievements.playedGame ? `<p class="text-io-base text-sm mb-4 text-center px-2">Survive 20s AND collect 3 packets for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

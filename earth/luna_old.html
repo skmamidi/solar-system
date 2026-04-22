@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Luna (The Moon) — Interactive Solar System Explorer</title>
+    
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#030712', 800: '#0f172a', 700: '#1e293b', 500: '#334155', 100: '#f8fafc' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        moon: { base: '#94a3b8', dark: '#475569', light: '#cbd5e1', crater: '#334155', glow: '#f1f5f9' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(203, 213, 225, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(203, 213, 225, 0.6)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #030712;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #cbd5e1 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #94a3b8 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #6ef0ff 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(3, 7, 18, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(203, 213, 225, 0.6);
+            box-shadow: 0 0 20px rgba(203, 213, 225, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Moon Graphic - Silver with deep impact craters */
+        .orb-moon-main {
+            background: radial-gradient(circle at 35% 35%, #f1f5f9, #cbd5e1, #94a3b8, #475569, #1e293b);
+            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(203, 213, 225, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* Craters (Tycho, Copernicus, Kepler representations) */
+        .orb-moon-main::before {
+            content: '';
+            position: absolute;
+            bottom: 20%; left: 30%;
+            width: 25%; height: 25%;
+            background: radial-gradient(circle at 70% 70%, #334155 0%, #475569 50%, transparent 100%);
+            border-radius: 50%;
+            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.6), -2px -2px 5px rgba(255,255,255,0.4);
+        }
+        
+        .orb-moon-main::after {
+            content: '';
+            position: absolute;
+            top: 25%; right: 25%;
+            width: 15%; height: 15%;
+            background: radial-gradient(circle at 70% 70%, #334155 0%, #64748b 60%, transparent 100%);
+            border-radius: 50%;
+            box-shadow: inset 2px 2px 4px rgba(0,0,0,0.5), -1px -1px 3px rgba(255,255,255,0.3);
+        }
+
+        /* Maria (Dark flat plains) */
+        .maria {
+            position: absolute;
+            top: 15%; left: 10%;
+            width: 40%; height: 35%;
+            background: radial-gradient(ellipse, rgba(51, 65, 85, 0.8) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(2px);
+            transform: rotate(20deg);
+        }
+        .maria-2 {
+            position: absolute;
+            bottom: 35%; right: 10%;
+            width: 35%; height: 45%;
+            background: radial-gradient(ellipse, rgba(51, 65, 85, 0.7) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(3px);
+            transform: rotate(-15deg);
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(203, 213, 225, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #030712; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-moon-base shadow-[0_0_40px_rgba(203,213,225,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-moon-base text-space-900 font-bold py-3 rounded-xl hover:bg-moon-light transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-moon-light">🌕</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="earth.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-cyan">
+                <span class="text-xl">🌍</span>
+                <span class="font-display font-bold text-lg">Back to Earth</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-moon-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-moon-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Lunar Mission Progress</span>
+                    <span id="progressText" class="text-moon-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-moon-dark to-moon-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Land Module</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-moon-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-moon-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-star-cyan animate-ping"></span> Earth's Satellite
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Luna</h1>
+                <p class="text-2xl text-moon-base font-body italic mb-6">"Our Celestial Companion"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    The only place beyond Earth where humans have set foot. Born from a violent cosmic collision billions of years ago, it stabilizes our planet's wobble and creates the rhythm of our ocean tides.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-moon-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-moon-light transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(148,163,184,0.5)]">
+                    Explore the Moon 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-56 h-56 md:w-72 md:h-72 animate-float">
+                    <div class="w-full h-full orb-moon-main animate-pulse-glow">
+                        <div class="maria"></div>
+                        <div class="maria-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🌡️</div>
+                <div class="text-moon-base font-mono text-xs uppercase mb-1">Temperature Extremes</div>
+                <div class="font-bold text-xl">-173°C to 127°C</div>
+                <div class="text-xs text-space-100 mt-1">No air to hold heat</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📍</div>
+                <div class="text-moon-base font-mono text-xs uppercase mb-1">Distance</div>
+                <div class="font-bold text-xl">384,400 km</div>
+                <div class="text-xs text-space-100 mt-1">~3 days by spacecraft</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">⚖️</div>
+                <div class="text-moon-base font-mono text-xs uppercase mb-1">Gravity</div>
+                <div class="font-bold text-xl">0.16g</div>
+                <div class="text-xs text-space-100 mt-1">1/6th of Earth's</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">⏱️</div>
+                <div class="text-moon-base font-mono text-xs uppercase mb-1">Length of Day</div>
+                <div class="font-bold text-xl">27.3 Earth Days</div>
+                <div class="text-xs text-space-100 mt-1">Tidally locked</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt lunar data.</p>
+                </div>
+                <div class="hidden md:block text-moon-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Tidally Locked -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'l1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">👀</div>
+                            <h3 class="font-display text-xl text-moon-light">The Near Side</h3>
+                            <p class="text-space-100 text-xs mt-2">Why do we always see the same face?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-moon-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-moon-dark pb-1 w-full">Tidal Locking</h3>
+                            <p class="text-sm text-left font-body">
+                                The Moon takes 27.3 days to orbit Earth, and exactly 27.3 days to rotate once on its axis! Because these speeds match perfectly, it is <strong>Tidally Locked</strong>, meaning we only ever see one side of it from Earth.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Size & Mass -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'l2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📏</div>
+                            <h3 class="font-display text-xl text-moon-light">Relative Size</h3>
+                            <p class="text-space-100 text-xs mt-2">How big is it?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-moon-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-moon-dark pb-1 w-full">A Quarter of Earth</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-moon-base font-mono font-bold">Diameter:</span> 3,474 km. It is roughly 1/4 the width of Earth.</li>
+                                <li><span class="text-moon-base font-mono font-bold">Ranking:</span> It is the 5th largest moon in the entire solar system.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Formation -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'l3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">💥</div>
+                            <h3 class="font-display text-xl text-moon-light">Formation</h3>
+                            <p class="text-space-100 text-xs mt-2">Where did it come from?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-moon-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-red mb-2 border-b border-moon-dark pb-1 w-full">The Giant Impact</h3>
+                            <p class="text-sm text-left font-body">
+                                The leading theory is the <strong>Giant Impact Hypothesis</strong>. About 4.5 billion years ago, a Mars-sized planet named <em>Theia</em> smashed into the young Earth. The debris from this violent collision clumped together in orbit to form the Moon!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Composition -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'l4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🪨</div>
+                            <h3 class="font-display text-xl text-moon-light">Composition</h3>
+                            <p class="text-space-100 text-xs mt-2">What is Moon dust?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-moon-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-moon-dark pb-1 w-full">Regolith & Glass</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>The surface is covered in a fine, powdery dust called <strong>Regolith</strong>.</li>
+                                <li>Because there is no wind or water to erode it, regolith particles are jagged and sharp like tiny shards of glass. It easily ruins spacesuits!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Tides & Eclipses -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'l5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌊</div>
+                            <h3 class="font-display text-2xl text-moon-light">The Moon's Power</h3>
+                            <p class="text-space-100 mt-2">Tides, Eclipses, and Wobbles</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-moon-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-cyan mb-3 border-b border-moon-dark pb-2 w-full">Invisible Influence</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-moon-light font-mono font-bold block mb-1">Ocean Tides:</span>
+                                    The Moon's gravity pulls on Earth's oceans, creating high and low tides. (The Sun helps too!)
+                                </div>
+                                <div>
+                                    <span class="text-moon-light font-mono font-bold block mb-1">Perfect Eclipses:</span>
+                                    The Sun is 400x wider than the Moon, but also exactly 400x further away. This coincidence allows the Moon to perfectly block the Sun during a Total Solar Eclipse!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Atmosphere & Environment -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'l6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔇</div>
+                            <h3 class="font-display text-2xl text-moon-light">The Environment</h3>
+                            <p class="text-space-100 mt-2">The Silent Vacuum</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-moon-base flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-moon-dark pb-1 w-full">A Dead World</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-moon-light">Atmosphere:</strong> Almost non-existent. It has a super-thin "exosphere" of atoms kicked up by solar wind.</li>
+                                <li><strong class="text-moon-light">Sound:</strong> Because there is no air, there is absolutely no sound on the Moon. Astronauts had to use radios even when standing next to each other.</li>
+                                <li><strong class="text-moon-light">Footprints:</strong> Without wind or rain to wash them away, the footprints left by the Apollo astronauts will remain there for millions of years.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: The Apollo Era -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'l7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">👨‍🚀</div>
+                            <h3 class="font-display text-2xl text-moon-light">The Apollo Era</h3>
+                            <p class="text-space-100 mt-2">One Giant Leap (1969 - 1972)</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-moon-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-gold mb-2 border-b border-moon-dark pb-2 w-full">The First Explorers</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-white">Apollo 11 (1969):</strong> Neil Armstrong and Buzz Aldrin became the first humans to ever walk on another celestial body.</li>
+                                <li><strong class="text-white">The Elite Dozen:</strong> During the Apollo program, a total of exactly <strong>12 American astronauts</strong> walked on the lunar surface.</li>
+                                <li><strong class="text-white">The Science:</strong> They brought back 842 lbs of lunar rocks, which proved the Giant Impact Hypothesis and revolutionized planetary science.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: The Artemis Generation -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'l8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🚀</div>
+                            <h3 class="font-display text-2xl text-moon-light">The Artemis Generation</h3>
+                            <p class="text-space-100 mt-2">Returning to stay</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-moon-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-cyan mb-2 border-b border-moon-dark pb-2 w-full">To The South Pole</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-star-cyan">The Goal:</strong> NASA's new Artemis program will return humans to the Moon, including the first woman and first person of color.</li>
+                                <li><strong class="text-white">The Destination:</strong> Unlike Apollo, Artemis will land at the <strong>Lunar South Pole</strong>.</li>
+                                <li><strong class="text-white">Why the pole?</strong> Deep craters at the poles are in permanent shadow and contain massive amounts of <strong>water ice</strong>, which can be used for drinking water and rocket fuel!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-moon-base border-2 shadow-[0_0_30px_rgba(148,163,184,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-moon-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Artemis Lunar Lander</h2>
+                        <p class="text-space-100 mb-6">Take manual control of the Human Landing System! Fire your thrusters to counteract the Moon's gravity and touch down softly on the <span class="text-star-green font-bold">green landing pad</span>. Land gently to earn the <span class="text-moon-light font-bold">Lunar Pilot Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-moon-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Use <kbd class="bg-space-700 px-2 rounded">←</kbd> <kbd class="bg-space-700 px-2 rounded">↑</kbd> <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap bottom corners to move sideways, tap center to thrust UP.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Start Descent
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-moon-base/30">
+                            <div class="text-5xl mb-2">🦅</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Eagle in Orbit</h3>
+                            <p class="text-moon-light text-sm">Click Start to begin powered descent</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#020617] via-[#0f172a] to-[#1e293b] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-moon-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-moon-base/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Lunar module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <!-- Question 1 -->
+                <div class="quiz-q block" id="q1">
+                    <h3 class="text-xl font-bold mb-4 text-moon-light">1. Why do we only ever see one side of the Moon from Earth?</h3>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-moon-base transition-all" onclick="answer(1, false, this)">Because it doesn't rotate at all.</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-moon-base transition-all" onclick="answer(1, true, this)">It is tidally locked (its rotation time matches its orbit time).</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-moon-base transition-all" onclick="answer(1, false, this)">Because Earth's shadow hides the other side.</button>
+                    </div>
+                </div>
+
+                <!-- Question 2 -->
+                <div class="quiz-q hidden" id="q2">
+                    <h3 class="text-xl font-bold mb-4 text-moon-light">2. How do scientists believe the Moon was formed?</h3>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-moon-base transition-all" onclick="answer(2, false, this)">Earth captured a passing asteroid.</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-moon-base transition-all" onclick="answer(2, false, this)">It formed at the exact same time as Earth from the same dust.</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-moon-base transition-all" onclick="answer(2, true, this)">The Giant Impact Hypothesis (debris from a massive collision).</button>
+                    </div>
+                </div>
+
+                <!-- Question 3 -->
+                <div class="quiz-q hidden" id="q3">
+                    <h3 class="text-xl font-bold mb-4 text-moon-light">3. What is the primary target destination for NASA's new Artemis program?</h3>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-moon-base transition-all" onclick="answer(3, false, this)">The exact same spot Apollo 11 landed.</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-moon-base transition-all" onclick="answer(3, true, this)">The Lunar South Pole (to search for water ice).</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-moon-base transition-all" onclick="answer(3, false, this)">The Far Side of the moon.</button>
+                    </div>
+                </div>
+
+                <!-- Quiz Results -->
+                <div class="quiz-q hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold text-moon-light">0/3</span></p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box (Replacement for alerts) */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Luna Module Complete!", "You have unlocked the 'Lunar Pilot' badge. Outstanding exploration!", "🌕");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Lunar files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    let currentQ = 1;
+    let score = 0;
+
+    function answer(qNum, isCorrect, btnEl) {
+        let siblings = btnEl.parentElement.children;
+        for(let s of siblings) {
+            s.disabled = true;
+            s.classList.remove('hover:bg-space-700', 'hover:border-moon-base');
+            s.classList.add('opacity-50');
+        }
+        btnEl.classList.remove('opacity-50', 'bg-space-800');
+        
+        if(isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            score++;
+            addXP(20);
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+        }
+
+        setTimeout(() => {
+            document.getElementById(`q${qNum}`).classList.add('hidden');
+            if(qNum < 3) {
+                document.getElementById(`q${qNum+1}`).classList.remove('hidden');
+                document.getElementById(`q${qNum+1}`).classList.add('block');
+            } else {
+                showResults();
+            }
+        }, 1000);
+    }
+
+    function showResults() {
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('q-result').classList.add('block');
+        document.getElementById('scoreText').innerText = `${score}/3`;
+        
+        if(score === 3) {
+            document.getElementById('scoreText').classList.add('text-star-green');
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Perfect Knowledge", "Perfect score on the Quiz! +100 XP", "🧠");
+            }
+        } else {
+            document.getElementById('scoreText').classList.add('text-star-red');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        score = 0;
+        currentQ = 1;
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        
+        for(let i=1; i<=3; i++) {
+            let qDiv = document.getElementById(`q${i}`);
+            qDiv.classList.add('hidden');
+            qDiv.classList.remove('block');
+            
+            let btns = qDiv.querySelectorAll('button');
+            btns.forEach(b => {
+                b.disabled = false;
+                b.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-moon-base transition-all";
+            });
+        }
+        document.getElementById('q1').classList.remove('hidden');
+        document.getElementById('q1').classList.add('block');
+    }
+
+    /* MINI GAME: Artemis Lunar Lander */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+        generateTerrain();
+    }
+    window.addEventListener('resize', resizeCanvas);
+    
+    // Game Physics & State
+    let gameActive = false;
+    let gameLoopReq;
+    
+    const gravity = 0.04;
+    const thrustPower = 0.1;
+    const sideThrust = 0.05;
+    const maxSafeSpeed = 2.0;
+
+    let player = { x: 0, y: 0, vx: 0, vy: 0, width: 30, height: 35 };
+    let terrain = [];
+    let landingPad = { x: 0, y: 0, width: 60 };
+    
+    let fuel = 100;
+
+    // Inputs
+    let keys = { ArrowUp: false, ArrowLeft: false, ArrowRight: false };
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(e.code === 'ArrowUp' || e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(e.code === 'ArrowUp' || e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            keys[e.code] = false; 
+        }
+    });
+    
+    // Touch Zones for Mobile
+    function handleTouch(e, isDown) {
+        if(!gameActive) return;
+        e.preventDefault();
+        
+        // Reset keys
+        keys.ArrowUp = false; keys.ArrowLeft = false; keys.ArrowRight = false;
+        if(!isDown) return;
+
+        const rect = canvas.getBoundingClientRect();
+        for(let i=0; i<e.touches.length; i++) {
+            let touchX = e.touches[i].clientX - rect.left;
+            let touchY = e.touches[i].clientY - rect.top;
+            
+            // Middle 50% horizontally is UP. Left 25% is Left. Right 25% is Right.
+            // But realistically, users just want to tap bottom left/right for sides, and bottom center for up.
+            if (touchY > canvas.height * 0.5) { // Only care about lower half taps
+                if (touchX < canvas.width * 0.3) keys.ArrowLeft = true;
+                else if (touchX > canvas.width * 0.7) keys.ArrowRight = true;
+                else keys.ArrowUp = true;
+            }
+        }
+    }
+
+    canvas.addEventListener('touchstart', (e) => handleTouch(e, true), {passive: false});
+    canvas.addEventListener('touchmove', (e) => handleTouch(e, true), {passive: false});
+    canvas.addEventListener('touchend', (e) => handleTouch(e, false));
+    
+    // Mouse fallback for zones
+    canvas.addEventListener('mousedown', (e) => {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let touchX = e.clientX - rect.left;
+        let touchY = e.clientY - rect.top;
+        if (touchY > canvas.height * 0.5) {
+            if (touchX < canvas.width * 0.3) keys.ArrowLeft = true;
+            else if (touchX > canvas.width * 0.7) keys.ArrowRight = true;
+            else keys.ArrowUp = true;
+        }
+    });
+    canvas.addEventListener('mouseup', () => { keys.ArrowUp = false; keys.ArrowLeft = false; keys.ArrowRight = false; });
+    canvas.addEventListener('mouseleave', () => { keys.ArrowUp = false; keys.ArrowLeft = false; keys.ArrowRight = false; });
+
+    function generateTerrain() {
+        terrain = [];
+        let segments = 20;
+        let segWidth = canvas.width / segments;
+        
+        // Randomize pad location (middle segments)
+        let padIndex = Math.floor(Math.random() * (segments - 6)) + 3; 
+        
+        let lastH = canvas.height * 0.8;
+        for(let i=0; i<=segments; i++) {
+            if(i >= padIndex && i <= padIndex + 2) {
+                // Flat pad
+                terrain.push({x: i * segWidth, y: lastH});
+                if(i === padIndex + 1) {
+                    landingPad.x = (padIndex) * segWidth;
+                    landingPad.y = lastH;
+                    landingPad.width = segWidth * 2;
+                }
+            } else {
+                // Jagged crater
+                lastH += (Math.random() * 80 - 40);
+                if(lastH > canvas.height * 0.95) lastH = canvas.height * 0.95;
+                if(lastH < canvas.height * 0.6) lastH = canvas.height * 0.6;
+                terrain.push({x: i * segWidth, y: lastH});
+            }
+        }
+    }
+
+    function initGame() {
+        resizeCanvas(); // also generates terrain
+        
+        player.x = canvas.width / 2;
+        player.y = 50;
+        player.vx = (Math.random() * 2) - 1; // Slight random drift
+        player.vy = 0;
+        fuel = 100;
+
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Descending...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function drawLander() {
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        
+        // Thrust flames
+        if (fuel > 0) {
+            if (keys.ArrowUp) {
+                ctx.fillStyle = '#fbbf24';
+                ctx.beginPath(); ctx.moveTo(-6, player.height/2); ctx.lineTo(0, player.height/2 + 15 + Math.random()*10); ctx.lineTo(6, player.height/2); ctx.fill();
+            }
+            if (keys.ArrowLeft) {
+                ctx.fillStyle = '#60a5fa';
+                ctx.beginPath(); ctx.moveTo(player.width/2, -5); ctx.lineTo(player.width/2 + 10 + Math.random()*5, -5); ctx.lineTo(player.width/2, 5); ctx.fill();
+            }
+            if (keys.ArrowRight) {
+                ctx.fillStyle = '#60a5fa';
+                ctx.beginPath(); ctx.moveTo(-player.width/2, -5); ctx.lineTo(-player.width/2 - 10 - Math.random()*5, -5); ctx.lineTo(-player.width/2, 5); ctx.fill();
+            }
+        }
+
+        // Ascent Stage (Gold foil)
+        ctx.fillStyle = '#fcd34d';
+        ctx.fillRect(-12, -player.height/2 + 5, 24, 15);
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(-8, -player.height/2 + 8, 16, 8); // window
+        
+        // Descent Stage (Gray polygon)
+        ctx.fillStyle = '#94a3b8';
+        ctx.beginPath();
+        ctx.moveTo(-15, -player.height/2 + 20);
+        ctx.lineTo(15, -player.height/2 + 20);
+        ctx.lineTo(10, player.height/2);
+        ctx.lineTo(-10, player.height/2);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Landing Legs
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-10, player.height/2); ctx.lineTo(-player.width/2 - 5, player.height/2 + 10);
+        ctx.moveTo(10, player.height/2); ctx.lineTo(player.width/2 + 5, player.height/2 + 10);
+        ctx.stroke();
+        // Footpads
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(-player.width/2 - 8, player.height/2 + 10, 6, 3);
+        ctx.fillRect(player.width/2 + 2, player.height/2 + 10, 6, 3);
+
+        ctx.restore();
+    }
+
+    function drawTerrain() {
+        ctx.fillStyle = '#334155'; // Dark crater gray
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height);
+        for(let i=0; i<terrain.length; i++) {
+            ctx.lineTo(terrain[i].x, terrain[i].y);
+        }
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.closePath();
+        ctx.fill();
+
+        // Landing Pad
+        ctx.fillStyle = '#10b981'; // Green
+        ctx.fillRect(landingPad.x, landingPad.y, landingPad.width, 6);
+        ctx.strokeStyle = '#059669';
+        ctx.strokeRect(landingPad.x, landingPad.y, landingPad.width, 6);
+    }
+
+    function updatePhysics() {
+        // Apply Gravity
+        player.vy += gravity;
+
+        // Apply Thrust
+        if (fuel > 0) {
+            if (keys.ArrowUp) { player.vy -= thrustPower; fuel -= 0.3; }
+            if (keys.ArrowLeft) { player.vx += sideThrust; fuel -= 0.1; }
+            if (keys.ArrowRight) { player.vx -= sideThrust; fuel -= 0.1; }
+        }
+
+        player.x += player.vx;
+        player.y += player.vy;
+
+        // Screen wrap X
+        if(player.x < 0) player.x = canvas.width;
+        if(player.x > canvas.width) player.x = 0;
+
+        // Check Ground Collision
+        // Simple bounding box check against terrain line segments
+        let legY = player.y + player.height/2 + 10; // Bottom of legs
+        let hit = false;
+        let surfaceY = canvas.height;
+
+        // Find terrain segment directly under player
+        for(let i=0; i<terrain.length-1; i++) {
+            if(player.x >= terrain[i].x && player.x <= terrain[i+1].x) {
+                // Linear interpolation to find exact Y
+                let pct = (player.x - terrain[i].x) / (terrain[i+1].x - terrain[i].x);
+                surfaceY = terrain[i].y + pct * (terrain[i+1].y - terrain[i].y);
+                if (legY >= surfaceY) hit = true;
+                break;
+            }
+        }
+
+        if (hit) {
+            // Check if on pad
+            let padCenter = landingPad.x + landingPad.width/2;
+            let onPad = (player.x > landingPad.x && player.x < landingPad.x + landingPad.width);
+            
+            let speed = Math.sqrt(player.vx*player.vx + player.vy*player.vy);
+            
+            if (onPad && speed <= maxSafeSpeed) {
+                gameOver(true, "The Eagle Has Landed!");
+            } else {
+                gameOver(false, onPad ? "Landed Too Fast! Crashed." : "Missed the Pad! Crashed.");
+            }
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        // Clear canvas
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw static stars
+        ctx.fillStyle = '#ffffff';
+        for(let i=0; i<20; i++){
+            let px = (Math.sin(i*123) * canvas.width + canvas.width) % canvas.width;
+            let py = (Math.cos(i*321) * canvas.height*0.6 + canvas.height) % (canvas.height*0.6);
+            ctx.fillRect(px, py, 1, 1);
+        }
+
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawTerrain();
+        drawLander();
+
+        // Draw HUD
+        let speed = Math.sqrt(player.vx*player.vx + player.vy*player.vy);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Fuel:  ${Math.max(0, Math.floor(fuel))}%`, 10, 25);
+        ctx.fillStyle = speed > maxSafeSpeed ? "#ff6b6b" : "#4ef0a8"; 
+        ctx.fillText(`Speed: ${speed.toFixed(1)}`, 10, 45);
+        
+        // Draw Touch Zones hint if mobile
+        if ('ontouchstart' in window) {
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            ctx.fillRect(0, canvas.height*0.5, canvas.width*0.3, canvas.height*0.5); // Left
+            ctx.fillRect(canvas.width*0.7, canvas.height*0.5, canvas.width*0.3, canvas.height*0.5); // Right
+            ctx.font = "10px sans-serif";
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.fillText("TAP LEFT", 10, canvas.height - 10);
+            ctx.fillText("TAP UP", canvas.width/2 - 15, canvas.height - 10);
+            ctx.fillText("TAP RIGHT", canvas.width - 60, canvas.height - 10);
+        }
+
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(win, reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Mission";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">${win ? '🦅' : '💥'}</div>
+            <h3 class="font-display text-2xl ${win ? 'text-star-green' : 'text-star-red'} mb-1 text-center px-4">${reason}</h3>
+            ${!achievements.playedGame && !win ? `<p class="text-space-100 text-sm mb-4">Land softly on the green pad for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(win && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Lunar Pilot Badge Unlocked!", "A perfect touchdown! +100 XP", "🦅");
+            updateProgress();
+        } else if (!win) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

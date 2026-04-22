@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Proteus — Interactive Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#02040a', 800: '#0a0f1c', 700: '#141d33', 500: '#23324d', 100: '#f1f5f9' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        proteus: { base: '#475569', dark: '#1e293b', light: '#94a3b8', crater: '#0f172a', glare: '#bfdbfe' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'tumble': 'tumble 50s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(71, 85, 105, 0.2)' },
+                            '100%': { boxShadow: '0 0 50px rgba(148, 163, 184, 0.4)' },
+                        },
+                        tumble: {
+                            '0%': { transform: 'rotate(0deg)' },
+                            '100%': { transform: 'rotate(360deg)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #02040a;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #3b82f6 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #475569 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #1e293b 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(10, 15, 28, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(2, 4, 10, 0.8), rgba(20, 29, 51, 0.9));
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(148, 163, 184, 0.6);
+            box-shadow: 0 0 20px rgba(148, 163, 184, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Proteus Graphic - Lumpy, dark, and highly cratered */
+        .orb-proteus {
+            background: radial-gradient(circle at 40% 40%, #64748b, #475569, #334155, #1e293b, #020617);
+            box-shadow: inset -15px -15px 30px rgba(0,0,0,0.9), 0 0 30px rgba(71, 85, 105, 0.3);
+            /* Irregular 'box-like' lumpy shape */
+            border-radius: 45% 55% 40% 60% / 55% 45% 60% 40%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* The Massive Pharos Crater */
+        .pharos-crater {
+            position: absolute;
+            top: 20%; left: 15%;
+            width: 50%; height: 50%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #1e293b, #0f172a, #020617);
+            box-shadow: inset 5px 5px 12px rgba(0,0,0,0.8), inset -2px -2px 6px rgba(255,255,255,0.1), 0 0 5px rgba(0,0,0,0.5);
+            z-index: 3;
+        }
+        
+        /* Smaller impact craters */
+        .orb-proteus::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 80% 30%, rgba(2, 6, 23, 0.7) 0%, transparent 10%),
+                radial-gradient(circle at 60% 75%, rgba(15, 23, 42, 0.8) 0%, transparent 15%),
+                radial-gradient(circle at 20% 80%, rgba(2, 6, 23, 0.6) 0%, transparent 12%);
+            mix-blend-mode: multiply;
+            z-index: 2;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(148, 163, 184, 0.2);
+            cursor: none; /* Hide default cursor for the flashlight effect */
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #02040a; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-proteus-base shadow-[0_0_40px_rgba(148,163,184,0.4)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-proteus-light text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-proteus-light">🌑</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="neptune.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-cyan">
+                <span class="text-xl">🪐</span>
+                <span class="font-display font-bold text-lg">Back to Neptune</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-proteus-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <!-- Progress/Gamification Bar -->
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-proteus-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Proteus Mission Progress</span>
+                    <span id="progressText" class="text-proteus-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-proteus-dark to-proteus-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Dark Mapper</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-proteus-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-proteus-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-proteus-light animate-ping"></span> Moon of Neptune
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Proteus</h1>
+                <p class="text-2xl text-proteus-light font-body italic mb-6">"The Hidden Polyhedron"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    Neptune's second-largest moon. It is the absolute largest object in the solar system that failed to become completely round, remaining a lumpy, battered, pitch-black rock hidden in its host planet's blinding glare.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-proteus-light text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(148,163,184,0.5)]">
+                    Explore the Darkness 👇
+                </button>
+            </div>
+            
+            <!-- Animated 3D-ish Moon -->
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-proteus animate-tumble animate-pulse-glow">
+                        <div class="pharos-crater"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Dashboard -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">🥔</div>
+                <div class="text-proteus-light font-mono text-xs uppercase mb-1">Shape</div>
+                <div class="font-bold text-xl text-star-red">Irregular</div>
+                <div class="text-[10px] text-space-100 mt-1">Largest non-sphere</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-proteus-light font-mono text-xs uppercase mb-1">Dimensions</div>
+                <div class="font-bold text-xl">420 km</div>
+                <div class="text-[10px] text-space-100 mt-1">Slightly boxy shape</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🌑</div>
+                <div class="text-proteus-light font-mono text-xs uppercase mb-1">Albedo</div>
+                <div class="font-bold text-xl">9.6%</div>
+                <div class="text-[10px] text-space-100 mt-1">Pitch black as soot</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🔭</div>
+                <div class="text-proteus-light font-mono text-xs uppercase mb-1">Discovered</div>
+                <div class="font-bold text-xl">1989</div>
+                <div class="text-[10px] text-space-100 mt-1">Found by Voyager 2</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Proteus data.</p>
+                </div>
+                <div class="hidden md:block text-proteus-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Shape -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'pr1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🥔</div>
+                            <h3 class="font-display text-xl text-proteus-light">The Shape</h3>
+                            <p class="text-space-100 text-xs mt-2">Why isn't it round?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-proteus-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-red mb-2 border-b border-proteus-dark pb-1 w-full">Failed Sphere</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>Proteus is the <strong>largest known irregular (non-spherical) body</strong> in the solar system.</li>
+                                <li>It measures about 420 km across. If it were just slightly larger, its own gravity would have been strong enough to crush it into a perfect sphere!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: The Glare -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'pr2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🕶️</div>
+                            <h3 class="font-display text-xl text-proteus-light">The Glare</h3>
+                            <p class="text-space-100 text-xs mt-2">Hidden in plain sight</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-proteus-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-cyan mb-2 border-b border-proteus-dark pb-1 w-full">Blinded by Neptune</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Proteus wasn't discovered from Earth because it orbits incredibly close to Neptune.</li>
+                                <li>Combined with its dark surface, the bright blue glare of Neptune completely blinded telescopes, hiding the moon until a probe flew close!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Pharos Crater -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'pr3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">💥</div>
+                            <h3 class="font-display text-xl text-proteus-light">Pharos Crater</h3>
+                            <p class="text-space-100 text-xs mt-2">A devastating impact</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-proteus-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-proteus-dark pb-1 w-full">A Near-Fatal Blow</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>Proteus is heavily cratered, but one stands out: <strong>Pharos</strong>.</li>
+                                <li>This crater is over 230 km wide—more than half the diameter of the entire moon! The impact that created it nearly shattered Proteus to pieces.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Composition -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'pr4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧊</div>
+                            <h3 class="font-display text-xl text-proteus-light">Composition</h3>
+                            <p class="text-space-100 text-xs mt-2">What is it made of?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-proteus-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-proteus-dark pb-1 w-full">Porous Ice and Rock</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>It is believed to be made of roughly equal amounts of water ice and dark silicate rock.</li>
+                                <li>It has a very low density, meaning it is likely highly porous (full of holes inside) like a giant space sponge.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Dark Albedo -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'pr5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌑</div>
+                            <h3 class="font-display text-2xl text-proteus-light">Albedo (Reflectivity)</h3>
+                            <p class="text-space-100 mt-2">As dark as soot</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-proteus-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-proteus-light mb-3 border-b border-proteus-dark pb-2 w-full">Swallowing Light</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-proteus-light font-mono font-bold block mb-1">Pitch Black:</span>
+                                    Proteus reflects only 9.6% of the sunlight that hits it. It is one of the darkest objects in the solar system, appearing as dark as soot.
+                                </div>
+                                <div>
+                                    <span class="text-proteus-light font-mono font-bold block mb-1">Color:</span>
+                                    Its surface is a neutral, deep gray. It shows no signs of geological activity or fresh ice to brighten it up.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: The Regular Orbit -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'pr6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔄</div>
+                            <h3 class="font-display text-2xl text-proteus-light">Orbit</h3>
+                            <p class="text-space-100 mt-2">The normal moon</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-proteus-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-gold mb-3 border-b border-proteus-dark pb-2 w-full">A Native Son</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    Unlike Triton, which was captured from the Kuiper belt and orbits backwards, Proteus is a "regular" moon. It formed out of the debris disk surrounding Neptune.
+                                </div>
+                                <div>
+                                    It orbits in the prograde direction (the same way Neptune spins) directly above Neptune's equator.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Discovery & Missions -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'pr7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-proteus-light">Discovery</h3>
+                            <p class="text-space-100 mt-2">Found by a robot</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-proteus-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-proteus-dark pb-2 w-full">Voyager 2 (1989)</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Because of the intense glare of Neptune, Proteus was completely invisible to Earth-based telescopes.</li>
+                                <li>It was finally discovered in 1989 by Stephen P. Synnott from the images beamed back by the <strong>Voyager 2</strong> spacecraft!</li>
+                                <li>Voyager 2 remains the only spacecraft to have ever visited Proteus.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Naming -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'pr8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌊</div>
+                            <h3 class="font-display text-2xl text-proteus-light">Mythology</h3>
+                            <p class="text-space-100 mt-2">What does the name mean?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-proteus-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-proteus-light mb-2 border-b border-proteus-dark pb-2 w-full">The Shapeshifter</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Following the convention of naming Neptunian moons after water deities, it is named after Proteus, a shape-shifting sea god from Greek mythology.</li>
+                                <li>This is highly appropriate, given the moon's strange, irregular, non-spherical shape!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-proteus-dark border-2 shadow-[0_0_30px_rgba(71,85,105,0.4)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-proteus-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Dark Surface Mapper</h2>
+                        <p class="text-space-100 mb-6">Proteus is completely hidden in darkness! Pilot Voyager 2 over the pitch-black surface using your scanner cone to see. Dodge the jagged <span class="text-proteus-light font-bold">Crater Peaks</span> and collect 5 <span class="text-star-cyan font-bold">Data Nodes</span> to earn the <span class="text-proteus-light font-bold">Dark Mapper Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-proteus-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Move your mouse across the canvas to steer Voyager's scanner.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Touch and drag to steer the scanner.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Start Scan
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-proteus-dark/30">
+                            <div class="text-5xl mb-2">🔦</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Systems Ready</h3>
+                            <p class="text-proteus-light text-sm">Click Start to enter darkness</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-space-900 rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-proteus-dark cursor-none"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-proteus-dark/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Proteus module.</p>
+            </div>
+
+            
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="quizStatus" class="flex items-center justify-between gap-4 mb-4 text-sm font-mono">
+                    <span class="text-space-100">Question <span id="quizCurrent">1</span> of <span id="quizTotal">20</span></span>
+                    <span class="proteus-light">Score: <span id="quizScore">0</span></span>
+                </div>
+
+                <div id="quizQuestionCard" class="quiz-q block glass-card rounded-2xl p-6">
+                    <h3 id="quizQuestion" class="text-xl font-bold mb-4 proteus-light"></h3>
+                    <div id="quizOptions" class="space-y-3"></div>
+                    <div id="quizExplanation" class="hidden mt-5 rounded-2xl border border-space-500 bg-space-900/80 p-4">
+                        <div id="quizAnswerLabel" class="font-bold mb-2"></div>
+                        <p id="quizExplanationText" class="text-space-100 leading-relaxed"></p>
+                    </div>
+                    <div class="mt-5 flex justify-end">
+                        <button id="nextQuestionBtn" onclick="goToNextQuestion()" disabled class="opacity-50 cursor-not-allowed bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full transition">Next</button>
+                    </div>
+                </div>
+
+                <div class="quiz-q hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-3">Score: <span id="scoreText" class="font-bold text-proteus-light">0/20</span></p>
+                    <p class="text-space-100 mb-6">Review the explanations as you play, then retry for a perfect score.</p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Proteus Module Complete!", "You have unlocked the 'Hidden Polyhedron' badge. Excellent exploration!", "🌑");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Proteus files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    
+    /* QUIZ LOGIC */
+    const quizQuestions = [{"question": "Why is Proteus famous among irregular solid worlds?", "options": ["It is thought to be the largest moon-shaped object that is still not fully round.", "It is the hottest moon in the solar system.", "It has giant rings of its own.", "It is brighter than fresh snow."], "correct": 0, "explanation": "Proteus is large for an irregular moon, yet it still did not become spherical. That makes it a classic example of a body near the size limit where self-gravity begins to round things out."}, {"question": "What does Proteus's lumpy shape tell scientists?", "options": ["It likely does not have enough self-gravity to fully pull itself into a sphere.", "It is made only of air.", "It was built by robots.", "It has no mass."], "correct": 0, "explanation": "Round shapes happen when gravity is strong enough to overcome the strength of the material. Proteus stayed irregular, so its self-gravity was not quite enough to smooth it into a sphere."}, {"question": "Voyager 2 is important to Proteus because...", "options": ["it discovered and photographed Proteus during the Neptune flyby.", "it pushed Proteus into a new orbit.", "it caused Proteus's largest crater.", "it built a base there."], "correct": 0, "explanation": "Voyager 2 flew by Neptune in 1989 and found several moons, including Proteus. Its images gave scientists their first close look at this dark, battered world."}, {"question": "Proteus is very dark. In astronomy, a low albedo means the surface...", "options": ["reflects only a small fraction of the sunlight that hits it.", "glows with its own strong light.", "is covered in oceans.", "must be very hot."], "correct": 0, "explanation": "Albedo is a measure of reflectivity. A low albedo means the surface is not very reflective, so it looks dark compared with brighter icy worlds."}, {"question": "Why does a dark surface matter when observing a small moon near bright Neptune?", "options": ["It can make the moon harder to notice because it reflects less light.", "It makes the moon louder.", "It forces the moon to move faster.", "It means the moon has an atmosphere."], "correct": 0, "explanation": "A dark moon is faint. When it is also close to a bright planet, observing it can be especially challenging because less reflected light reaches the telescope."}, {"question": "Proteus has a huge crater called Pharos. What does a giant crater suggest?", "options": ["A major impact struck the moon sometime in its history.", "The moon is hollow and made of paper.", "Its orbit is a straight line.", "It once had trees and rivers."], "correct": 0, "explanation": "Large craters are evidence of major collisions. Pharos shows that Proteus was hit hard by a sizable impactor in the past."}, {"question": "Why is it surprising that Proteus survived a giant impact and still exists as one moon?", "options": ["A very large impact can shatter or break apart a small world.", "Any impact instantly turns a moon into a star.", "No moon has ever been hit before.", "Impacts only happen on Earth."], "correct": 0, "explanation": "Small bodies can be badly damaged by huge impacts. The fact that Proteus still exists as one body tells scientists the collision was dramatic but not enough to completely destroy it."}, {"question": "Which description best matches Proteus's surface?", "options": ["Dark, heavily cratered, and irregular.", "Bright pink clouds over a deep ocean.", "Smooth plains covered in grass.", "A glowing atmosphere with no solid ground."], "correct": 0, "explanation": "Proteus is a dark, cratered moon with an irregular shape. Those traits define its appearance."}, {"question": "If Proteus were much bigger but made of similar material, what shape would you expect?", "options": ["More nearly spherical because stronger gravity would reshape it.", "More cube-shaped.", "Perfectly flat like paper.", "Invisible."], "correct": 0, "explanation": "Increasing mass strengthens self-gravity, which tends to pull material into a rounder shape. Bigger worlds are usually better at becoming spheres."}, {"question": "What does self-gravity mean?", "options": ["A body's own gravity pulling its material toward its center.", "Gravity made by a different planet only.", "A force that works only on gas.", "The same thing as sunlight."], "correct": 0, "explanation": "Self-gravity is the gravity an object creates because it has mass. It acts on the object's own material and can help shape it."}, {"question": "Why are cratered moons useful to planetary scientists?", "options": ["They preserve a record of impacts that helps reveal solar system history.", "They can only be studied with submarines.", "They erase all evidence of the past.", "They show that gravity is missing."], "correct": 0, "explanation": "Craters are like scars from ancient collisions. By studying them, scientists can infer how active and violent a moon's history may have been."}, {"question": "Which statement best explains Proteus's low reflectivity?", "options": ["Its surface material is dark and sends back only a small amount of sunlight.", "Neptune turns off light around it.", "It has no surface at all.", "It is made of pure mirrors."], "correct": 0, "explanation": "A dark composition causes low reflectivity. That means Proteus absorbs more light and reflects less back toward observers."}, {"question": "Compared with a bright icy moon, a dark moon of the same size is usually...", "options": ["harder to spot in reflected sunlight.", "easier to spot because darkness glows.", "always hotter.", "always closer to the Sun."], "correct": 0, "explanation": "Brightness in telescope images often depends on how much sunlight the surface reflects. Darker objects generally appear fainter if other things are similar."}, {"question": "What can a very large crater help scientists estimate?", "options": ["The size and energy of an impact event.", "The moon's favorite season.", "How many people live there.", "The moon's musical pitch."], "correct": 0, "explanation": "Crater size gives clues about how big and energetic an impact was. Scientists use impact physics to estimate what sort of object may have struck the moon."}, {"question": "Why is Proteus described as a world hidden in Neptune's glare?", "options": ["Neptune is bright nearby, making a small dark moon difficult to detect.", "Neptune covers it with clouds.", "Proteus lives inside Neptune's core.", "It only appears during eclipses on Earth."], "correct": 0, "explanation": "A faint object close to a bright planet can be hard to see because the planet's reflected light overwhelms the view. That is what is meant by glare."}, {"question": "Which comparison is most accurate?", "options": ["Proteus is more like a battered dark space rock than a smooth round mini-planet.", "Proteus is a gas giant.", "Proteus is brighter than fresh ice.", "Proteus has a thick breathable atmosphere."], "correct": 0, "explanation": "Proteus is solid, irregular, and heavily cratered, so the first choice best matches the evidence."}, {"question": "What is the main reason Proteus is not classified as a planet?", "options": ["It is a moon orbiting Neptune, not a body orbiting the Sun on its own path.", "It is too dark.", "It has a crater.", "It was seen by Voyager 2."], "correct": 0, "explanation": "Planets orbit the Sun directly. Proteus orbits Neptune, so it is a moon."}, {"question": "If a moon keeps many old craters, that usually means its surface...", "options": ["has not been heavily resurfaced for a long time.", "changes completely every day.", "is made of liquid water.", "has a thick weather system."], "correct": 0, "explanation": "Resurfacing processes such as volcanism, tectonics, or erosion can erase craters. A crater-rich surface usually means those processes have been limited."}, {"question": "What kind of evidence most strongly supports the idea that Proteus is irregular and cratered?", "options": ["Spacecraft images and careful measurements of its shape and surface.", "One guess from a single observer with no data.", "A weather forecast from Earth.", "A storybook drawing only."], "correct": 0, "explanation": "Scientists rely on images and measurements. Voyager 2's observations are especially important for what we know about Proteus."}, {"question": "Which summary best fits Proteus?", "options": ["A dark, irregular Neptunian moon discovered by Voyager 2, notable for staying non-spherical and for its giant crater Pharos.", "A captured dwarf planet with backward orbit and geysers.", "A tiny inner moon first found by stellar occultation.", "A moon famous for an extremely eccentric orbit discovered in 1949."], "correct": 0, "explanation": "That choice combines Proteus's key facts: discovered by Voyager 2, dark, irregular, and home to the giant crater Pharos."}];
+    let currentQ = 0;
+    let score = 0;
+    let questionOrder = [];
+    let currentQuestionSet = [];
+    let answeredCurrent = false;
+
+    function shuffleArray(items) {
+        const arr = [...items];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function prepareQuizData() {
+        questionOrder = shuffleArray(quizQuestions.map((_, idx) => idx));
+        currentQuestionSet = questionOrder.map((idx) => {
+            const q = JSON.parse(JSON.stringify(quizQuestions[idx]));
+            const options = q.options.map((text, index) => ({ text, isCorrect: index === q.correct }));
+            q.options = shuffleArray(options);
+            return q;
+        });
+    }
+
+    function renderQuestion() {
+        const total = currentQuestionSet.length;
+        const question = currentQuestionSet[currentQ];
+        answeredCurrent = false;
+
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('quizQuestionCard').classList.remove('hidden');
+        document.getElementById('quizQuestionCard').classList.add('block');
+        document.getElementById('quizCurrent').innerText = `${currentQ + 1}`;
+        document.getElementById('quizTotal').innerText = `${total}`;
+        document.getElementById('quizScore').innerText = `${score}`;
+        document.getElementById('quizQuestion').innerText = `${currentQ + 1}. ${question.question}`;
+
+        const optionsWrap = document.getElementById('quizOptions');
+        optionsWrap.innerHTML = '';
+        question.options.forEach((option) => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-proteus-light transition-all";
+            btn.innerText = option.text;
+            btn.onclick = () => answer(option.isCorrect, btn);
+            optionsWrap.appendChild(btn);
+        });
+
+        const explanationBox = document.getElementById('quizExplanation');
+        explanationBox.classList.add('hidden');
+        document.getElementById('quizAnswerLabel').innerText = '';
+        document.getElementById('quizExplanationText').innerText = '';
+
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.disabled = true;
+        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.remove('hover:bg-space-500');
+        nextBtn.innerText = currentQ === total - 1 ? 'See Results' : 'Next';
+    }
+
+    function answer(isCorrect, btnEl) {
+        if (answeredCurrent) return;
+        answeredCurrent = true;
+
+        const allButtons = document.querySelectorAll('#quizOptions button');
+        allButtons.forEach((btn) => {
+            btn.disabled = true;
+            btn.classList.remove('hover:bg-space-700', 'hover:border-proteus-light');
+            btn.classList.add('opacity-50');
+        });
+
+        btnEl.classList.remove('opacity-50', 'bg-space-800');
+
+        if (isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            score++;
+            addXP(20);
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+            const correctBtn = Array.from(allButtons).find((btn) => currentQuestionSet[currentQ].options.find((opt) => opt.text === btn.innerText && opt.isCorrect));
+            if (correctBtn) {
+                correctBtn.classList.remove('opacity-50', 'bg-space-800');
+                correctBtn.classList.add('bg-star-green/20', 'border-star-green', 'font-bold');
+            }
+        }
+
+        document.getElementById('quizScore').innerText = `${score}`;
+        const explanationBox = document.getElementById('quizExplanation');
+        document.getElementById('quizAnswerLabel').innerText = isCorrect ? 'Correct answer' : 'Explanation';
+        document.getElementById('quizAnswerLabel').className = isCorrect ? 'font-bold mb-2 text-star-green' : 'font-bold mb-2 text-star-red';
+        document.getElementById('quizExplanationText').innerText = currentQuestionSet[currentQ].explanation;
+        explanationBox.classList.remove('hidden');
+
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.add('hover:bg-space-500');
+    }
+
+    function goToNextQuestion() {
+        if (!answeredCurrent) return;
+        if (currentQ < currentQuestionSet.length - 1) {
+            currentQ++;
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('quizQuestionCard').classList.add('hidden');
+        document.getElementById('quizQuestionCard').classList.remove('block');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('q-result').classList.add('block');
+        document.getElementById('scoreText').innerText = `${score}/${currentQuestionSet.length}`;
+        document.getElementById('scoreText').classList.remove('text-star-green', 'text-star-red');
+
+        if(score === currentQuestionSet.length) {
+            document.getElementById('scoreText').classList.add('text-star-green');
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Perfect Knowledge", "Perfect score on the Proteus Quiz! +100 XP", "🧠");
+            }
+        } else {
+            document.getElementById('scoreText').classList.add('text-star-red');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        score = 0;
+        currentQ = 0;
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        prepareQuizData();
+        renderQuestion();
+    }
+
+    prepareQuizData();
+    renderQuestion();
+
+    /* MINI GAME: Dark Surface Mapper */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    // Player (Voyager Scanner) - Direct mouse/touch control
+    const player = {
+        x: 200, 
+        y: 400, 
+        width: 30,
+        height: 30,
+        scanRadius: 80, // Size of the flashlight hole
+        color: '#6ef0ff' 
+    };
+
+    let obstacles = []; // Dark jagged rocks
+    let collectibles = []; // Data nodes
+    let bgCraters = []; // Scenery for parallax
+
+    // Mouse/Touch Tracking
+    let targetX = 200;
+    let targetY = 400;
+    let isTouching = false;
+
+    function handlePointerMove(e) {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        
+        targetX = (clientX - rect.left) * (canvas.width / rect.width);
+        targetY = (clientY - rect.top) * (canvas.height / rect.height);
+        
+        isTouching = true;
+        if(e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+    }
+    function handlePointerUp() { isTouching = false; }
+
+    canvas.addEventListener('touchstart', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchend', handlePointerUp);
+    canvas.addEventListener('mousedown', handlePointerMove);
+    canvas.addEventListener('mousemove', handlePointerMove);
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerUp);
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width/2;
+        player.y = canvas.height - 100;
+        targetX = player.x + player.width/2;
+        targetY = player.y + player.height/2;
+        
+        obstacles = [];
+        collectibles = [];
+        dataCollected = 0;
+        isTouching = false;
+
+        // Init background craters (scenery)
+        bgCraters = Array.from({length: 15}).map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            r: Math.random() * 20 + 10,
+            speed: Math.random() * 2 + 1
+        }));
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Scanning...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity() {
+        let speedMult = 1 + (scoreFrames / 2000); 
+        let globalSpeedY = (Math.random() * 2 + 3) * speedMult; // Scroll speed down
+        
+        // Data Node
+        if (Math.random() > 0.7 && collectibles.length < 2) {
+            collectibles.push({
+                x: Math.random() * (canvas.width - 20) + 10,
+                y: -30, // Spawn at top
+                width: 20, 
+                height: 20,
+                speedY: globalSpeedY,
+                pulse: 0
+            });
+            return;
+        }
+
+        // Dark Rocks
+        let w = Math.random() * 60 + 40; 
+        let h = Math.random() * 40 + 30; 
+
+        obstacles.push({ 
+            x: Math.random() * (canvas.width - w), 
+            y: -h, 
+            width: w, 
+            height: h, 
+            speedY: globalSpeedY,
+            rotation: Math.random() * Math.PI*2,
+            rotSpeed: (Math.random() - 0.5) * 0.1
+        });
+    }
+
+    function drawGameScene() {
+        // 1. Draw solid dark background (moon surface)
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 2. Draw Scenery (Craters)
+        bgCraters.forEach(c => {
+            ctx.fillStyle = '#020617';
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, c.r, 0, Math.PI*2);
+            ctx.fill();
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            c.y += c.speed + (scoreFrames/1000);
+            if(c.y > canvas.height + c.r) {
+                c.y = -c.r;
+                c.x = Math.random() * canvas.width;
+            }
+        });
+
+        // 3. Draw Collectibles
+        for (let i = 0; i < collectibles.length; i++) {
+            let c = collectibles[i];
+            c.pulse += 0.1;
+            let glow = 8 + Math.sin(c.pulse) * 4;
+            
+            ctx.fillStyle = '#6ef0ff'; // Cyan data
+            ctx.shadowBlur = glow;
+            ctx.shadowColor = '#6ef0ff'; 
+            
+            ctx.beginPath();
+            ctx.moveTo(c.x, c.y - c.height/2);
+            ctx.lineTo(c.x + c.width/2, c.y);
+            ctx.lineTo(c.x, c.y + c.height/2);
+            ctx.lineTo(c.x - c.width/2, c.y);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.shadowBlur = 0;
+        }
+
+        // 4. Draw Obstacles (Dark Rocks)
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            ctx.save();
+            ctx.translate(o.x + o.width/2, o.y + o.height/2);
+            ctx.rotate(o.rotation);
+            
+            ctx.fillStyle = '#1e293b'; // slightly lighter than bg
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 3;
+            
+            ctx.beginPath();
+            ctx.moveTo(-o.width/2, -o.height/3);
+            ctx.lineTo(-o.width/4, -o.height/2);
+            ctx.lineTo(o.width/3, -o.height/2);
+            ctx.lineTo(o.width/2, o.height/4);
+            ctx.lineTo(o.width/4, o.height/2);
+            ctx.lineTo(-o.width/3, o.height/2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+
+        // 5. Draw Player (Probe reticle)
+        ctx.strokeStyle = '#4ef0a8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(player.x + player.width/2, player.y + player.height/2, player.width/2, 0, Math.PI*2);
+        ctx.stroke();
+        
+        ctx.fillStyle = '#4ef0a8';
+        ctx.beginPath();
+        ctx.arc(player.x + player.width/2, player.y + player.height/2, 3, 0, Math.PI*2);
+        ctx.fill();
+    }
+
+    function checkCollisionRect(r1, r2) {
+        return !(r2.x > r1.x + r1.width || 
+                 r2.x + r2.width < r1.x || 
+                 r2.y > r1.y + r1.height ||
+                 r2.y + r2.height < r1.y);
+    }
+
+    function updatePhysics() {
+        // Smoothly move player to target
+        let dx = targetX - (player.x + player.width/2);
+        let dy = targetY - (player.y + player.height/2);
+        player.x += dx * 0.15; // LERP
+        player.y += dy * 0.15;
+
+        // Clamp to screen
+        if(player.x < 0) player.x = 0;
+        if(player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+        if(player.y < 0) player.y = 0;
+        if(player.y > canvas.height - player.height) player.y = canvas.height - player.height;
+
+        let pRect = { x: player.x + 5, y: player.y + 5, width: player.width - 10, height: player.height - 10 };
+
+        // Spawning
+        let spawnRate = Math.max(25, 45 - Math.floor(scoreFrames/100)); 
+        if (frames % spawnRate === 0) spawnEntity();
+
+        // Update Collectibles
+        for (let i = collectibles.length - 1; i >= 0; i--) {
+            collectibles[i].y += collectibles[i].speedY; // Move down
+            
+            // Collectible uses center point
+            let cRect = { x: collectibles[i].x - collectibles[i].width/2, y: collectibles[i].y - collectibles[i].height/2, width: collectibles[i].width, height: collectibles[i].height };
+
+            if (checkCollisionRect(pRect, cRect)) {
+                dataCollected++;
+                addXP(10);
+                collectibles.splice(i, 1);
+                continue;
+            }
+
+            if (collectibles[i].y > canvas.height + 20) {
+                collectibles.splice(i, 1);
+            }
+        }
+
+        // Update Obstacles
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].y += obstacles[i].speedY; // Move down
+            
+            // Rough collision for jagged rock (use slightly smaller box)
+            let oRect = {x: obstacles[i].x + 5, y: obstacles[i].y + 5, width: obstacles[i].width - 10, height: obstacles[i].height - 10};
+
+            if (checkCollisionRect(pRect, oRect)) {
+                gameOver("Crashed into a Dark Peak!");
+                return;
+            }
+
+            if (obstacles[i].y > canvas.height + 20) {
+                obstacles.splice(i, 1);
+            }
+        }
+    }
+
+    function drawDarknessOverlay() {
+        // Draw the pitch black screen
+        ctx.fillStyle = '#020617'; // solid dark
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // "Punch a hole" in the darkness where the player is
+        ctx.globalCompositeOperation = 'destination-out';
+        
+        let cx = player.x + player.width/2;
+        let cy = player.y + player.height/2;
+        let gradient = ctx.createRadialGradient(cx, cy, 10, cx, cy, player.scanRadius);
+        
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 1)'); // completely transparent hole
+        gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.8)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)'); // fades to solid black
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(cx, cy, player.scanRadius, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Reset composite operation so next frame draws normally
+        ctx.globalCompositeOperation = 'source-over';
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        // Draw everything brightly first
+        drawGameScene();
+        
+        // Then cover it in darkness with a flashlight cutout
+        drawDarknessOverlay();
+
+        // HUD (drawn over darkness)
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        
+        ctx.fillStyle = "rgba(15, 23, 42, 0.8)";
+        ctx.fillRect(5, 5, 140, 60);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillStyle = "#6ef0ff"; // Cyan
+        ctx.fillText(`🔷 Scans: ${dataCollected}/5`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && dataCollected >= 5 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Dark Mapper Badge Unlocked!", "You survived the dark peaks and collected the data! +100 XP", "🔦");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Scan";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 5);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You survived for ${secondsAlive}s.</p>
+            <p class="text-star-cyan mb-4 text-sm font-bold">🔷 Collected ${dataCollected} Nodes</p>
+            ${!achievements.playedGame ? `<p class="text-proteus-light text-sm mb-4 text-center px-2">Survive 20s AND collect 5 nodes for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

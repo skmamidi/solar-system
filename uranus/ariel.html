@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ariel — Interactive Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#020617', 800: '#0f172a', 700: '#1e293b', 500: '#334155', 100: '#f8fafc' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        ariel: { base: '#cbd5e1', dark: '#475569', light: '#f8fafc', chasm: '#1e293b', ice: '#e2e8f0' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 80s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(203, 213, 225, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(248, 250, 252, 0.6)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #020617;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #67e8f9 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #cbd5e1 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #e2e8f0 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(203, 213, 225, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(2, 6, 23, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(203, 213, 225, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(248, 250, 252, 0.6);
+            box-shadow: 0 0 20px rgba(248, 250, 252, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Ariel Graphic - Bright Ice with Deep Chasmata (Canyons) */
+        .orb-ariel {
+            background: radial-gradient(circle at 35% 35%, #ffffff, #f8fafc, #cbd5e1, #94a3b8, #475569);
+            box-shadow: inset -20px -20px 40px rgba(0,0,0,0.8), 0 0 30px rgba(203, 213, 225, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* The Chasmata (Rift Valleys) */
+        .orb-ariel::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                repeating-linear-gradient(65deg, transparent, transparent 20px, rgba(30, 41, 59, 0.5) 20px, rgba(30, 41, 59, 0.5) 24px),
+                repeating-linear-gradient(-20deg, transparent, transparent 35px, rgba(15, 23, 42, 0.4) 35px, rgba(15, 23, 42, 0.4) 38px);
+            border-radius: 50%;
+            mix-blend-mode: multiply;
+            opacity: 0.8;
+            filter: blur(0.5px);
+        }
+
+        /* Occasional craters */
+        .orb-ariel::after {
+            content: '';
+            position: absolute;
+            top: 20%; left: 60%;
+            width: 15%; height: 15%;
+            background: radial-gradient(circle, rgba(15, 23, 42, 0.5) 0%, transparent 70%);
+            border-radius: 50%;
+            box-shadow: inset 1px 1px 3px rgba(0,0,0,0.4);
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(203, 213, 225, 0.15);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-ariel-base shadow-[0_0_40px_rgba(203,213,225,0.4)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-ariel-light text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-ariel-light">✨</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="uranus.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-cyan">
+                <span class="text-xl">🪩</span>
+                <span class="font-display font-bold text-lg">Back to Uranus</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-ariel-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-ariel-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Ariel Mission Progress</span>
+                    <span id="progressText" class="text-ariel-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-ariel-dark to-ariel-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Glider Dive</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-ariel-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-ariel-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-ariel-light animate-ping"></span> Moon of Uranus
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Ariel</h1>
+                <p class="text-2xl text-ariel-light font-body italic mb-6">"The Brightest Uranian"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    The brightest of Uranus's major moons. Its icy surface is a patchwork of ancient craters crossed by a vast, deep network of steep canyons (grabens) shaped by cryovolcanism!
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-ariel-light text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(248,250,252,0.5)]">
+                    Explore the Canyons 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-ariel animate-spin-slow animate-pulse-glow"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-cyan text-space-900 text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">✨</div>
+                <div class="text-ariel-light font-mono text-xs uppercase mb-1">Albedo</div>
+                <div class="font-bold text-xl text-star-cyan">Brightest</div>
+                <div class="text-xs text-space-100 mt-1">Reflects ~39% of light</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-ariel-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">1,159 km</div>
+                <div class="text-xs text-space-100 mt-1">4th largest of Uranus</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🥶</div>
+                <div class="text-ariel-light font-mono text-xs uppercase mb-1">Temperature</div>
+                <div class="font-bold text-xl">-213°C</div>
+                <div class="text-xs text-space-100 mt-1">Extreme cold</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🧊</div>
+                <div class="text-ariel-light font-mono text-xs uppercase mb-1">Composition</div>
+                <div class="font-bold text-xl">Half & Half</div>
+                <div class="text-xs text-space-100 mt-1">~50% water ice, 50% rock</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Ariel data.</p>
+                </div>
+                <div class="hidden md:block text-ariel-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Position & Discovery -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'a1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔭</div>
+                            <h3 class="font-display text-xl text-ariel-light">Discovery</h3>
+                            <p class="text-space-100 text-xs mt-2">Who found it?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ariel-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-ariel-dark pb-1 w-full">William Lassell</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>Discovered in <strong>1851</strong> by William Lassell (the same guy who discovered Triton!).</li>
+                                <li>It orbits ~190,000 km from Uranus, taking just 2.5 Earth days to complete one orbit.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: The Brightest -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'a2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">✨</div>
+                            <h3 class="font-display text-xl text-ariel-light">Albedo</h3>
+                            <p class="text-space-100 text-xs mt-2">The brightest of its kind</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ariel-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-cyan mb-2 border-b border-ariel-dark pb-1 w-full">Reflecting Light</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Ariel has the <strong>highest albedo</strong> (reflectivity) of all Uranian moons.</li>
+                                <li>It reflects about 39% of the sunlight that hits it, suggesting a very fresh, clean icy surface compared to its darker sibling Umbriel.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Naming Convention -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'a3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📖</div>
+                            <h3 class="font-display text-xl text-ariel-light">Naming</h3>
+                            <p class="text-space-100 text-xs mt-2">A break from mythology</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ariel-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-ariel-light mb-2 border-b border-ariel-dark pb-1 w-full">Literature Spirits</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>Unlike most moons named after Greek/Roman gods, moons of Uranus are named after characters from classic English literature.</li>
+                                <li>"Ariel" is a sylph (air spirit) in Alexander Pope's <em>The Rape of the Lock</em> and also a spirit in Shakespeare's <em>The Tempest</em>.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Composition -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'a4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🪨</div>
+                            <h3 class="font-display text-xl text-ariel-light">Composition</h3>
+                            <p class="text-space-100 text-xs mt-2">What is it made of?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ariel-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-ariel-dark pb-1 w-full">Half Rock, Half Ice</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Ariel is believed to consist of roughly equal parts <strong>water ice</strong> and dense <strong>rock</strong>.</li>
+                                <li>Scientists believe it may be differentiated—meaning the heavy rock sank to form a core, surrounded by an icy mantle.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Extreme Seasons -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'a5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">☀️</div>
+                            <h3 class="font-display text-2xl text-ariel-light">Extreme Seasons</h3>
+                            <p class="text-space-100 mt-2">The side effects of a sideways planet</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ariel-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-gold mb-3 border-b border-ariel-dark pb-2 w-full">42-Year Winters</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    Because Uranus rolls on its side (98° tilt), its moons orbit along its equator perpendicular to the sun.
+                                </div>
+                                <div>
+                                    This means Ariel's poles spend <strong>42 Earth years</strong> in continuous sunlight, followed by 42 Earth years of total, freezing darkness!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Chasmata & Cryovolcanism -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'a6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌋</div>
+                            <h3 class="font-display text-2xl text-ariel-light">Chasmata & Cryovolcanism</h3>
+                            <p class="text-space-100 mt-2">The most distinct surface feature</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ariel-dark flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-star-cyan mb-2 border-b border-ariel-dark pb-1 w-full">Rift Valleys of Ice</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Ariel's surface is crisscrossed by an extensive network of <strong>grabens</strong> (deep, steep-sided rift valleys or canyons) called <strong>Chasmata</strong>.</li>
+                                <li>The floors of these canyons are incredibly smooth, showing very few craters.</li>
+                                <li>Scientists believe this is proof of past <strong>cryovolcanism</strong> (ice volcanoes)—warm, slushy liquid water/ammonia erupted from inside the moon, filling the valleys and freezing over into fresh, smooth ice!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Voyager 2 Mission -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'a7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-ariel-light">Voyager 2</h3>
+                            <p class="text-space-100 mt-2">The only visitor</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ariel-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-ariel-dark pb-2 w-full">A Brief Encounter</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>The NASA <strong>Voyager 2</strong> probe is the only spacecraft to have ever visited Ariel, making a flyby in January 1986.</li>
+                                <li>Because of Ariel's extreme seasons, the northern hemisphere was pitched into total darkness. Voyager 2 was only able to photograph and map about <strong>35% of the moon's surface</strong>!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Kachina Chasmata -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'a8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🕳️</div>
+                            <h3 class="font-display text-2xl text-ariel-light">Kachina Chasmata</h3>
+                            <p class="text-space-100 mt-2">The great canyon</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ariel-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-ariel-light mb-2 border-b border-ariel-dark pb-2 w-full">A Massive Rift</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>The longest known canyon system on Ariel is the <strong>Kachina Chasmata</strong>.</li>
+                                <li>It is over 620 km long and up to 50 km wide!</li>
+                                <li>Like all features on Ariel, it is named after benevolent spirits from global mythology (Kachina refers to spirits in Pueblo culture).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-ariel-dark border-2 shadow-[0_0_30px_rgba(71,85,105,0.4)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-ariel-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Cryo-Chasm Glider</h2>
+                        <p class="text-space-100 mb-6">Pilot a drone through the massive rift valleys (grabens) of Ariel! Use your thrusters to glide up and down, dodging the jagged <span class="text-white font-bold">ice cliffs</span> and collecting 5 <span class="text-star-cyan font-bold">Cryolava Samples</span> to earn the <span class="text-ariel-light font-bold">Chasm Skimmer Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-ariel-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">↑</kbd> and <kbd class="bg-space-700 px-2 rounded">↓</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold top or bottom half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Enter Canyon
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-ariel-dark/30">
+                            <div class="text-5xl mb-2">🛰️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Targeting Graben</h3>
+                            <p class="text-ariel-light text-sm">Click Enter to glide</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-r from-[#020617] via-[#0f172a] to-[#1e293b] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-ariel-dark"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-ariel-dark/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Ariel module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="dynamicQuizArea" class="space-y-4">
+                    <!-- Dynamic quiz content will be injected here -->
+                </div>
+
+                <!-- Quiz Results -->
+                <div class="quiz-q hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold">0/20</span></p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Ariel Module Complete!", "You have unlocked the 'Chasm Skimmer' badge. Excellent exploration!", "✨");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Ariel files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    const moonColor = 'ariel-light';
+    const quizData = [
+        { q: "Ariel has the highest albedo of the Uranian moons. What percentage of sunlight does it reflect?", options: [{text: "15%", isCorrect: false}, {text: "39%", isCorrect: true}, {text: "65%", isCorrect: false}, {text: "99%", isCorrect: false}], explanation: "Ariel reflects roughly 39% of the sunlight that hits it, suggesting a relatively fresh, clean icy surface." },
+        { q: "What geological feature is most prominent on Ariel, indicating past tectonic activity?", options: [{text: "Massive Shield Volcanoes", isCorrect: false}, {text: "Deep Grabens (Chasmata)", isCorrect: true}, {text: "Liquid Methane Oceans", isCorrect: false}, {text: "Subduction Trenches", isCorrect: false}], explanation: "Ariel's surface is crisscrossed by an extensive network of grabens, which are steep-sided rift valleys or canyons known as Chasmata." },
+        { q: "What is the likely cause of the incredibly smooth floors found in Ariel's chasmata?", options: [{text: "Wind erosion", isCorrect: false}, {text: "Lava flows from molten rock", isCorrect: false}, {text: "Past cryovolcanism", isCorrect: true}, {text: "Glacial movement", isCorrect: false}], explanation: "The smooth canyon floors are evidence of cryovolcanism (ice volcanoes), where warm, slushy liquid erupted from inside the moon and froze over." },
+        { q: "Voyager 2 only mapped about 35% of Ariel's surface. What astronomical phenomenon caused this limitation?", options: [{text: "A dense atmosphere blocking light", isCorrect: false}, {text: "Uranus's 98-degree axial tilt causing a 42-year winter", isCorrect: true}, {text: "A camera failure during the flyby", isCorrect: false}, {text: "Ariel's rapid rotation blurring the images", isCorrect: false}], explanation: "Because Uranus and its moons are tilted 98 degrees, the northern hemisphere of Ariel was experiencing a 42-year total eclipse/winter, leaving it unobservable." },
+        { q: "Ariel is believed to have a differentiated interior. What does this imply about its structure?", options: [{text: "It is a loose pile of rubble", isCorrect: false}, {text: "It has a dense rocky core surrounded by an icy mantle", isCorrect: true}, {text: "Its rock and ice are mixed uniformly", isCorrect: false}, {text: "It is completely hollow", isCorrect: false}], explanation: "Differentiation means the heavier materials (like rock) sank to the center to form a core, while lighter materials (like ice) formed an outer mantle." },
+        { q: "Who discovered Ariel in 1851?", options: [{text: "William Herschel", isCorrect: false}, {text: "Galileo Galilei", isCorrect: false}, {text: "Gerard Kuiper", isCorrect: false}, {text: "William Lassell", isCorrect: true}], explanation: "Ariel, along with Umbriel, was discovered by astronomer William Lassell in 1851 using a custom-built telescope." },
+        { q: "Unlike most moons in the solar system, Uranian moons are named after characters from which sources?", options: [{text: "Greek and Roman mythology", isCorrect: false}, {text: "English literature (Shakespeare and Pope)", isCorrect: true}, {text: "Norse mythology", isCorrect: false}, {text: "Famous astronomers", isCorrect: false}], explanation: "Most Uranian moons are named after characters from the works of William Shakespeare and Alexander Pope, diverging from classical mythology." },
+        { q: "Ariel orbits Uranus at a distance of approximately 190,000 km. How long does one complete orbit take?", options: [{text: "2.5 Earth days", isCorrect: true}, {text: "14 Earth days", isCorrect: false}, {text: "30 Earth days", isCorrect: false}, {text: "365 Earth days", isCorrect: false}], explanation: "Ariel completes one orbit around Uranus very quickly, taking just about 2.5 Earth days." },
+        { q: "What is the name of the longest known canyon system on Ariel?", options: [{text: "Valles Marineris", isCorrect: false}, {text: "Messina Chasma", isCorrect: false}, {text: "Kachina Chasmata", isCorrect: true}, {text: "Verona Rupes", isCorrect: false}], explanation: "The Kachina Chasmata is an enormous rift system on Ariel that extends over 620 kilometers in length." },
+        { q: "The lack of massive impact craters on Ariel compared to Oberon suggests what about Ariel's surface?", options: [{text: "It is geologically younger and has been resurfaced", isCorrect: true}, {text: "It is much older than the other moons", isCorrect: false}, {text: "Uranus's gravity shielded it from meteors", isCorrect: false}, {text: "It has a thick atmosphere that burns up meteors", isCorrect: false}], explanation: "A relatively uncratered surface indicates that geological processes (like cryovolcanism) have recently wiped away or filled in older impact scars." },
+        { q: "Which process most likely provided the heat necessary for Ariel's past cryovolcanism?", options: [{text: "Solar radiation", isCorrect: false}, {text: "Tidal heating from ancient orbital resonances", isCorrect: true}, {text: "Nuclear fusion in its core", isCorrect: false}, {text: "Friction from its rapid rotation", isCorrect: false}], explanation: "In the past, Ariel likely entered an orbital resonance with other moons, causing Uranus's gravity to stretch and squeeze it, generating internal tidal heat." },
+        { q: "Ariel's composition is roughly half water ice and half dense rock. Which other Uranian moon shares a nearly identical composition ratio and size, making them 'twins'?", options: [{text: "Miranda", isCorrect: false}, {text: "Titania", isCorrect: false}, {text: "Oberon", isCorrect: false}, {text: "Umbriel", isCorrect: true}], explanation: "Ariel and Umbriel are often considered twins due to their incredibly similar sizes and densities, despite their vastly different surface brightness." },
+        { q: "At what temperature does Ariel's surface hover, making it one of the coldest places in the solar system?", options: [{text: "0°C", isCorrect: false}, {text: "-50°C", isCorrect: false}, {text: "-100°C", isCorrect: false}, {text: "-213°C", isCorrect: true}], explanation: "Due to its immense distance from the Sun, Ariel's surface temperature is a frigid -213°C." },
+        { q: "What exactly are 'grabens', the type of canyons found on Ariel?", options: [{text: "Rift valleys formed by the stretching and dropping of the moon's crust", isCorrect: true}, {text: "Trenches carved by ancient rivers", isCorrect: false}, {text: "Craters formed by oblique impacts", isCorrect: false}, {text: "Sinkholes caused by collapsing caves", isCorrect: false}], explanation: "Grabens are tectonic features where a block of crust drops down between two parallel fault lines due to extensional (pulling apart) forces." },
+        { q: "Ariel's equator is nearly perpendicular to its orbit around the Sun. How long does a single season (e.g., summer) last at its poles?", options: [{text: "3 Earth months", isCorrect: false}, {text: "1 Earth year", isCorrect: false}, {text: "42 Earth years", isCorrect: true}, {text: "84 Earth years", isCorrect: false}], explanation: "Because Uranus orbits the Sun every 84 years, its 98-degree tilt subjects its moons' poles to 42 years of continuous sunlight followed by 42 years of darkness." },
+        { q: "In planetary geology, what is 'cryovolcanism', which smoothed Ariel's canyons?", options: [{text: "The eruption of molten silicate rock", isCorrect: false}, {text: "The eruption of liquid volatiles like water, ammonia, or methane", isCorrect: true}, {text: "The violent explosion of trapped subsurface air", isCorrect: false}, {text: "Lava flows that freeze instantly in space", isCorrect: false}], explanation: "Cryovolcanism refers to 'ice volcanoes' that erupt fluids like water, ammonia, or methane instead of the molten rock seen on Earth." },
+        { q: "Which spacecraft holds the record as the *only* one to have flown past Ariel?", options: [{text: "Cassini", isCorrect: false}, {text: "New Horizons", isCorrect: false}, {text: "Voyager 2", isCorrect: true}, {text: "Galileo", isCorrect: false}], explanation: "NASA's Voyager 2 probe is the only spacecraft to have visited the Uranian system, making its flyby in January 1986." },
+        { q: "What mythological figure is the name 'Ariel' derived from in classic literature?", options: [{text: "A mermaid princess", isCorrect: false}, {text: "A sylph or air spirit", isCorrect: true}, {text: "A god of the sea", isCorrect: false}, {text: "A fiery demon", isCorrect: false}], explanation: "In Alexander Pope's 'The Rape of the Lock', Ariel is a sylph (air spirit), and in Shakespeare's 'The Tempest', Ariel is an airy spirit bound to Prospero." },
+        { q: "Ariel is the 4th largest of Uranus's moons. How does its gravity compare to Earth's?", options: [{text: "It is identical to Earth's", isCorrect: false}, {text: "It is extremely weak, only a tiny fraction of Earth's", isCorrect: true}, {text: "It is twice as strong as Earth's", isCorrect: false}, {text: "It has zero gravity", isCorrect: false}], explanation: "Due to its small size and lower mass, Ariel's surface gravity is incredibly weak compared to Earth's." },
+        { q: "What physical state was the erupting fluid on Ariel likely in during its cryovolcanic past?", options: [{text: "A warm, slushy mixture of water and ammonia", isCorrect: true}, {text: "Superheated steam", isCorrect: false}, {text: "Liquid molten iron", isCorrect: false}, {text: "A dry flow of fine dust", isCorrect: false}], explanation: "Scientists believe the cryomagma was a thick, slushy mixture of water ice and ammonia, which acted as an antifreeze to lower the melting point." }
+    ];
+
+    let currentQ = 0;
+    let score = 0;
+    let shuffledQuestions = [];
+
+    function shuffleArray(arr) {
+        let array = [...arr];
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function initQuiz() {
+        shuffledQuestions = shuffleArray(quizData).map(q => ({
+            ...q,
+            options: shuffleArray(q.options)
+        }));
+        currentQ = 0;
+        score = 0;
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('dynamicQuizArea').classList.remove('hidden');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const qData = shuffledQuestions[currentQ];
+        const container = document.getElementById('dynamicQuizArea');
+        
+        let html = `
+            <div class="quiz-q block">
+                <h3 class="text-xl font-bold mb-4 text-${moonColor}">Question ${currentQ + 1} of 20: <br/><span class="text-white mt-2 block">${qData.q}</span></h3>
+                <div class="space-y-3" id="optionsContainer">
+                    ${qData.options.map((opt, idx) => `
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-${moonColor} transition-all opt-btn" onclick="answer(${idx}, ${opt.isCorrect}, this)">${opt.text}</button>
+                    `).join('')}
+                </div>
+                <div id="explanationArea" class="hidden mt-6 p-4 rounded-xl bg-space-800 border border-space-500">
+                    <p class="text-sm text-space-100"><strong class="text-white">Explanation:</strong> ${qData.explanation}</p>
+                </div>
+                <button id="nextQBtn" onclick="nextQuestion()" class="hidden mt-6 w-full bg-space-700 text-white font-bold py-3 rounded-xl hover:bg-space-500 transition-colors">Next Question ▶</button>
+            </div>
+        `;
+        container.innerHTML = html;
+    }
+
+    function answer(optIdx, isCorrect, btnEl) {
+        const qData = shuffledQuestions[currentQ];
+        const buttons = document.querySelectorAll('.opt-btn');
+        
+        buttons.forEach((btn, idx) => {
+            btn.disabled = true;
+            btn.classList.remove('hover:bg-space-700', `hover:border-${moonColor}`);
+            if (qData.options[idx].isCorrect) {
+                btn.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            } else {
+                btn.classList.add('opacity-50');
+            }
+        });
+
+        if (isCorrect) {
+            score++;
+            addXP(5);
+        } else {
+            btnEl.classList.remove('opacity-50', 'bg-space-800');
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+        }
+
+        document.getElementById('explanationArea').classList.remove('hidden');
+        document.getElementById('nextQBtn').classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        currentQ++;
+        if (currentQ < 20) {
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('dynamicQuizArea').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('q-result').classList.add('block');
+        document.getElementById('scoreText').innerText = `${score}/20`;
+        
+        document.getElementById('scoreText').classList.remove('text-star-green', 'text-star-red', `text-${moonColor}`);
+
+        if(score >= 15) {
+            document.getElementById('scoreText').classList.add('text-star-green');
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Olympiad Scholar!", "Excellent performance! You passed the rigorous SciOly Quiz! +100 XP", "🧠");
+            }
+            document.getElementById('retryQuizBtn').classList.add('hidden');
+        } else {
+            document.getElementById('scoreText').classList.add('text-star-red');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        initQuiz();
+    }
+
+    window.addEventListener('DOMContentLoaded', initQuiz);
+
+    /* MINI GAME: Cryo-Chasm Glider (Horizontal side-scroller tunnel) */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    // Player (Drone) - Moves up/down, fixed X
+    const player = {
+        x: 50, 
+        y: 200, 
+        width: 35,
+        height: 20,
+        speed: 5,
+        color: '#f8fafc' 
+    };
+
+    let obstacles = []; // Ceiling and Floor of the chasm
+    let collectibles = []; // Cryolava pools/samples
+    
+    // Inputs
+    let keys = { ArrowUp: false, ArrowDown: false };
+    let isTouching = false;
+    let touchTargetY = 0;
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(['ArrowUp', 'ArrowDown'].includes(e.code)) {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(['ArrowUp', 'ArrowDown'].includes(e.code)) keys[e.code] = false; 
+    });
+    
+    // Touch/Mouse Support
+    function handlePointerMove(e) {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        touchTargetY = (clientY - rect.top) * (canvas.height / rect.height);
+        isTouching = true;
+        if(e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+    }
+    function handlePointerUp() { isTouching = false; }
+
+    canvas.addEventListener('touchstart', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchend', handlePointerUp);
+    canvas.addEventListener('mousedown', handlePointerMove);
+    canvas.addEventListener('mousemove', (e) => { if(isTouching) handlePointerMove(e); });
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerUp);
+
+    function initGame() {
+        resizeCanvas();
+        player.y = canvas.height / 2;
+        obstacles = [];
+        collectibles = [];
+        dataCollected = 0;
+        isTouching = false;
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Scanning...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let globalSpeedX = (Math.random() * 2 + 5) * speedMult; // Scroll speed left
+        
+        // Cryolava Sample (30% chance)
+        if (Math.random() > 0.7 && collectibles.length < 2) {
+            collectibles.push({
+                x: canvas.width + 20,
+                y: Math.random() * (canvas.height * 0.5) + (canvas.height * 0.25), // Spawn in middle
+                width: 20,
+                height: 20,
+                speedX: globalSpeedX,
+                pulse: 0
+            });
+            // Don't spawn crazy walls right where sample is
+            return;
+        }
+
+        // Tunnel Generation (Ceiling and Floor)
+        // Tunnel gets slightly narrower over time
+        let gap = Math.max(120, 220 - (scoreFrames / 20)); 
+        // Randomize center path
+        let centerY = Math.random() * (canvas.height - gap - 40) + (gap/2 + 20);
+        
+        let topHeight = centerY - (gap/2);
+        let bottomY = centerY + (gap/2);
+        let bottomHeight = canvas.height - bottomY;
+
+        let w = 40; // width of wall segment
+
+        obstacles.push({ x: canvas.width, y: 0, width: w, height: topHeight, speedX: globalSpeedX, isTop: true });
+        obstacles.push({ x: canvas.width, y: bottomY, width: w, height: bottomHeight, speedX: globalSpeedX, isTop: false });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        // Tilt slightly based on movement
+        let tilt = 0;
+        if(keys.ArrowUp || (isTouching && touchTargetY < player.y)) tilt = -0.2;
+        if(keys.ArrowDown || (isTouching && touchTargetY > player.y)) tilt = 0.2;
+        ctx.rotate(tilt);
+
+        // Thruster
+        ctx.fillStyle = '#38bdf8'; // Cyan flame
+        ctx.beginPath();
+        ctx.moveTo(-player.width/2, -player.height/4);
+        ctx.lineTo(-player.width/2 - 15 - Math.random()*5, 0);
+        ctx.lineTo(-player.width/2, player.height/4);
+        ctx.fill();
+
+        // Main body (Drone)
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(-player.width/2, -player.height/2, player.width, player.height);
+        
+        // Head/Sensor
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.arc(player.width/2, 0, player.height/2, Math.PI*1.5, Math.PI*0.5);
+        ctx.fill();
+        
+        // Window
+        ctx.fillStyle = '#020617';
+        ctx.fillRect(player.width/4, -player.height/4, 6, player.height/2);
+
+        ctx.restore();
+    }
+
+    function drawEntities() {
+        // Collectibles (Cryolava)
+        for (let i = 0; i < collectibles.length; i++) {
+            let c = collectibles[i];
+            c.pulse += 0.1;
+            let glow = 8 + Math.sin(c.pulse) * 4;
+            
+            ctx.fillStyle = '#6ef0ff'; // Cyan/blue
+            ctx.shadowBlur = glow;
+            ctx.shadowColor = '#6ef0ff';
+            
+            ctx.beginPath();
+            ctx.arc(c.x + c.width/2, c.y + c.height/2, c.width/2, 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(c.x + c.width/2 - 2, c.y + c.height/2 - 2, c.width/4, 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.shadowBlur = 0;
+        }
+
+        // Obstacles (Ice Cliffs)
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            
+            // Draw icy gradient blocks
+            let gradient = ctx.createLinearGradient(o.x, o.y, o.x, o.y + o.height);
+            if(o.isTop) {
+                gradient.addColorStop(0, '#0f172a');
+                gradient.addColorStop(1, '#475569');
+            } else {
+                gradient.addColorStop(0, '#475569');
+                gradient.addColorStop(1, '#0f172a');
+            }
+            
+            ctx.fillStyle = gradient; 
+            ctx.fillRect(o.x, o.y, o.width, o.height);
+            
+            // Snow/frost edge
+            ctx.fillStyle = 'rgba(241, 245, 249, 0.3)';
+            if(o.isTop) {
+                ctx.fillRect(o.x, o.height - 4, o.width, 4);
+            } else {
+                ctx.fillRect(o.x, o.y, o.width, 4);
+            }
+        }
+    }
+
+    function drawBackground() {
+        // Gradient background representing looking deep into the canyon
+        let grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+        grad.addColorStop(0, '#020617'); 
+        grad.addColorStop(1, '#0f172a'); 
+        
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Speed lines for depth
+        ctx.fillStyle = 'rgba(241, 245, 249, 0.05)';
+        for(let i=0; i<5; i++){
+            let py = (i * 100) % canvas.height;
+            let px = (canvas.width - ((scoreFrames * 4 + i * 50) % canvas.width));
+            ctx.fillRect(px, py, 40, 2);
+        }
+    }
+
+    function checkCollisionRect(r1, r2) {
+        return !(r2.x > r1.x + r1.width || 
+                 r2.x + r2.width < r1.x || 
+                 r2.y > r1.y + r1.height ||
+                 r2.y + r2.height < r1.y);
+    }
+
+    function updatePhysics() {
+        // Player Movement (Vertical only)
+        if (keys.ArrowUp) player.y -= player.speed;
+        if (keys.ArrowDown) player.y += player.speed;
+
+        if (isTouching) {
+            let dy = touchTargetY - (player.y + player.height/2);
+            if (Math.abs(dy) > player.speed) {
+                player.y += (dy / Math.abs(dy)) * player.speed;
+            }
+        }
+
+        // Clamp to screen
+        if(player.y < 0) player.y = 0;
+        if(player.y > canvas.height - player.height) player.y = canvas.height - player.height;
+
+        // Forgiving hitbox
+        let pRect = { x: player.x + 5, y: player.y + 5, width: player.width - 10, height: player.height - 10 };
+
+        // Spawning
+        let spawnRate = Math.max(10, 25 - Math.floor(scoreFrames/100)); // Spawn columns frequently to make tunnel
+        if (frames % spawnRate === 0) spawnEntity();
+
+        // Update Collectibles
+        for (let i = collectibles.length - 1; i >= 0; i--) {
+            collectibles[i].x -= collectibles[i].speedX; // Move LEFT
+            
+            if (checkCollisionRect(pRect, collectibles[i])) {
+                dataCollected++;
+                addXP(10);
+                ctx.fillStyle = 'rgba(110, 240, 255, 0.4)'; // Cyan flash
+                ctx.fillRect(0,0, canvas.width, canvas.height);
+                collectibles.splice(i, 1);
+                continue;
+            }
+
+            if (collectibles[i].x + collectibles[i].width < 0) {
+                collectibles.splice(i, 1);
+            }
+        }
+
+        // Update Obstacles
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].x -= obstacles[i].speedX; // Move LEFT
+            
+            if (checkCollisionRect(pRect, obstacles[i])) {
+                gameOver("Crashed into the Ice Cliffs!");
+                return;
+            }
+
+            if (obstacles[i].x + obstacles[i].width < 0) {
+                obstacles.splice(i, 1);
+            }
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        drawBackground();
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawEntities();
+        drawPlayer();
+
+        // HUD
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let dist = Math.floor(secondsAlive * 12); // Distance deep into canyon
+        
+        ctx.fillStyle = "rgba(15, 23, 42, 0.8)";
+        ctx.fillRect(5, 5, 150, 60);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Distance: ${dist} km`, 10, 25);
+        ctx.fillStyle = "#6ef0ff"; // Cyan
+        ctx.fillText(`🧪 Samples: ${dataCollected}/5`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && dataCollected >= 5 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Chasm Skimmer Badge Unlocked!", "You survived the graben and gathered the cryolava! +100 XP", "✨");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Dive";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 5);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You flew for ${secondsAlive}s.</p>
+            <p class="text-star-cyan mb-4 text-sm font-bold">🧪 Collected ${dataCollected} Samples</p>
+            ${!achievements.playedGame ? `<p class="text-ariel-light text-sm mb-4 text-center px-2">Survive 20s AND collect 5 samples for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

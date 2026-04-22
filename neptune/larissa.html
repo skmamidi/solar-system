@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Larissa — Interactive Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#020617', 800: '#0f172a', 700: '#1e293b', 500: '#334155', 100: '#f8fafc' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        larissa: { base: '#64748b', dark: '#334155', light: '#94a3b8', shadow: '#0f172a', ring: '#38bdf8' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'tumble': 'tumble 45s linear infinite',
+                        'star-cross': 'starCross 10s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(100, 116, 139, 0.2)' },
+                            '100%': { boxShadow: '0 0 50px rgba(148, 163, 184, 0.4)' },
+                        },
+                        tumble: {
+                            '0%': { transform: 'rotate(0deg)' },
+                            '100%': { transform: 'rotate(360deg)' }
+                        },
+                        starCross: {
+                            '0%': { transform: 'translateX(200px)', opacity: 0 },
+                            '10%': { opacity: 1 },
+                            '45%': { opacity: 1 },
+                            '50%': { opacity: 0 }, /* occultation! */
+                            '55%': { opacity: 1 },
+                            '90%': { opacity: 1 },
+                            '100%': { transform: 'translateX(-200px)', opacity: 0 }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #020617;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #3b82f6 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #64748b 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #1e40af 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(100, 116, 139, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(2, 6, 23, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(148, 163, 184, 0.6);
+            box-shadow: 0 0 20px rgba(148, 163, 184, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Larissa Graphic - Dark, irregular, heavily cratered */
+        .orb-larissa {
+            background: radial-gradient(circle at 40% 40%, #94a3b8, #64748b, #475569, #1e293b, #0f172a);
+            box-shadow: inset -15px -15px 30px rgba(0,0,0,0.9), 0 0 30px rgba(100, 116, 139, 0.3);
+            /* Irregular potato shape */
+            border-radius: 48% 52% 45% 55% / 55% 45% 60% 40%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* Craters */
+        .orb-larissa::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 75% 25%, rgba(15, 23, 42, 0.6) 0%, transparent 15%),
+                radial-gradient(circle at 30% 60%, rgba(2, 6, 23, 0.7) 0%, transparent 20%),
+                radial-gradient(circle at 60% 80%, rgba(15, 23, 42, 0.5) 0%, transparent 10%);
+            mix-blend-mode: multiply;
+        }
+
+        /* Occultation Star */
+        .occultation-star {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px; height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fff, 0 0 20px #6ef0ff;
+            z-index: 1; /* Behind Larissa */
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(56, 189, 248, 0.15);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-larissa-base shadow-[0_0_40px_rgba(100,116,139,0.4)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-larissa-light text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-larissa-light">🌑</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="neptune.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-cyan">
+                <span class="text-xl">🪐</span>
+                <span class="font-display font-bold text-lg">Back to Neptune</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-larissa-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <!-- Progress/Gamification Bar -->
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-larissa-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Larissa Mission Progress</span>
+                    <span id="progressText" class="text-larissa-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-larissa-dark to-larissa-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Pilot Skimmer</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-larissa-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-larissa-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-larissa-light animate-ping"></span> Moon of Neptune
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Larissa</h1>
+                <p class="text-2xl text-larissa-light font-body italic mb-6">"The Doomed Rock"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    The fifth closest moon to Neptune. Discovered not by a telescope seeing the moon itself, but by noticing a star magically blink out! This heavily cratered world is spiraling inward to its ultimate destruction.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-larissa-light text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(148,163,184,0.5)]">
+                    Explore Larissa 👇
+                </button>
+            </div>
+            
+            <!-- Animated 3D-ish Moon -->
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="occultation-star animate-star-cross"></div>
+                    <div class="w-full h-full orb-larissa animate-tumble animate-pulse-glow"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Dashboard -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-cyan text-space-900 text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">✨</div>
+                <div class="text-larissa-light font-mono text-xs uppercase mb-1">Discovery</div>
+                <div class="font-bold text-xl text-star-cyan">Occultation</div>
+                <div class="text-[10px] text-space-100 mt-1">Found by blocking a star</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-larissa-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">194 km</div>
+                <div class="text-[10px] text-space-100 mt-1">4th largest of Neptune</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🥔</div>
+                <div class="text-larissa-light font-mono text-xs uppercase mb-1">Shape</div>
+                <div class="font-bold text-xl">Irregular</div>
+                <div class="text-[10px] text-space-100 mt-1">Lacks mass to be round</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">DANGER</div>
+                <div class="text-3xl mb-2">💥</div>
+                <div class="text-larissa-light font-mono text-xs uppercase mb-1">Ultimate Fate</div>
+                <div class="font-bold text-xl text-star-red">Torn Apart</div>
+                <div class="text-[10px] text-space-100 mt-1">Spiraling into Neptune</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Larissa data.</p>
+                </div>
+                <div class="hidden md:block text-larissa-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Discovery -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'l1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">✨</div>
+                            <h3 class="font-display text-xl text-larissa-light">Discovery</h3>
+                            <p class="text-space-100 text-xs mt-2">A magical trick of light</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-larissa-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-cyan mb-2 border-b border-larissa-dark pb-1 w-full">Stellar Occultation</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>Larissa was discovered in 1981 not by seeing it directly, but because it blocked the light of a distant star!</li>
+                                <li>Astronomers measuring the star's brightness saw a dip. This process is called <strong>occultation</strong>.</li>
+                                <li>It was officially confirmed by Voyager 2 in 1989.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Size & Shape -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'l2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🥔</div>
+                            <h3 class="font-display text-xl text-larissa-light">Size & Shape</h3>
+                            <p class="text-space-100 text-xs mt-2">Is it a perfect sphere?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-larissa-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-larissa-dark pb-1 w-full">An Irregular Potato</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Larissa is about 194 kilometers in diameter, making it Neptune's fourth-largest moon.</li>
+                                <li>Because it lacks sufficient mass, its gravity cannot crush it into a sphere, leaving it looking like an irregular, lumpy potato.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: The Surface -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'l3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">☄️</div>
+                            <h3 class="font-display text-xl text-larissa-light">The Surface</h3>
+                            <p class="text-space-100 text-xs mt-2">What does it look like?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-larissa-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-larissa-dark pb-1 w-full">Heavily Cratered</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>Voyager 2 photos show that Larissa is heavily cratered.</li>
+                                <li>Unlike Triton, which has active geysers wiping its surface clean, Larissa appears completely dead and shows no signs of geological modification.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Albedo -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'l4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌑</div>
+                            <h3 class="font-display text-xl text-larissa-light">Albedo</h3>
+                            <p class="text-space-100 text-xs mt-2">Is it bright or dark?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-larissa-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-larissa-dark pb-1 w-full">A Dark World</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Larissa is very dark, similar to Proteus.</li>
+                                <li>It reflects less than 10% of the sunlight that hits it. This made it incredibly difficult to spot against the bright glare of Neptune!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: The Orbit -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'l5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔄</div>
+                            <h3 class="font-display text-2xl text-larissa-light">The Orbit</h3>
+                            <p class="text-space-100 mt-2">A perilous path</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-larissa-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-gold mb-3 border-b border-larissa-dark pb-2 w-full">Below Synchronous Orbit</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-larissa-light font-mono font-bold block mb-1">Fast Flyer:</span>
+                                    Larissa orbits incredibly close to Neptune, zipping around the giant planet in just over 13 hours!
+                                </div>
+                                <div>
+                                    <span class="text-larissa-light font-mono font-bold block mb-1">The Drag:</span>
+                                    Because it orbits faster than Neptune spins, tidal forces from the planet are acting like a brake, slowly dragging the moon inward over millions of years.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: The Ultimate Fate -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'l6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">💥</div>
+                            <h3 class="font-display text-2xl text-larissa-light">Ultimate Fate</h3>
+                            <p class="text-space-100 mt-2">What will happen to it?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-larissa-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-red mb-2 border-b border-larissa-dark pb-1 w-full">Destruction by Gravity</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>As Larissa spirals closer to Neptune, it will eventually cross the <strong>Roche limit</strong>.</li>
+                                <li>At this distance, Neptune's gravitational pull on the near side of the moon will be so much stronger than on the far side that it will literally tear the moon to pieces!</li>
+                                <li>These pieces will spread out and form a brand new planetary ring around Neptune.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Voyager 2 Mission -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'l7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-larissa-light">Voyager 2</h3>
+                            <p class="text-space-100 mt-2">The only visitor</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-larissa-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-larissa-dark pb-2 w-full">Confirmation at Last</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>For 8 years after the 1981 occultation, scientists weren't fully sure Larissa existed.</li>
+                                <li>In 1989, NASA's <strong>Voyager 2</strong> flew through the Neptune system and finally captured the first direct photographs of Larissa, proving the occultation data was correct!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Mythology -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'l8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌊</div>
+                            <h3 class="font-display text-2xl text-larissa-light">Mythology</h3>
+                            <p class="text-space-100 mt-2">What does the name mean?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-larissa-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-larissa-light mb-2 border-b border-larissa-dark pb-2 w-full">The Sea Nymph</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>In Greek mythology, Larissa was a beautiful nymph of Thessaly and one of the lovers of Poseidon.</li>
+                                <li>Since Neptune is the Roman equivalent of Poseidon, naming the moon after his mythological counterpart's lover perfectly fits the naming convention of the Neptunian system!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-larissa-dark border-2 shadow-[0_0_30px_rgba(71,85,105,0.4)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-larissa-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Roche Limit Skimmer</h2>
+                        <p class="text-space-100 mb-6">Larissa orbits dangerously close to Neptune! Pilot your probe horizontally while fighting Neptune's intense gravity pulling you down. Dodge the jagged <span class="text-white font-bold">Ring Debris</span> and collect 5 <span class="text-star-cyan font-bold">Orbital Data Packets</span> to earn the <span class="text-larissa-light font-bold">Limit Skimmer Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-larissa-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Press and hold <kbd class="bg-space-700 px-2 rounded">SPACE</kbd> or <kbd class="bg-space-700 px-2 rounded">↑</kbd> to thrust upwards.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Touch and hold the game screen to thrust upwards.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Launch Probe
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-larissa-dark/30">
+                            <div class="text-5xl mb-2">🛰️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Engines Ready</h3>
+                            <p class="text-larissa-light text-sm">Click Launch to begin orbit</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#020617] via-[#0f172a] to-[#1e3a8a] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-larissa-dark"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-larissa-dark/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Larissa module.</p>
+            </div>
+
+            
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="quizStatus" class="flex items-center justify-between gap-4 mb-4 text-sm font-mono">
+                    <span class="text-space-100">Question <span id="quizCurrent">1</span> of <span id="quizTotal">20</span></span>
+                    <span class="larissa-light">Score: <span id="quizScore">0</span></span>
+                </div>
+
+                <div id="quizQuestionCard" class="quiz-q block glass-card rounded-2xl p-6">
+                    <h3 id="quizQuestion" class="text-xl font-bold mb-4 larissa-light"></h3>
+                    <div id="quizOptions" class="space-y-3"></div>
+                    <div id="quizExplanation" class="hidden mt-5 rounded-2xl border border-space-500 bg-space-900/80 p-4">
+                        <div id="quizAnswerLabel" class="font-bold mb-2"></div>
+                        <p id="quizExplanationText" class="text-space-100 leading-relaxed"></p>
+                    </div>
+                    <div class="mt-5 flex justify-end">
+                        <button id="nextQuestionBtn" onclick="goToNextQuestion()" disabled class="opacity-50 cursor-not-allowed bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full transition">Next</button>
+                    </div>
+                </div>
+
+                <div class="quiz-q hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-3">Score: <span id="scoreText" class="font-bold text-larissa-light">0/20</span></p>
+                    <p class="text-space-100 mb-6">Review the explanations as you play, then retry for a perfect score.</p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Larissa Module Complete!", "You have unlocked the 'Limit Skimmer' badge. Excellent work!", "🌑");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Larissa files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    
+    /* QUIZ LOGIC */
+    const quizQuestions = [{"question": "Why do scientists say Larissa is likely doomed in the very distant future?", "options": ["Its orbit is slowly shrinking, so it could cross Neptune's Roche limit and break apart.", "Its gravity is growing stronger every year, so it may swallow Neptune.", "Its orbit is stretching outward, so it will become a dwarf planet.", "It is heating up so fast that it will turn into a comet."], "correct": 0, "explanation": "Larissa orbits very close to Neptune. Tidal forces can slowly change close orbits. If Larissa ever moves inside the Roche limit, Neptune's gravity could pull it apart into debris that may form a ring."}, {"question": "Larissa was first detected by stellar occultation. What does that mean?", "options": ["A star suddenly looked brighter because Larissa reflected extra light.", "A star briefly disappeared or dimmed when Larissa passed in front of it.", "Larissa made a star explode.", "A star changed color and revealed Larissa's atmosphere."], "correct": 1, "explanation": "In a stellar occultation, astronomers watch a distant star. If a moon passes in front of it, the star's light briefly drops. That blink can reveal an object too faint to spot directly at first."}, {"question": "Why is Larissa irregular instead of nearly spherical?", "options": ["It spins too fast for gravity to work.", "It is made entirely of gas.", "It does not have enough mass for gravity to pull it into a round shape.", "Sunlight melted part of it away."], "correct": 2, "explanation": "Large worlds have enough self-gravity to pull themselves into a rounded shape. Small moons such as Larissa do not, so they keep lumpy, potato-like forms."}, {"question": "Voyager 2 was important to Larissa science because it...", "options": ["created Larissa with a rocket impact.", "took close-up images that confirmed and studied the moon.", "moved Larissa into a safer orbit.", "landed astronauts on Larissa."], "correct": 1, "explanation": "Voyager 2 flew past Neptune in 1989 and photographed its moons. Those images confirmed details about Larissa and gave scientists much better information than distant observations alone."}, {"question": "Larissa is one of Neptune's inner moons. Compared with faraway moons, inner moons usually orbit...", "options": ["closer and faster.", "closer and slower.", "farther and faster.", "farther and slower."], "correct": 0, "explanation": "Objects closer to a planet feel stronger gravity and usually complete their orbits more quickly. That is why inner moons tend to move faster than distant moons."}, {"question": "What best describes Larissa's surface?", "options": ["Smooth and covered with oceans.", "Heavily cratered and dark.", "Bright with giant active volcanoes.", "Wrapped in thick clouds."], "correct": 1, "explanation": "Larissa is a small dark moon with many impact craters. A cratered surface shows that collisions have shaped it over a very long time."}, {"question": "If a moon has many craters, what does that usually tell scientists?", "options": ["The surface has avoided major resurfacing for a long time.", "The moon has a deep breathable atmosphere.", "The moon is made of liquid metal.", "The moon formed only a few years ago."], "correct": 0, "explanation": "Lots of preserved craters usually mean the surface is old and has not been erased by weather, flowing lava, or tectonic activity. Larissa's battered appearance suggests an ancient surface."}, {"question": "Which statement best explains why small moons are often good at preserving impact scars?", "options": ["They have strong winds that carve craters deeper.", "They usually lack thick atmospheres, rain, and active geology that would erase craters.", "They are always made of soft ice cream-like rock.", "They orbit too fast for impacts to matter."], "correct": 1, "explanation": "Without thick air, rain, rivers, or much internal activity, many small moons keep old impact marks for extremely long times. That is why crater records can survive so well."}, {"question": "Why would crossing the Roche limit be dangerous for Larissa?", "options": ["Neptune's magnetic field would instantly freeze it.", "Neptune's tides could overcome Larissa's self-gravity and pull it apart.", "Its orbit would stop completely.", "The Sun would drag it away from Neptune."], "correct": 1, "explanation": "The Roche limit is the distance where tidal forces from a planet can become stronger than the small object's own gravity. For a weakly held-together moon, that can mean breakup into many pieces."}, {"question": "Larissa was named after a figure from Greek mythology. Why do many planetary moons have names like that?", "options": ["Scientists often use naming traditions connected to mythological families or themes.", "Only Greek words can be used in astronomy.", "A telescope can only detect mythological names.", "The moons named themselves."], "correct": 0, "explanation": "Astronomers follow naming systems approved by the International Astronomical Union. Neptune's moons often use names linked to sea gods, sea nymphs, and related mythological figures."}, {"question": "Suppose Larissa were much more massive but made of similar material. What shape would you expect then?", "options": ["Even more jagged and blocky.", "More nearly round because stronger gravity would reshape it.", "A giant flat disk.", "A hollow cube."], "correct": 1, "explanation": "As mass increases, self-gravity becomes better at pulling material evenly toward the center. That tends to make worlds rounder."}, {"question": "Why can astronomers learn about a moon even when they cannot visit it?", "options": ["They use light, motion, images, and timing measurements to test ideas.", "They guess and never check.", "They only wait for astronauts.", "They ask the moon directly."], "correct": 0, "explanation": "Science uses evidence from telescopes, spacecraft images, orbital measurements, and light curves. Larissa's discovery by occultation is a strong example of learning from careful measurements."}, {"question": "Which event most likely created many of Larissa's craters?", "options": ["Frequent impacts from space rocks over long periods.", "Trees falling over in strong winds.", "Rainstorms wearing holes into the ground.", "Cities digging giant pits."], "correct": 0, "explanation": "Craters on airless moons are mainly produced by impacts from meteoroids, asteroids, and other debris. Over billions of years, those impacts can heavily scar a surface."}, {"question": "Why is Neptune able to keep Larissa in orbit?", "options": ["Because Neptune's gravity pulls Larissa inward while Larissa's sideways motion keeps it falling around the planet.", "Because space has no gravity at all.", "Because Larissa is tied to Neptune by magnetic ropes.", "Because the Sun pushes Larissa directly into Neptune every day."], "correct": 0, "explanation": "An orbit is a balance: gravity pulls the moon inward, but the moon is moving sideways fast enough that it keeps missing the planet. So it continually falls around Neptune instead of straight down."}, {"question": "What would likely happen to new craters on a world with thick air, flowing water, and active volcanoes?", "options": ["They would stay unchanged forever.", "Many would erode or be covered more quickly than on Larissa.", "They would all turn into mountains at once.", "They would glow blue at night."], "correct": 1, "explanation": "Weather and geologic activity can erase craters. Larissa preserves craters well partly because it lacks those powerful resurfacing processes."}, {"question": "Which comparison is most reasonable?", "options": ["Larissa is more like a lumpy space rock than a planet-sized world.", "Larissa is bigger than Neptune.", "Larissa is a star because it reflects light.", "Larissa is made mostly of hot gas."], "correct": 0, "explanation": "Larissa is a small irregular moon, so its shape and surface are more similar to battered rocky or icy space bodies than to large round planets."}, {"question": "Why does a close moon often experience stronger tidal effects than a distant moon?", "options": ["Because tidal effects usually grow stronger at smaller distances.", "Because distant moons are heavier.", "Because close moons have no gravity.", "Because only faraway moons feel their planet."], "correct": 0, "explanation": "Gravity changes with distance. When a moon is very close to a planet, the difference in the planet's pull across the moon can be larger, producing stronger tides."}, {"question": "If Larissa blocks a star during an occultation, what might scientists measure carefully?", "options": ["How long the star's light dims and how sharply it changes.", "The star's favorite color.", "The moon's smell.", "Whether Neptune starts spinning backwards."], "correct": 0, "explanation": "The timing of a dip in starlight can help astronomers estimate a moon's size, position, or shape. Careful timing is one of the keys to occultation science."}, {"question": "What is one reason inner moon systems can be scientifically exciting?", "options": ["They can show strong gravitational interactions, fast orbits, and possible future changes.", "They are the only places where gravity exists.", "They never experience impacts.", "They are always easy to land on."], "correct": 0, "explanation": "Inner moons often move quickly and can be strongly affected by their planet's gravity and tides. Larissa is interesting partly because of its close orbit and long-term fate."}, {"question": "Which summary best fits Larissa?", "options": ["A small, irregular, dark inner moon of Neptune discovered through a star-blink event and later imaged by Voyager 2.", "A giant ringed planet with a thick atmosphere.", "A hot moon covered in forests and rivers.", "A captured dwarf planet larger than Earth's Moon."], "correct": 0, "explanation": "That choice combines the big ideas correctly: Larissa is small, irregular, close to Neptune, first detected by occultation, and later studied closely by Voyager 2."}];
+    let currentQ = 0;
+    let score = 0;
+    let questionOrder = [];
+    let currentQuestionSet = [];
+    let answeredCurrent = false;
+
+    function shuffleArray(items) {
+        const arr = [...items];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function prepareQuizData() {
+        questionOrder = shuffleArray(quizQuestions.map((_, idx) => idx));
+        currentQuestionSet = questionOrder.map((idx) => {
+            const q = JSON.parse(JSON.stringify(quizQuestions[idx]));
+            const options = q.options.map((text, index) => ({ text, isCorrect: index === q.correct }));
+            q.options = shuffleArray(options);
+            return q;
+        });
+    }
+
+    function renderQuestion() {
+        const total = currentQuestionSet.length;
+        const question = currentQuestionSet[currentQ];
+        answeredCurrent = false;
+
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('quizQuestionCard').classList.remove('hidden');
+        document.getElementById('quizQuestionCard').classList.add('block');
+        document.getElementById('quizCurrent').innerText = `${currentQ + 1}`;
+        document.getElementById('quizTotal').innerText = `${total}`;
+        document.getElementById('quizScore').innerText = `${score}`;
+        document.getElementById('quizQuestion').innerText = `${currentQ + 1}. ${question.question}`;
+
+        const optionsWrap = document.getElementById('quizOptions');
+        optionsWrap.innerHTML = '';
+        question.options.forEach((option) => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-larissa-light transition-all";
+            btn.innerText = option.text;
+            btn.onclick = () => answer(option.isCorrect, btn);
+            optionsWrap.appendChild(btn);
+        });
+
+        const explanationBox = document.getElementById('quizExplanation');
+        explanationBox.classList.add('hidden');
+        document.getElementById('quizAnswerLabel').innerText = '';
+        document.getElementById('quizExplanationText').innerText = '';
+
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.disabled = true;
+        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.remove('hover:bg-space-500');
+        nextBtn.innerText = currentQ === total - 1 ? 'See Results' : 'Next';
+    }
+
+    function answer(isCorrect, btnEl) {
+        if (answeredCurrent) return;
+        answeredCurrent = true;
+
+        const allButtons = document.querySelectorAll('#quizOptions button');
+        allButtons.forEach((btn) => {
+            btn.disabled = true;
+            btn.classList.remove('hover:bg-space-700', 'hover:border-larissa-light');
+            btn.classList.add('opacity-50');
+        });
+
+        btnEl.classList.remove('opacity-50', 'bg-space-800');
+
+        if (isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            score++;
+            addXP(20);
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+            const correctBtn = Array.from(allButtons).find((btn) => currentQuestionSet[currentQ].options.find((opt) => opt.text === btn.innerText && opt.isCorrect));
+            if (correctBtn) {
+                correctBtn.classList.remove('opacity-50', 'bg-space-800');
+                correctBtn.classList.add('bg-star-green/20', 'border-star-green', 'font-bold');
+            }
+        }
+
+        document.getElementById('quizScore').innerText = `${score}`;
+        const explanationBox = document.getElementById('quizExplanation');
+        document.getElementById('quizAnswerLabel').innerText = isCorrect ? 'Correct answer' : 'Explanation';
+        document.getElementById('quizAnswerLabel').className = isCorrect ? 'font-bold mb-2 text-star-green' : 'font-bold mb-2 text-star-red';
+        document.getElementById('quizExplanationText').innerText = currentQuestionSet[currentQ].explanation;
+        explanationBox.classList.remove('hidden');
+
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.add('hover:bg-space-500');
+    }
+
+    function goToNextQuestion() {
+        if (!answeredCurrent) return;
+        if (currentQ < currentQuestionSet.length - 1) {
+            currentQ++;
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('quizQuestionCard').classList.add('hidden');
+        document.getElementById('quizQuestionCard').classList.remove('block');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('q-result').classList.add('block');
+        document.getElementById('scoreText').innerText = `${score}/${currentQuestionSet.length}`;
+        document.getElementById('scoreText').classList.remove('text-star-green', 'text-star-red');
+
+        if(score === currentQuestionSet.length) {
+            document.getElementById('scoreText').classList.add('text-star-green');
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Perfect Knowledge", "Perfect score on the Larissa Quiz! +100 XP", "🧠");
+            }
+        } else {
+            document.getElementById('scoreText').classList.add('text-star-red');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        score = 0;
+        currentQ = 0;
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        prepareQuizData();
+        renderQuestion();
+    }
+
+    prepareQuizData();
+    renderQuestion();
+
+    /* MINI GAME: Roche Limit Skimmer (Horizontal Scroller) */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    // Player (Probe) - Fixed X, moving Y via gravity vs thrust
+    const player = {
+        x: 60, 
+        y: 200, 
+        width: 30,
+        height: 24,
+        vy: 0,
+        gravity: 0.15, // Neptune pulling down
+        thrust: -0.35, // Engine pushing up
+        color: '#f8fafc' 
+    };
+
+    let obstacles = []; // Debris
+    let collectibles = []; // Data nodes
+    let bgStars = [];
+
+    // Inputs
+    let isThrusting = false;
+
+    // Input Listeners
+    function handleThrustStart(e) {
+        if(!gameActive) return;
+        if(e.type === 'keydown' && !['Space', 'ArrowUp'].includes(e.code)) return;
+        if(e.type === 'keydown') e.preventDefault();
+        isThrusting = true;
+    }
+    function handleThrustEnd(e) {
+        if(e.type === 'keyup' && !['Space', 'ArrowUp'].includes(e.code)) return;
+        isThrusting = false;
+    }
+
+    window.addEventListener('keydown', handleThrustStart);
+    window.addEventListener('keyup', handleThrustEnd);
+    
+    // Touch Support
+    canvas.addEventListener('touchstart', handleThrustStart, {passive: false});
+    canvas.addEventListener('touchend', handleThrustEnd);
+    canvas.addEventListener('mousedown', handleThrustStart);
+    canvas.addEventListener('mouseup', handleThrustEnd);
+    canvas.addEventListener('mouseleave', handleThrustEnd);
+
+    function initGame() {
+        resizeCanvas();
+        player.y = canvas.height / 2;
+        player.vy = 0;
+        obstacles = [];
+        collectibles = [];
+        dataCollected = 0;
+        isThrusting = false;
+
+        // Background stars moving left
+        bgStars = Array.from({length: 30}).map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 1,
+            speed: Math.random() * 2 + 1
+        }));
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Hovering...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity(globalSpeedMult) {
+        // Collectible Data Node
+        if (Math.random() > 0.75 && collectibles.length < 2) {
+            collectibles.push({
+                x: canvas.width + 20,
+                y: Math.random() * (canvas.height - 40) + 20,
+                radius: 12,
+                speedX: (Math.random() * 2 + 3) * globalSpeedMult,
+                pulse: 0
+            });
+            return;
+        }
+
+        // Debris Rock
+        let size = Math.random() * 20 + 15;
+        obstacles.push({
+            x: canvas.width + size,
+            y: Math.random() * (canvas.height - size*2) + size,
+            radius: size,
+            speedX: (Math.random() * 3 + 4) * globalSpeedMult,
+            rotation: 0,
+            rotSpeed: (Math.random() - 0.5) * 0.1
+        });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        
+        // Tilt based on velocity
+        ctx.rotate(player.vy * 0.05);
+        
+        // Flame if thrusting
+        if(isThrusting) {
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.moveTo(0, player.height/2);
+            ctx.lineTo(player.width/2, player.height/2 + 15 + Math.random()*10);
+            ctx.lineTo(player.width, player.height/2);
+            ctx.fill();
+        }
+
+        // Hull
+        ctx.fillStyle = player.color;
+        ctx.beginPath();
+        ctx.ellipse(player.width/2, player.height/2, player.width/2, player.height/2, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Eye/Sensor
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.arc(player.width - 8, player.height/2, 4, 0, Math.PI*2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+
+    function drawEntities() {
+        // Collectibles
+        for (let i = 0; i < collectibles.length; i++) {
+            let c = collectibles[i];
+            c.pulse += 0.1;
+            let glow = 8 + Math.sin(c.pulse) * 4;
+            
+            ctx.fillStyle = '#6ef0ff'; 
+            ctx.shadowBlur = glow;
+            ctx.shadowColor = '#6ef0ff';
+            
+            // Diamond shape
+            ctx.beginPath();
+            ctx.moveTo(c.x, c.y - c.radius);
+            ctx.lineTo(c.x + c.radius, c.y);
+            ctx.lineTo(c.x, c.y + c.radius);
+            ctx.lineTo(c.x - c.radius, c.y);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.shadowBlur = 0;
+        }
+
+        // Rocks
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            ctx.save();
+            ctx.translate(o.x, o.y);
+            ctx.rotate(o.rotation);
+            
+            ctx.fillStyle = '#475569';
+            ctx.beginPath();
+            ctx.moveTo(-o.radius, -o.radius*0.5);
+            ctx.lineTo(-o.radius*0.5, -o.radius);
+            ctx.lineTo(o.radius*0.5, -o.radius*0.8);
+            ctx.lineTo(o.radius, 0);
+            ctx.lineTo(o.radius*0.5, o.radius);
+            ctx.lineTo(-o.radius*0.5, o.radius*0.8);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.fillStyle = '#334155';
+            ctx.beginPath();
+            ctx.arc(-o.radius/4, -o.radius/4, o.radius/3, 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+    }
+
+    function drawBackground(speedMult) {
+        // Dark blue space transitioning to Neptune blue at the very bottom
+        let grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        grad.addColorStop(0, '#020617'); // Space
+        grad.addColorStop(0.8, '#0f172a'); 
+        grad.addColorStop(1, '#1e3a8a'); // Neptune's Gravity Well
+        
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Stars/Dust moving left
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        bgStars.forEach(s => {
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
+            ctx.fill();
+            
+            s.x -= s.speed * speedMult;
+            if(s.x < 0) {
+                s.x = canvas.width;
+                s.y = Math.random() * canvas.height;
+            }
+        });
+        
+        // Danger zone indicator at bottom
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
+        ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
+        ctx.fillStyle = '#60a5fa';
+        ctx.font = "10px 'JetBrains Mono', monospace";
+        ctx.fillText("CRITICAL GRAVITY ZONE", canvas.width/2 - 60, canvas.height - 10);
+    }
+
+    function checkCollisionRectCircle(rect, circle) {
+        let cx = Math.max(rect.x, Math.min(circle.x, rect.x + rect.w));
+        let cy = Math.max(rect.y, Math.min(circle.y, rect.y + rect.h));
+        let dx = circle.x - cx;
+        let dy = circle.y - cy;
+        return (dx*dx + dy*dy) < (circle.radius * circle.radius);
+    }
+
+    function updatePhysics(speedMult) {
+        // Apply Gravity vs Thrust
+        if(isThrusting) {
+            player.vy += player.thrust;
+        } else {
+            player.vy += player.gravity; // Pulled down towards Neptune
+        }
+        
+        // Add some drag
+        player.vy *= 0.95;
+        player.y += player.vy;
+
+        // Check bounds (Die if you hit top or bottom)
+        if(player.y < 0) {
+            gameOver("Crashed into Orbital Debris!");
+            return;
+        }
+        if(player.y + player.height > canvas.height - 20) { // Slightly above bottom
+            gameOver("Pulled into Neptune's Atmosphere!");
+            return;
+        }
+
+        // Spawning
+        let spawnRate = Math.max(20, Math.floor(60 - scoreFrames/100)); 
+        if (frames % spawnRate === 0) spawnEntity(speedMult);
+
+        let pRect = {x: player.x, y: player.y, w: player.width, h: player.height};
+
+        // Update Collectibles
+        for (let i = collectibles.length - 1; i >= 0; i--) {
+            collectibles[i].x -= collectibles[i].speedX;
+            
+            if (checkCollisionRectCircle(pRect, collectibles[i])) {
+                dataCollected++;
+                addXP(10);
+                ctx.fillStyle = 'rgba(110, 240, 255, 0.3)';
+                ctx.fillRect(0,0, canvas.width, canvas.height);
+                collectibles.splice(i, 1);
+                continue;
+            }
+
+            if (collectibles[i].x + collectibles[i].radius < 0) collectibles.splice(i, 1);
+        }
+
+        // Update Obstacles
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].x -= obstacles[i].speedX;
+            obstacles[i].rotation += obstacles[i].rotSpeed;
+            
+            if (checkCollisionRectCircle(pRect, obstacles[i])) {
+                gameOver("Smashed by Ring Debris!");
+                return;
+            }
+
+            if (obstacles[i].x + obstacles[i].radius < 0) obstacles.splice(i, 1);
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let speedMult = 1 + (scoreFrames / 1500); 
+        
+        drawBackground(speedMult);
+        updatePhysics(speedMult);
+        if(!gameActive) return; 
+        
+        drawEntities();
+        drawPlayer();
+
+        // HUD
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Orbit Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillStyle = "#6ef0ff"; // Cyan
+        ctx.fillText(`🔷 Scans: ${dataCollected}/5`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && dataCollected >= 5 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Limit Skimmer Badge Unlocked!", "You survived the Roche Limit pull! +100 XP", "🚀");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Orbit";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 5);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You survived for ${secondsAlive}s.</p>
+            <p class="text-star-cyan mb-4 text-sm font-bold">🔷 Collected ${dataCollected} Nodes</p>
+            ${!achievements.playedGame ? `<p class="text-larissa-light text-sm mb-4 text-center px-2">Survive 20s AND collect 5 nodes for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

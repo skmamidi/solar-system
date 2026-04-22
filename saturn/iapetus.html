@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Iapetus — Interactive Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#03050a', 800: '#0a0d1c', 700: '#141a33', 500: '#232c4d', 100: '#fcfaf2' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        iapetus: { base: '#cbd5e1', dark: '#0f172a', light: '#f8fafc', ridge: '#475569', dust: '#334155' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'wobble': 'wobble 20s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(203, 213, 225, 0.2)' },
+                            '100%': { boxShadow: '0 0 50px rgba(248, 250, 252, 0.5)' },
+                        },
+                        wobble: {
+                            '0%, 100%': { transform: 'rotate(-5deg)' },
+                            '50%': { transform: 'rotate(5deg)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #03050a;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #f8fafc 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #475569 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #0f172a 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(20, 26, 51, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(203, 213, 225, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(10, 13, 28, 0.8), rgba(20, 26, 51, 0.9));
+            border: 1px solid rgba(203, 213, 225, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(248, 250, 252, 0.6);
+            box-shadow: 0 0 20px rgba(248, 250, 252, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Iapetus Graphic - The Yin-Yang Walnut */
+        .orb-iapetus {
+            /* Sharp split between dark Cassini Regio and bright Roncevaux Terra */
+            background: linear-gradient(110deg, #0f172a 45%, #475569 50%, #f8fafc 55%);
+            box-shadow: inset -20px -20px 40px rgba(0,0,0,0.7), 0 0 30px rgba(248, 250, 252, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* The Equatorial Ridge */
+        .orb-iapetus::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: -5%;
+            width: 110%; height: 5%;
+            background: linear-gradient(90deg, #1e293b, #94a3b8);
+            transform: translateY(-50%) rotate(-10deg);
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.8));
+            border-top: 1px solid rgba(255,255,255,0.4);
+            border-bottom: 2px solid rgba(0,0,0,0.8);
+        }
+
+        /* Giant craters representation */
+        .orb-iapetus::before {
+            content: '';
+            position: absolute;
+            top: 20%; right: 20%;
+            width: 25%; height: 25%;
+            background: radial-gradient(circle, rgba(148, 163, 184, 0.8) 0%, transparent 70%);
+            border-radius: 50%;
+            box-shadow: inset 3px 3px 5px rgba(0,0,0,0.4);
+            z-index: 1;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(203, 213, 225, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #03050a; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-iapetus-base shadow-[0_0_40px_rgba(203,213,225,0.4)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-iapetus-light text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-iapetus-light">🌗</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="saturn.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-gold">
+                <span class="text-xl">🪐</span>
+                <span class="font-display font-bold text-lg">Back to Saturn</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-iapetus-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-iapetus-ridge">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Iapetus Mission Progress</span>
+                    <span id="progressText" class="text-iapetus-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-iapetus-ridge to-iapetus-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Ridge Skimmer</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-iapetus-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-iapetus-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-iapetus-light animate-ping"></span> The Third Largest Moon
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Iapetus</h1>
+                <p class="text-2xl text-iapetus-base font-body italic mb-6">"The Two-Toned Moon"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    A bizarre world of extreme contrasts. Half of Iapetus is covered in bright, reflective ice, while the other half is as dark as coal. Adding to the mystery, a massive mountain ridge wraps around its entire equator, making it look like a giant space walnut!
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-iapetus-light text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(248,250,252,0.5)]">
+                    Explore the Anomaly 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center pt-6">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-iapetus animate-wobble animate-pulse-glow"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">EXTREME!</div>
+                <div class="text-3xl mb-2">🌗</div>
+                <div class="text-iapetus-base font-mono text-xs uppercase mb-1">Albedo (Reflectivity)</div>
+                <div class="font-bold text-xl text-white">4% vs 60%</div>
+                <div class="text-xs text-star-cyan mt-1 font-bold">Largest contrast in system</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-iapetus-base font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">1,469 km</div>
+                <div class="text-xs text-space-100 mt-1">3rd largest of Saturn</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">⛰️</div>
+                <div class="text-iapetus-base font-mono text-xs uppercase mb-1">Equatorial Ridge</div>
+                <div class="font-bold text-xl">13 km High</div>
+                <div class="text-xs text-space-100 mt-1">Taller than Mt. Everest!</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">❄️</div>
+                <div class="text-iapetus-base font-mono text-xs uppercase mb-1">Composition</div>
+                <div class="font-bold text-xl text-iapetus-base">Mostly Ice</div>
+                <div class="text-xs text-space-100 mt-1">~80% ice, ~20% rock</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Iapetus data.</p>
+                </div>
+                <div class="hidden md:block text-iapetus-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Position & Orbit -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'ia1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📍</div>
+                            <h3 class="font-display text-xl text-iapetus-light">The Outlier</h3>
+                            <p class="text-space-100 text-xs mt-2">Where does it orbit?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-iapetus-ridge flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-iapetus-ridge pb-1 w-full">Far and Tilted</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>Iapetus orbits much farther away from Saturn than the other regular large moons (like Titan or Enceladus).</li>
+                                <li>Its orbit is also highly inclined (tilted) relative to Saturn's ring plane, giving it a unique vantage point looking down on the rings.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Yin-Yang Discovery -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'ia2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔭</div>
+                            <h3 class="font-display text-xl text-iapetus-light">Discovery</h3>
+                            <p class="text-space-100 text-xs mt-2">The disappearing moon</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-iapetus-ridge flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-gold mb-2 border-b border-iapetus-ridge pb-1 w-full">Cassini's Mystery</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Discovered by Giovanni Domenico Cassini in 1671.</li>
+                                <li>He noticed he could only see Iapetus on the west side of Saturn, but it vanished on the east side!</li>
+                                <li>He correctly guessed that one side was incredibly dark, the other bright, and that the moon was tidally locked to Saturn.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: The Dark Side -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'ia3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚫</div>
+                            <h3 class="font-display text-xl text-iapetus-light">Cassini Regio</h3>
+                            <p class="text-space-100 text-xs mt-2">The pitch-black leading edge</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-iapetus-ridge flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-iapetus-ridge mb-2 border-b border-space-500 pb-1 w-full">Sweeping up Dust</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>The dark region is called <strong>Cassini Regio</strong>. It is as dark as coal (reflecting only 4% of light).</li>
+                                <li>Because Iapetus is tidally locked, this leading face plows through a massive, invisible ring of dark dust created by meteor impacts on the outer moon Phoebe!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Thermal Runaway -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'ia4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">☀️</div>
+                            <h3 class="font-display text-xl text-iapetus-light">Thermal Runaway</h3>
+                            <p class="text-space-100 text-xs mt-2">Why the split is so sharp</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-iapetus-ridge flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-red mb-2 border-b border-iapetus-ridge pb-1 w-full">Melting the Dark Side</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>The dust alone isn't enough to make it pitch black.</li>
+                                <li>The dark dust absorbs sunlight and heats up. This heat causes the water ice underneath to sublimate (turn to gas).</li>
+                                <li>The gas travels to the colder, trailing white side (<strong>Roncevaux Terra</strong>) and refreezes, leaving only dark rock behind. The darker it gets, the more it heats up!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: The Walnut Shape -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'ia5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌰</div>
+                            <h3 class="font-display text-2xl text-iapetus-light">The Space Walnut</h3>
+                            <p class="text-space-100 mt-2">The massive Equatorial Ridge</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-iapetus-ridge flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-iapetus-light mb-3 border-b border-iapetus-ridge pb-2 w-full">A Mountain Chain</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-iapetus-light font-mono font-bold block mb-1">Massive Scale:</span>
+                                    Running exactly along its equator is a towering mountain ridge. It is up to 13 km (8 miles) high and 20 km wide!
+                                </div>
+                                <div>
+                                    <span class="text-iapetus-light font-mono font-bold block mb-1">How did it form?</span>
+                                    Scientists are still debating. It could be the remains of an ancient ring system that crashed down, or crustal folding from when the moon slowed its spin.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Internal Structure -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'ia6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧊</div>
+                            <h3 class="font-display text-2xl text-iapetus-light">Composition</h3>
+                            <p class="text-space-100 mt-2">What is beneath the surface?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-iapetus-ridge flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-star-cyan mb-2 border-b border-iapetus-ridge pb-1 w-full">Mostly Ice</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Iapetus has a very low density (1.08 g/cm³), meaning it is composed almost entirely of water ice.</li>
+                                <li>It is estimated to be roughly 80% ice and 20% rock.</li>
+                                <li>Unlike Titan or Enceladus, it exhibits no current signs of geological activity, cryovolcanism, or subsurface oceans. It is frozen solid.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Cassini's Visit -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'ia7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-iapetus-light">The Cassini Mission</h3>
+                            <p class="text-space-100 mt-2">Solving the mysteries</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-iapetus-ridge flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-iapetus-ridge pb-2 w-full">The 2007 Flyby</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Before 2004, our best images were blurry photos from Voyager 1 & 2.</li>
+                                <li>On September 10, 2007, NASA's Cassini spacecraft performed a targeted, incredibly close flyby, passing just 1,640 km from the surface.</li>
+                                <li>This flyby provided the high-resolution images that finally confirmed the thermal runaway theory for its two-toned coloration!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Giant Craters -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'ia8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🕳️</div>
+                            <h3 class="font-display text-2xl text-iapetus-light">Giant Impact Basins</h3>
+                            <p class="text-space-100 mt-2">The scarred surface</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-iapetus-ridge flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-iapetus-base mb-2 border-b border-iapetus-ridge pb-2 w-full">Turgis and Engelier</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Iapetus is heavily cratered. The dark region (Cassini Regio) contains several massive impact basins.</li>
+                                <li>The largest, <strong>Turgis</strong>, is 580 km in diameter. The impact was so severe it created steep scarps (cliffs) up to 15 km high around its rim!</li>
+                                <li><strong>Engelier</strong> is another massive basin that actually destroyed a large section of the equatorial ridge.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-iapetus-ridge border-2 shadow-[0_0_30px_rgba(71,85,105,0.4)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-iapetus-ridge text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Walnut Ridge Skimmer</h2>
+                        <p class="text-space-100 mb-6">Pilot the Cassini probe low over the massive equatorial ridge of Iapetus! Use your thrusters to jump over the 13km-high mountain peaks and collect 5 <span class="text-star-cyan font-bold">Albedo Scans</span> to earn the <span class="text-iapetus-light font-bold">Ridge Surveyor Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-iapetus-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">↑</kbd> and <kbd class="bg-space-700 px-2 rounded">↓</kbd> Arrow Keys to fly.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold top or bottom half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Start Flyby
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-iapetus-ridge/30">
+                            <div class="text-5xl mb-2">🛰️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Targeting Ridge</h3>
+                            <p class="text-iapetus-light text-sm">Click Start to descend</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#020617] via-[#0f172a] to-[#1e293b] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-iapetus-ridge"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-iapetus-ridge/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Iapetus module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="quizActiveArea">
+                    <h3 id="questionText" class="text-xl font-bold mb-4 text-iapetus-light"></h3>
+                    <div id="optionsContainer" class="space-y-3 mb-6"></div>
+                    <div id="explanationBox" class="hidden p-4 rounded-xl border border-space-500 bg-space-800 text-sm mb-6 text-space-100"></div>
+                    <button id="nextQuestionBtn" onclick="nextQuestion()" class="hidden w-full bg-iapetus-light text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Next Question</button>
+                </div>
+
+                <!-- Quiz Results -->
+                <div class="hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold text-iapetus-light">0/20</span></p>
+                    <button id="retryQuizBtn" onclick="initQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Iapetus Module Complete!", "You have unlocked the 'Ridge Surveyor' badge. Excellent exploration!", "🌗");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Iapetus files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    const quizQuestions = [
+        {
+            q: "What gives Iapetus its distinct \"Yin-Yang\" two-toned appearance?",
+            options: [
+                { text: "Dark dust accumulating on the leading edge causing thermal runaway.", isCorrect: true },
+                { text: "Volcanic eruptions on one half.", isCorrect: false },
+                { text: "Shadows cast by Saturn's rings.", isCorrect: false },
+                { text: "A massive ocean covering one hemisphere.", isCorrect: false }
+            ],
+            explanation: "Dust from Phoebe coats the leading hemisphere. This dark dust absorbs sunlight, heats up, and sublimates the ice, which refreezes on the white trailing side."
+        },
+        {
+            q: "What geological feature makes Iapetus look like a giant space walnut?",
+            options: [
+                { text: "A towering 13km high ridge running precisely along its equator.", isCorrect: true },
+                { text: "A massive, 100km deep canyon.", isCorrect: false },
+                { text: "It was crushed by a larger moon into a flat shape.", isCorrect: false },
+                { text: "Six giant craters arranged in a line.", isCorrect: false }
+            ],
+            explanation: "The equatorial ridge is a massive chain of mountains unique to Iapetus, wrapping almost entirely around its equator."
+        },
+        {
+            q: "Who originally discovered Iapetus in 1671 and realized it was dark on one side?",
+            options: [
+                { text: "Giovanni Domenico Cassini", isCorrect: true },
+                { text: "Galileo Galilei", isCorrect: false },
+                { text: "Johannes Kepler", isCorrect: false },
+                { text: "Christiaan Huygens", isCorrect: false }
+            ],
+            explanation: "Cassini discovered Iapetus and correctly deduced its two-toned nature because he could only see it on one side of its orbit around Saturn."
+        },
+        {
+            q: "What is the name of the dark, pitch-black region on Iapetus?",
+            options: [
+                { text: "Cassini Regio", isCorrect: true },
+                { text: "Roncevaux Terra", isCorrect: false },
+                { text: "Macula Dark", isCorrect: false },
+                { text: "Sputnik Planitia", isCorrect: false }
+            ],
+            explanation: "Cassini Regio is the dark leading hemisphere of Iapetus, named after its discoverer."
+        },
+        {
+            q: "What is the name of the bright, icy trailing hemisphere of Iapetus?",
+            options: [
+                { text: "Roncevaux Terra", isCorrect: true },
+                { text: "Cassini Regio", isCorrect: false },
+                { text: "Tombaugh Regio", isCorrect: false },
+                { text: "Valhalla Basin", isCorrect: false }
+            ],
+            explanation: "Roncevaux Terra is the highly reflective trailing hemisphere, where sublimated ice from the dark side refreezes."
+        },
+        {
+            q: "Where does the dark dust that initially coats Iapetus come from?",
+            options: [
+                { text: "Meteor impacts on the outer moon Phoebe.", isCorrect: true },
+                { text: "Volcanic ash from Enceladus.", isCorrect: false },
+                { text: "Dust from the asteroid belt.", isCorrect: false },
+                { text: "Material shed by Saturn's main rings.", isCorrect: false }
+            ],
+            explanation: "Impacts on the dark, distant moon Phoebe create a massive, invisible ring of dust that Iapetus plows through as it orbits."
+        },
+        {
+            q: "Which physical process is responsible for making the dark side of Iapetus even darker over time?",
+            options: [
+                { text: "Thermal runaway (sublimation of ice).", isCorrect: true },
+                { text: "Continuous volcanic eruptions.", isCorrect: false },
+                { text: "Frequent asteroid impacts on that specific side.", isCorrect: false },
+                { text: "The solar wind stripping away the ice.", isCorrect: false }
+            ],
+            explanation: "As the dark dust heats up, it turns the underlying ice into gas (sublimation). The ice migrates away, leaving behind more concentrated dark material, accelerating the heating."
+        },
+        {
+            q: "How does Iapetus's orbit compare to the other major moons of Saturn (like Titan or Enceladus)?",
+            options: [
+                { text: "It orbits much further away and is highly inclined (tilted).", isCorrect: true },
+                { text: "It orbits closer than any other moon.", isCorrect: false },
+                { text: "It orbits in the exact opposite direction (retrograde).", isCorrect: false },
+                { text: "It orbits perfectly within the main rings.", isCorrect: false }
+            ],
+            explanation: "Iapetus is a distant outlier, orbiting millions of miles away at a steep angle, which gives it a clear view of Saturn's rings."
+        },
+        {
+            q: "Iapetus is the third-largest moon of Saturn. What are the two larger moons?",
+            options: [
+                { text: "Titan and Rhea", isCorrect: true },
+                { text: "Enceladus and Mimas", isCorrect: false },
+                { text: "Ganymede and Callisto", isCorrect: false },
+                { text: "Triton and Charon", isCorrect: false }
+            ],
+            explanation: "Titan is the largest, followed by Rhea, and then Iapetus."
+        },
+        {
+            q: "What is the approximate albedo (reflectivity) of the dark Cassini Regio?",
+            options: [
+                { text: "About 4%", isCorrect: true },
+                { text: "About 50%", isCorrect: false },
+                { text: "About 90%", isCorrect: false },
+                { text: "Almost 100%", isCorrect: false }
+            ],
+            explanation: "Cassini Regio is incredibly dark, reflecting only about 4% of the light that hits it, making it as dark as coal or fresh asphalt."
+        },
+        {
+            q: "What is the name of the massive 580km diameter impact basin on Iapetus that features 15km high cliffs?",
+            options: [
+                { text: "Turgis", isCorrect: true },
+                { text: "Engelier", isCorrect: false },
+                { text: "Herschel", isCorrect: false },
+                { text: "Caloris Basin", isCorrect: false }
+            ],
+            explanation: "Turgis is a massive crater in Cassini Regio, known for its extreme depth and towering rim scarps."
+        },
+        {
+            q: "How does Iapetus's density (1.08 g/cm³) give a clue about its composition?",
+            options: [
+                { text: "It indicates it is composed almost entirely of water ice.", isCorrect: true },
+                { text: "It means it must have a solid iron core.", isCorrect: false },
+                { text: "It proves it has a thick, dense atmosphere.", isCorrect: false },
+                { text: "It shows it is made primarily of heavy metals.", isCorrect: false }
+            ],
+            explanation: "A density near 1.0 g/cm³ (the density of water) means the moon is mostly ice with only a small fraction of rocky material (~20%)."
+        },
+        {
+            q: "Which spacecraft provided the high-resolution images that confirmed the thermal runaway theory on Iapetus?",
+            options: [
+                { text: "Cassini", isCorrect: true },
+                { text: "Voyager 1", isCorrect: false },
+                { text: "Pioneer 11", isCorrect: false },
+                { text: "Hubble Space Telescope", isCorrect: false }
+            ],
+            explanation: "The Cassini spacecraft performed a targeted flyby in 2007, revealing the intricate details of the boundary between the light and dark regions."
+        },
+        {
+            q: "What is a \"tidally locked\" moon?",
+            options: [
+                { text: "A moon that always shows the same face to the planet it orbits.", isCorrect: true },
+                { text: "A moon whose orbit is slowly decaying into the planet.", isCorrect: false },
+                { text: "A moon that does not rotate on its axis at all.", isCorrect: false },
+                { text: "A moon that has stopped orbiting and hovers in one place.", isCorrect: false }
+            ],
+            explanation: "Iapetus, like Earth's Moon, is tidally locked, which is why one side is always leading (plowing through dust) and one is trailing."
+        },
+        {
+            q: "What is the most likely reason Iapetus currently lacks geological activity like cryovolcanism?",
+            options: [
+                { text: "It orbits too far from Saturn to experience strong tidal heating.", isCorrect: true },
+                { text: "It is too close to the Sun.", isCorrect: false },
+                { text: "It doesn't have enough rocky material.", isCorrect: false },
+                { text: "Its atmosphere acts as an insulator.", isCorrect: false }
+            ],
+            explanation: "Because it orbits so far away, Saturn's gravity doesn't flex and heat Iapetus enough to melt its interior."
+        },
+        {
+            q: "What happens to the water vapor that sublimates from the dark side of Iapetus?",
+            options: [
+                { text: "It travels to the colder regions and refreezes as ice.", isCorrect: true },
+                { text: "It escapes into space to form a new ring.", isCorrect: false },
+                { text: "It forms thick, permanent clouds over the equator.", isCorrect: false },
+                { text: "It chemically reacts to form sulfuric acid.", isCorrect: false }
+            ],
+            explanation: "The gas migrates to the colder trailing hemisphere or the poles, where it deposits back onto the surface as bright white ice."
+        },
+        {
+            q: "Which prominent feature on Iapetus was partially destroyed by the Engelier impact basin?",
+            options: [
+                { text: "The equatorial ridge", isCorrect: true },
+                { text: "The north pole", isCorrect: false },
+                { text: "The Cassini Regio dark spot", isCorrect: false },
+                { text: "A massive cryovolcano", isCorrect: false }
+            ],
+            explanation: "The giant Engelier impact crater is superimposed directly over the equatorial ridge, wiping out a segment of the mountain chain."
+        },
+        {
+            q: "What makes the equatorial ridge on Iapetus so unusual compared to mountains on Earth?",
+            options: [
+                { text: "It follows the equator almost perfectly.", isCorrect: true },
+                { text: "It is made entirely of solid gold.", isCorrect: false },
+                { text: "It floats above the surface.", isCorrect: false },
+                { text: "It is constantly erupting lava.", isCorrect: false }
+            ],
+            explanation: "The ridge is uniquely aligned with the moon's equator, sparking theories about a collapsed ring system or an ancient, faster rotation."
+        },
+        {
+            q: "If you were standing in the bright Roncevaux Terra region, what would the ground look like?",
+            options: [
+                { text: "Brilliant white, heavily cratered ice.", isCorrect: true },
+                { text: "Smooth, dark basaltic rock.", isCorrect: false },
+                { text: "Shifting sand dunes of orange smog.", isCorrect: false },
+                { text: "A liquid methane sea.", isCorrect: false }
+            ],
+            explanation: "Roncevaux Terra is the trailing hemisphere, characterized by bright, ancient, heavily cratered water ice."
+        },
+        {
+            q: "When did Giovanni Cassini originally discover Iapetus?",
+            options: [
+                { text: "1671", isCorrect: true },
+                { text: "1980", isCorrect: false },
+                { text: "2004", isCorrect: false },
+                { text: "1492", isCorrect: false }
+            ],
+            explanation: "Cassini discovered the moon in the 17th century using a relatively primitive refractor telescope."
+        }
+    ];
+
+    let currentQIndex = 0;
+    let score = 0;
+    let randomizedQuestions = [];
+
+    function initQuiz() {
+        randomizedQuestions = [...quizQuestions].sort(() => Math.random() - 0.5);
+        randomizedQuestions.forEach(q => {
+            q.options.sort(() => Math.random() - 0.5);
+        });
+        currentQIndex = 0;
+        score = 0;
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('quizActiveArea').classList.remove('hidden');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = randomizedQuestions[currentQIndex];
+        document.getElementById('questionText').innerText = `${currentQIndex + 1}. ${q.q}`;
+        const optionsContainer = document.getElementById('optionsContainer');
+        optionsContainer.innerHTML = '';
+        
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-iapetus-light transition-all";
+            btn.innerHTML = opt.text;
+            btn.dataset.isCorrect = opt.isCorrect;
+            btn.onclick = () => handleAnswer(opt.isCorrect, btn, q);
+            optionsContainer.appendChild(btn);
+        });
+        
+        document.getElementById('explanationBox').classList.add('hidden');
+        document.getElementById('nextQuestionBtn').classList.add('hidden');
+    }
+
+    function handleAnswer(isCorrect, btnEl, q) {
+        const siblings = btnEl.parentElement.children;
+        for(let s of siblings) {
+            s.disabled = true;
+            s.classList.remove('hover:bg-space-700', 'hover:border-iapetus-light');
+            s.classList.add('opacity-50');
+            if(s.dataset.isCorrect === 'true') {
+                 s.classList.remove('opacity-50', 'border-space-500');
+                 s.classList.add('border-star-green', 'text-star-green');
+            }
+        }
+        btnEl.classList.remove('opacity-50', 'bg-space-800', 'border-star-green', 'text-star-green');
+        
+        if(isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            score++;
+            addXP(10);
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+        }
+
+        const expBox = document.getElementById('explanationBox');
+        expBox.innerHTML = `<strong class="${isCorrect ? 'text-star-green' : 'text-star-red'}">${isCorrect ? 'Correct!' : 'Incorrect.'}</strong> <br/> ${q.explanation}`;
+        expBox.classList.remove('hidden');
+        
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        currentQIndex++;
+        if(currentQIndex < randomizedQuestions.length) {
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('quizActiveArea').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('scoreText').innerText = `${score}/20`;
+        
+        if(score === 20) {
+            document.getElementById('scoreText').className = 'font-bold text-star-green';
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(200);
+                showMsgBox("Perfect Knowledge", "Perfect score on the Iapetus Quiz! +200 XP", "🧠");
+            }
+            document.getElementById('retryQuizBtn').classList.add('hidden');
+        } else {
+            document.getElementById('scoreText').className = 'font-bold text-star-red';
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', initQuiz);
+
+    /* MINI GAME: Ridge Skimmer */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    // Player (Cassini Probe) - Moves up/down, fixed X
+    const player = {
+        x: 50, 
+        y: 200, 
+        width: 40,
+        height: 20,
+        speed: 5,
+        color: '#f8fafc' 
+    };
+
+    let obstacles = []; // Ridge peaks
+    let collectibles = []; // Albedo Scans
+
+    // Inputs
+    let keys = { ArrowUp: false, ArrowDown: false };
+    let isTouching = false;
+    let touchTargetY = 0;
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(['ArrowUp', 'ArrowDown'].includes(e.code)) {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(['ArrowUp', 'ArrowDown'].includes(e.code)) keys[e.code] = false; 
+    });
+    
+    // Touch/Mouse Support
+    function handlePointerMove(e) {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        touchTargetY = (clientY - rect.top) * (canvas.height / rect.height);
+        isTouching = true;
+        if(e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+    }
+    function handlePointerUp() { isTouching = false; }
+
+    canvas.addEventListener('touchstart', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchend', handlePointerUp);
+    canvas.addEventListener('mousedown', handlePointerMove);
+    canvas.addEventListener('mousemove', (e) => { if(isTouching) handlePointerMove(e); });
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerUp);
+
+    function initGame() {
+        resizeCanvas();
+        player.y = canvas.height / 3;
+        obstacles = [];
+        collectibles = [];
+        dataCollected = 0;
+        isTouching = false;
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Scanning...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let globalSpeed = (Math.random() * 2 + 5) * speedMult; // Scroll speed left
+        
+        // 30% chance for a data node
+        if (Math.random() > 0.7 && collectibles.length < 2) {
+            collectibles.push({
+                x: canvas.width + 20,
+                y: Math.random() * (canvas.height/2) + 20, // Spawn in upper half
+                width: 25,
+                height: 25,
+                speedX: globalSpeed,
+                pulse: 0
+            });
+            return;
+        }
+
+        // Obstacles: Massive Ridge Mountains at bottom
+        let h = Math.random() * (canvas.height * 0.6) + 40; // Extremely high peaks (up to 60% of screen)
+        let w = Math.random() * 60 + 40;
+
+        obstacles.push({
+            x: canvas.width, 
+            y: canvas.height - h, 
+            width: w, 
+            height: h, 
+            speedX: globalSpeed
+        });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        // Tilt slightly based on movement
+        let tilt = 0;
+        if(keys.ArrowUp || (isTouching && touchTargetY < player.y)) tilt = -0.15;
+        if(keys.ArrowDown || (isTouching && touchTargetY > player.y)) tilt = 0.15;
+        ctx.rotate(tilt);
+
+        // Main cylindrical body (Cassini)
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(-player.width/2, -player.height/2, player.width, player.height);
+        
+        // Dish (pointing forward/left)
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.ellipse(player.width/2, 0, 8, player.height/1.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Thruster
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.moveTo(-player.width/2, -player.height/4);
+        ctx.lineTo(-player.width/2 - 10, 0);
+        ctx.lineTo(-player.width/2, player.height/4);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    function drawEntities() {
+        // Collectibles
+        for (let i = 0; i < collectibles.length; i++) {
+            let c = collectibles[i];
+            c.pulse += 0.1;
+            let glow = 8 + Math.sin(c.pulse) * 4;
+            
+            ctx.fillStyle = '#6ef0ff'; // Cyan data
+            ctx.shadowBlur = glow;
+            ctx.shadowColor = '#6ef0ff';
+            
+            ctx.beginPath();
+            ctx.arc(c.x + c.width/2, c.y + c.height/2, c.width/2, 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(c.x + c.width/2, c.y + c.height/2, c.width/4, 0, Math.PI*2);
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+        }
+
+        // Obstacles (Ridge Mountains)
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            
+            // Draw jagged mountain
+            // Make them dark slate color to represent the dark dust
+            let gradient = ctx.createLinearGradient(o.x, o.y, o.x, o.y + o.height);
+            gradient.addColorStop(0, '#334155');
+            gradient.addColorStop(1, '#0f172a');
+            
+            ctx.fillStyle = gradient; 
+            ctx.beginPath();
+            ctx.moveTo(o.x, o.y + o.height);
+            ctx.lineTo(o.x + o.width/2, o.y);
+            ctx.lineTo(o.x + o.width, o.y + o.height);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Highlight slope (snow/bright ice on trailing side)
+            ctx.fillStyle = 'rgba(248, 250, 252, 0.4)';
+            ctx.beginPath();
+            ctx.moveTo(o.x + o.width/2, o.y);
+            ctx.lineTo(o.x + o.width, o.y + o.height);
+            ctx.lineTo(o.x + o.width/2, o.y + o.height);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+
+    function drawBackground() {
+        // Dynamic Yin-Yang Background
+        // Half dark sky, half bright sky moving past
+        let offset = (scoreFrames * 2) % (canvas.width * 2);
+        
+        let grad = ctx.createLinearGradient(-offset, 0, canvas.width*2 - offset, 0);
+        grad.addColorStop(0, '#020617'); // Dark side
+        grad.addColorStop(0.4, '#0f172a');
+        grad.addColorStop(0.6, '#94a3b8'); // Transition
+        grad.addColorStop(1, '#e2e8f0'); // Bright side
+        
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Ground line
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
+    }
+
+    function checkCollisionRect(r1, r2) {
+        return !(r2.x > r1.x + r1.width || 
+                 r2.x + r2.width < r1.x || 
+                 r2.y > r1.y + r1.height ||
+                 r2.y + r2.height < r1.y);
+    }
+
+    function updatePhysics() {
+        // Player Movement (Vertical only)
+        if (keys.ArrowUp) player.y -= player.speed;
+        if (keys.ArrowDown) player.y += player.speed;
+
+        if (isTouching) {
+            let dy = touchTargetY - (player.y + player.height/2);
+            if (Math.abs(dy) > player.speed) {
+                player.y += (dy / Math.abs(dy)) * player.speed;
+            }
+        }
+
+        // Clamp to screen
+        if(player.y < 0) player.y = 0;
+        if(player.y > canvas.height - player.height - 20) player.y = canvas.height - player.height - 20;
+
+        let pRect = { x: player.x, y: player.y, width: player.width, height: player.height };
+
+        // Spawning
+        let spawnRate = Math.max(25, 60 - Math.floor(scoreFrames/60));
+        if (frames % spawnRate === 0) spawnEntity();
+
+        // Update Collectibles
+        for (let i = collectibles.length - 1; i >= 0; i--) {
+            collectibles[i].x -= collectibles[i].speedX; 
+            
+            if (checkCollisionRect(pRect, collectibles[i])) {
+                dataCollected++;
+                addXP(10);
+                ctx.fillStyle = 'rgba(110, 240, 255, 0.4)'; // Cyan flash
+                ctx.fillRect(0,0, canvas.width, canvas.height);
+                collectibles.splice(i, 1);
+                continue;
+            }
+
+            if (collectibles[i].x + collectibles[i].width < 0) {
+                collectibles.splice(i, 1);
+            }
+        }
+
+        // Update Obstacles
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].x -= obstacles[i].speedX; // Move LEFT
+            
+            // Triangle collision approximation for mountain
+            let oRect = {x: obstacles[i].x + (obstacles[i].width*0.25), y: obstacles[i].y + (obstacles[i].height*0.2), width: obstacles[i].width*0.5, height: obstacles[i].height*0.8};
+
+            if (checkCollisionRect(pRect, oRect)) {
+                gameOver("Crashed into the Equatorial Ridge!");
+                return;
+            }
+
+            if (obstacles[i].x + obstacles[i].width < 0) {
+                obstacles.splice(i, 1);
+            }
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        drawBackground();
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawEntities();
+        drawPlayer();
+
+        // HUD
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let dist = Math.floor(secondsAlive * 12);
+        
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(5, 5, 150, 60);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Distance: ${dist} km`, 10, 25);
+        ctx.fillStyle = "#6ef0ff"; // Cyan
+        ctx.fillText(`📡 Scans: ${dataCollected}/5`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && dataCollected >= 5 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Ridge Surveyor Badge Unlocked!", "You successfully mapped the giant ridge! +100 XP", "⛰️");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Flyby";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 5);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You flew for ${secondsAlive}s.</p>
+            <p class="text-star-cyan mb-4 text-sm font-bold">📡 Collected ${dataCollected} Scans</p>
+            ${!achievements.playedGame ? `<p class="text-iapetus-light text-sm mb-4 text-center px-2">Survive 20s AND collect 5 scans for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

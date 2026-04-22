@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Solar System Explorer — Mission Control</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#05060f', 800: '#0a0d20', 700: '#0f1430', 500: '#1a234d', 100: '#e2e8f0' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #000000; /* Pure deep space vacuum */
+        }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar {
+            -ms-overflow-style: none; scrollbar-width: none;
+            scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
+        }
+
+        .glass-panel {
+            background: rgba(15, 20, 48, 0.65);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(110, 240, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-press { 
+            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1); 
+            cursor: pointer; touch-action: manipulation; 
+        }
+        .btn-press:active { transform: scale(0.95); }
+
+        .planet-wrapper { position: relative; cursor: pointer; z-index: 10;}
+        .planet-orb {
+            border-radius: 50%; position: relative; 
+            transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+        }
+
+        .planet-wrapper:hover .planet-orb { transform: scale(1.10); filter: brightness(1.15); }
+
+        /* =========================================================
+           SCIENTIFIC PHOTO-REALISTIC PLANET CSS (STATIC 3D)
+        ========================================================= */
+        
+        .orb-sun {
+            background: radial-gradient(circle at 95% 50%, #ffffff 0%, #ffd166 5%, #f97316 20%, #7f1d1d 80%, #450a0a 100%);
+            box-shadow: 0 0 150px rgba(249, 115, 22, 0.6), inset -20px -20px 60px rgba(127, 29, 29, 0.8);
+        }
+        
+        .orb-mercury { 
+            background: radial-gradient(circle at 35% 35%, #a3a3a3 0%, #6b7280 60%, #374151 100%); 
+            box-shadow: inset -3px -3px 6px rgba(0,0,0,0.9); 
+        }
+        
+        .orb-venus { 
+            background: 
+                radial-gradient(circle at 30% 30%, transparent 40%, rgba(0,0,0,0.8) 90%),
+                linear-gradient(135deg, #fef3c7 0%, #fcd34d 30%, #d97706 70%, #92400e 100%);
+            box-shadow: inset -6px -6px 12px rgba(0,0,0,0.9);
+            filter: contrast(0.95) sepia(0.1);
+        }
+        
+        .orb-earth { 
+            background: 
+                radial-gradient(circle at 35% 35%, rgba(255,255,255,0.25) 0%, transparent 40%),
+                radial-gradient(ellipse at 30% 40%, #10b981 10%, transparent 30%),
+                radial-gradient(ellipse at 70% 60%, #10b981 15%, transparent 40%),
+                radial-gradient(ellipse at 40% 10%, #d4d4d8 5%, transparent 20%),
+                #1e3a8a;
+            box-shadow: inset -6px -6px 12px rgba(0,0,0,0.9), inset 1px 1px 4px rgba(255,255,255,0.5); 
+        }
+        
+        .orb-mars { 
+            background: 
+                radial-gradient(circle at 50% 10%, #ffffff 0%, transparent 18%),
+                radial-gradient(circle at 30% 30%, transparent 40%, rgba(0,0,0,0.85) 90%),
+                radial-gradient(ellipse at 40% 60%, #7f1d1d 15%, transparent 45%),
+                #dc2626;
+            box-shadow: inset -4px -4px 10px rgba(0,0,0,0.9); 
+        }
+        
+        .orb-jupiter { 
+            background: 
+                radial-gradient(circle at 35% 35%, transparent 40%, rgba(0,0,0,0.85) 90%),
+                linear-gradient(180deg, 
+                    #4b3a2a 0%, #b29e84 10%, #dcd0c0 20%, #9e7f60 30%, 
+                    #c8b39a 40%, #82664d 50%, #cbb8a1 65%, #a8947f 80%, #5c4a3d 100%);
+            box-shadow: inset -25px -25px 60px rgba(0,0,0,0.9);
+        }
+        .orb-jupiter::after { 
+            content: ''; position: absolute; top: 62%; left: 45%;
+            width: 14%; height: 9%; border-radius: 50%;
+            background: #9b4b32; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5);
+            transform: rotate(-10deg); filter: blur(0.5px);
+        }
+
+        /* 3D RINGS ENGINE (Infinitely Scalable Vectors via Radial-Gradients) */
+        .ring-back, .ring-front {
+            position: absolute; top: 50%; left: 50%;
+            border-radius: 50%; pointer-events: none;
+        }
+        .ring-back { z-index: -1; }
+        .ring-front { z-index: 5; clip-path: polygon(0 50%, 100% 50%, 100% 100%, 0 100%); }
+        
+        /* Saturn Body & Rings */
+        .orb-saturn { 
+            background: linear-gradient(180deg, #d4c2a5 0%, #e6d5b8 20%, #b89f78 45%, #d6c6a1 60%, #a68d5e 80%, #c2b08d 100%);
+            box-shadow: inset -15px -15px 30px rgba(0,0,0,0.9); overflow: visible;
+        }
+        .ring-back-saturn, .ring-front-saturn {
+            width: 240%; height: 240%;
+            background: radial-gradient(circle,
+                transparent 45%,
+                rgba(220, 205, 175, 0.9) 46%,
+                rgba(190, 175, 140, 0.95) 51%,
+                rgba(20, 15, 10, 0.85) 52%, /* Cassini Division */
+                rgba(200, 185, 150, 0.85) 54%,
+                rgba(160, 145, 115, 0.5) 63%,
+                transparent 66%
+            );
+            transform: translate(-50%, -50%) rotate(-20deg) scaleY(0.25);
+        }
+        
+        /* Uranus Body & Rings */
+        .orb-uranus { 
+            background: radial-gradient(circle at 25% 50%, #e0f2fe 0%, #38bdf8 40%, #0284c7 80%, #082f49 100%);
+            box-shadow: inset -15px 0px 30px rgba(0,0,0,0.9); overflow: visible;
+        }
+        .ring-back-uranus, .ring-front-uranus {
+            width: 220%; height: 220%;
+            background: radial-gradient(circle,
+                transparent 48%,
+                rgba(255, 255, 255, 0.15) 49%,
+                rgba(255, 255, 255, 0.4) 50%,
+                rgba(255, 255, 255, 0.15) 51%,
+                transparent 52%
+            );
+            transform: translate(-50%, -50%) rotate(75deg) scaleY(0.15); /* Extreme Tilt */
+        }
+        
+        /* Neptune Body & Rings */
+        .orb-neptune { 
+            background: radial-gradient(circle at 35% 35%, #60a5fa 0%, #2563eb 45%, #1e3a8a 85%);
+            box-shadow: inset -15px -15px 30px rgba(0,0,0,0.9); overflow: visible;
+        }
+        .ring-back-neptune, .ring-front-neptune {
+            width: 200%; height: 200%;
+            background: radial-gradient(circle,
+                transparent 48%,
+                rgba(150, 180, 255, 0.05) 49%,
+                rgba(150, 180, 255, 0.15) 50%,
+                transparent 51%
+            );
+            transform: translate(-50%, -50%) rotate(-25deg) scaleY(0.25);
+        }
+        .orb-neptune::after { 
+            content: ''; position: absolute; top: 45%; left: 55%;
+            width: 18%; height: 12%; border-radius: 50%;
+            background: #172554; box-shadow: inset 2px 2px 4px rgba(0,0,0,0.6); filter: blur(1px);
+        }
+
+        .orb-asteroid { background: #78716c; box-shadow: inset -2px -2px 5px rgba(0,0,0,0.9); border-radius: 40% 60% 70% 30%; }
+        .orb-kuiper { background: #bae6fd; box-shadow: inset -2px -2px 5px rgba(0,0,0,0.8); }
+        .orb-dwarf { background: radial-gradient(circle at 35% 35%, #d8b4fe, #a855f7, #581c87); box-shadow: inset -3px -3px 6px rgba(0,0,0,0.9); }
+
+        /* MOONS */
+        .moon-wrapper { z-index: 20; position: relative; }
+        .orb-luna { background: radial-gradient(circle at 35% 35%, #e5e7eb, #9ca3af, #4b5563); box-shadow: inset -2px -2px 4px rgba(0,0,0,0.9); }
+        .orb-phobos { background: #78716c; border-radius: 40% 60% 50% 50%; box-shadow: inset -1px -1px 3px rgba(0,0,0,0.9); }
+        .orb-deimos { background: #a8a29e; border-radius: 50% 40% 60% 40%; box-shadow: inset -1px -1px 3px rgba(0,0,0,0.9); }
+        .orb-io { background: radial-gradient(circle at 35% 35%, #fef08a, #eab308, #ca8a04); background-image: radial-gradient(#854d0e 1px, transparent 1px); background-size: 3px 3px; box-shadow: inset -2px -2px 5px rgba(0,0,0,0.9); }
+        .orb-europa { background: #fdfbf7; background-image: linear-gradient(45deg, transparent 40%, #d6d3d1 45%, transparent 50%); box-shadow: inset -2px -2px 5px rgba(0,0,0,0.9); }
+        .orb-ganymede { background: radial-gradient(circle at 35% 35%, #d1d5db, #6b7280, #374151); box-shadow: inset -3px -3px 6px rgba(0,0,0,0.9); }
+        .orb-callisto { background: #4b5563; background-image: radial-gradient(#9ca3af 0.5px, transparent 0.5px); background-size: 2px 2px; box-shadow: inset -3px -3px 6px rgba(0,0,0,0.9); }
+        .orb-titan { background: radial-gradient(circle at 35% 35%, #fdba74, #ea580c, #9a3412); box-shadow: inset -3px -3px 6px rgba(0,0,0,0.9); }
+        .orb-enceladus { background: radial-gradient(circle at 35% 35%, #ffffff, #f3f4f6, #d1d5db); box-shadow: inset -1px -1px 3px rgba(0,0,0,0.9); }
+        .orb-iapetus { background: linear-gradient(110deg, #1f2937 45%, #f3f4f6 55%); box-shadow: inset -2px -2px 4px rgba(0,0,0,0.9); }
+        .orb-mimas { background: radial-gradient(circle at 35% 35%, #d1d5db, #9ca3af); box-shadow: inset -1px -1px 3px rgba(0,0,0,0.9); }
+        .orb-mimas::after { content: ''; position:absolute; top:25%; left:20%; width:35%; height:35%; background: #6b7280; border-radius:50%; box-shadow: inset 1px 1px 2px #374151; }
+        .orb-rhea { background: radial-gradient(circle at 35% 35%, #f3f4f6, #9ca3af); box-shadow: inset -2px -2px 4px rgba(0,0,0,0.9); }
+        .orb-ariel { background: radial-gradient(circle at 35% 35%, #e5e7eb, #9ca3af); box-shadow: inset -1px -1px 3px rgba(0,0,0,0.9); }
+        .orb-miranda { background: radial-gradient(circle at 35% 35%, #d1d5db, #6b7280); box-shadow: inset -1px -1px 3px rgba(0,0,0,0.9); }
+        .orb-oberon { background: radial-gradient(circle at 35% 35%, #9ca3af, #4b5563, #1f2937); box-shadow: inset -2px -2px 4px rgba(0,0,0,0.9); }
+        .orb-titania { background: radial-gradient(circle at 35% 35%, #d1d5db, #9ca3af, #4b5563); box-shadow: inset -2px -2px 4px rgba(0,0,0,0.9); }
+        .orb-umbriel { background: radial-gradient(circle at 35% 35%, #4b5563, #1f2937, #111827); box-shadow: inset -1px -1px 3px rgba(0,0,0,0.9); }
+        .orb-triton { background: radial-gradient(circle at 35% 35%, #fce7f3, #f472b6, #be185d); box-shadow: inset -2px -2px 5px rgba(0,0,0,0.9); }
+        .orb-proteus { background: radial-gradient(circle at 35% 35%, #9ca3af, #4b5563, #1f2937); box-shadow: inset -1px -1px 3px rgba(0,0,0,0.9); border-radius: 40% 60% 50% 50%; }
+        .orb-nereid { background: radial-gradient(circle at 35% 35%, #d1d5db, #9ca3af, #6b7280); box-shadow: inset -1px -1px 2px rgba(0,0,0,0.9); border-radius: 50% 50% 40% 60%; }
+        .orb-larissa { background: radial-gradient(circle at 35% 35%, #6b7280, #374151, #111827); box-shadow: inset -1px -1px 2px rgba(0,0,0,0.9); border-radius: 50% 40% 60% 40%; }
+
+        /* Visited and Badged Gamification States */
+        .planet-wrapper.visited .planet-orb, .moon-wrapper.visited .planet-orb { 
+            box-shadow: 0 0 15px #4ef0a8, inset -5px -5px 15px rgba(0,0,0,0.9); border: 1px solid #4ef0a8; 
+        }
+        .planet-wrapper.badged .planet-orb, .moon-wrapper.badged .planet-orb { 
+            box-shadow: 0 0 25px #ffd166, inset -5px -5px 15px rgba(0,0,0,0.9); border: 2px solid #ffd166; 
+        }
+        .planet-wrapper.badged::before { 
+            content: '🏆'; position: absolute; top: -15px; right: -15px; font-size: 1.2rem; 
+            filter: drop-shadow(0 0 5px #ffd166); z-index: 10; animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+        body.navigating { pointer-events: none; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden" ontouchstart="">
+
+<main id="app" class="pt-10 pb-10 min-h-screen flex flex-col">
+
+    <div class="text-center mb-2 px-4 z-20">
+        <h1 class="font-display font-bold text-4xl md:text-5xl text-white tracking-wide drop-shadow-lg">SOLAR SYSTEM EXPLORER</h1>
+        <p class="font-body text-gray-300 italic mt-2 text-sm md:text-base drop-shadow-md">Accurate Scale & Photorealistic Maps. Chart every world. Collect every badge.</p>
+    </div>
+
+    <!-- Solar system horizontal map -->
+    <section id="view-hub" class="flex-grow relative overflow-hidden py-4">
+
+        <!-- Scrollable Track -->
+        <div class="w-full h-full overflow-x-auto snap-x hide-scrollbar flex items-center z-20 min-h-[600px] md:min-h-[700px]">
+            
+            <!-- Inner container holding all celestial bodies -->
+            <div class="flex items-center gap-16 md:gap-32 px-10 md:px-40 min-w-max h-full relative">
+
+                <!-- Global Astronomical Distance Meter Line -->
+                <div class="absolute bottom-12 left-0 right-0 h-px bg-white/10 pointer-events-none z-0"></div>
+
+                <!-- SUN -->
+                <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative -ml-[1900px] mr-10">
+                    <div></div>
+                    <button type="button" class="planet-wrapper btn-press focus:outline-none" data-wrapper="sun" onclick="zoomAndNavigate(event, 'sun.html')">
+                        <div data-orb="sun" data-type="sun" class="w-[2000px] h-[2000px] orb-sun planet-orb flex items-center justify-end pr-16 animate-pulse-slow">
+                            <span class="font-display font-bold text-4xl text-red-900 drop-shadow-md z-10 relative">SUN</span>
+                        </div>
+                    </button>
+                    <div></div>
+                    
+                    <!-- AU Distance Marker -->
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-12 flex flex-col items-center pointer-events-none z-0">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.5)] -translate-y-[3px]"></div>
+                        <span class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">0 AU</span>
+                    </div>
+                </div>
+
+                <!-- MERCURY -->
+                <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative">
+                    <div></div>
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="mercury" onclick="zoomAndNavigate(event, 'mercury/mercury.html')">
+                        <div data-orb="mercury" data-type="rocky" class="w-[12px] h-[12px] planet-orb orb-mercury"></div>
+                        <span class="font-mono text-sm text-gray-100 uppercase tracking-widest">Mercury</span>
+                    </button>
+                    <div></div>
+
+                    <!-- AU Distance Marker -->
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-12 flex flex-col items-center pointer-events-none z-0">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.5)] -translate-y-[3px]"></div>
+                        <span class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">0.4 AU</span>
+                    </div>
+                </div>
+
+                <!-- VENUS -->
+                <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative">
+                    <div></div>
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="venus" onclick="zoomAndNavigate(event, 'venus/venus.html')">
+                        <div data-orb="venus" data-type="gas" class="w-[30px] h-[30px] planet-orb orb-venus"></div>
+                        <span class="font-mono text-sm text-gray-100 uppercase tracking-widest">Venus</span>
+                    </button>
+                    <div></div>
+
+                    <!-- AU Distance Marker -->
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-12 flex flex-col items-center pointer-events-none z-0">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.5)] -translate-y-[3px]"></div>
+                        <span class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">0.7 AU</span>
+                    </div>
+                </div>
+
+                <!-- EARTH & LUNA -->
+                <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative">
+                    <div></div>
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="earth" onclick="zoomAndNavigate(event, 'earth/earth.html')">
+                        <div data-orb="earth" data-type="water" class="w-[32px] h-[32px] planet-orb orb-earth"></div>
+                        <span class="font-mono text-sm text-gray-100 uppercase tracking-widest">Earth</span>
+                    </button>
+                    
+                    <div class="flex flex-col items-center self-start mt-6 w-full px-2">
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="luna" onclick="zoomAndNavigate(event, 'earth/luna.html')">
+                            <div data-type="rocky" class="w-[9px] h-[9px] planet-orb orb-luna"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Luna</span>
+                        </button>
+                    </div>
+
+                    <!-- AU Distance Marker -->
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-12 flex flex-col items-center pointer-events-none z-0">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.5)] -translate-y-[3px]"></div>
+                        <span class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">1.0 AU</span>
+                    </div>
+                </div>
+
+                <!-- MARS & MOONS -->
+                <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative">
+                    <div></div>
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="mars" onclick="zoomAndNavigate(event, 'mars/mars.html')">
+                        <div data-orb="mars" data-type="rocky" class="w-[17px] h-[17px] planet-orb orb-mars"></div>
+                        <span class="font-mono text-sm text-gray-100 uppercase tracking-widest">Mars</span>
+                    </button>
+                    
+                    <div class="flex flex-wrap justify-center gap-4 self-start mt-6 w-[80px]">
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="deimos" onclick="zoomAndNavigate(event, 'mars/deimos.html')">
+                            <div data-type="rocky" class="w-[4px] h-[4px] planet-orb orb-deimos"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Deimos</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="phobos" onclick="zoomAndNavigate(event, 'mars/phobos.html')">
+                            <div data-type="rocky" class="w-[5px] h-[5px] planet-orb orb-phobos"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Phobos</span>
+                        </button>
+                    </div>
+
+                    <!-- AU Distance Marker -->
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-12 flex flex-col items-center pointer-events-none z-0">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.5)] -translate-y-[3px]"></div>
+                        <span class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">1.5 AU</span>
+                    </div>
+                </div>
+
+                <!-- ASTEROID BELT -->
+                <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative">
+                    <div></div>
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="asteroid-belt" onclick="zoomAndNavigate(event, 'asteroid-belt/asteroid-belt.html')">
+                        <div class="flex gap-2 items-center justify-center h-10 w-24">
+                            <div data-orb="asteroid-belt" data-type="rocky" class="w-[5px] h-[5px] planet-orb orb-asteroid"></div>
+                            <div data-type="rocky" class="w-[3px] h-[3px] planet-orb orb-asteroid opacity-70"></div>
+                            <div data-type="rocky" class="w-[6px] h-[6px] planet-orb orb-asteroid opacity-90"></div>
+                            <div data-type="rocky" class="w-[4px] h-[4px] planet-orb orb-asteroid opacity-70"></div>
+                        </div>
+                        <span class="font-mono text-xs text-gray-100 uppercase tracking-widest text-center">Asteroid<br>Belt</span>
+                    </button>
+                    <div></div>
+
+                    <!-- AU Distance Marker -->
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-12 flex flex-col items-center pointer-events-none z-0">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.5)] -translate-y-[3px]"></div>
+                        <span class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">2.7 AU</span>
+                    </div>
+                </div>
+
+                <!-- JUPITER & MOONS -->
+                <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative mx-10">
+                    <div></div>
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="jupiter" onclick="zoomAndNavigate(event, 'jupiter/jupiter.html')">
+                        <div data-orb="jupiter" data-type="gas" class="w-[350px] h-[350px] planet-orb orb-jupiter"></div>
+                        <span class="font-mono text-sm text-gray-100 uppercase tracking-widest">Jupiter</span>
+                    </button>
+                    
+                    <div class="flex flex-wrap justify-center gap-5 self-start mt-6 w-[250px]">
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="io" onclick="zoomAndNavigate(event, 'jupiter/io.html')">
+                            <div data-type="rocky" class="w-[9px] h-[9px] planet-orb orb-io"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Io</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="europa" onclick="zoomAndNavigate(event, 'jupiter/europa.html')">
+                            <div data-type="ice" class="w-[8px] h-[8px] planet-orb orb-europa"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Europa</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="ganymede" onclick="zoomAndNavigate(event, 'jupiter/ganymede.html')">
+                            <div data-type="rocky" class="w-[13px] h-[13px] planet-orb orb-ganymede"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Ganymede</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="callisto" onclick="zoomAndNavigate(event, 'jupiter/callisto.html')">
+                            <div data-type="rocky" class="w-[12px] h-[12px] planet-orb orb-callisto"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Callisto</span>
+                        </button>
+                    </div>
+
+                    <!-- AU Distance Marker -->
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-12 flex flex-col items-center pointer-events-none z-0">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.5)] -translate-y-[3px]"></div>
+                        <span class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">5.2 AU</span>
+                    </div>
+                </div>
+
+                <!-- SATURN & MOONS -->
+                <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative mx-24">
+                    <div></div>
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="saturn" onclick="zoomAndNavigate(event, 'saturn/saturn.html')">
+                        <div data-orb="saturn" data-type="gas" class="w-[290px] h-[290px] planet-orb orb-saturn mt-4">
+                            <div class="ring-back ring-back-saturn"></div>
+                            <div class="ring-front ring-front-saturn"></div>
+                        </div>
+                        <span class="font-mono text-sm text-gray-100 uppercase tracking-widest mt-4">Saturn</span>
+                    </button>
+                    
+                    <div class="flex flex-wrap justify-center gap-4 self-start mt-8 w-[280px]">
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="mimas" onclick="zoomAndNavigate(event, 'saturn/mimas.html')">
+                            <div data-type="rocky" class="w-[4px] h-[4px] planet-orb orb-mimas"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Mimas</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="enceladus" onclick="zoomAndNavigate(event, 'saturn/enceladus.html')">
+                            <div data-type="ice" class="w-[4px] h-[4px] planet-orb orb-enceladus"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Enceladus</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="rhea" onclick="zoomAndNavigate(event, 'saturn/rhea.html')">
+                            <div data-type="rocky" class="w-[6px] h-[6px] planet-orb orb-rhea"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Rhea</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="titan" onclick="zoomAndNavigate(event, 'saturn/titan.html')">
+                            <div data-type="gas" class="w-[13px] h-[13px] planet-orb orb-titan"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Titan</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="iapetus" onclick="zoomAndNavigate(event, 'saturn/iapetus.html')">
+                            <div data-type="rocky" class="w-[6px] h-[6px] planet-orb orb-iapetus"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Iapetus</span>
+                        </button>
+                    </div>
+
+                    <!-- AU Distance Marker -->
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-12 flex flex-col items-center pointer-events-none z-0">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.5)] -translate-y-[3px]"></div>
+                        <span class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">9.5 AU</span>
+                    </div>
+                </div>
+
+                <!-- URANUS & MOONS -->
+                <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative">
+                    <div></div>
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="uranus" onclick="zoomAndNavigate(event, 'uranus/uranus.html')">
+                        <div data-orb="uranus" data-type="ice" class="w-[128px] h-[128px] planet-orb orb-uranus">
+                            <div class="ring-back ring-back-uranus"></div>
+                            <div class="ring-front ring-front-uranus"></div>
+                        </div>
+                        <span class="font-mono text-sm text-gray-100 uppercase tracking-widest">Uranus</span>
+                    </button>
+                    
+                    <div class="flex flex-wrap justify-center gap-4 self-start mt-6 w-[220px]">
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="miranda" onclick="zoomAndNavigate(event, 'uranus/miranda.html')">
+                            <div data-type="rocky" class="w-[4px] h-[4px] planet-orb orb-miranda"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Miranda</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="ariel" onclick="zoomAndNavigate(event, 'uranus/ariel.html')">
+                            <div data-type="rocky" class="w-[5px] h-[5px] planet-orb orb-ariel"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Ariel</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="umbriel" onclick="zoomAndNavigate(event, 'uranus/umbriel.html')">
+                            <div data-type="rocky" class="w-[5px] h-[5px] planet-orb orb-umbriel"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Umbriel</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="titania" onclick="zoomAndNavigate(event, 'uranus/titania.html')">
+                            <div data-type="rocky" class="w-[6px] h-[6px] planet-orb orb-titania"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Titania</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="oberon" onclick="zoomAndNavigate(event, 'uranus/oberon.html')">
+                            <div data-type="rocky" class="w-[6px] h-[6px] planet-orb orb-oberon"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Oberon</span>
+                        </button>
+                    </div>
+
+                    <!-- AU Distance Marker -->
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-12 flex flex-col items-center pointer-events-none z-0">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.5)] -translate-y-[3px]"></div>
+                        <span class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">19.2 AU</span>
+                    </div>
+                </div>
+
+                <!-- NEPTUNE & MOONS -->
+                <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative">
+                    <div></div>
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="neptune" onclick="zoomAndNavigate(event, 'neptune/neptune.html')">
+                        <div data-orb="neptune" data-type="ice" class="w-[124px] h-[124px] planet-orb orb-neptune">
+                            <div class="ring-back ring-back-neptune"></div>
+                            <div class="ring-front ring-front-neptune"></div>
+                        </div>
+                        <span class="font-mono text-sm text-gray-100 uppercase tracking-widest">Neptune</span>
+                    </button>
+                    
+                    <div class="flex flex-wrap justify-center gap-4 self-start mt-6 w-[200px]">
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="triton" onclick="zoomAndNavigate(event, 'neptune/triton.html')">
+                            <div data-type="rocky" class="w-[7px] h-[7px] planet-orb orb-triton"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Triton</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="proteus" onclick="zoomAndNavigate(event, 'neptune/proteus.html')">
+                            <div data-type="rocky" class="w-[4px] h-[4px] planet-orb orb-proteus"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Proteus</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="nereid" onclick="zoomAndNavigate(event, 'neptune/nereid.html')">
+                            <div data-type="rocky" class="w-[3px] h-[3px] planet-orb orb-nereid"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Nereid</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="larissa" onclick="zoomAndNavigate(event, 'neptune/larissa.html')">
+                            <div data-type="rocky" class="w-[3px] h-[3px] planet-orb orb-larissa"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Larissa</span>
+                        </button>
+                    </div>
+
+                    <!-- AU Distance Marker -->
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-12 flex flex-col items-center pointer-events-none z-0">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.5)] -translate-y-[3px]"></div>
+                        <span class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">30.1 AU</span>
+                    </div>
+                </div>
+
+                <!-- KUIPER BELT -->
+                <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative">
+                    <div></div>
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="kuiper-belt" onclick="zoomAndNavigate(event, 'kuiper-belt/kuiper-belt.html')">
+                        <div class="flex gap-2 items-center justify-center h-10 w-24">
+                            <div data-orb="kuiper-belt" data-type="ice" class="w-[4px] h-[4px] planet-orb orb-kuiper"></div>
+                            <div data-type="ice" class="w-[5px] h-[5px] planet-orb orb-kuiper opacity-80"></div>
+                            <div data-type="ice" class="w-[3px] h-[3px] planet-orb orb-kuiper opacity-70"></div>
+                        </div>
+                        <span class="font-mono text-xs text-gray-100 uppercase tracking-widest text-center">Kuiper<br>Belt</span>
+                    </button>
+                    <div></div>
+
+                    <!-- AU Distance Marker -->
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-12 flex flex-col items-center pointer-events-none z-0">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.5)] -translate-y-[3px]"></div>
+                        <span class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">30-50 AU</span>
+                    </div>
+                </div>
+
+                <!-- DWARF PLANETS -->
+                <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative mr-10 md:mr-20">
+                    <div></div>
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="dwarf-planets" onclick="zoomAndNavigate(event, 'dwarf-planets/dwarf-planets.html')">
+                        <div data-orb="dwarf-planets" data-type="rocky" class="w-[6px] h-[6px] planet-orb orb-dwarf"></div>
+                        <span class="font-mono text-xs text-gray-100 uppercase tracking-widest text-center">Dwarf<br>Planets</span>
+                    </button>
+                    <div></div>
+
+                    <!-- AU Distance Marker -->
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-12 flex flex-col items-center pointer-events-none z-0">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.5)] -translate-y-[3px]"></div>
+                        <span class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">39 AU</span>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="absolute bottom-0 w-full text-center text-gray-400 font-mono text-xs animate-pulse bg-black/60 py-2 z-30 pointer-events-none">
+            &larr; Scroll horizontally to explore the solar system &rarr;
+        </div>
+    </section>
+
+    <!-- Bottom utility row -->
+    <div class="max-w-6xl mx-auto w-full px-4 mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 z-20">
+        <button onclick="zoomAndNavigate(event, 'astronomical-terms.html')"
+                class="btn-press glass-panel border-star-magenta p-6 text-left hover:border-white transition-colors rounded-2xl group w-full">
+            <div class="flex items-center gap-4">
+                <span class="text-5xl group-hover:scale-110 transition-transform">🌌</span>
+                <div>
+                    <h2 class="font-display font-bold text-xl text-star-magenta mb-1 group-hover:text-white transition-colors">Astronomical Terms</h2>
+                    <p class="font-body text-sm text-gray-300 leading-snug">Learn Zenith, Horizon, Meridian, Ecliptic &amp; more. Discover how to find the planets in the night sky.</p>
+                </div>
+            </div>
+        </button>
+
+        <button onclick="zoomAndNavigate(event, 'planetary-comparisons.html')"
+                class="btn-press glass-panel border-star-gold p-6 text-left hover:border-white transition-colors rounded-2xl group w-full">
+            <div class="flex items-center gap-4">
+                <span class="text-5xl group-hover:scale-110 transition-transform">📊</span>
+                <div>
+                    <h2 class="font-display font-bold text-xl text-star-gold mb-1 group-hover:text-white transition-colors">Planetary Comparisons</h2>
+                    <p class="font-body text-sm text-gray-300 leading-snug">See how the worlds stack up against each other in size, speed, and extremes.</p>
+                </div>
+            </div>
+        </button>
+    </div>
+
+</main>
+
+<script>
+    /**
+     * Highly Optimized Single-Pass Procedural Texture Generator
+     */
+    function generateAdvancedTerrainSVG(type) {
+        let svgBody = '';
+        
+        if (type === 'rocky') {
+            svgBody = `
+                <filter id="tex">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="6" result="noise"/>
+                    <feColorMatrix type="matrix" values="0.5 0 0 0 0  0 0.5 0 0 0  0 0 0.5 0 0  0 0 0 3 -1" result="colored"/>
+                </filter>
+                <rect width="100%" height="100%" filter="url(#tex)" opacity="0.6" mix-blend-mode="multiply"/>
+            `;
+        } else if (type === 'water') {
+            svgBody = `
+                <filter id="tex">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.008" numOctaves="5" result="noise"/>
+                    <feColorMatrix type="matrix" values="1 1 1 0 0  1 1 1 0 0  1 1 1 0 0  0 0 0 2 -0.8" result="clouds"/>
+                </filter>
+                <rect width="100%" height="100%" filter="url(#tex)" opacity="0.8" mix-blend-mode="screen"/>
+            `;
+        } else if (type === 'gas') {
+            svgBody = `
+                <filter id="tex">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.002 0.02" numOctaves="5" result="noise"/>
+                    <feColorMatrix type="matrix" values="1 0 0 0 0  0 0.8 0 0 0  0 0.6 0 0 0  0 0 0 1.5 0" result="colored"/>
+                </filter>
+                <rect width="100%" height="100%" filter="url(#tex)" opacity="0.7" mix-blend-mode="overlay"/>
+            `;
+        } else if (type === 'ice') {
+            svgBody = `
+                <filter id="tex">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" result="noise"/>
+                    <feColorMatrix type="matrix" values="1 1 1 0 0  1 1 1 0 0  1 1 1 0 0  0 0 0 4 -1.5" result="cracks"/>
+                </filter>
+                <rect width="100%" height="100%" filter="url(#tex)" opacity="0.5" mix-blend-mode="screen"/>
+            `;
+        } else if (type === 'sun') {
+            svgBody = `
+                <filter id="tex">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="5" result="noise"/>
+                    <feColorMatrix type="matrix" values="1 0 0 0 0  0 0.5 0 0 0  0 0 0 0 0  0 0 0 2 0" result="colored"/>
+                </filter>
+                <rect width="100%" height="100%" filter="url(#tex)" opacity="0.6" mix-blend-mode="overlay"/>
+            `;
+        }
+
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="2000">${svgBody}</svg>`;
+        return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+    }
+
+    /**
+     * Cinematic Restrained Scale Engine with Ring Support
+     */
+    function zoomAndNavigate(event, url) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const btn = event.currentTarget;
+        const orb = btn.querySelector('.planet-orb') || btn.querySelector('[data-type]');
+        
+        if (!orb) {
+            document.body.style.transition = 'opacity 0.5s ease-out';
+            document.body.style.opacity = '0';
+            setTimeout(() => { window.location.href = url; }, 500);
+            return;
+        }
+
+        document.body.classList.add('navigating');
+        document.body.style.overflow = 'hidden'; 
+        const viewHub = document.getElementById('view-hub');
+        const scrollArea = document.querySelector('.overflow-x-auto');
+        if (viewHub) viewHub.style.overflow = 'visible';
+        if (scrollArea) {
+            scrollArea.style.overflow = 'visible';
+            scrollArea.classList.remove('overflow-x-auto', 'snap-x');
+        }
+
+        const rect = orb.getBoundingClientRect();
+        const orbType = orb.getAttribute('data-type') || 'rocky';
+        
+        orb.style.visibility = 'hidden';
+        btn.classList.remove('badged', 'visited');
+
+        // Create massive 2000x2000 native-resolution container
+        const highResContainer = document.createElement('div');
+        const INTRINSIC_SIZE = 2000;
+        const initialScale = rect.width / INTRINSIC_SIZE;
+        
+        const screenCenterX = window.innerWidth / 2;
+        const screenCenterY = window.innerHeight / 2;
+        const orbCenterX = rect.left + (rect.width / 2);
+        const orbCenterY = rect.top + (rect.height / 2);
+        
+        const startX = orbCenterX - screenCenterX;
+        const startY = orbCenterY - screenCenterY;
+        
+        highResContainer.style.position = 'fixed';
+        highResContainer.style.top = '50%';
+        highResContainer.style.left = '50%';
+        highResContainer.style.width = `${INTRINSIC_SIZE}px`;
+        highResContainer.style.height = `${INTRINSIC_SIZE}px`;
+        highResContainer.style.marginTop = `-${INTRINSIC_SIZE / 2}px`;
+        highResContainer.style.marginLeft = `-${INTRINSIC_SIZE / 2}px`;
+        highResContainer.style.borderRadius = '50%';
+        highResContainer.style.zIndex = '999999';
+        highResContainer.style.pointerEvents = 'none';
+        
+        const compStyle = window.getComputedStyle(orb);
+        highResContainer.style.background = compStyle.background;
+        
+        // Ensure volumetric shadowing is maintained flawlessly at high scale
+        highResContainer.style.boxShadow = 'inset -80px -80px 150px rgba(0,0,0,0.9)';
+        highResContainer.style.transform = `translate(${startX}px, ${startY}px) scale(${initialScale})`;
+        
+        document.body.appendChild(highResContainer);
+
+        // Render back rings FIRST so they go behind the planet and topography
+        const backRing = orb.querySelector('.ring-back');
+        if (backRing) {
+            highResContainer.style.overflow = 'visible';
+            highResContainer.appendChild(backRing.cloneNode(true));
+        }
+
+        // Render one highly optimized, distinct topographical map
+        const highResOverlay = document.createElement('div');
+        highResOverlay.style.position = 'absolute';
+        highResOverlay.style.inset = '0';
+        highResOverlay.style.borderRadius = '50%';
+        highResOverlay.style.opacity = '0';
+        highResOverlay.style.transition = 'opacity 1s ease-in-out';
+        highResOverlay.style.backgroundImage = generateAdvancedTerrainSVG(orbType);
+        highResOverlay.style.backgroundSize = 'cover';
+        
+        highResContainer.appendChild(highResOverlay);
+
+        // Render front rings LAST so they dynamically clip perfectly over the front of the topography
+        const frontRing = orb.querySelector('.ring-front');
+        if (frontRing) {
+            highResContainer.appendChild(frontRing.cloneNode(true));
+        }
+
+        // Cap Zoom at exactly 85% of the shortest viewport dimension so we can see the whole planet perfectly
+        const viewportMin = Math.min(window.innerWidth, window.innerHeight);
+        const targetSize = viewportMin * 0.85; 
+        const targetScale = targetSize / INTRINSIC_SIZE;
+        
+        setTimeout(() => {
+            // Trigger beautiful zoom physics
+            highResContainer.style.transition = 'transform 1.4s cubic-bezier(0.65, 0, 0.15, 1)';
+            highResContainer.style.transform = `translate(0px, 0px) scale(${targetScale})`;
+            
+            // Fade out the UI around it
+            document.querySelectorAll('button, h1, p, span, .glass-panel, .absolute').forEach(el => {
+                el.style.transition = 'opacity 0.8s ease-out';
+                el.style.opacity = '0';
+            });
+            
+            // Smoothly fade in our topographical texture mapping overlay during the push
+            setTimeout(() => {
+                highResOverlay.style.opacity = '1';
+            }, 100);
+            
+        }, 20);
+
+        // Wait to let the user admire the HD rendered sphere, then cleanly navigate away
+        setTimeout(() => {
+            window.location.href = url;
+        }, 1900);
+    }
+
+    function getSystemState() {
+        try { return JSON.parse(localStorage.getItem('solarSystemState')) || {}; } 
+        catch(e) { return {}; }
+    }
+
+    function hasVisited(key) {
+        const state = getSystemState();
+        return state[key] && state[key].visited;
+    }
+
+    function hasBadge(key) {
+        const state = getSystemState();
+        return state[key] && state[key].badge;
+    }
+
+    function onPageReady() {
+        document.querySelectorAll('.planet-wrapper, .moon-wrapper').forEach(wrapper => {
+            const key = wrapper.dataset.wrapper;
+            wrapper.classList.remove('visited', 'badged');
+            if (hasBadge(key)) {
+                wrapper.classList.add('badged');
+            } else if (hasVisited(key)) {
+                wrapper.classList.add('visited');
+            }
+        });
+        
+        const scrollContainer = document.querySelector('.overflow-x-auto');
+        scrollContainer.addEventListener('wheel', (evt) => {
+            if (evt.deltaY !== 0) {
+                evt.preventDefault();
+                scrollContainer.scrollLeft += evt.deltaY * 2;
+            }
+        });
+    }
+
+    window.addEventListener('DOMContentLoaded', onPageReady);
+</script>
+
+</body>
+</html>

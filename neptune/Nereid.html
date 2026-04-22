@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nereid — Interactive Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#02040a', 800: '#0a0f1c', 700: '#141d33', 500: '#23324d', 100: '#f1f5f9' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        nereid: { base: '#94a3b8', dark: '#475569', light: '#cbd5e1', ice: '#f1f5f9', shadow: '#1e293b' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'tumble': 'tumble 40s linear infinite',
+                        'spin-eccentric': 'spinEccentric 15s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(148, 163, 184, 0.2)' },
+                            '100%': { boxShadow: '0 0 50px rgba(203, 213, 225, 0.5)' },
+                        },
+                        tumble: {
+                            '0%': { transform: 'rotate(0deg)' },
+                            '100%': { transform: 'rotate(360deg)' }
+                        },
+                        spinEccentric: {
+                            '0%': { transform: 'translate(-50%, -50%) rotate(0deg)' },
+                            '100%': { transform: 'translate(-50%, -50%) rotate(360deg)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #02040a;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #3b82f6 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #94a3b8 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #cbd5e1 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(10, 15, 28, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(2, 4, 10, 0.8), rgba(20, 29, 51, 0.9));
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(203, 213, 225, 0.6);
+            box-shadow: 0 0 20px rgba(148, 163, 184, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Nereid Graphic - Lumpy, icy gray, irregular */
+        .orb-nereid {
+            background: radial-gradient(circle at 35% 35%, #f1f5f9, #cbd5e1, #94a3b8, #475569, #1e293b);
+            box-shadow: inset -15px -15px 30px rgba(0,0,0,0.8), 0 0 30px rgba(148, 163, 184, 0.3);
+            /* Irregular lumpy shape */
+            border-radius: 40% 60% 55% 45% / 50% 45% 60% 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* Surface dimples */
+        .orb-nereid::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 70% 30%, rgba(30, 41, 59, 0.5) 0%, transparent 15%),
+                radial-gradient(circle at 30% 60%, rgba(15, 23, 42, 0.6) 0%, transparent 20%),
+                radial-gradient(circle at 60% 80%, rgba(30, 41, 59, 0.4) 0%, transparent 12%);
+            mix-blend-mode: multiply;
+        }
+
+        /* Extreme Eccentric Orbit Graphic behind planet */
+        .eccentric-orbit {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 250%; height: 80%;
+            border: 2px dashed rgba(59, 130, 246, 0.4);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            /* Shift the center of the orbit to show extreme eccentricity */
+            transform-origin: 20% 50%;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(148, 163, 184, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #02040a; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-nereid-base shadow-[0_0_40px_rgba(148,163,184,0.4)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-nereid-light text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-nereid-light">🌑</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="neptune.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-cyan">
+                <span class="text-xl">🪐</span>
+                <span class="font-display font-bold text-lg">Back to Neptune</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-nereid-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-nereid-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Nereid Mission Progress</span>
+                    <span id="progressText" class="text-nereid-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-nereid-dark to-nereid-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Orbit Surveyor</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-nereid-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-nereid-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-nereid-light animate-ping"></span> Moon of Neptune
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Nereid</h1>
+                <p class="text-2xl text-nereid-light font-body italic mb-6">"The Eccentric Wanderer"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    The third-largest moon of Neptune. It holds the solar system record for the most extreme, highly elliptical orbit of any moon, swinging incredibly close to its planet before flinging millions of miles away into deep space!
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-nereid-light text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(148,163,184,0.5)]">
+                    Track the Orbit 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64">
+                    <div class="eccentric-orbit animate-spin-eccentric"></div>
+                    <div class="w-full h-full orb-nereid animate-tumble animate-pulse-glow shadow-2xl"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">☄️</div>
+                <div class="text-nereid-light font-mono text-xs uppercase mb-1">Orbit Type</div>
+                <div class="font-bold text-xl text-star-red">Most Eccentric</div>
+                <div class="text-[10px] text-space-100 mt-1">Highly elliptical path</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-nereid-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">~340 km</div>
+                <div class="text-[10px] text-space-100 mt-1">3rd largest Neptunian moon</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🗓️</div>
+                <div class="text-nereid-light font-mono text-xs uppercase mb-1">Orbital Period</div>
+                <div class="font-bold text-xl">360 Days</div>
+                <div class="text-[10px] text-space-100 mt-1">Nearly an Earth year!</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🔭</div>
+                <div class="text-nereid-light font-mono text-xs uppercase mb-1">Discovered</div>
+                <div class="font-bold text-xl">1949</div>
+                <div class="text-[10px] text-space-100 mt-1">By Gerard Kuiper</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Nereid data.</p>
+                </div>
+                <div class="hidden md:block text-nereid-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Discovery -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'nr1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔭</div>
+                            <h3 class="font-display text-xl text-nereid-light">Discovery</h3>
+                            <p class="text-space-100 text-xs mt-2">Who found it?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-nereid-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-nereid-dark pb-1 w-full">Gerard Kuiper</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>Nereid was discovered in <strong>1949</strong> by the famous astronomer Gerard Kuiper (the namesake of the Kuiper Belt!).</li>
+                                <li>It was the very last moon of Neptune discovered using Earth-based telescopes before Voyager 2 arrived.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: The Extreme Orbit -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'nr2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🎢</div>
+                            <h3 class="font-display text-xl text-nereid-light">The Orbit</h3>
+                            <p class="text-space-100 text-xs mt-2">A solar system record</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-nereid-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-red mb-2 border-b border-nereid-dark pb-1 w-full">Most Eccentric</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Nereid holds the record for the <strong>most eccentric (elliptical) orbit</strong> of any moon in the solar system.</li>
+                                <li>At its closest, it is 1.3 million km from Neptune. At its farthest, it swings out to <strong>9.6 million km!</strong></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Size and Shape -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'nr3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🥔</div>
+                            <h3 class="font-display text-xl text-nereid-light">Size & Shape</h3>
+                            <p class="text-space-100 text-xs mt-2">Is it a sphere?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-nereid-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-nereid-dark pb-1 w-full">The Lumpy Ice Ball</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>With a diameter of about 340 km, it is the third-largest of Neptune's 14 moons.</li>
+                                <li>Despite its size, it is irregularly shaped (like a lumpy potato), meaning its gravity isn't strong enough to pull it into a perfect sphere.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Long Year -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'nr4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⏳</div>
+                            <h3 class="font-display text-xl text-nereid-light">Length of Year</h3>
+                            <p class="text-space-100 text-xs mt-2">A long journey</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-nereid-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-nereid-dark pb-1 w-full">360 Days</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Because its orbit swings so far away from Neptune, it takes a very long time to complete a single lap.</li>
+                                <li>One orbit for Nereid takes <strong>360 Earth days</strong>—nearly a full Earth year just to go around its planet once!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Composition -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'nr5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧊</div>
+                            <h3 class="font-display text-2xl text-nereid-light">Composition</h3>
+                            <p class="text-space-100 mt-2">What is it made of?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-nereid-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-cyan mb-3 border-b border-nereid-dark pb-2 w-full">Water Ice and Rock</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-nereid-light font-mono font-bold block mb-1">A Frozen Mix:</span>
+                                    Spectral data indicates that Nereid is composed of a mixture of water ice and some silicate rock.
+                                </div>
+                                <div>
+                                    <span class="text-nereid-light font-mono font-bold block mb-1">Surface Neutrality:</span>
+                                    Unlike other outer moons that get stained red by tholins or radiation, Nereid appears very neutral in color (grey/white).
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: The Origin Mystery -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'nr6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🤔</div>
+                            <h3 class="font-display text-2xl text-nereid-light">The Origin Mystery</h3>
+                            <p class="text-space-100 mt-2">Why is its orbit so crazy?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-nereid-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-gold mb-3 border-b border-nereid-dark pb-2 w-full">Two Leading Theories</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-nereid-light font-mono font-bold block mb-1">Theory 1: Captured!</span>
+                                    Like Triton, it might be a Kuiper Belt object that drifted too close and was captured by Neptune's gravity.
+                                </div>
+                                <div>
+                                    <span class="text-nereid-light font-mono font-bold block mb-1">Theory 2: Disrupted!</span>
+                                    It formed near Neptune, but when Neptune violently captured Triton, the gravitational chaos flung Nereid out into its extreme orbit!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Voyager 2 Mission -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'nr7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-nereid-light">Voyager 2 Flyby</h3>
+                            <p class="text-space-100 mt-2">The only visitor</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-nereid-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-nereid-dark pb-2 w-full">A Long-Distance Snapshot</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>NASA's <strong>Voyager 2</strong> is the only spacecraft to have ever visited the Neptune system (in 1989).</li>
+                                <li>Because Nereid was at the far end of its eccentric orbit, Voyager passed it at a massive distance of <strong>4.7 million km</strong>.</li>
+                                <li>The resulting photos were very blurry, showing only a smudged, irregular shape with no surface details!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Mythology -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'nr8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌊</div>
+                            <h3 class="font-display text-2xl text-nereid-light">Mythology</h3>
+                            <p class="text-space-100 mt-2">What does the name mean?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-nereid-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-nereid-light mb-2 border-b border-nereid-dark pb-2 w-full">The Sea Nymphs</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>In Greek mythology, the <strong>Nereids</strong> were 50 sea nymphs who were the daughters of Nereus (the old man of the sea).</li>
+                                <li>They were known to accompany Poseidon (the Roman equivalent is Neptune), making it a perfect name for a moon circling the blue giant!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-nereid-dark border-2 shadow-[0_0_30px_rgba(71,85,105,0.4)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-nereid-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Eccentric Orbit Surveyor</h2>
+                        <p class="text-space-100 mb-6">Pilot a probe on an incredibly extreme elliptical orbit! You will fly very fast when close to Neptune, and slow down as you drift into deep space. Dodge the <span class="text-white font-bold">Rogue Comets</span> and collect 5 <span class="text-star-cyan font-bold">Telemetry Nodes</span> to earn the <span class="text-nereid-light font-bold">Eccentric Explorer Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-nereid-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Use <kbd class="bg-space-700 px-2 rounded">←</kbd><kbd class="bg-space-700 px-2 rounded">↑</kbd><kbd class="bg-space-700 px-2 rounded">↓</kbd><kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys to fly.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Touch and drag anywhere on canvas to steer.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Launch Probe
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-nereid-dark/30">
+                            <div class="text-5xl mb-2">🛰️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Trajectory Locked</h3>
+                            <p class="text-nereid-light text-sm">Click Launch to begin</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#020617] via-[#0f172a] to-[#1e293b] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-nereid-dark"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-nereid-dark/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Nereid module.</p>
+            </div>
+
+            
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="quizStatus" class="flex items-center justify-between gap-4 mb-4 text-sm font-mono">
+                    <span class="text-space-100">Question <span id="quizCurrent">1</span> of <span id="quizTotal">20</span></span>
+                    <span class="nereid-light">Score: <span id="quizScore">0</span></span>
+                </div>
+
+                <div id="quizQuestionCard" class="quiz-q block glass-card rounded-2xl p-6">
+                    <h3 id="quizQuestion" class="text-xl font-bold mb-4 nereid-light"></h3>
+                    <div id="quizOptions" class="space-y-3"></div>
+                    <div id="quizExplanation" class="hidden mt-5 rounded-2xl border border-space-500 bg-space-900/80 p-4">
+                        <div id="quizAnswerLabel" class="font-bold mb-2"></div>
+                        <p id="quizExplanationText" class="text-space-100 leading-relaxed"></p>
+                    </div>
+                    <div class="mt-5 flex justify-end">
+                        <button id="nextQuestionBtn" onclick="goToNextQuestion()" disabled class="opacity-50 cursor-not-allowed bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full transition">Next</button>
+                    </div>
+                </div>
+
+                <div class="quiz-q hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-3">Score: <span id="scoreText" class="font-bold text-nereid-light">0/20</span></p>
+                    <p class="text-space-100 mb-6">Review the explanations as you play, then retry for a perfect score.</p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Nereid Module Complete!", "You have unlocked the 'Eccentric Explorer' badge. Excellent work!", "🌑");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Nereid files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    
+    /* QUIZ LOGIC */
+    const quizQuestions = [{"question": "What makes Nereid especially famous among Neptune's moons?", "options": ["It has one of the most eccentric, or stretched-out, moon orbits in the solar system.", "It is hotter than the Sun.", "It is Neptune's only moon.", "It spins around Neptune in a perfectly straight line."], "correct": 0, "explanation": "Nereid's orbit is very eccentric, meaning its distance from Neptune changes a lot during one trip around the planet. That unusual path is its standout feature."}, {"question": "An eccentric orbit is best described as...", "options": ["perfectly circular.", "strongly stretched into an oval shape.", "moving in a square.", "not an orbit at all."], "correct": 1, "explanation": "A circular orbit keeps nearly the same distance from the planet all the way around. An eccentric orbit is more oval, so the object comes much closer at one point and much farther at another."}, {"question": "Because Nereid's orbit is so stretched out, which statement is true?", "options": ["Its distance from Neptune changes a lot during an orbit.", "Its surface disappears and returns every month.", "It leaves the solar system every year.", "It stops feeling gravity when it is far away."], "correct": 0, "explanation": "A highly eccentric orbit means the moon swings inward and outward a great deal. Nereid therefore does not stay at one steady distance from Neptune."}, {"question": "Nereid was discovered in 1949 by...", "options": ["Galileo Galilei.", "Gerard Kuiper.", "Clyde Tombaugh.", "Sally Ride."], "correct": 1, "explanation": "Gerard Kuiper discovered Nereid in 1949. He was an important planetary astronomer who also helped advance the study of outer solar system objects."}, {"question": "If a moon is much closer to its planet at one part of its orbit and much farther away at another part, the orbit is called...", "options": ["retrograde.", "synchronous.", "eccentric.", "stationary."], "correct": 2, "explanation": "The key word is eccentric. It tells us the orbit is not close to a circle."}, {"question": "Why is Nereid's orbit scientifically interesting?", "options": ["It may preserve clues about past gravitational changes in Neptune's moon system.", "It proves Neptune has no gravity.", "It means Nereid is a planet, not a moon.", "It causes Neptune to stop rotating."], "correct": 0, "explanation": "Odd orbits can hint that a moon system changed in the past. Scientists study Nereid's path to learn how Neptune's moons may have been disturbed long ago."}, {"question": "Which idea best matches Nereid's likely surface?", "options": ["A small cold world of rock and ice with many impacts.", "A tropical moon with oceans and rain forests.", "A glowing ball of liquid fire.", "A moon made entirely of clouds."], "correct": 0, "explanation": "Nereid is a small outer solar system moon, so scientists expect a cold surface made largely of rock and ice, shaped by impacts over time."}, {"question": "Nereid takes about 360 Earth days to orbit Neptune. That is closest to...", "options": ["about one Earth year.", "about one Earth hour.", "about ten Earth years.", "about one Earth minute."], "correct": 0, "explanation": "An Earth year is about 365 days, so 360 days is very close to one year. This makes Nereid's orbital period easy to compare with Earth's calendar."}, {"question": "When Nereid is nearer Neptune, gravity should make it move...", "options": ["faster than when it is far away.", "slower than when it is far away.", "backwards only.", "with no motion at all."], "correct": 0, "explanation": "Objects in eccentric orbits generally move faster near the planet and slower when farther away. That pattern follows the rules of orbital motion."}, {"question": "Which model would best help a student show Nereid's path?", "options": ["A long oval loop around Neptune.", "A square wrapped around Neptune.", "A straight line starting at Neptune.", "A zigzag arrow with no center."], "correct": 0, "explanation": "Because Nereid's orbit is highly eccentric, a stretched oval is the best simple model for its path around Neptune."}, {"question": "What is the best meaning of 'elliptical orbit'?", "options": ["An orbit shaped like an ellipse, or oval.", "An orbit made from electric sparks.", "An orbit that only works during eclipses.", "An orbit with no gravity involved."], "correct": 0, "explanation": "Ellipse is the geometric word for an oval. So an elliptical orbit is simply an oval-shaped orbit."}, {"question": "If scientists compare Nereid with Neptune's inner moons, one major difference is that Nereid...", "options": ["travels much farther from Neptune during part of its orbit.", "orbits inside Neptune's atmosphere.", "is brighter than every star.", "has no solid surface."], "correct": 0, "explanation": "Neptune's inner moons stay relatively close to the planet, but Nereid roams far out on a stretched orbit. That difference makes it stand out."}, {"question": "Why do unusual moon orbits matter to scientists?", "options": ["They can reveal clues about collisions, captures, or gravitational interactions in the past.", "They cancel the laws of motion.", "They mean telescopes are unnecessary.", "They prove moons are alive."], "correct": 0, "explanation": "Orbits act like historical evidence. A strange orbit can suggest that something major happened earlier, such as a capture event or strong gravitational disturbance."}, {"question": "Which statement is most accurate?", "options": ["Nereid's path around Neptune is much less circular than many regular moons' paths.", "Nereid travels around the Sun instead of Neptune.", "Nereid is Neptune's largest moon.", "Nereid has a thick oxygen atmosphere."], "correct": 0, "explanation": "Nereid still orbits Neptune, but in a much more stretched path than a typical regular moon. That is the key fact to remember."}, {"question": "What would a scientist most likely measure to describe Nereid's orbit?", "options": ["Its changing distance, orbital period, and path shape.", "Its favorite myth.", "Its sound in Earth's atmosphere.", "Its number of trees."], "correct": 0, "explanation": "To describe an orbit, scientists focus on measurable things such as how long the orbit takes, how stretched it is, and how far the moon gets from the planet at different points."}, {"question": "Nereid's name fits Neptune's moon theme because Nereids in mythology were...", "options": ["sea nymphs.", "forest giants.", "mountain dragons.", "sun gods."], "correct": 0, "explanation": "Neptune is the Roman sea god, so many of its moons are named for sea-related mythological figures. Nereids were sea nymphs in Greek mythology."}, {"question": "What is a likely reason Nereid is not perfectly round?", "options": ["It is too small for gravity to fully shape it into a sphere.", "It has no material inside it.", "It is made only of light.", "It changes shape every second."], "correct": 0, "explanation": "Like many small moons, Nereid probably lacks enough self-gravity to pull itself into a perfect sphere. Small size often means irregular shape."}, {"question": "If Nereid moved in a nearly circular orbit instead, what would change most?", "options": ["Its distance from Neptune would stay much more even during the orbit.", "It would stop being a moon.", "It would become hotter than Mercury.", "Neptune would disappear."], "correct": 0, "explanation": "A more circular orbit means the moon stays at a more constant distance from its planet. The big swings inward and outward would be much smaller."}, {"question": "Why might Nereid be harder to summarize with one simple picture than a close inner moon?", "options": ["Because its highly stretched orbit changes its position relative to Neptune so dramatically.", "Because it has no orbit at all.", "Because it is invisible to all telescopes.", "Because it is inside the Sun."], "correct": 0, "explanation": "A moon on a strongly eccentric orbit can appear in very different locations depending on when you look. That makes its motion more dramatic than that of a close, regular moon."}, {"question": "Which summary best fits Nereid?", "options": ["A small Neptunian moon discovered by Gerard Kuiper, notable for an extremely eccentric orbit that takes about an Earth year.", "A giant moon with active nitrogen geysers and retrograde motion.", "A tiny inner moon doomed by the Roche limit.", "A dark moon discovered by Voyager 2 in 1989 and famous for Pharos crater."], "correct": 0, "explanation": "That choice combines Nereid's key facts accurately: discovery by Kuiper, a highly eccentric orbit, and a period close to one Earth year."}];
+    let currentQ = 0;
+    let score = 0;
+    let questionOrder = [];
+    let currentQuestionSet = [];
+    let answeredCurrent = false;
+
+    function shuffleArray(items) {
+        const arr = [...items];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function prepareQuizData() {
+        questionOrder = shuffleArray(quizQuestions.map((_, idx) => idx));
+        currentQuestionSet = questionOrder.map((idx) => {
+            const q = JSON.parse(JSON.stringify(quizQuestions[idx]));
+            const options = q.options.map((text, index) => ({ text, isCorrect: index === q.correct }));
+            q.options = shuffleArray(options);
+            return q;
+        });
+    }
+
+    function renderQuestion() {
+        const total = currentQuestionSet.length;
+        const question = currentQuestionSet[currentQ];
+        answeredCurrent = false;
+
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('quizQuestionCard').classList.remove('hidden');
+        document.getElementById('quizQuestionCard').classList.add('block');
+        document.getElementById('quizCurrent').innerText = `${currentQ + 1}`;
+        document.getElementById('quizTotal').innerText = `${total}`;
+        document.getElementById('quizScore').innerText = `${score}`;
+        document.getElementById('quizQuestion').innerText = `${currentQ + 1}. ${question.question}`;
+
+        const optionsWrap = document.getElementById('quizOptions');
+        optionsWrap.innerHTML = '';
+        question.options.forEach((option) => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-nereid-light transition-all";
+            btn.innerText = option.text;
+            btn.onclick = () => answer(option.isCorrect, btn);
+            optionsWrap.appendChild(btn);
+        });
+
+        const explanationBox = document.getElementById('quizExplanation');
+        explanationBox.classList.add('hidden');
+        document.getElementById('quizAnswerLabel').innerText = '';
+        document.getElementById('quizExplanationText').innerText = '';
+
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.disabled = true;
+        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.remove('hover:bg-space-500');
+        nextBtn.innerText = currentQ === total - 1 ? 'See Results' : 'Next';
+    }
+
+    function answer(isCorrect, btnEl) {
+        if (answeredCurrent) return;
+        answeredCurrent = true;
+
+        const allButtons = document.querySelectorAll('#quizOptions button');
+        allButtons.forEach((btn) => {
+            btn.disabled = true;
+            btn.classList.remove('hover:bg-space-700', 'hover:border-nereid-light');
+            btn.classList.add('opacity-50');
+        });
+
+        btnEl.classList.remove('opacity-50', 'bg-space-800');
+
+        if (isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            score++;
+            addXP(20);
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+            const correctBtn = Array.from(allButtons).find((btn) => currentQuestionSet[currentQ].options.find((opt) => opt.text === btn.innerText && opt.isCorrect));
+            if (correctBtn) {
+                correctBtn.classList.remove('opacity-50', 'bg-space-800');
+                correctBtn.classList.add('bg-star-green/20', 'border-star-green', 'font-bold');
+            }
+        }
+
+        document.getElementById('quizScore').innerText = `${score}`;
+        const explanationBox = document.getElementById('quizExplanation');
+        document.getElementById('quizAnswerLabel').innerText = isCorrect ? 'Correct answer' : 'Explanation';
+        document.getElementById('quizAnswerLabel').className = isCorrect ? 'font-bold mb-2 text-star-green' : 'font-bold mb-2 text-star-red';
+        document.getElementById('quizExplanationText').innerText = currentQuestionSet[currentQ].explanation;
+        explanationBox.classList.remove('hidden');
+
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.add('hover:bg-space-500');
+    }
+
+    function goToNextQuestion() {
+        if (!answeredCurrent) return;
+        if (currentQ < currentQuestionSet.length - 1) {
+            currentQ++;
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('quizQuestionCard').classList.add('hidden');
+        document.getElementById('quizQuestionCard').classList.remove('block');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('q-result').classList.add('block');
+        document.getElementById('scoreText').innerText = `${score}/${currentQuestionSet.length}`;
+        document.getElementById('scoreText').classList.remove('text-star-green', 'text-star-red');
+
+        if(score === currentQuestionSet.length) {
+            document.getElementById('scoreText').classList.add('text-star-green');
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Perfect Knowledge", "Perfect score on the Nereid Quiz! +100 XP", "🧠");
+            }
+        } else {
+            document.getElementById('scoreText').classList.add('text-star-red');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        score = 0;
+        currentQ = 0;
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        prepareQuizData();
+        renderQuestion();
+    }
+
+    prepareQuizData();
+    renderQuestion();
+
+    /* MINI GAME: Eccentric Orbit Surveyor */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    // Player (Probe) - Omni-directional movement
+    const player = {
+        x: 200, 
+        y: 400, 
+        width: 24,
+        height: 24,
+        speed: 5,
+        color: '#f8fafc' 
+    };
+
+    let obstacles = []; // Comets
+    let collectibles = []; // Data nodes
+    let bgNeptuneSize = 0; // Animates to simulate zooming out
+
+    // Inputs
+    let keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false };
+    let isTouching = false;
+    let touchTarget = {x: 0, y: 0};
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) keys[e.code] = false; 
+    });
+    
+    // Touch Support
+    function handlePointerMove(e) {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        touchTarget.x = (clientX - rect.left) * (canvas.width / rect.width);
+        touchTarget.y = (clientY - rect.top) * (canvas.height / rect.height);
+        isTouching = true;
+        if(e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+    }
+    function handlePointerUp() { isTouching = false; }
+
+    canvas.addEventListener('touchstart', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchend', handlePointerUp);
+    canvas.addEventListener('mousedown', handlePointerMove);
+    canvas.addEventListener('mousemove', (e) => { if(isTouching) handlePointerMove(e); });
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerUp);
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2;
+        player.y = canvas.height * 0.8;
+        obstacles = [];
+        collectibles = [];
+        dataCollected = 0;
+        isTouching = false;
+        bgNeptuneSize = canvas.width; // Start close to Neptune
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Surveying...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity(globalSpeedMult) {
+        // Collectible Data Node
+        if (Math.random() > 0.75 && collectibles.length < 2) {
+            collectibles.push({
+                x: Math.random() * (canvas.width - 20) + 10,
+                y: -20,
+                radius: 10,
+                speedY: (Math.random() * 2 + 2) * globalSpeedMult,
+                pulse: 0
+            });
+            return;
+        }
+
+        // Rogue Comet
+        let size = Math.random() * 15 + 10;
+        obstacles.push({
+            x: Math.random() * (canvas.width - size*2) + size,
+            y: -size*2,
+            radius: size,
+            speedY: (Math.random() * 4 + 3) * globalSpeedMult,
+            speedX: (Math.random() - 0.5) * 2 * globalSpeedMult // Slight horizontal drift
+        });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        
+        // Flame
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.moveTo(-5, player.height/2);
+        ctx.lineTo(0, player.height/2 + 15 + Math.random()*5);
+        ctx.lineTo(5, player.height/2);
+        ctx.fill();
+
+        // Hull
+        ctx.fillStyle = player.color;
+        ctx.beginPath();
+        ctx.moveTo(0, -player.height/2);
+        ctx.lineTo(player.width/2, player.height/2);
+        ctx.lineTo(-player.width/2, player.height/2);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Accents
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(-player.width/4, 0, player.width/2, player.height/3);
+        
+        ctx.restore();
+    }
+
+    function drawEntities() {
+        // Collectibles
+        for (let i = 0; i < collectibles.length; i++) {
+            let c = collectibles[i];
+            c.pulse += 0.1;
+            let glow = 8 + Math.sin(c.pulse) * 4;
+            
+            ctx.fillStyle = '#6ef0ff'; 
+            ctx.shadowBlur = glow;
+            ctx.shadowColor = '#6ef0ff';
+            
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, c.radius, 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.shadowBlur = 0;
+        }
+
+        // Comets
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            
+            // Comet tail
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.beginPath();
+            ctx.arc(o.x, o.y, o.radius, Math.PI, 0);
+            ctx.lineTo(o.x - o.speedX*5, o.y - o.speedY*5);
+            ctx.closePath();
+            ctx.fill();
+
+            // Comet core
+            ctx.fillStyle = '#cbd5e1';
+            ctx.beginPath();
+            ctx.arc(o.x, o.y, o.radius, 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#475569';
+            ctx.beginPath();
+            ctx.arc(o.x - o.radius/4, o.y + o.radius/4, o.radius/3, 0, Math.PI*2);
+            ctx.fill();
+        }
+    }
+
+    function drawBackground(depthRatio) {
+        // Space color
+        ctx.fillStyle = '#020617';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Shrinking Neptune to simulate highly elliptical orbit moving away
+        // Depth ratio goes from 0 to 1 over 20 seconds.
+        bgNeptuneSize = canvas.width - (canvas.width * 0.8 * depthRatio); 
+        
+        ctx.fillStyle = '#1e3a8a';
+        ctx.beginPath();
+        // Draw Neptune at bottom center, getting smaller and further away
+        ctx.arc(canvas.width/2, canvas.height + (bgNeptuneSize/2) - (depthRatio * 200), bgNeptuneSize, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Stars
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        for(let i=0; i<15; i++) {
+            let px = (i * 73) % canvas.width;
+            let py = (frames * 2 + i * 41) % canvas.height;
+            ctx.fillRect(px, py, 2, 2);
+        }
+    }
+
+    function checkCollisionCircle(obj, circleRadius) {
+        let dx = player.x - obj.x;
+        let dy = player.y - obj.y;
+        let distance = Math.sqrt(dx*dx + dy*dy);
+        // Player radius approx 12
+        return distance < (12 + circleRadius);
+    }
+
+    function updatePhysics(depthRatio) {
+        // Player Movement
+        if (keys.ArrowLeft) player.x -= player.speed;
+        if (keys.ArrowRight) player.x += player.speed;
+        if (keys.ArrowUp) player.y -= player.speed;
+        if (keys.ArrowDown) player.y += player.speed;
+
+        if (isTouching) {
+            let dx = touchTarget.x - player.x;
+            let dy = touchTarget.y - player.y;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist > player.speed) {
+                player.x += (dx / dist) * player.speed;
+                player.y += (dy / dist) * player.speed;
+            }
+        }
+
+        // Clamp to screen
+        if(player.x < 15) player.x = 15;
+        if(player.x > canvas.width - 15) player.x = canvas.width - 15;
+        if(player.y < 20) player.y = 20;
+        if(player.y > canvas.height - 20) player.y = canvas.height - 20;
+
+        // In an eccentric orbit, you fly fast near the planet, and slow down far away!
+        // Depth ratio 0 = close (fast). Depth ratio 1 = far (slow).
+        let orbitalSpeedMult = 1.5 - (depthRatio * 0.8); 
+
+        // Spawning
+        let spawnRate = Math.max(15, Math.floor(40 * orbitalSpeedMult)); 
+        if (frames % spawnRate === 0) spawnEntity(orbitalSpeedMult);
+
+        // Update Collectibles
+        for (let i = collectibles.length - 1; i >= 0; i--) {
+            collectibles[i].y += collectibles[i].speedY;
+            
+            if (checkCollisionCircle(collectibles[i], collectibles[i].radius)) {
+                dataCollected++;
+                addXP(10);
+                ctx.fillStyle = 'rgba(110, 240, 255, 0.3)';
+                ctx.fillRect(0,0, canvas.width, canvas.height);
+                collectibles.splice(i, 1);
+                continue;
+            }
+
+            if (collectibles[i].y > canvas.height + 20) collectibles.splice(i, 1);
+        }
+
+        // Update Obstacles (Comets)
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].y += obstacles[i].speedY;
+            obstacles[i].x += obstacles[i].speedX;
+            
+            if (checkCollisionCircle(obstacles[i], obstacles[i].radius * 0.8)) {
+                gameOver("Crashed into a Rogue Comet!");
+                return;
+            }
+
+            if (obstacles[i].y > canvas.height + 20) obstacles.splice(i, 1);
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let depthRatio = Math.min(1, scoreFrames / 1200); // 0 to 1 over 20 seconds
+        
+        drawBackground(depthRatio);
+        updatePhysics(depthRatio);
+        if(!gameActive) return; 
+        
+        drawEntities();
+        drawPlayer();
+
+        // HUD
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Orbit Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillStyle = "#6ef0ff"; // Cyan
+        ctx.fillText(`🔷 Scans: ${dataCollected}/5`, 10, 45);
+        
+        // Show speed indicator
+        ctx.fillStyle = "#f8fafc";
+        ctx.font = "12px 'JetBrains Mono', monospace";
+        let speedStatus = depthRatio < 0.5 ? "HIGH VELOCITY (PERIAPSIS)" : "LOW VELOCITY (APOAPSIS)";
+        ctx.fillText(speedStatus, 10, canvas.height - 15);
+
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && dataCollected >= 5 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Eccentric Explorer Badge Unlocked!", "You survived the extreme orbit! +100 XP", "🎢");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Orbit";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 5);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You survived for ${secondsAlive}s.</p>
+            <p class="text-star-cyan mb-4 text-sm font-bold">🔷 Collected ${dataCollected} Nodes</p>
+            ${!achievements.playedGame ? `<p class="text-nereid-light text-sm mb-4 text-center px-2">Survive 20s AND collect 5 nodes for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

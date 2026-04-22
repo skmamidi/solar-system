@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Astronomical Terms — Interactive Solar System Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Three.js for 3D Celestial Sphere -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#060412', 800: '#0f1123', 700: '#1a1d36', 500: '#2c315e', 100: '#f1f5f9' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        astro: { base: '#8b5cf6', dark: '#5b21b6', light: '#c4b5fd', line: '#a78bfa' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(139, 92, 246, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(139, 92, 246, 0.6)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #060412;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #8b5cf6 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #6ef0ff 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #ffd166 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        .glass-panel {
+            background: rgba(15, 17, 35, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(6, 4, 18, 0.8), rgba(26, 29, 54, 0.9));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(139, 92, 246, 0.6);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        #gameCanvas, #constellationCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(139, 92, 246, 0.15);
+        }
+        #gameCanvas { cursor: none; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(6, 4, 18, 0.5); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #5b21b6; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #8b5cf6; }
+        
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+        
+        /* Range slider styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px; width: 16px;
+            border-radius: 50%;
+            background: #6ef0ff;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(110, 240, 255, 0.8);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px;
+            cursor: pointer;
+            background: #5b21b6;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-astro-base shadow-[0_0_40px_rgba(139,92,246,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-astro-base text-white font-bold py-3 rounded-xl hover:bg-astro-light hover:text-space-900 transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <a href="index.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+            <span class="text-2xl text-astro-light">🔭</span>
+            <span class="font-display font-bold text-xl tracking-wide hidden sm:block">Solar System Explorer</span>
+            <span class="font-display font-bold text-xl tracking-wide sm:hidden">SSE</span>
+        </a>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-astro-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-astro-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">State Olympian Training Progress</span>
+                    <span id="progressText" class="text-astro-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-astro-dark to-astro-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Sky Maps</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Use Telescope</div>
+                <div id="badgeWeaver" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Zodiac Weaver</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">4. Pass Exam</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-astro-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-astro-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-astro-base animate-ping"></span> Advanced Navigation
+                </p>
+                <h1 class="font-display text-5xl md:text-6xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Astronomical Terms</h1>
+                <p class="text-2xl text-star-gold font-body italic mb-6">"Decoding the Cosmos at a Championship Level"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-6">
+                    To master the universe, you must understand the <strong>Celestial Sphere</strong>. Drag the 3D model to explore, and use the slider to see how your latitude changes the angle of the sky!
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-astro-base text-white px-8 py-3 rounded-full font-bold hover:bg-astro-light hover:text-space-900 transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(139,92,246,0.5)]">
+                    Access Advanced Dictionary 👇
+                </button>
+            </div>
+            
+            <!-- 3D Interactive Simulator -->
+            <div class="z-10 relative mt-8 md:mt-0 flex flex-col items-center w-full md:w-1/2 max-w-[400px]">
+                <div id="celestial-3d-container" class="w-full h-64 md:h-80 rounded-xl overflow-hidden shadow-[0_0_30px_rgba(139,92,246,0.3)] border border-astro-dark cursor-grab active:cursor-grabbing bg-space-900/80 backdrop-blur-md"></div>
+                
+                <div class="mt-4 glass-card p-4 rounded-xl w-full text-sm border-astro-base/40">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="font-bold text-white">Observer Latitude: <span id="latValue" class="text-star-cyan font-mono">40° N</span></label>
+                        <input type="range" id="latSlider" min="-90" max="90" value="40" class="w-1/2" oninput="updateLatitude()">
+                    </div>
+                    <div class="flex justify-center gap-2 flex-wrap">
+                        <button id="toggleEquator" onclick="toggle3D('equator')" class="px-3 py-1 bg-star-cyan text-space-900 text-xs rounded font-bold shadow-[0_0_10px_rgba(110,240,255,0.4)]">Equator</button>
+                        <button id="toggleEcliptic" onclick="toggle3D('ecliptic')" class="px-3 py-1 bg-star-gold text-space-900 text-xs rounded font-bold shadow-[0_0_10px_rgba(255,209,102,0.4)]">Ecliptic</button>
+                        <button id="toggleMeridian" onclick="toggle3D('meridian')" class="px-3 py-1 bg-star-magenta text-white text-xs rounded font-bold shadow-[0_0_10px_rgba(255,90,198,0.4)]">Meridian</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dictionary Grid -->
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">The Olympian's Dictionary</h2>
+                    <p class="text-space-100 font-mono text-sm">Tap cards to flip. Study the <span class="text-star-gold">Olympiad Facts</span> for the exam!</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <!-- Zenith -->
+                <div class="flip-card perspective-1000 h-[22rem] cursor-pointer group" onclick="flipCard(this, 't1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⬆️</div>
+                            <h3 class="font-display text-3xl text-star-cyan">Zenith</h3>
+                            <p class="text-space-100 text-sm mt-2">The point directly overhead</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Zenith</h3>
+                            <p class="text-sm text-left font-body mb-3">
+                                The point on the celestial sphere that is exactly, 100% directly over an observer's head.
+                            </p>
+                            <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
+                                <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
+                                <p class="text-xs text-space-100">
+                                    In the altitude-azimuth system, the Zenith has an altitude of exactly <strong>+90°</strong>. The point diametrically opposite the Zenith (directly under your feet, passing through Earth) is called the <strong>Nadir</strong> (altitude -90°).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Horizon -->
+                <div class="flip-card perspective-1000 h-[22rem] cursor-pointer group" onclick="flipCard(this, 't2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌅</div>
+                            <h3 class="font-display text-3xl text-star-gold">Horizon</h3>
+                            <p class="text-space-100 text-sm mt-2">Where sky & Earth meet</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Horizon</h3>
+                            <p class="text-sm text-left font-body mb-3">
+                                The great circle halfway between the zenith and the nadir, acting as the boundary between the Earth and the sky.
+                            </p>
+                            <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
+                                <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
+                                <p class="text-xs text-space-100">
+                                    The <strong>Celestial Horizon</strong> (or Astronomical Horizon) assumes a perfectly flat Earth without mountains or buildings. It always sits at exactly <strong>0° altitude</strong>. Azimuth is measured along the horizon (0° to 360°).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Celestial Meridian -->
+                <div class="flip-card perspective-1000 h-[22rem] cursor-pointer group" onclick="flipCard(this, 't3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌐</div>
+                            <h3 class="font-display text-3xl text-star-magenta leading-tight">Celestial Meridian</h3>
+                            <p class="text-space-100 text-sm mt-2">The sky's dividing line</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Celestial Meridian</h3>
+                            <p class="text-sm text-left font-body mb-3">
+                                An imaginary line passing from the North Celestial Pole, straight through your Zenith, to the South Celestial Pole.
+                            </p>
+                            <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
+                                <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
+                                <p class="text-xs text-space-100">
+                                    When an object crosses this line, it's called a <strong>Transit</strong> or <strong>Culmination</strong> (its highest point in the sky). "AM" means <em>Ante Meridiem</em> (before crossing the meridian) and "PM" means <em>Post Meridiem</em>!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Celestial Poles -->
+                <div class="flip-card perspective-1000 h-[22rem] cursor-pointer group" onclick="flipCard(this, 't4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧭</div>
+                            <h3 class="font-display text-3xl text-astro-light">Celestial Poles</h3>
+                            <p class="text-space-100 text-sm mt-2">The pivot points of the sky</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Celestial Poles</h3>
+                            <p class="text-sm text-left font-body mb-3">
+                                The two points in the sky directly above Earth's North and South poles. The entire sky appears to rotate around them.
+                            </p>
+                            <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
+                                <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
+                                <p class="text-xs text-space-100 mb-1">
+                                    The altitude of the visible Celestial Pole <strong>exactly equals your latitude</strong> on Earth! 
+                                </p>
+                                <p class="text-xs text-space-100">
+                                    Due to Earth's wobble (<strong>Precession</strong>), the poles shift. Polaris won't always be the North Star!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Celestial Equator -->
+                <div class="flip-card perspective-1000 h-[22rem] cursor-pointer group" onclick="flipCard(this, 't5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">➗</div>
+                            <h3 class="font-display text-3xl text-star-green">Celestial Equator</h3>
+                            <p class="text-space-100 text-sm mt-2">Earth's belt, projected</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Celestial Equator</h3>
+                            <p class="text-sm text-left font-body mb-3">
+                                An imaginary great circle on the celestial sphere, created by projecting Earth's equator directly out into space.
+                            </p>
+                            <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
+                                <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
+                                <p class="text-xs text-space-100">
+                                    Every object exactly on the celestial equator has a <strong>Declination of 0°</strong>. The celestial equator always intersects your local horizon at exactly <strong>due East</strong> and <strong>due West</strong>, no matter your latitude!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ecliptic -->
+                <div class="flip-card perspective-1000 h-[22rem] cursor-pointer group" onclick="flipCard(this, 't6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">☀️</div>
+                            <h3 class="font-display text-3xl text-star-red">Ecliptic</h3>
+                            <p class="text-space-100 text-sm mt-2">The path of the Sun</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">The Ecliptic</h3>
+                            <p class="text-sm text-left font-body mb-3">
+                                The apparent path of the Sun through the sky over the course of a single year.
+                            </p>
+                            <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
+                                <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
+                                <p class="text-xs text-space-100 mb-1">
+                                    It is tilted at <strong>23.5°</strong> relative to the celestial equator due to Earth's axial tilt.
+                                </p>
+                                <p class="text-xs text-space-100">
+                                    The constellations intersecting this plane form the <strong>Zodiac</strong>. Eclipses only occur when the Moon's orbit crosses the Ecliptic (at points called nodes).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Mini Game 1: Telescope Targeter -->
+        <div class="mb-12">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-astro-line border-2 shadow-[0_0_30px_rgba(167,139,250,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-astro-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME 1</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Telescope Targeter</h2>
+                        <p class="text-space-100 mb-4">It's time to gather scientific data! Use your telescope crosshair to find "Data Stars" hiding in three key regions:</p>
+                        <ul class="text-left bg-space-800/50 p-4 rounded-xl space-y-2 mb-6 border border-space-500 inline-block">
+                            <li><span class="text-star-cyan font-bold">⬆️ Zenith</span> (Top of the map, Altitude +90°)</li>
+                            <li><span class="text-star-gold font-bold">☀️ Ecliptic</span> (The golden curve, path of the Sun)</li>
+                            <li><span class="text-star-green font-bold">🌅 Horizon</span> (Bottom boundary, Altitude 0°)</li>
+                        </ul>
+                        
+                        <div class="bg-astro-dark/30 p-4 rounded-xl mb-6 inline-block text-left w-full border border-astro-base/50">
+                            <h4 class="font-bold text-astro-light mb-2 border-b border-astro-base/50 pb-1">How to Play:</h4>
+                            <ul class="text-sm space-y-2 text-white">
+                                <li>1. Move your mouse/finger to aim the crosshair.</li>
+                                <li>2. Hover over a pulsing Data Star until the crosshair <strong class="text-star-red">turns red (locked on)</strong>.</li>
+                                <li>3. <strong class="text-star-gold">CLICK / TAP</strong> to scan the star and download the data!</li>
+                                <li>4. Scan 10 stars before time runs out to earn the badge.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105 shadow-[0_0_15px_rgba(78,240,168,0.4)]">
+                                ▶ Power On Telescope
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-astro-base/30 transition-opacity">
+                            <div class="text-5xl mb-2">🔭</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Calibration Required</h3>
+                            <p class="text-astro-light text-sm">Click Power On to start</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="500" class="bg-gradient-to-b from-[#0a0515] via-[#11132b] to-[#040814] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-astro-line cursor-crosshair"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mini Game 2: Zodiac Weaver -->
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-star-gold border-2 shadow-[0_0_30px_rgba(255,209,102,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="weaverOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-star-gold/30 transition-opacity">
+                            <div class="text-5xl mb-2">✨</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Constellation Hidden</h3>
+                            <p class="text-star-gold text-sm">Click Start Weaver below</p>
+                        </div>
+                        <canvas id="constellationCanvas" width="500" height="500" class="bg-gradient-to-b from-[#11132b] via-[#0a0515] to-[#040814] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-star-gold/50 cursor-pointer"></canvas>
+                    </div>
+
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-star-gold/20 text-star-gold border border-star-gold text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME 2</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Zodiac Weaver</h2>
+                        <p class="text-space-100 mb-4">Because the <strong class="text-star-red">Ecliptic</strong> is the apparent path of the Sun, the constellations that lie along this path are special—they make up the <strong>Zodiac</strong>!</p>
+                        
+                        <div class="bg-space-800/50 p-4 rounded-xl mb-6 inline-block text-left w-full border border-star-gold/30">
+                            <h4 class="font-bold text-star-gold mb-2 border-b border-star-gold/30 pb-1">Mission: Reveal Leo 🦁</h4>
+                            <ul class="text-sm space-y-2 text-white">
+                                <li>1. Click on any glowing star to select it.</li>
+                                <li>2. Click on an adjacent star to weave a connection line between them.</li>
+                                <li>3. Connect all the correct stars to reveal the constellation on the Ecliptic!</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startWeaverBtn" onclick="initWeaver()" class="bg-star-gold text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105 shadow-[0_0_15px_rgba(255,209,102,0.4)]">
+                                ✨ Start Weaver
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 20 Question Olympiad Quiz -->
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-astro-base/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">State Olympiad Qualifier Exam</h2>
+                <p class="text-space-100">Test your advanced knowledge! You need at least <strong class="text-star-green">16/20</strong> to pass and earn the final badge.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-3xl mx-auto">
+                <div id="quizStatus" class="flex justify-between items-center mb-6 hidden">
+                    <span class="text-astro-light font-mono text-sm">Question <span id="qCurrent">1</span> of <span id="qTotal">20</span></span>
+                    <span class="text-star-gold font-mono text-sm">Score: <span id="qScore">0</span></span>
+                </div>
+
+                <div id="questionWrapper" class="hidden">
+                    <h3 id="questionText" class="text-xl md:text-2xl font-bold mb-6 text-white leading-tight">Question goes here?</h3>
+                    <div id="answersContainer" class="space-y-3 mb-6"></div>
+                    
+                    <div id="explanationContainer" class="hidden glass-panel p-5 rounded-xl border border-astro-base mb-6 bg-space-800/80">
+                        <p class="text-sm font-bold text-astro-light mb-1">Explanation:</p>
+                        <p id="explanationText" class="text-space-100 text-sm leading-relaxed"></p>
+                    </div>
+
+                    <div class="text-right">
+                        <button id="nextQuestionBtn" onclick="nextQuestion()" class="hidden bg-astro-base text-white px-6 py-2 rounded-full font-bold hover:bg-astro-light hover:text-space-900 transition-colors">Next Question ➔</button>
+                    </div>
+                </div>
+
+                <div id="quizStartScreen" class="text-center py-8 block">
+                    <p class="text-space-100 mb-6">Warning: These questions match 5th-grade State Level Science Olympiad difficulty. Make sure you read the Olympiad Facts on the flashcards!</p>
+                    <button onclick="startQuiz()" class="bg-astro-base text-white px-8 py-3 rounded-full font-bold hover:bg-astro-light hover:text-space-900 transition-colors transform hover:scale-105">Begin Exam</button>
+                </div>
+
+                <div id="quizResultScreen" class="hidden text-center py-8">
+                    <div id="resultIcon" class="text-6xl mb-4">🏅</div>
+                    <h3 id="resultTitle" class="text-3xl font-display text-star-gold mb-2">Exam Complete!</h3>
+                    <p class="text-xl text-white mb-6">Final Score: <span id="finalScoreText" class="font-bold">0/20</span></p>
+                    <p id="resultMsg" class="text-space-100 mb-6">Let's see how you did.</p>
+                    <button id="retryQuizBtn" onclick="startQuiz()" class="bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+
+    </section>
+</main>
+
+<script>
+    /* =========================================================
+       APP STATE & GAMIFICATION
+       ========================================================= */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        playedConstellation: false,
+        passedQuiz: false
+    };
+
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 4; // Now 4 tasks!
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.playedConstellation) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedConstellation) document.getElementById('badgeWeaver').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.astroCompleteAlerted) {
+            window.astroCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Olympiad Training Complete!", "You have unlocked the 'State Olympian' title. Outstanding work!", "🎓");
+            }, 500);
+        }
+    }
+
+    /* =========================================================
+       3D INTERACTIVE CELESTIAL SPHERE (Three.js)
+       ========================================================= */
+    let scene, camera, renderer, controls;
+    let celestialGroup;
+    let rings = {};
+    let is3DInit = false;
+
+    function init3DSphere() {
+        const container = document.getElementById('celestial-3d-container');
+        if(!container) return;
+
+        scene = new THREE.Scene();
+        
+        // Setup Camera
+        camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+        camera.position.set(0, 3, 7);
+
+        // Setup Renderer
+        renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Controls
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.enablePan = false;
+        controls.minDistance = 3;
+        controls.maxDistance = 10;
+
+        // 1. Base Horizon Plane & Earth
+        const earthGeo = new THREE.SphereGeometry(0.3, 32, 32);
+        const earthMat = new THREE.MeshBasicMaterial({ color: 0x0ea5e9, wireframe: true });
+        scene.add(new THREE.Mesh(earthGeo, earthMat));
+
+        const horizonGeo = new THREE.RingGeometry(1.95, 2.0, 64);
+        const horizonMat = new THREE.MeshBasicMaterial({ color: 0x4ef0a8, side: THREE.DoubleSide });
+        const horizon = new THREE.Mesh(horizonGeo, horizonMat);
+        horizon.rotation.x = Math.PI / 2;
+        scene.add(horizon);
+        
+        // Zenith Line (Y-axis of world)
+        const zenithGeo = new THREE.CylinderGeometry(0.01, 0.01, 2.5);
+        const zenithMat = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red for Zenith
+        const zenith = new THREE.Mesh(zenithGeo, zenithMat);
+        zenith.position.y = 1.25;
+        scene.add(zenith);
+
+        // 2. Celestial Sphere Group (This rotates with latitude)
+        celestialGroup = new THREE.Group();
+        scene.add(celestialGroup);
+
+        // Celestial Equator
+        rings.equator = new THREE.Mesh(
+            new THREE.TorusGeometry(2, 0.02, 16, 100), 
+            new THREE.MeshBasicMaterial({ color: 0x6ef0ff })
+        );
+        rings.equator.rotation.x = Math.PI / 2;
+        celestialGroup.add(rings.equator);
+
+        // Ecliptic (Tilted 23.5 degrees relative to equator)
+        rings.ecliptic = new THREE.Mesh(
+            new THREE.TorusGeometry(2, 0.02, 16, 100), 
+            new THREE.MeshBasicMaterial({ color: 0xffd166 })
+        );
+        rings.ecliptic.rotation.x = Math.PI / 2;
+        rings.ecliptic.rotation.y = 23.5 * Math.PI / 180;
+        celestialGroup.add(rings.ecliptic);
+
+        // Celestial Meridian (Passes through poles and zenith usually, 
+        // but physically it's locked to North/South points on horizon and Zenith.
+        // We'll keep it static in the world space, NOT the celestial group, 
+        // because the meridian stays overhead while the sphere rotates!
+        rings.meridian = new THREE.Mesh(
+            new THREE.TorusGeometry(2, 0.02, 16, 100), 
+            new THREE.MeshBasicMaterial({ color: 0xff5ac6 })
+        );
+        rings.meridian.rotation.y = Math.PI / 2;
+        scene.add(rings.meridian); // Note: Added to scene, not celestialGroup
+
+        // Celestial Poles (Axis of rotation)
+        const poleGeo = new THREE.CylinderGeometry(0.01, 0.01, 4.2);
+        const poleMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const pole = new THREE.Mesh(poleGeo, poleMat);
+        celestialGroup.add(pole);
+
+        // Initial setup
+        updateLatitude();
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if(!container) return;
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
+        is3DInit = true;
+        animate3D();
+    }
+
+    function updateLatitude() {
+        if(!is3DInit) return;
+        const lat = parseFloat(document.getElementById('latSlider').value);
+        
+        // Formatting display
+        let dir = lat >= 0 ? "N" : "S";
+        document.getElementById('latValue').innerText = `${Math.abs(lat)}° ${dir}`;
+        
+        // Mathematical Core: 
+        // If lat = 90 (North Pole), Celestial Equator is parallel to Horizon (rotation.x = 0).
+        // If lat = 0 (Equator), Celestial Equator is perpendicular to Horizon (rotation.x = 90 deg).
+        celestialGroup.rotation.x = (90 - lat) * (Math.PI / 180);
+    }
+
+    function toggle3D(elementKey) {
+        if(!is3DInit) return;
+        rings[elementKey].visible = !rings[elementKey].visible;
+        
+        // Update button visual
+        const btn = document.getElementById('toggle' + elementKey.charAt(0).toUpperCase() + elementKey.slice(1));
+        if (rings[elementKey].visible) {
+            btn.classList.remove('opacity-50');
+        } else {
+            btn.classList.add('opacity-50');
+        }
+    }
+
+    function animate3D() {
+        requestAnimationFrame(animate3D);
+        if(controls) controls.update();
+        if(renderer && scene && camera) renderer.render(scene, camera);
+        
+        // Slowly auto-rotate the earth and the ecliptic tilt slightly for effect
+        if(celestialGroup) {
+            // Earth spins inside
+            scene.children[0].rotation.y += 0.005;
+            // The celestial sphere spins around its poles (local Y axis)
+            celestialGroup.rotation.y += 0.001; 
+        }
+    }
+
+    // Initialize 3D when window loads
+    window.addEventListener('load', () => {
+        if(typeof THREE !== 'undefined') {
+            init3DSphere();
+        } else {
+            setTimeout(init3DSphere, 1000); // Wait for CDN if slow
+        }
+    });
+
+    /* =========================================================
+       DICTIONARY CARDS
+       ========================================================= */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            if(cardsFlipped.size === 6 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Dictionary Mastered", "You read all the Advanced Astronomical Terms! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* =========================================================
+       MINI-GAME 1: TELESCOPE TARGETER
+       ========================================================= */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas1() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 500 ? 500 : rect.width;
+        canvas.height = canvas.width; 
+    }
+    window.addEventListener('resize', resizeCanvas1);
+    window.addEventListener('load', resizeCanvas1);
+
+    let gameActive = false;
+    let frames = 0;
+    let timeLimit = 30 * 60; 
+    let gameLoopReq;
+    let starsCollected = 0;
+
+    const crosshair = { x: 250, y: 250, radius: 20 };
+    let crosshairLocked = false;
+    let lockedStarIndex = -1;
+    let dataStars = [];
+    let bgStars = [];
+    let floatingTexts = [];
+    let scanMessage = "";
+    let scanMessageTimer = 0;
+
+    function getMousePos1(e) {
+        const rect = canvas.getBoundingClientRect();
+        let clientX, clientY;
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+        return {
+            x: (clientX - rect.left) * (canvas.width / rect.width),
+            y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+    }
+
+    function updateCrosshair(e) {
+        if(!gameActive) return;
+        if (e.type === 'touchmove') e.preventDefault(); 
+        let pos = getMousePos1(e);
+        crosshair.x = pos.x;
+        crosshair.y = pos.y;
+    }
+    
+    function handleScanClick(e) {
+        if(!gameActive) return;
+        if (e.type === 'touchstart') e.preventDefault();
+        
+        let pos = getMousePos1(e);
+        crosshair.x = pos.x;
+        crosshair.y = pos.y;
+        
+        if (crosshairLocked && lockedStarIndex !== -1) {
+            let scannedStar = dataStars[lockedStarIndex];
+            starsCollected++;
+            addXP(5);
+            
+            floatingTexts.push({ x: scannedStar.x, y: scannedStar.y, text: "DATA ACQUIRED!", color: scannedStar.color, life: 60 });
+            
+            if (scannedStar.type === 'Zenith') {
+                scanMessage = "Scanned Zenith: Altitude exactly +90°";
+            } else if (scannedStar.type === 'Horizon') {
+                scanMessage = "Scanned Horizon: Boundary altitude 0°";
+            } else {
+                scanMessage = "Scanned Ecliptic: The apparent path of the Sun";
+            }
+            scanMessageTimer = 90; 
+
+            dataStars.splice(lockedStarIndex, 1);
+            crosshairLocked = false;
+            lockedStarIndex = -1;
+        } else {
+            floatingTexts.push({ x: crosshair.x, y: crosshair.y, text: "No Target Locked", color: "#ff6b6b", life: 30 });
+        }
+    }
+
+    canvas.addEventListener('mousemove', updateCrosshair);
+    canvas.addEventListener('touchmove', updateCrosshair, {passive: false});
+    canvas.addEventListener('mousedown', handleScanClick);
+    canvas.addEventListener('touchstart', handleScanClick, {passive: false});
+
+    function initGame() {
+        resizeCanvas1();
+        crosshair.x = canvas.width / 2;
+        crosshair.y = canvas.height / 2;
+        dataStars = [];
+        floatingTexts = [];
+        starsCollected = 0;
+        scanMessage = "";
+        scanMessageTimer = 0;
+        crosshairLocked = false;
+        lockedStarIndex = -1;
+        
+        bgStars = Array.from({length: 40}).map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 1.5 + 0.5
+        }));
+
+        frames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Scanning...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnDataStar() {
+        let region = Math.floor(Math.random() * 3);
+        let x, y, color, type;
+        
+        if (region === 0) { 
+            x = canvas.width / 2 + (Math.random() * 60 - 30);
+            y = 40 + Math.random() * 40;
+            color = '#6ef0ff'; 
+            type = 'Zenith';
+        } else if (region === 1) { 
+            x = Math.random() * canvas.width;
+            y = canvas.height - 30 - Math.random() * 20;
+            color = '#4ef0a8'; 
+            type = 'Horizon';
+        } else { 
+            x = Math.random() * canvas.width;
+            let normalizedX = x / canvas.width;
+            y = canvas.height * 0.8 - (Math.sin(normalizedX * Math.PI) * canvas.height * 0.6);
+            y += (Math.random() * 40 - 20);
+            color = '#ffd166'; 
+            type = 'Ecliptic';
+        }
+
+        dataStars.push({
+            x: x, y: y, maxRadius: 18, currentRadius: 0, growthRate: 0.5, life: 180, color: color, type: type
+        });
+    }
+
+    function drawSkyMap() {
+        ctx.fillStyle = '#060412';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = '#ffffff';
+        bgStars.forEach(s => {
+            ctx.globalAlpha = Math.random() > 0.9 ? 0.5 : 1.0; 
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
+            ctx.fill();
+        });
+        ctx.globalAlpha = 1.0;
+
+        ctx.strokeStyle = 'rgba(255, 90, 198, 0.3)'; 
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(canvas.width/2, 0);
+        ctx.lineTo(canvas.width/2, canvas.height);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(110, 240, 255, 0.5)';
+        ctx.font = "14px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("ZENITH ⬆", canvas.width/2, 20);
+
+        ctx.strokeStyle = 'rgba(78, 240, 168, 0.4)'; 
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]); 
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height - 20);
+        ctx.lineTo(canvas.width, canvas.height - 20);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(78, 240, 168, 0.5)';
+        ctx.fillText("HORIZON", canvas.width/2, canvas.height - 5);
+
+        ctx.strokeStyle = 'rgba(255, 209, 102, 0.3)'; 
+        ctx.lineWidth = 2;
+        ctx.setLineDash([10, 10]);
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height * 0.8);
+        for(let x=0; x<=canvas.width; x+=10) {
+            let normalizedX = x / canvas.width;
+            let y = canvas.height * 0.8 - (Math.sin(normalizedX * Math.PI) * canvas.height * 0.6);
+            ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]); 
+        
+        ctx.fillStyle = 'rgba(255, 209, 102, 0.5)';
+        ctx.fillText("ECLIPTIC", canvas.width * 0.75, canvas.height * 0.3);
+    }
+
+    function drawCrosshair1() {
+        if (crosshairLocked) {
+            ctx.strokeStyle = '#ff6b6b'; 
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ff6b6b';
+        } else {
+            ctx.strokeStyle = '#a78bfa'; 
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 0;
+        }
+        ctx.beginPath();
+        ctx.arc(crosshair.x, crosshair.y, crosshair.radius, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(crosshair.x - crosshair.radius - 5, crosshair.y);
+        ctx.lineTo(crosshair.x + crosshair.radius + 5, crosshair.y);
+        ctx.moveTo(crosshair.x, crosshair.y - crosshair.radius - 5);
+        ctx.lineTo(crosshair.x, crosshair.y + crosshair.radius + 5);
+        ctx.stroke();
+        ctx.fillStyle = crosshairLocked ? '#ff6b6b' : '#ff5ac6';
+        ctx.beginPath();
+        ctx.arc(crosshair.x, crosshair.y, 3, 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+        if (frames % 45 === 0) spawnDataStar();
+
+        drawSkyMap();
+        
+        crosshairLocked = false;
+        lockedStarIndex = -1;
+
+        for (let i = dataStars.length - 1; i >= 0; i--) {
+            let s = dataStars[i];
+            if (s.currentRadius < s.maxRadius && s.life > 20) s.currentRadius += s.growthRate;
+            else if (s.life <= 20) s.currentRadius = Math.max(0, s.currentRadius - s.growthRate * 2);
+            
+            if(s.currentRadius > 0) {
+                let pulse = Math.sin(frames * 0.1) * 3;
+                ctx.fillStyle = s.color;
+                ctx.shadowBlur = 15 + pulse;
+                ctx.shadowColor = s.color;
+                ctx.beginPath();
+                for (let j = 0; j < 5; j++) {
+                    ctx.lineTo(s.x + (s.currentRadius + pulse) * Math.cos((18 + j * 72) * Math.PI / 180),
+                               s.y - (s.currentRadius + pulse) * Math.sin((18 + j * 72) * Math.PI / 180));
+                    ctx.lineTo(s.x + ((s.currentRadius + pulse)/2) * Math.cos((54 + j * 72) * Math.PI / 180),
+                               s.y - ((s.currentRadius + pulse)/2) * Math.sin((54 + j * 72) * Math.PI / 180));
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            let dist = Math.sqrt(Math.pow(s.x - crosshair.x, 2) + Math.pow(s.y - crosshair.y, 2));
+            if (dist < crosshair.radius + s.currentRadius) {
+                crosshairLocked = true;
+                lockedStarIndex = i;
+            }
+            s.life--;
+            if (s.life <= 0) dataStars.splice(i, 1);
+        }
+
+        for (let i = floatingTexts.length - 1; i >= 0; i--) {
+            let ft = floatingTexts[i];
+            ctx.fillStyle = ft.color;
+            ctx.globalAlpha = ft.life / 60;
+            ctx.font = "bold 14px 'Nunito', sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText(ft.text, ft.x, ft.y - (60 - ft.life) * 0.5);
+            ctx.globalAlpha = 1.0;
+            ft.life--;
+            if (ft.life <= 0) floatingTexts.splice(i, 1);
+        }
+
+        drawCrosshair1();
+
+        if (scanMessageTimer > 0) {
+            ctx.fillStyle = "rgba(15, 17, 35, 0.8)";
+            ctx.fillRect(0, canvas.height - 60, canvas.width, 40);
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 14px 'JetBrains Mono', monospace";
+            ctx.textAlign = "center";
+            ctx.fillText(scanMessage, canvas.width / 2, canvas.height - 35);
+            scanMessageTimer--;
+        }
+
+        let secondsLeft = Math.ceil((timeLimit - frames) / 60);
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.textAlign = "left";
+        ctx.fillText(`Time: ${secondsLeft}s`, 10, 25);
+        ctx.fillStyle = "#ff5ac6"; 
+        ctx.fillText(`⭐ Scanned: ${starsCollected}/10`, 10, 45);
+
+        if (frames >= timeLimit || starsCollected >= 10) {
+            gameOver(starsCollected >= 10, starsCollected >= 10 ? "All Data Collected!" : "Time Expired!");
+            return;
+        }
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(win, reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Scanner";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">${win ? '🌟' : '⏱️'}</div>
+            <h3 class="font-display text-2xl ${win ? 'text-star-green' : 'text-star-red'} mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You scanned ${starsCollected} stars.</p>
+            ${!achievements.playedGame && !win ? `<p class="text-astro-light text-sm mb-4">Scan 10 stars before time runs out for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(win && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Stargazer Badge Unlocked!", "Excellent telescope control! +100 XP", "🔭");
+            updateProgress();
+        }
+    }
+
+
+    /* =========================================================
+       MINI-GAME 2: ZODIAC WEAVER (Constellation Connect)
+       ========================================================= */
+    const weaverCanvas = document.getElementById('constellationCanvas');
+    const wCtx = weaverCanvas.getContext('2d');
+    const wOverlay = document.getElementById('weaverOverlay');
+    const wStartBtn = document.getElementById('startWeaverBtn');
+
+    function resizeWeaver() {
+        const rect = weaverCanvas.parentElement.getBoundingClientRect();
+        weaverCanvas.width = rect.width > 500 ? 500 : rect.width;
+        weaverCanvas.height = weaverCanvas.width; 
+    }
+    window.addEventListener('resize', resizeWeaver);
+    window.addEventListener('load', resizeWeaver);
+
+    let weaverActive = false;
+    let wSelectedStar = -1;
+    let wUserEdges = [];
+    
+    // Leo-ish layout (normalized to 0-1 so it scales)
+    const leoBase = [
+        {id: 0, nx: 0.2, ny: 0.6}, // Regulus
+        {id: 1, nx: 0.4, ny: 0.7}, // Algieba
+        {id: 2, nx: 0.45, ny: 0.5},// Adhafera
+        {id: 3, nx: 0.6, ny: 0.3}, // Zosma
+        {id: 4, nx: 0.8, ny: 0.4}, // Denebola
+        {id: 5, nx: 0.5, ny: 0.8}, // Rasalas
+        {id: 6, nx: 0.25, ny: 0.4} // Subra
+    ];
+    // Required connections
+    const leoEdges = [
+        [0, 1], [1, 2], [2, 3], [3, 4], // Back/Tail
+        [1, 5], [5, 6], [6, 0] // Sickle/Head
+    ];
+
+    let wStars = [];
+
+    function initWeaver() {
+        resizeWeaver();
+        wOverlay.classList.add('hidden');
+        wStartBtn.innerText = "Weaving in progress...";
+        wStartBtn.disabled = true;
+        wStartBtn.classList.add('opacity-50');
+
+        wUserEdges = [];
+        wSelectedStar = -1;
+        weaverActive = true;
+
+        // Map normalized coordinates to canvas
+        wStars = leoBase.map(s => ({
+            id: s.id,
+            x: s.nx * weaverCanvas.width,
+            y: s.ny * weaverCanvas.height
+        }));
+
+        drawWeaver();
+    }
+
+    function getMousePosWeaver(e) {
+        const rect = weaverCanvas.getBoundingClientRect();
+        let clientX, clientY;
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+        return {
+            x: (clientX - rect.left) * (weaverCanvas.width / rect.width),
+            y: (clientY - rect.top) * (weaverCanvas.height / rect.height)
+        };
+    }
+
+    function handleWeaverClick(e) {
+        if (!weaverActive) return;
+        if (e.type === 'touchstart') e.preventDefault();
+        
+        const pos = getMousePosWeaver(e);
+        let clicked = -1;
+
+        // Check if clicked a star
+        wStars.forEach((s) => {
+            if (Math.hypot(s.x - pos.x, s.y - pos.y) < 20) {
+                clicked = s.id;
+            }
+        });
+
+        if (clicked !== -1) {
+            if (wSelectedStar === -1) {
+                // Select first star
+                wSelectedStar = clicked;
+            } else if (wSelectedStar !== clicked) {
+                // Attempt connection
+                const isRequiredEdge = leoEdges.some(edge => 
+                    (edge[0] === wSelectedStar && edge[1] === clicked) || 
+                    (edge[1] === wSelectedStar && edge[0] === clicked)
+                );
+                
+                if (isRequiredEdge) {
+                    const edgeExists = wUserEdges.some(edge => 
+                        (edge[0] === wSelectedStar && edge[1] === clicked) || 
+                        (edge[1] === wSelectedStar && edge[0] === clicked)
+                    );
+                    if (!edgeExists) {
+                        wUserEdges.push([wSelectedStar, clicked]);
+                        addXP(2); // tiny reward for line
+                    }
+                }
+                // Move selection to new star
+                wSelectedStar = clicked; 
+
+                // Check Win
+                if (wUserEdges.length === leoEdges.length) {
+                    finishWeaver();
+                }
+            }
+        } else {
+            // Clicked empty space
+            wSelectedStar = -1;
+        }
+        drawWeaver();
+    }
+
+    weaverCanvas.addEventListener('mousedown', handleWeaverClick);
+    weaverCanvas.addEventListener('touchstart', handleWeaverClick, {passive: false});
+
+    function drawWeaver() {
+        wCtx.clearRect(0, 0, weaverCanvas.width, weaverCanvas.height);
+
+        // Draw faint ecliptic guideline
+        wCtx.strokeStyle = 'rgba(255, 209, 102, 0.1)';
+        wCtx.lineWidth = 10;
+        wCtx.beginPath();
+        wCtx.moveTo(0, weaverCanvas.height * 0.8);
+        wCtx.lineTo(weaverCanvas.width, weaverCanvas.height * 0.2);
+        wCtx.stroke();
+        
+        wCtx.fillStyle = 'rgba(255, 209, 102, 0.3)';
+        wCtx.font = "14px 'JetBrains Mono', monospace";
+        wCtx.textAlign = "center";
+        wCtx.fillText("THE ECLIPTIC", weaverCanvas.width/2, weaverCanvas.height/2 + 30);
+
+        // Draw completed user edges
+        wCtx.strokeStyle = '#ffd166';
+        wCtx.lineWidth = 3;
+        wCtx.shadowBlur = 10;
+        wCtx.shadowColor = '#ffd166';
+        
+        wUserEdges.forEach(edge => {
+            let s1 = wStars.find(s => s.id === edge[0]);
+            let s2 = wStars.find(s => s.id === edge[1]);
+            if(s1 && s2) {
+                wCtx.beginPath();
+                wCtx.moveTo(s1.x, s1.y);
+                wCtx.lineTo(s2.x, s2.y);
+                wCtx.stroke();
+            }
+        });
+        wCtx.shadowBlur = 0;
+
+        // Draw stars
+        wStars.forEach(s => {
+            let isSelected = (s.id === wSelectedStar);
+            wCtx.fillStyle = isSelected ? '#ff5ac6' : '#ffffff';
+            wCtx.shadowBlur = isSelected ? 20 : 5;
+            wCtx.shadowColor = isSelected ? '#ff5ac6' : '#ffffff';
+            
+            wCtx.beginPath();
+            wCtx.arc(s.x, s.y, isSelected ? 8 : 5, 0, Math.PI*2);
+            wCtx.fill();
+        });
+        wCtx.shadowBlur = 0;
+
+        // Progress text
+        wCtx.fillStyle = "white";
+        wCtx.font = "16px 'JetBrains Mono', monospace";
+        wCtx.textAlign = "left";
+        wCtx.fillText(`Connections: ${wUserEdges.length}/${leoEdges.length}`, 10, 25);
+    }
+
+    function finishWeaver() {
+        weaverActive = false;
+        wSelectedStar = -1;
+        drawWeaver(); // Draw final state without selection
+        
+        wStartBtn.innerText = "▶ Restart Weaver";
+        wStartBtn.disabled = false;
+        wStartBtn.classList.remove('opacity-50');
+
+        setTimeout(() => {
+            wOverlay.innerHTML = `
+                <div class="text-6xl mb-2">🦁</div>
+                <h3 class="font-display text-2xl text-star-gold mb-1 text-center px-4">Leo Constellation Revealed!</h3>
+                <p class="text-white text-sm mb-2 max-w-xs text-center">Leo lies perfectly on the Ecliptic, making it a Zodiac constellation.</p>
+            `;
+            wOverlay.classList.remove('hidden');
+
+            if(!achievements.playedConstellation) {
+                achievements.playedConstellation = true;
+                addXP(100);
+                showMsgBox("Zodiac Weaver Badge!", "You connected the stars of Leo! +100 XP", "✨");
+                updateProgress();
+            }
+        }, 500);
+    }
+
+
+    /* =========================================================
+       20-QUESTION OLYMPIAD QUIZ 
+       ========================================================= */
+    let quizDataMaster = [
+        {
+            q: "If a star is located exactly at your Zenith, what is its altitude in degrees?",
+            options: ["0°", "45°", "90°", "180°"],
+            ans: 2,
+            explanation: "Altitude is measured starting from the horizon (0°) straight up. The Zenith is directly over your head, which forms a perfect 90° right angle with the horizon."
+        },
+        {
+            q: "The point exactly opposite the Zenith on the celestial sphere, directly beneath your feet, is called?",
+            options: ["The Nadir", "The Celestial Pole", "The Meridian", "The Ecliptic Node"],
+            ans: 0,
+            explanation: "The Nadir is the geometric point exactly opposite the Zenith. If you drew a line from the Zenith straight down through your body and through the center of the Earth to the other side of the celestial sphere, it would hit the Nadir."
+        },
+        {
+            q: "If you are standing at 40° North latitude, what is the altitude of the North Celestial Pole?",
+            options: ["0°", "23.5°", "40°", "90°"],
+            ans: 2,
+            explanation: "A fundamental rule of navigation is that the altitude of the visible Celestial Pole above the horizon is exactly equal to your latitude on Earth. So at 40°N latitude, the North Celestial Pole is 40° high."
+        },
+        {
+            q: "The celestial equator and the ecliptic intersect at two specific points. What are these points called?",
+            options: ["Solstices", "Equinoxes", "Nodes", "Zeniths"],
+            ans: 1,
+            explanation: "The apparent path of the Sun (Ecliptic) crosses the Celestial Equator twice a year. These intersection points are the Vernal (Spring) and Autumnal Equinoxes, where day and night are roughly equal."
+        },
+        {
+            q: "What is the approximate angle (tilt) between the celestial equator and the ecliptic?",
+            options: ["0°", "5.1°", "23.5°", "90°"],
+            ans: 2,
+            explanation: "Earth's axis is tilted by about 23.5° relative to its orbit around the Sun. Because of this, the Ecliptic (the Sun's path) appears tilted by 23.5° relative to the Celestial Equator."
+        },
+        {
+            q: "When a celestial object crosses your local celestial meridian, it reaches its highest altitude. This event is called?",
+            options: ["Precession", "Conjunction", "Transit (Culmination)", "Opposition"],
+            ans: 2,
+            explanation: "As the Earth spins, objects appear to rise in the east, reach their highest point when crossing the imaginary north-south line (the Meridian), and set in the west. This crossing is called a Transit or Culmination."
+        },
+        {
+            q: "A star located perfectly on the Celestial Equator has a declination of:",
+            options: ["0°", "23.5°", "45°", "90°"],
+            ans: 0,
+            explanation: "Declination is the celestial equivalent of latitude. Just as Earth's equator is 0° latitude, the Celestial Equator sits exactly at 0° declination."
+        },
+        {
+            q: "The band of constellations through which the Ecliptic passes is widely known as the:",
+            options: ["Milky Way", "Zodiac", "Orion Arm", "Asterism Belt"],
+            ans: 1,
+            explanation: "The Sun, Moon, and planets all travel roughly along the Ecliptic. The 12 (or 13, including Ophiuchus) constellations that lie along this path are collectively called the Zodiac."
+        },
+        {
+            q: "Earth's axis slowly wobbles over a 26,000-year cycle, changing which star is the 'North Star'. This motion is called:",
+            options: ["Nutations", "Retrograde", "Parallax", "Precession"],
+            ans: 3,
+            explanation: "Just like a spinning top wobbles as it slows down, Earth undergoes Precession. This slow wobble shifts the celestial poles over thousands of years."
+        },
+        {
+            q: "The Celestial Meridian is a great circle that passes through your Zenith, your Nadir, and the...?",
+            options: ["Equinoxes", "North and South Celestial Poles", "Ecliptic Nodes", "Galactic Center"],
+            ans: 1,
+            explanation: "The Meridian divides the sky into East and West. It must pass exactly from the North Celestial Pole, up through your Zenith, to the South Celestial Pole, and back around through the Nadir."
+        },
+        {
+            q: "The astronomical coordinate system that uses Altitude and Azimuth is entirely dependent on the observer's:",
+            options: ["Horizon", "Equator", "Ecliptic", "Longitude"],
+            ans: 0,
+            explanation: "Altitude (height up) and Azimuth (compass direction along the ground) are measured relative to where you are standing and your specific Horizon. They are 'local' coordinates."
+        },
+        {
+            q: "The celestial equivalent of Earth's longitude, measured along the celestial equator, is called:",
+            options: ["Declination", "Azimuth", "Right Ascension", "Hour Angle"],
+            ans: 2,
+            explanation: "Right Ascension (RA) acts like longitude but for the sky. It is usually measured in Hours, Minutes, and Seconds instead of degrees, starting from the Vernal Equinox."
+        },
+        {
+            q: "The celestial equivalent of Earth's latitude, measuring distance north or south of the celestial equator, is called:",
+            options: ["Altitude", "Declination", "Right Ascension", "Zenith Distance"],
+            ans: 1,
+            explanation: "Declination measures how far North (+) or South (-) an object is from the Celestial Equator, exactly like latitude on Earth."
+        },
+        {
+            q: "On the Summer Solstice in the Northern Hemisphere, the Sun reaches its maximum declination of:",
+            options: ["0°", "+23.5°", "+90°", "-23.5°"],
+            ans: 1,
+            explanation: "Because the Ecliptic is tilted 23.5°, the Sun moves between +23.5° (Summer Solstice, highest in the sky) and -23.5° (Winter Solstice, lowest in the sky) declination."
+        },
+        {
+            q: "Stars near the celestial poles that never dip below the horizon from your specific latitude are called:",
+            options: ["Ecliptic stars", "Equatorial stars", "Circumpolar stars", "Zenith stars"],
+            ans: 2,
+            explanation: "Circumpolar means 'around the pole'. These stars stay so close to the celestial pole that as the Earth spins, their tight circles never bring them below your local horizon."
+        },
+        {
+            q: "At what latitude on Earth must you stand for the Celestial Equator to pass directly through your Zenith?",
+            options: ["The North Pole (90° N)", "45° N", "The Equator (0°)", "The South Pole (90° S)"],
+            ans: 2,
+            explanation: "If you stand on Earth's equator, looking straight up (Zenith) puts you looking directly at the Celestial Equator stretching across the sky from due East to due West."
+        },
+        {
+            q: "Solar and Lunar Eclipses only occur when the Moon crosses the plane of the...",
+            options: ["Celestial Equator", "Ecliptic", "Meridian", "Horizon"],
+            ans: 1,
+            explanation: "The Moon's orbit is tilted about 5° relative to the Ecliptic (the Sun's path). Eclipses can only happen when the Moon crosses this plane (at the nodes) so all three bodies align perfectly."
+        },
+        {
+            q: "In timekeeping, 'AM' (Ante Meridiem) literally translates to what astronomical event?",
+            options: ["After the Sun rises", "Before the Sun crosses the Meridian", "At Moonset", "Above the Horizon"],
+            ans: 1,
+            explanation: "Meridiem refers to the Celestial Meridian. Ante means 'before'. So AM is the time before the Sun transits the meridian, and PM (Post Meridiem) is after it has transited (solar noon)."
+        },
+        {
+            q: "If you are standing exactly at the Earth's South Pole, where is the South Celestial Pole located?",
+            options: ["On the horizon", "23.5° above the horizon", "At your Zenith (90°)", "Below your feet (Nadir)"],
+            ans: 2,
+            explanation: "Because your latitude is 90° South, the altitude of the South Celestial Pole is 90°—which means it is directly overhead at your Zenith!"
+        },
+        {
+            q: "In the altitude-azimuth coordinate system, a star rising exactly due East has an azimuth of:",
+            options: ["0°", "90°", "180°", "270°"],
+            ans: 1,
+            explanation: "Azimuth starts at North (0°) and moves clockwise. East is 90°, South is 180°, and West is 270°."
+        }
+    ];
+
+    let currentQuizList = [];
+    let currentQIndex = 0;
+    let quizScore = 0;
+    let isAnswering = false;
+
+    function startQuiz() {
+        currentQuizList = JSON.parse(JSON.stringify(quizDataMaster));
+        shuffleArray(currentQuizList);
+        
+        currentQIndex = 0;
+        quizScore = 0;
+        document.getElementById('quizStartScreen').classList.add('hidden');
+        document.getElementById('quizResultScreen').classList.add('hidden');
+        document.getElementById('quizStatus').classList.remove('hidden');
+        document.getElementById('questionWrapper').classList.remove('hidden');
+        
+        document.getElementById('qTotal').innerText = currentQuizList.length;
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        isAnswering = false;
+        document.getElementById('qCurrent').innerText = currentQIndex + 1;
+        document.getElementById('qScore').innerText = quizScore;
+        
+        const qData = currentQuizList[currentQIndex];
+        document.getElementById('questionText').innerText = `${currentQIndex + 1}. ${qData.q}`;
+        
+        document.getElementById('explanationContainer').classList.add('hidden');
+        document.getElementById('nextQuestionBtn').classList.add('hidden');
+        
+        const container = document.getElementById('answersContainer');
+        container.innerHTML = '';
+        
+        let mappedOptions = qData.options.map((opt, index) => {
+            return { text: opt, isCorrect: index === qData.ans };
+        });
+        
+        shuffleArray(mappedOptions);
+        
+        mappedOptions.forEach((optObj) => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-astro-base transition-all";
+            btn.innerText = optObj.text;
+            btn.dataset.correct = optObj.isCorrect;
+            btn.onclick = () => submitAnswer(btn);
+            container.appendChild(btn);
+        });
+    }
+
+    function submitAnswer(btnEl) {
+        if(isAnswering) return;
+        isAnswering = true;
+        
+        const isCorrect = btnEl.dataset.correct === "true";
+        const container = document.getElementById('answersContainer');
+        const allBtns = container.querySelectorAll('button');
+
+        allBtns.forEach(b => {
+            b.disabled = true;
+            b.classList.remove('hover:bg-space-700', 'hover:border-astro-base');
+            b.classList.add('opacity-50', 'cursor-not-allowed');
+            if (b.dataset.correct === "true") {
+                b.classList.remove('opacity-50', 'bg-space-800');
+                b.classList.add('bg-star-green/20', 'border-star-green', 'text-star-green', 'font-bold');
+            }
+        });
+
+        btnEl.classList.remove('opacity-50', 'bg-space-800', 'bg-star-green/20', 'text-star-green');
+        
+        if(isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            quizScore++;
+            addXP(5); 
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+        }
+        
+        document.getElementById('qScore').innerText = quizScore;
+        document.getElementById('explanationText').innerText = currentQuizList[currentQIndex].explanation;
+        document.getElementById('explanationContainer').classList.remove('hidden');
+        document.getElementById('nextQuestionBtn').classList.remove('hidden');
+    }
+    
+    function nextQuestion() {
+        currentQIndex++;
+        if(currentQIndex < currentQuizList.length) {
+            renderQuestion();
+        } else {
+            showQuizResults();
+        }
+    }
+
+    function showQuizResults() {
+        document.getElementById('quizStatus').classList.add('hidden');
+        document.getElementById('questionWrapper').classList.add('hidden');
+        document.getElementById('quizResultScreen').classList.remove('hidden');
+        
+        const scoreText = document.getElementById('finalScoreText');
+        scoreText.innerText = `${quizScore}/${currentQuizList.length}`;
+        
+        const passed = quizScore >= 16;
+        
+        if(passed) {
+            scoreText.className = "font-bold text-star-green";
+            document.getElementById('resultIcon').innerText = "🏆";
+            document.getElementById('resultTitle').innerText = "Olympiad Passed!";
+            document.getElementById('resultTitle').className = "text-3xl font-display text-star-green mb-2";
+            document.getElementById('resultMsg').innerText = "Outstanding knowledge of the Celestial Sphere!";
+            document.getElementById('retryQuizBtn').innerText = "Retake for Fun";
+            
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Olympiad Qualifier!", "You scored 16+ on the state exam! +100 Bonus XP", "🧠");
+            }
+        } else {
+            scoreText.className = "font-bold text-star-red";
+            document.getElementById('resultIcon').innerText = "📚";
+            document.getElementById('resultTitle').innerText = "Keep Studying!";
+            document.getElementById('resultTitle').className = "text-3xl font-display text-star-gold mb-2";
+            document.getElementById('resultMsg').innerText = "You need at least 16/20 to pass. Review the flashcard Olympiad Facts!";
+            document.getElementById('retryQuizBtn').innerText = "Try Again";
+        }
+    }
+
+</script>
+</body>
+</html>

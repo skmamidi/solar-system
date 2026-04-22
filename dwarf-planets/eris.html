@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eris — Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#05060f', 700: '#0f1430', 500: '#1a234d' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-body text-white antialiased">
+
+<main class="pt-24 pb-10 min-h-screen">
+    <section class="max-w-5xl mx-auto px-4">
+
+        <button onclick="navigate('../index.html')"
+                class="btn-press mb-6 mt-4 inline-flex items-center gap-2 text-star-cyan hover:text-white bg-space-700 px-4 py-2 rounded-full border border-space-500">
+            &larr; Back to Mission Control
+        </button>
+
+        <!-- Hero -->
+        <div class="glass-panel p-8 mb-8 flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
+            <div class="z-10 text-center md:text-left mb-6 md:mb-0">
+                <p class="text-star-magenta font-mono text-sm uppercase tracking-widest mb-2">Dwarf Planet</p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2">Eris</h1>
+                <p class="text-xl text-star-cyan font-body italic">"The Pluto-Demoter"</p>
+            </div>
+            <div class="z-10 relative">
+                <div class="w-40 h-40 md:w-56 md:h-56 planet-orb orb-dwarf" style="animation: pulse 6s infinite alternate ease-in-out;"></div>
+            </div>
+        </div>
+
+        <!-- Coming-soon banner -->
+        <div class="glass-panel border-star-gold p-6 mb-10 flex items-center gap-4">
+            <span class="text-4xl">🚧</span>
+            <div>
+                <h2 class="font-display font-bold text-star-gold text-xl">Full Experience Coming Soon</h2>
+                <p class="font-body text-space-100 text-sm mt-1">You've still earned <span class="text-star-gold font-bold">+20 XP</span> for visiting! The complete page will include fact cards, a mini-game, and a quiz — same pattern as Earth.</p>
+            </div>
+        </div>
+
+        <!-- Preview grid -->
+        <h3 class="font-display text-xl text-star-cyan mb-3">What you'll explore here:</h3>
+        <div class="stub-preview-grid mb-10">
+            <div class="stub-preview-cell"><div class="text-3xl mb-1">🌞</div><div class="font-mono text-xs text-star-cyan">Distance from Sun</div></div>
+<div class="stub-preview-cell"><div class="text-3xl mb-1">📏</div><div class="font-mono text-xs text-star-cyan">Relative Size</div></div>
+<div class="stub-preview-cell"><div class="text-3xl mb-1">🌡️</div><div class="font-mono text-xs text-star-cyan">Temperature</div></div>
+<div class="stub-preview-cell"><div class="text-3xl mb-1">🧪</div><div class="font-mono text-xs text-star-cyan">Composition & Density</div></div>
+<div class="stub-preview-cell"><div class="text-3xl mb-1">⏱️</div><div class="font-mono text-xs text-star-cyan">Length of Day</div></div>
+<div class="stub-preview-cell"><div class="text-3xl mb-1">🗓️</div><div class="font-mono text-xs text-star-cyan">Length of Year</div></div>
+<div class="stub-preview-cell"><div class="text-3xl mb-1">🌕</div><div class="font-mono text-xs text-star-cyan">Moons</div></div>
+<div class="stub-preview-cell"><div class="text-3xl mb-1">💨</div><div class="font-mono text-xs text-star-cyan">Atmosphere</div></div>
+        </div>
+
+        
+        <div class="mb-10">
+            <button onclick="navigate('./index.html')"
+                    class="btn-press glass-panel p-3 inline-flex items-center gap-3 hover:border-star-cyan">
+                <span class="text-star-cyan text-sm">◂</span>
+                <span class="font-display font-bold">Back to Dwarf Planets Hub</span>
+            </button>
+        </div>
+    
+
+    </section>
+</main>
+
+<script src="../assets/js/progress.js"></script>
+<script src="../assets/js/ui.js"></script>
+<script>
+function onPageReady() {
+    markVisited('eris');
+}
+</script>
+</body>
+</html>

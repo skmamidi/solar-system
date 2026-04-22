@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mimas — Interactive Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#03050a', 800: '#0a0d1c', 700: '#141a33', 500: '#232c4d', 100: '#fcfaf2' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        mimas: { base: '#94a3b8', dark: '#475569', light: '#e2e8f0', crater: '#1e293b', ice: '#cbd5e1' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'wobble': 'wobble 20s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(148, 163, 184, 0.2)' },
+                            '100%': { boxShadow: '0 0 50px rgba(226, 232, 240, 0.4)' },
+                        },
+                        wobble: {
+                            '0%, 100%': { transform: 'rotate(-5deg)' },
+                            '50%': { transform: 'rotate(5deg)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #03050a;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #e2e8f0 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #94a3b8 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #475569 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(20, 26, 51, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(10, 13, 28, 0.8), rgba(20, 26, 51, 0.9));
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(226, 232, 240, 0.6);
+            box-shadow: 0 0 20px rgba(226, 232, 240, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Mimas Graphic - The Death Star */
+        .orb-mimas {
+            background: radial-gradient(circle at 30% 30%, #e2e8f0, #94a3b8, #475569);
+            box-shadow: inset -20px -20px 40px rgba(0,0,0,0.8), 0 0 30px rgba(148, 163, 184, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* The Herschel Crater */
+        .orb-mimas::after {
+            content: '';
+            position: absolute;
+            top: 22%; right: 18%;
+            width: 38%; height: 38%;
+            background: radial-gradient(circle at 70% 70%, #1e293b 0%, #334155 50%, #64748b 100%);
+            border-radius: 50%;
+            box-shadow: inset 5px 5px 10px rgba(0,0,0,0.7), -1px -1px 3px rgba(255,255,255,0.5);
+            z-index: 1;
+        }
+
+        /* The Central Mountain Peak in the Crater */
+        .orb-mimas::before {
+            content: '';
+            position: absolute;
+            top: 36%; right: 33%;
+            width: 8%; height: 8%;
+            background: #94a3b8;
+            border-radius: 50%;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.6);
+            z-index: 3;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(148, 163, 184, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #03050a; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-mimas-base shadow-[0_0_40px_rgba(148,163,184,0.4)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-mimas-light text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-mimas-light">🛰️</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="saturn.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-gold">
+                <span class="text-xl">🪐</span>
+                <span class="font-display font-bold text-lg">Back to Saturn</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-mimas-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-mimas-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Mimas Mission Progress</span>
+                    <span id="progressText" class="text-mimas-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-mimas-dark to-mimas-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Crater Skimmer</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-mimas-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-mimas-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-mimas-light animate-ping"></span> The Inner Ice Moon
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Mimas</h1>
+                <p class="text-2xl text-mimas-light font-body italic mb-6">"The Death Star Moon"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    A small, heavily cratered moon of Saturn that looks strikingly similar to the Death Star from Star Wars. Despite its frozen, battered exterior, recent discoveries suggest it might be hiding a massive secret ocean beneath its crust!
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-mimas-light text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(226,232,240,0.5)]">
+                    Explore the Crater 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center pt-6">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-mimas animate-wobble animate-pulse-glow"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">🎱</div>
+                <div class="text-mimas-light font-mono text-xs uppercase mb-1">Spherical Gravity</div>
+                <div class="font-bold text-xl text-white">Smallest</div>
+                <div class="text-[10px] text-star-cyan mt-1 font-bold">In hydrostatic equilibrium</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-mimas-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">396 km</div>
+                <div class="text-[10px] text-space-100 mt-1">It is incredibly tiny</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">❄️</div>
+                <div class="text-mimas-light font-mono text-xs uppercase mb-1">Temperature</div>
+                <div class="font-bold text-xl">-209°C</div>
+                <div class="text-[10px] text-space-100 mt-1">Extremely cold ice</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">NEW!</div>
+                <div class="text-3xl mb-2">🌊</div>
+                <div class="text-mimas-light font-mono text-xs uppercase mb-1">Interior</div>
+                <div class="font-bold text-xl text-mimas-light">Hidden Ocean</div>
+                <div class="text-[10px] text-space-100 mt-1">Discovered in 2024!</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Mimas data.</p>
+                </div>
+                <div class="hidden md:block text-mimas-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Size & Shape -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'mi1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🎱</div>
+                            <h3 class="font-display text-xl text-mimas-light">The Smallest Sphere</h3>
+                            <p class="text-space-100 text-xs mt-2">A cosmic milestone</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-mimas-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-mimas-dark pb-1 w-full">Hydrostatic Equilibrium</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>Mimas is the <strong>smallest known astronomical body in the solar system that is rounded in shape because of its own gravity.</strong></li>
+                                <li>Bodies smaller than Mimas don't have enough mass/gravity to pull themselves into a sphere, so they look like lumpy potatoes!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Herschel Crater -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'mi2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">💥</div>
+                            <h3 class="font-display text-xl text-mimas-light">Herschel Crater</h3>
+                            <p class="text-space-100 text-xs mt-2">The near-fatal blow</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-mimas-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-red mb-2 border-b border-mimas-dark pb-1 w-full">A Massive Impact</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Mimas is famous for a giant crater named <strong>Herschel</strong>, which is 130 km across.</li>
+                                <li>That crater spans almost <strong>one-third of the entire moon's diameter!</strong></li>
+                                <li>The impact was so massive that shockwaves travelled right through the moon, creating giant fractures on the exact opposite side. A slightly larger impact would have shattered it completely.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: The Death Star -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'mi3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-xl text-mimas-light">The Death Star</h3>
+                            <p class="text-space-100 text-xs mt-2">A cinematic coincidence</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-mimas-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-mimas-light mb-2 border-b border-space-500 pb-1 w-full">Life Imitates Art</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>Because of the massive Herschel Crater, Mimas looks exactly like the <strong>Death Star</strong> from the movie <em>Star Wars</em>.</li>
+                                <li>Here's the crazy part: Star Wars came out in 1977. The first clear photos of Mimas showing the crater weren't taken until Voyager 1 arrived in <strong>1980</strong>! It was a complete coincidence.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Clearing the Rings -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'mi4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧹</div>
+                            <h3 class="font-display text-xl text-mimas-light">Ring Sweeper</h3>
+                            <p class="text-space-100 text-xs mt-2">The Cassini Division</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-mimas-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-cyan mb-2 border-b border-mimas-dark pb-1 w-full">Orbital Resonance</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>If you look at Saturn's rings, there is a massive dark gap between the A and B rings called the <strong>Cassini Division</strong>.</li>
+                                <li>Mimas is responsible for this gap! Its gravity pulls repeatedly on any ice particles in that region (a 2:1 resonance), literally sweeping the gap clean of debris.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: The Stealth Ocean (BIG NEWS) -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'mi5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌊</div>
+                            <h3 class="font-display text-2xl text-mimas-light">A Stealth Ocean!</h3>
+                            <p class="text-space-100 mt-2">The massive 2024 Discovery</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-mimas-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-cyan mb-3 border-b border-mimas-dark pb-2 w-full">Hiding in Plain Sight</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-mimas-light font-mono font-bold block mb-1">The Mystery Wobble:</span>
+                                    Scientists studying data from the Cassini mission noticed Mimas wobbles slightly in its orbit (called libration).
+                                </div>
+                                <div>
+                                    <span class="text-mimas-light font-mono font-bold block mb-1">Liquid Water:</span>
+                                    In <strong>February 2024</strong>, astronomers confirmed this wobble is caused by a global liquid water ocean hiding 20-30 km beneath the icy crust! It's a brand new ocean world!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Pac-Man Map -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'mi6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">ᗧ•••</div>
+                            <h3 class="font-display text-2xl text-mimas-light">The Pac-Man Map</h3>
+                            <p class="text-space-100 mt-2">A weird temperature anomaly</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-mimas-dark flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-star-gold mb-2 border-b border-mimas-dark pb-1 w-full">More Gaming Coincidences</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>When the Cassini probe mapped the surface temperatures of Mimas, scientists found something hilarious.</li>
+                                <li>The heat distribution pattern created a shape that looks exactly like <strong>Pac-Man</strong> eating the Herschel crater!</li>
+                                <li>This happens because different types of ice on the surface absorb and release heat at different rates.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Composition -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'mi7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧊</div>
+                            <h3 class="font-display text-2xl text-mimas-light">Composition</h3>
+                            <p class="text-space-100 mt-2">What is it made of?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-mimas-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-mimas-dark pb-2 w-full">A Dirty Snowball</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Mimas has a very low density (1.15 g/cm³), meaning it is composed almost entirely of <strong>water ice</strong> with only a small amount of rock.</li>
+                                <li>Because it lacks internal heat escaping to the surface (unlike Enceladus), its surface remains heavily cratered and ancient, hiding the ocean deep below.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Discovery & Missions -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'mi8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔭</div>
+                            <h3 class="font-display text-2xl text-mimas-light">Discovery</h3>
+                            <p class="text-space-100 mt-2">Who found it?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-mimas-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-mimas-light mb-2 border-b border-mimas-dark pb-2 w-full">William Herschel</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Discovered in 1789 by astronomer William Herschel (who the giant crater is named after).</li>
+                                <li>It was studied up close by Voyager 1 and 2 in the 1980s, and extensively mapped by the Cassini spacecraft between 2004 and 2017.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-mimas-dark border-2 shadow-[0_0_30px_rgba(71,85,105,0.4)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-mimas-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Herschel Crater Skimmer</h2>
+                        <p class="text-space-100 mb-6">Pilot the Cassini probe deep inside the giant Herschel Crater to search for clues to the hidden subsurface ocean! Use your thrusters to dive into the crater, dodge the massive <span class="text-white font-bold">Central Mountain Peak</span>, and collect 5 <span class="text-star-cyan font-bold">Ocean Data Nodes</span> to earn the <span class="text-mimas-light font-bold">Ocean Hunter Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-mimas-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">↑</kbd> and <kbd class="bg-space-700 px-2 rounded">↓</kbd> Arrow Keys to fly.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold top or bottom half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Start Flyby
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-mimas-dark/30">
+                            <div class="text-5xl mb-2">🛰️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Targeting Crater</h3>
+                            <p class="text-mimas-light text-sm">Click Start to descend</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#020617] via-[#0f172a] to-[#1e293b] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-mimas-dark"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-mimas-dark/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Mimas module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="quizActiveArea">
+                    <h3 id="questionText" class="text-xl font-bold mb-4 text-mimas-light"></h3>
+                    <div id="optionsContainer" class="space-y-3 mb-6"></div>
+                    <div id="explanationBox" class="hidden p-4 rounded-xl border border-space-500 bg-space-800 text-sm mb-6 text-space-100"></div>
+                    <button id="nextQuestionBtn" onclick="nextQuestion()" class="hidden w-full bg-mimas-light text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Next Question</button>
+                </div>
+
+                <!-- Quiz Results -->
+                <div class="hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold text-mimas-light">0/20</span></p>
+                    <button id="retryQuizBtn" onclick="initQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Mimas Module Complete!", "You have unlocked the 'Ocean Hunter' badge. Excellent exploration!", "🎱");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Mimas files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    const quizQuestions = [
+        {
+            q: "Which famous movie space station does Mimas visually resemble?",
+            options: [
+                { text: "The Death Star", isCorrect: true },
+                { text: "The Borg Cube", isCorrect: false },
+                { text: "Deep Space Nine", isCorrect: false },
+                { text: "The Millennium Falcon", isCorrect: false }
+            ],
+            explanation: "The massive Herschel Crater gives Mimas a striking resemblance to the Death Star from Star Wars, though it was purely a coincidence!"
+        },
+        {
+            q: "What major feature in Saturn's rings is caused by the gravity of Mimas?",
+            options: [
+                { text: "The Cassini Division", isCorrect: true },
+                { text: "The E-Ring", isCorrect: false },
+                { text: "The Encke Gap", isCorrect: false },
+                { text: "The F-Ring shepherd effect", isCorrect: false }
+            ],
+            explanation: "Mimas's gravity creates a 2:1 orbital resonance that clears particles out of a wide band in the rings, creating the dark Cassini Division."
+        },
+        {
+            q: "What incredible discovery about Mimas was confirmed in early 2024?",
+            options: [
+                { text: "It hides a young, global liquid water ocean beneath its icy crust.", isCorrect: true },
+                { text: "It is actually a captured asteroid.", isCorrect: false },
+                { text: "It has a core of solid gold.", isCorrect: false },
+                { text: "It possesses active volcanoes on its surface.", isCorrect: false }
+            ],
+            explanation: "Astronomers analyzing Cassini data found anomalies in Mimas's rotation (libration) that can only be explained by a subsurface liquid ocean."
+        },
+        {
+            q: "What is the name of the massive 130 km wide crater on Mimas?",
+            options: [
+                { text: "Herschel Crater", isCorrect: true },
+                { text: "Stickney Crater", isCorrect: false },
+                { text: "Tycho Crater", isCorrect: false },
+                { text: "Copernicus Crater", isCorrect: false }
+            ],
+            explanation: "The crater is named after William Herschel, the astronomer who discovered Mimas."
+        },
+        {
+            q: "How large is the Herschel Crater compared to the rest of Mimas?",
+            options: [
+                { text: "It spans almost one-third of the moon's entire diameter.", isCorrect: true },
+                { text: "It covers the entire southern hemisphere.", isCorrect: false },
+                { text: "It is only 1% of the surface area.", isCorrect: false },
+                { text: "It is larger than the moon itself.", isCorrect: false }
+            ],
+            explanation: "Mimas is 396 km across, and the crater is 130 km across. An impact any larger would have shattered the moon completely."
+        },
+        {
+            q: "What is hydrostatic equilibrium?",
+            options: [
+                { text: "When a body has enough gravity to pull itself into a spherical shape.", isCorrect: true },
+                { text: "When a moon is perfectly balanced between two planets.", isCorrect: false },
+                { text: "When water freezes and boils at the same temperature.", isCorrect: false },
+                { text: "The point where an ocean stops moving.", isCorrect: false }
+            ],
+            explanation: "Mimas is the smallest known astronomical body in the solar system that is in hydrostatic equilibrium, making it round."
+        },
+        {
+            q: "Who discovered Mimas in 1789?",
+            options: [
+                { text: "William Herschel", isCorrect: true },
+                { text: "Galileo Galilei", isCorrect: false },
+                { text: "Giovanni Cassini", isCorrect: false },
+                { text: "Christiaan Huygens", isCorrect: false }
+            ],
+            explanation: "William Herschel, a British astronomer, discovered Mimas and Enceladus using his 40-foot reflecting telescope."
+        },
+        {
+            q: "What strange shape did Mimas's temperature map resemble when Cassini scanned it?",
+            options: [
+                { text: "Pac-Man", isCorrect: true },
+                { text: "A smiley face", isCorrect: false },
+                { text: "A perfect square", isCorrect: false },
+                { text: "A tiger's stripes", isCorrect: false }
+            ],
+            explanation: "The temperature map created a shape resembling Pac-Man eating the Herschel Crater, due to differences in the thermal inertia of the surface ice."
+        },
+        {
+            q: "What lies at the exact center of the Herschel Crater?",
+            options: [
+                { text: "A massive central mountain peak.", isCorrect: true },
+                { text: "A deep, bottomless pit.", isCorrect: false },
+                { text: "A liquid methane lake.", isCorrect: false },
+                { text: "An active cryovolcano.", isCorrect: false }
+            ],
+            explanation: "Like many large impact craters, the rebound of the crust after the strike created a towering central mountain peak."
+        },
+        {
+            q: "What does the heavily cratered surface of Mimas tell scientists about its history?",
+            options: [
+                { text: "Its surface is ancient and has not been geologically active recently.", isCorrect: true },
+                { text: "It was formed only a few million years ago.", isCorrect: false },
+                { text: "It has an atmosphere that burns up most meteors.", isCorrect: false },
+                { text: "It is constantly resurfaced by fresh ice.", isCorrect: false }
+            ],
+            explanation: "A high density of craters indicates a very old surface that hasn't been smoothed out by volcanism or tectonic activity."
+        },
+        {
+            q: "Why was the discovery of an ocean on Mimas so surprising to scientists?",
+            options: [
+                { text: "Because its surface shows absolutely no signs of geological activity or fracturing.", isCorrect: true },
+                { text: "Because Mimas is too hot to hold liquid water.", isCorrect: false },
+                { text: "Because Mimas is made entirely of rock.", isCorrect: false },
+                { text: "Because it orbits too far from Saturn.", isCorrect: false }
+            ],
+            explanation: "Unlike Enceladus or Europa, which have cracked, active surfaces, Mimas looks completely frozen and dead on the outside, hiding the ocean deep below."
+        },
+        {
+            q: "Roughly how far beneath the surface is the newly discovered ocean of Mimas estimated to be?",
+            options: [
+                { text: "20 to 30 kilometers", isCorrect: true },
+                { text: "Just 100 meters", isCorrect: false },
+                { text: "500 kilometers", isCorrect: false },
+                { text: "It is directly exposed on the surface.", isCorrect: false }
+            ],
+            explanation: "The ice shell is incredibly thick, estimating between 20-30 km, which is why no cracks or geysers reach the surface."
+        },
+        {
+            q: "What is the primary composition of Mimas?",
+            options: [
+                { text: "Mostly water ice with a small amount of rock.", isCorrect: true },
+                { text: "Solid iron.", isCorrect: false },
+                { text: "Liquid methane and ethane.", isCorrect: false },
+                { text: "Silicate rock and heavy metals.", isCorrect: false }
+            ],
+            explanation: "With a low density of 1.15 g/cm³, Mimas is essentially a giant 'dirty snowball.'"
+        },
+        {
+            q: "How does the \"Pac-Man\" thermal anomaly on Mimas actually work?",
+            options: [
+                { text: "Hard-packed ice in some areas absorbs heat better than loose, powdery snow.", isCorrect: true },
+                { text: "Nuclear reactions occur in specific zones.", isCorrect: false },
+                { text: "Saturn's rings cast a Pac-Man shaped shadow.", isCorrect: false },
+                { text: "Alien technology generates heat in that pattern.", isCorrect: false }
+            ],
+            explanation: "The 'Pac-Man' shape is caused by differences in thermal inertia; the harder ice retains heat differently than the powdery frost."
+        },
+        {
+            q: "What is \"libration\"?",
+            options: [
+                { text: "A slight wobble in a moon's rotation as it orbits.", isCorrect: true },
+                { text: "The process of water turning into ice.", isCorrect: false },
+                { text: "The freeing of a moon from a planet's gravity.", isCorrect: false },
+                { text: "The alignment of three celestial bodies.", isCorrect: false }
+            ],
+            explanation: "Mimas's libration—how it wobbles back and forth slightly—was the key piece of evidence that proved it has a liquid interior sloshing around."
+        },
+        {
+            q: "How did the impact that created Herschel Crater affect the opposite side of Mimas?",
+            options: [
+                { text: "It caused massive shockwaves that created fractures on the opposite side.", isCorrect: true },
+                { text: "It pushed an ocean of water to the surface.", isCorrect: false },
+                { text: "It blew off the entire atmosphere.", isCorrect: false },
+                { text: "It had absolutely no effect.", isCorrect: false }
+            ],
+            explanation: "The seismic shockwaves from the impact traveled through the moon and converged on the antipode (exact opposite side), causing deep fracturing."
+        },
+        {
+            q: "If a moon is smaller than Mimas, what shape is it most likely to be?",
+            options: [
+                { text: "Irregular and potato-shaped.", isCorrect: true },
+                { text: "A perfect cube.", isCorrect: false },
+                { text: "A flat disc.", isCorrect: false },
+                { text: "A perfect sphere.", isCorrect: false }
+            ],
+            explanation: "Mimas is right on the boundary of hydrostatic equilibrium. Smaller objects lack the gravity to pull themselves into a sphere."
+        },
+        {
+            q: "What is the approximate surface temperature of Mimas?",
+            options: [
+                { text: "-209°C", isCorrect: true },
+                { text: "0°C", isCorrect: false },
+                { text: "100°C", isCorrect: false },
+                { text: "-50°C", isCorrect: false }
+            ],
+            explanation: "Mimas is incredibly cold, averaging around -209°C (-344°F)."
+        },
+        {
+            q: "Which spacecraft provided the most detailed, high-resolution maps of Mimas?",
+            options: [
+                { text: "Cassini", isCorrect: true },
+                { text: "Voyager 1", isCorrect: false },
+                { text: "Hubble", isCorrect: false },
+                { text: "Galileo", isCorrect: false }
+            ],
+            explanation: "NASA's Cassini spacecraft spent 13 years orbiting Saturn, providing our best views of Mimas and its giant crater."
+        },
+        {
+            q: "Why do scientists call Mimas a \"stealth\" ocean world?",
+            options: [
+                { text: "Because it shows no surface features hinting at an ocean.", isCorrect: true },
+                { text: "Because it is invisible to radar.", isCorrect: false },
+                { text: "Because its ocean is made of dark matter.", isCorrect: false },
+                { text: "Because it hides behind Saturn's rings.", isCorrect: false }
+            ],
+            explanation: "Unlike Enceladus with its geysers or Europa with its cracked ice, Mimas completely conceals its internal ocean beneath a dead, cratered shell."
+        }
+    ];
+
+    let currentQIndex = 0;
+    let score = 0;
+    let randomizedQuestions = [];
+
+    function initQuiz() {
+        randomizedQuestions = [...quizQuestions].sort(() => Math.random() - 0.5);
+        randomizedQuestions.forEach(q => {
+            q.options.sort(() => Math.random() - 0.5);
+        });
+        currentQIndex = 0;
+        score = 0;
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('quizActiveArea').classList.remove('hidden');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = randomizedQuestions[currentQIndex];
+        document.getElementById('questionText').innerText = `${currentQIndex + 1}. ${q.q}`;
+        const optionsContainer = document.getElementById('optionsContainer');
+        optionsContainer.innerHTML = '';
+        
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-mimas-light transition-all";
+            btn.innerHTML = opt.text;
+            btn.dataset.isCorrect = opt.isCorrect;
+            btn.onclick = () => handleAnswer(opt.isCorrect, btn, q);
+            optionsContainer.appendChild(btn);
+        });
+        
+        document.getElementById('explanationBox').classList.add('hidden');
+        document.getElementById('nextQuestionBtn').classList.add('hidden');
+    }
+
+    function handleAnswer(isCorrect, btnEl, q) {
+        const siblings = btnEl.parentElement.children;
+        for(let s of siblings) {
+            s.disabled = true;
+            s.classList.remove('hover:bg-space-700', 'hover:border-mimas-light');
+            s.classList.add('opacity-50');
+            if(s.dataset.isCorrect === 'true') {
+                 s.classList.remove('opacity-50', 'border-space-500');
+                 s.classList.add('border-star-green', 'text-star-green');
+            }
+        }
+        btnEl.classList.remove('opacity-50', 'bg-space-800', 'border-star-green', 'text-star-green');
+        
+        if(isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            score++;
+            addXP(10);
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+        }
+
+        const expBox = document.getElementById('explanationBox');
+        expBox.innerHTML = `<strong class="${isCorrect ? 'text-star-green' : 'text-star-red'}">${isCorrect ? 'Correct!' : 'Incorrect.'}</strong> <br/> ${q.explanation}`;
+        expBox.classList.remove('hidden');
+        
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        currentQIndex++;
+        if(currentQIndex < randomizedQuestions.length) {
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('quizActiveArea').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('scoreText').innerText = `${score}/20`;
+        
+        if(score === 20) {
+            document.getElementById('scoreText').className = 'font-bold text-star-green';
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(200);
+                showMsgBox("Perfect Knowledge", "Perfect score on the Mimas Quiz! +200 XP", "🧠");
+            }
+            document.getElementById('retryQuizBtn').classList.add('hidden');
+        } else {
+            document.getElementById('scoreText').className = 'font-bold text-star-red';
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', initQuiz);
+
+    /* MINI GAME: Herschel Crater Skimmer */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    // Player (Cassini Probe) - Moves up/down, fixed X
+    const player = {
+        x: 50, 
+        y: 200, 
+        width: 40,
+        height: 20,
+        speed: 5,
+        color: '#f8fafc' 
+    };
+
+    let obstacles = []; // Crater walls and Central Peak
+    let collectibles = []; // Ocean Data Nodes
+    let currentCraterState = 'rim'; // rim, descending, floor, peak, ascending
+
+    // Inputs
+    let keys = { ArrowUp: false, ArrowDown: false };
+    let isTouching = false;
+    let touchTargetY = 0;
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(['ArrowUp', 'ArrowDown'].includes(e.code)) {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(['ArrowUp', 'ArrowDown'].includes(e.code)) keys[e.code] = false; 
+    });
+    
+    // Touch/Mouse Support
+    function handlePointerMove(e) {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        touchTargetY = (clientY - rect.top) * (canvas.height / rect.height);
+        isTouching = true;
+        if(e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+    }
+    function handlePointerUp() { isTouching = false; }
+
+    canvas.addEventListener('touchstart', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchend', handlePointerUp);
+    canvas.addEventListener('mousedown', handlePointerMove);
+    canvas.addEventListener('mousemove', (e) => { if(isTouching) handlePointerMove(e); });
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerUp);
+
+    function initGame() {
+        resizeCanvas();
+        player.y = canvas.height / 2;
+        obstacles = [];
+        collectibles = [];
+        dataCollected = 0;
+        currentCraterState = 'rim';
+        isTouching = false;
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Scanning...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity() {
+        let globalSpeed = 5 + (scoreFrames / 1500); 
+        
+        // Ocean Data Node logic (Spawn more often near the floor)
+        if (Math.random() > 0.7 && collectibles.length < 2) {
+            collectibles.push({
+                x: canvas.width + 20,
+                y: Math.random() * (canvas.height * 0.6) + (canvas.height * 0.2), // keep off edges
+                width: 20,
+                height: 20,
+                speedX: globalSpeed,
+                pulse: 0
+            });
+            return;
+        }
+
+        // Scripted terrain generation to mimic flying *into* a giant crater and over the central peak
+        let topH = 20;
+        let botH = 20;
+
+        if (scoreFrames < 300) {
+            // Descending crater wall
+            topH = 100 - (scoreFrames/3);
+            botH = 50 + (scoreFrames/3);
+        } else if (scoreFrames >= 300 && scoreFrames < 600) {
+            // Crater floor (wide open)
+            topH = 30;
+            botH = 150; // High floor
+        } else if (scoreFrames >= 600 && scoreFrames < 800) {
+            // THE CENTRAL PEAK!
+            topH = 30;
+            botH = 300 - Math.abs(700 - scoreFrames); // Peaks at 700
+        } else if (scoreFrames >= 800 && scoreFrames < 1000) {
+            // Crater floor
+            topH = 30;
+            botH = 150;
+        } else {
+            // Ascending out
+            topH = 30 + ((scoreFrames-1000)/2);
+            botH = 150 - ((scoreFrames-1000)/2);
+            if(topH > 200) topH = 200;
+            if(botH < 30) botH = 30;
+        }
+
+        // Add some noise to the heights
+        topH += Math.random() * 30 - 15;
+        botH += Math.random() * 30 - 15;
+        
+        let w = 40;
+
+        // Push Top Obstacle
+        obstacles.push({ x: canvas.width, y: 0, width: w, height: topH, speedX: globalSpeed, isTop: true });
+        // Push Bottom Obstacle
+        obstacles

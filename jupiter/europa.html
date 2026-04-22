@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Europa — Interactive Solar System Explorer</title>
+    
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#020617', 800: '#0f172a', 700: '#1e293b', 500: '#334155', 100: '#f8fafc' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        europa: { base: '#3b82f6', dark: '#1e3a8a', light: '#bfdbfe', ice: '#f8fafc', crack: '#9a3412' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 80s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(191, 219, 254, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(191, 219, 254, 0.6)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #020617;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #6ef0ff 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #bfdbfe 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #1e3a8a 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(191, 219, 254, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(2, 6, 23, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(191, 219, 254, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(191, 219, 254, 0.6);
+            box-shadow: 0 0 20px rgba(191, 219, 254, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Europa Graphic - Bright ice with reddish-brown cracks (lineae) */
+        .orb-europa {
+            background: radial-gradient(circle at 30% 30%, #ffffff, #e2e8f0, #94a3b8, #475569);
+            box-shadow: inset -20px -20px 40px rgba(0,0,0,0.8), 0 0 30px rgba(191, 219, 254, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* Lineae (Cracks) */
+        .orb-europa::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(154, 52, 18, 0.4) 15px, rgba(154, 52, 18, 0.4) 18px),
+                repeating-linear-gradient(-30deg, transparent, transparent 25px, rgba(124, 45, 18, 0.3) 25px, rgba(124, 45, 18, 0.3) 27px),
+                repeating-linear-gradient(80deg, transparent, transparent 40px, rgba(154, 52, 18, 0.5) 40px, rgba(154, 52, 18, 0.5) 42px);
+            border-radius: 50%;
+            mix-blend-mode: multiply;
+            opacity: 0.8;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-europa-base shadow-[0_0_40px_rgba(59,130,246,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-europa-base text-white font-bold py-3 rounded-xl hover:bg-europa-light hover:text-space-900 transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-europa-light">🎱</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="jupiter.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-gold">
+                <span class="text-xl">🪐</span>
+                <span class="font-display font-bold text-lg">Back to Jupiter</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-europa-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-europa-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Europa Mission Progress</span>
+                    <span id="progressText" class="text-europa-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-europa-dark to-europa-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Deep Dive</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-europa-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-europa-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-europa-base animate-ping"></span> Galilean Moon
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Europa</h1>
+                <p class="text-2xl text-europa-light font-body italic mb-6">"Ocean Under Ice"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    Slightly smaller than Earth's Moon, Europa is covered in a shell of blindingly smooth water ice. Beneath this frozen crust lies a vast, global liquid ocean that contains twice as much water as all of Earth's oceans combined!
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-europa-base text-white px-8 py-3 rounded-full font-bold hover:bg-europa-light hover:text-space-900 transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+                    Explore the Ice 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-europa animate-spin-slow"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-europa-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">3,121 km</div>
+                <div class="text-xs text-space-100 mt-1">90% the size of our Moon</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">🎱</div>
+                <div class="text-europa-light font-mono text-xs uppercase mb-1">Surface</div>
+                <div class="font-bold text-xl text-star-cyan">Smoothest</div>
+                <div class="text-xs text-space-100 mt-1">Almost zero craters</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">🌊</div>
+                <div class="text-europa-light font-mono text-xs uppercase mb-1">Liquid Water</div>
+                <div class="font-bold text-xl">2x Earth</div>
+                <div class="text-xs text-space-100 mt-1">Hidden beneath ice</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🥶</div>
+                <div class="text-europa-light font-mono text-xs uppercase mb-1">Surface Temp</div>
+                <div class="font-bold text-xl">-160°C</div>
+                <div class="text-xs text-space-100 mt-1">Hard as rock</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Europa data.</p>
+                </div>
+                <div class="hidden md:block text-europa-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Position -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'eu1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📍</div>
+                            <h3 class="font-display text-xl text-europa-light">The Second Galilean</h3>
+                            <p class="text-space-100 text-xs mt-2">Where does it orbit?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-europa-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-europa-dark pb-1 w-full">Fast Orbit</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>It is the second of the four Galilean moons extending outward from Jupiter (after Io).</li>
+                                <li>It orbits Jupiter at a distance of 670,900 km, taking exactly 3.5 Earth days to complete one trip.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Tidal Heating -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'eu2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔥</div>
+                            <h3 class="font-display text-xl text-europa-light">Tidal Heating</h3>
+                            <p class="text-space-100 text-xs mt-2">Why is it melting inside?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-europa-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-red mb-2 border-b border-europa-dark pb-1 w-full">The Squeeze</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Europa is locked in a 1:2:4 orbital resonance with Io and Ganymede.</li>
+                                <li>This constant gravitational tug-of-war literally stretches and squishes the moon. This friction creates massive internal heat (<strong>Tidal Heating</strong>), preventing the ocean from freezing solid!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: The Ice Shell -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'eu3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧊</div>
+                            <h3 class="font-display text-xl text-europa-light">The Ice Shell</h3>
+                            <p class="text-space-100 text-xs mt-2">Smoothest object in space</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-europa-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-cyan mb-2 border-b border-europa-dark pb-1 w-full">A Young Surface</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>The solid ice crust is estimated to be 10 to 25 km thick.</li>
+                                <li>It has almost no large impact craters. This means the surface is very young and "active"—water from below constantly erupts to freeze over and erase old scars!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Lineae -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'eu4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚡</div>
+                            <h3 class="font-display text-xl text-europa-light">Lineae</h3>
+                            <p class="text-space-100 text-xs mt-2">The reddish-brown scars</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-europa-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-europa-crack mb-2 border-b border-europa-dark pb-1 w-full">Cracking Ice</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>The most striking features are the <strong>lineae</strong> (dark streaks crisscrossing the globe).</li>
+                                <li>As Jupiter's gravity flexes the moon, the ice cracks. Warmer slushy ice and salts from the ocean below well up into the cracks, turning reddish-brown when exposed to space radiation.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: The Ocean -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'eu5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌊</div>
+                            <h3 class="font-display text-2xl text-europa-light">The Global Ocean</h3>
+                            <p class="text-space-100 mt-2">More water than Earth</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-europa-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-cyan mb-3 border-b border-europa-dark pb-2 w-full">A Deep Abyss</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-europa-light font-mono font-bold block mb-1">Magnetic Proof:</span>
+                                    The Galileo spacecraft detected that Europa induces a magnetic field, perfectly matching what a highly conductive, salty saltwater ocean would do!
+                                </div>
+                                <div>
+                                    <span class="text-europa-light font-mono font-bold block mb-1">Massive Scale:</span>
+                                    The ocean is estimated to be up to <strong>100 km deep</strong> across the entire moon.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Astrobiology -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'eu6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🦠</div>
+                            <h3 class="font-display text-2xl text-europa-light">Astrobiology</h3>
+                            <p class="text-space-100 mt-2">Could there be alien life?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-europa-base flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-star-green mb-2 border-b border-europa-dark pb-1 w-full">The Best Candidate</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Europa is considered one of the most likely places to find extraterrestrial life in our solar system.</li>
+                                <li>It has all three ingredients for life: Liquid water, organic chemical building blocks, and an energy source.</li>
+                                <li>Because sunlight can't penetrate the ice, scientists theorize that <strong>hydrothermal vents</strong> at the bottom of the ocean floor could provide heat and chemical energy for microbes, just like at the bottom of Earth's oceans!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Geysers -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'eu7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">💦</div>
+                            <h3 class="font-display text-2xl text-europa-light">Water Plumes</h3>
+                            <p class="text-space-100 mt-2">Shooting into space</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-europa-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-europa-dark pb-2 w-full">Erupting Geysers</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>The Hubble Space Telescope has repeatedly detected towering plumes of water vapor erupting from Europa's south pole.</li>
+                                <li>These geysers shoot up to 200 km into space. This is incredibly exciting because future spacecraft could fly through the plumes and sample the ocean water without having to drill through 20km of solid ice!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Missions -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'eu8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🚀</div>
+                            <h3 class="font-display text-2xl text-europa-light">Space Missions</h3>
+                            <p class="text-space-100 mt-2">Europa Clipper</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-europa-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-cyan mb-2 border-b border-europa-dark pb-2 w-full">The Next Great Leap</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-white">Past:</strong> The Galileo probe intentionally crashed into Jupiter in 2003 to ensure it wouldn't accidentally contaminate Europa with Earth microbes!</li>
+                                <li><strong class="text-star-cyan">Upcoming (Europa Clipper):</strong> NASA is launching a massive, multi-billion dollar probe dedicated entirely to performing 45 close flybys of Europa to scan its ocean, ice shell, and search for signs of habitability.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-europa-base border-2 shadow-[0_0_30px_rgba(59,130,246,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-europa-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Cryobot Deep Dive</h2>
+                        <p class="text-space-100 mb-6">Melt your way through the ice and deploy the autonomous Cryobot submarine! Pilot the sub down into the dark abyss, dodging falling ice chunks, and collect 3 <span class="text-star-green font-bold">Glowing Biosignatures</span> from the hydrothermal vents to earn the <span class="text-europa-light font-bold">Astrobiologist Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-europa-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Deploy Submarine
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-europa-base/30">
+                            <div class="text-5xl mb-2">🌊</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Ice Breach Complete</h3>
+                            <p class="text-europa-light text-sm">Click Deploy to dive</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#0e2a47] via-[#020617] to-[#000000] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-europa-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-europa-base/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Europa module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <!-- Quiz rendered dynamically by JavaScript -->
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Europa Module Complete!", "You have unlocked the 'Astrobiologist' badge. Excellent exploration!", "🌊");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Europa files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* ── QUIZ ──────────────────────────────────────────────────────── */
+    /* ── QUIZ DATA ────────────────────────────────────────────────────── */
+    const QUIZ_BANK = [
+        {"q": "What is the primary scientific evidence that Europa harbors a subsurface liquid water ocean beneath its icy crust?", "choices": ["Magnetic field data from Galileo showing an induced magnetic field, plus surface features suggesting ice movement", "Direct sampling of liquid water by a probe that landed on the surface", "Radio telescope detection of liquid water from Earth", "Temperature readings showing above-freezing temperatures at the surface"], "correct": 0, "explanation": "The Galileo spacecraft detected an induced magnetic field at Europa, meaning the moon has an electrically conductive layer responding to Jupiter's changing magnetic field — consistent with a saltwater ocean. Additionally, Europa's very smooth, young surface (few impact craters) with chaotic terrain and lineae (cracks) suggests active ice shell movement over a liquid interior."},
+        {"q": "What force primarily heats Europa's interior and keeps its subsurface ocean liquid despite being far from the Sun?", "choices": ["Tidal flexing: Jupiter's immense gravity constantly squeezes and stretches Europa as it orbits", "Radioactive decay of heavy elements in Europa's rocky core", "Solar radiation absorbed through the thin ice shell", "Electrical currents induced by Jupiter's magnetic field"], "correct": 0, "explanation": "Europa participates in a 4:2:1 orbital resonance with Io and Ganymede (the Laplace resonance), which keeps its orbit slightly elliptical. Jupiter's gravity constantly pulls harder on the near side than the far side, flexing Europa's interior like squeezing a rubber ball. This tidal flexing generates enough heat through friction to keep water liquid under the ice."},
+        {"q": "Europa's surface is crisscrossed by dark reddish-brown lines. What are these features called, and what likely colors them?", "choices": ["Lineae; they are likely colored by salt minerals and organic compounds brought up from the ocean below", "Sulci; they are channels carved by ancient flowing water", "Valles; they are deep canyons formed by crustal stretching", "Fossae; they are volcanic lava flows frozen in place"], "correct": 0, "explanation": "Europa's lineae (singular: linea) are fractures in the ice where warmer material from below has welled up and refrozen. Spectroscopic analysis by the Galileo spacecraft and ground-based telescopes suggests the reddish-brown color comes from magnesium sulfate salts and possibly organic compounds (carbon-bearing molecules) mixed in with the upwelling water ice."},
+        {"q": "The four large moons of Jupiter discovered by Galileo Galilei in 1610 are called the Galilean moons. In order from Jupiter outward, what are they?", "choices": ["Io, Europa, Ganymede, Callisto", "Europa, Io, Callisto, Ganymede", "Ganymede, Europa, Io, Callisto", "Callisto, Ganymede, Europa, Io"], "correct": 0, "explanation": "In order from Jupiter: Io (~422,000 km), Europa (~671,000 km), Ganymede (~1,070,000 km), Callisto (~1,883,000 km). A mnemonic: 'I Eat Green Carrots.' Galileo's discovery that these moons orbit Jupiter — not Earth — was pivotal evidence for the heliocentric model of the solar system."},
+        {"q": "The Laplace resonance describes the orbital relationship among three of Jupiter's moons. What is the exact resonance ratio involving Europa?", "choices": ["Io:Europa:Ganymede orbit in a 4:2:1 resonance (for every 1 Ganymede orbit, Europa orbits twice, Io orbits four times)", "Europa:Io:Callisto in a 3:1:1 resonance", "Europa:Ganymede:Callisto in a 2:4:8 resonance", "All four Galilean moons orbit in a 1:2:4:8 resonance"], "correct": 0, "explanation": "The Laplace resonance means for every one orbit Ganymede completes (~7.15 days), Europa completes two orbits (~3.55 days), and Io completes four orbits (~1.77 days). This gravitational 'locking' among the three moons keeps their orbits slightly elliptical, maintaining the tidal heating that drives Io's volcanism and Europa's subsurface ocean."},
+        {"q": "Europa's ice shell is estimated to be how thick, based on current scientific models?", "choices": ["10–30 km thick, with the liquid ocean below potentially 100 km deep", "1–2 km thick, nearly transparent to sunlight", "100–200 km thick, with only a thin ocean layer beneath", "Europa is frozen solid with no liquid layer"], "correct": 0, "explanation": "Scientists estimate Europa's ice shell is 10–30 km thick (models vary). Beneath it, the liquid water ocean may be 60–150 km deep — potentially containing twice as much liquid water as all of Earth's oceans combined. This makes Europa one of the most promising places in the solar system to search for life. NASA's Europa Clipper mission will refine these estimates."},
+        {"q": "NASA's Europa Clipper mission, launched in October 2024, will perform flybys rather than orbiting Europa directly. Why?", "choices": ["Jupiter's intense radiation belts would damage spacecraft electronics if it orbited Europa too long", "Europa's gravity is too weak to capture a spacecraft in orbit", "The mission is designed to study all four Galilean moons equally", "Orbiting Europa would interfere with its magnetic field measurements"], "correct": 0, "explanation": "Europa sits deep inside Jupiter's powerful radiation belts, which bombard the surface with high-energy particles equivalent to about 5,400 mSv/day — instantly lethal to humans and damaging to electronics. By making ~49 close flybys from a safer orbit around Jupiter, Europa Clipper can study Europa up close while spending most of its time in less radiation-intense regions."},
+        {"q": "Observations by the Hubble Space Telescope in 2013 and 2016 suggested Europa may be venting material from its subsurface ocean. What are these suspected eruptions called?", "choices": ["Cryovolcanic plumes: eruptions of water vapor and ice particles from under the ice shell", "Geysers: hot water jets from hydrothermal vents", "Sulfur plumes: sulfur dioxide eruptions from a volcanic core", "Outgassing: passive release of gases from the ice surface"], "correct": 0, "explanation": "Hubble detected apparent plumes of water vapor rising ~200 km above Europa's south polar region. These cryovolcanic (cold volcanic) plumes could be shooting ocean material directly into space — meaning a future spacecraft might fly through a plume and sample Europa's ocean chemistry without even landing. This is similar to the confirmed plumes of Saturn's moon Enceladus."},
+        {"q": "Europa's ocean is potentially habitable because of what energy source at the ocean floor that could support life without sunlight?", "choices": ["Hydrothermal vents: chemosynthetic ecosystems like those on Earth's ocean floor", "Bioluminescence from existing life forms generating their own light", "Solar energy transmitted through the ice shell as infrared radiation", "Nuclear fission in the rocky core heating the water"], "correct": 0, "explanation": "On Earth's deep ocean floor, hydrothermal vents support thriving ecosystems using chemosynthesis — organisms that get energy from chemical reactions (like oxidizing hydrogen sulfide) rather than sunlight. If similar vents exist at Europa's seafloor where water contacts the warm rocky interior, they could support life. This makes Europa a prime astrobiology target even without surface sunlight."},
+        {"q": "What is Europa's diameter, and how does it compare to Earth's Moon?", "choices": ["~3,122 km, slightly smaller than Earth's Moon (3,474 km)", "~5,000 km, larger than Earth's Moon", "~1,500 km, less than half the size of Earth's Moon", "~6,800 km, nearly twice the size of Earth's Moon"], "correct": 0, "explanation": "Europa has a diameter of ~3,122 km, making it slightly smaller than Earth's Moon (3,474 km) but close in size. Despite its similar size, Europa is fundamentally different: it has an ice-covered surface over a deep liquid ocean, while Earth's Moon is a dry, geologically dead rocky body. Europa is the smallest of the four Galilean moons."},
+        {"q": "Europa's surface is one of the smoothest in the solar system with very few impact craters. What does this tell scientists about Europa's surface age?", "choices": ["The surface is geologically young (~40–90 million years old), continuously resurfaced by geological activity", "Europa formed recently and hasn't been hit by many meteorites yet", "Jupiter's gravity deflects most meteorites away from Europa", "Europa's thick ice absorbs impacts without leaving permanent craters"], "correct": 0, "explanation": "The scarcity of impact craters indicates Europa's surface is geologically young — only ~40–90 million years old (compared to ~4 billion years for Earth's Moon). This means the surface is constantly being renewed: warm ice wells up from below, old ice sinks, and cracks refill. This active resurfacing is driven by tidal heating and suggests an actively convecting ice shell over a liquid ocean."},
+        {"q": "What is the primary chemical composition of Europa's surface ice, and what impurity makes parts of it appear reddish-brown?", "choices": ["Primarily water ice (H₂O) with magnesium sulfate salts and possibly organic compounds creating the reddish tint", "Carbon dioxide ice with iron oxide impurities", "Ammonia ice with sulfur contamination", "Nitrogen ice with tholins (organic polymers) coloring it"], "correct": 0, "explanation": "Europa's surface is primarily water ice. The reddish-brown coloring in the lineae and chaotic terrain regions is thought to result from magnesium sulfate salts (like Epsom salt) erupted from the salty subsurface ocean, combined with organic compounds. Some studies suggest the redness could also involve irradiated sodium chloride, similar to Earth's table salt altered by radiation."},
+        {"q": "Europa has a tenuous atmosphere. What is its primary component, and how does it form?", "choices": ["Molecular oxygen (O₂), produced when Jupiter's radiation splits water molecules on the surface", "Water vapor evaporating from the ice surface under sunlight", "Carbon dioxide outgassing from the icy interior", "Hydrogen gas escaping from the subsurface ocean"], "correct": 0, "explanation": "Europa has an extremely thin exosphere composed primarily of molecular oxygen (O₂). This is NOT from photosynthesis but from radiolysis — Jupiter's intense radiation particles split water molecules on the surface into hydrogen and oxygen. The hydrogen escapes to space (being light) while the heavier oxygen accumulates as a sparse exosphere. The surface pressure is about 0.1 micropascals — a trillion times less than Earth's atmosphere."},
+        {"q": "Why do scientists believe Europa's subsurface ocean could contain saltwater rather than pure freshwater?", "choices": ["The induced magnetic field is consistent with a conductive saltwater solution; rock-water interaction over billions of years would dissolve minerals into the ocean", "Direct spectroscopic detection of salts in water vapor plumes by Galileo spacecraft", "The ocean's temperature is too high for fresh water to stay liquid", "Pure water would have frozen solid long ago; only saltwater stays liquid at those temperatures"], "correct": 0, "explanation": "The Galileo spacecraft detected that Europa's magnetic field response is consistent with an electrically conductive layer — meaning saltwater. Over billions of years, water contacting Europa's rocky mantle and seafloor would dissolve minerals and salts. Scientists have identified spectroscopic signatures of magnesium sulfate (Epsom salt) and sodium chloride on the surface, likely originating from the ocean below."},
+        {"q": "The concept of a 'habitable zone' traditionally refers to distances from a star where liquid water can exist on a surface. How does Europa challenge this traditional definition?", "choices": ["Europa shows that habitable zones can exist based on tidal heating regardless of distance from a star, expanding the search for life beyond the traditional stellar habitable zone", "Europa proves that habitable zones don't exist and life cannot survive anywhere else", "Europa is actually inside the traditional habitable zone of our Sun", "Europa shows stars are not needed at all; all planets have internal heat"], "correct": 0, "explanation": "Europa orbits Jupiter ~780 million km from the Sun — well outside the traditional 'habitable zone' (~0.95–1.37 AU from Sun). Yet it may host liquid water due to tidal heating. This fundamentally expands astrobiology: icy moons of giant planets throughout the universe could host liquid water oceans through tidal heating, even in systems where the star's habitable zone is far away. Similar bodies likely exist around Jupiter-like exoplanets."},
+        {"q": "Europa's orbital period around Jupiter is approximately how long?", "choices": ["3.55 Earth days", "7.15 Earth days", "1.77 Earth days", "16.69 Earth days"], "correct": 0, "explanation": "Europa orbits Jupiter in approximately 3.55 Earth days (~85.2 hours) at a distance of ~671,000 km. This fast orbit is what enables the tidal resonance with Io (1.77 days) and Ganymede (7.15 days). The 4:2:1 resonance ratio keeps these orbits slightly elliptical, maintaining the tidal heating that makes Europa so scientifically interesting."},
+        {"q": "What is 'chaotic terrain' on Europa's surface, and what does it indicate about the moon's ice shell?", "choices": ["Regions where the ice shell apparently melted through, scrambled, refroze, and resurfaced — indicating warm ice or liquid water reached near the surface", "Random meteorite impact patterns that disrupted the ice", "Areas where the ice is thinner and collapses due to gravity", "Ancient volcanic calderas that erupted through the ice"], "correct": 0, "explanation": "Chaotic terrain (chaos regions) shows where the ice shell was disrupted: blocks of older ice appear rotated and tilted, frozen in new positions surrounded by refrozen matrix material. This suggests warm ice or actual liquid water welled up from below, disrupted the surface, and then refroze. Conamara Chaos, one of the most studied regions, shows ice blocks resembling Arctic sea ice floes on Earth."},
+        {"q": "If life were discovered in Europa's ocean, it would most likely be what type of organism, based on analogues found on Earth?", "choices": ["Chemolithotrophic microbes (bacteria/archaea that get energy from chemical reactions, like those at deep-sea hydrothermal vents)", "Photosynthetic algae using faint sunlight through the ice", "Large complex animals similar to fish or invertebrates", "Organisms that use Jupiter's magnetic field as an energy source"], "correct": 0, "explanation": "Without sunlight penetrating deep ice, any life in Europa's ocean would most likely be chemolithotrophs — organisms that extract energy from chemical reactions between rock and water (like hydrogen oxidation or sulfur metabolism). On Earth, chemosynthetic ecosystems at hydrothermal vents in the deep ocean host thriving communities of bacteria, archaea, tube worms, and other organisms with no dependence on photosynthesis."},
+        {"q": "The thickness of Europa's ice shell matters enormously for its potential habitability. A 'thin ice' model vs. a 'thick ice' model differ in what key way?", "choices": ["Thin ice (~few km) allows exchange between ocean and surface; thick ice (~30 km) means the ocean is isolated from surface oxidants", "Thin ice means the ocean is smaller; thick ice means the ocean is larger", "Thin ice model predicts no life; thick ice model predicts life is possible", "The thickness affects only surface temperature, not ocean habitability"], "correct": 0, "explanation": "This is a critical astrobiology debate: a thin ice shell (~few km) would allow relatively easy exchange between the surface (where Jupiter's radiation creates oxidants like O₂ and H₂O₂) and the ocean (where reductants form at hydrothermal vents). This oxidant-reductant gradient could fuel life. A thick ice shell (~30+ km) better insulates the ocean but may isolate it from surface chemistry, potentially limiting the chemical energy available for life."},
+        {"q": "Europa was discovered by Galileo Galilei in January 1610 using an early telescope. Who else independently discovered Europa at almost the same time?", "choices": ["Simon Marius, a German astronomer who discovered it nearly simultaneously and gave the moon its name from Greek mythology", "Johannes Kepler, who predicted its existence mathematically", "Nicolaus Copernicus, who observed it just after Galileo", "Tycho Brahe, who recorded it years earlier but didn't recognize it as a moon"], "correct": 0, "explanation": "Simon Marius, a German astronomer, independently discovered all four Galilean moons at almost the same time as Galileo (Jan 1610). Although Galileo published first and gets primary credit, it was Marius who proposed the mythological names we use today: Io, Europa, Ganymede, and Callisto — all lovers or companions of Zeus (Jupiter) in Greek mythology. Europa was a Phoenician princess carried away by Zeus."}
+    ];
+
+    /* ── QUIZ STATE ──────────────────────────────────────────────────── */
+    let quizState = { questions: [], current: 0, score: 0, answered: false };
+
+    function shuffleArr(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    function initQuiz() {
+        quizState.questions = shuffleArr(QUIZ_BANK).map(q => {
+            // Shuffle choices while tracking the correct answer
+            const idxArr = shuffleArr([0, 1, 2, 3]);
+            const shuffledChoices = idxArr.map(i => q.choices[i]);
+            const newCorrect = idxArr.indexOf(q.correct);
+            return { ...q, choices: shuffledChoices, correct: newCorrect };
+        });
+        quizState.current = 0;
+        quizState.score   = 0;
+        quizState.answered = false;
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const container = document.getElementById('quizContainer');
+        const qData = quizState.questions[quizState.current];
+        const total = quizState.questions.length;
+        const pct   = Math.round((quizState.current / total) * 100);
+
+        container.innerHTML = `
+            <div class="mb-6">
+                <div class="flex justify-between text-sm font-mono mb-1">
+                    <span class="text-europa-light">Question ${quizState.current + 1} of ${total}</span>
+                    <span class="text-space-100">Score: ${quizState.score}/${quizState.current}</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-2 border border-space-500 overflow-hidden">
+                    <div class="bg-europa-light h-2 rounded-full transition-all duration-500" style="width:${pct}%"></div>
+                </div>
+            </div>
+            <h3 class="text-xl font-bold mb-5 text-europa-light leading-snug">${qData.q}</h3>
+            <div class="space-y-3" id="choiceArea">
+                ${qData.choices.map((c, i) => `
+                    <button id="choice-${i}"
+                        class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-europa-base transition-all"
+                        onclick="answerQ(${i}, ${qData.correct}, ${quizState.current})">${c}</button>
+                `).join('')}
+            </div>
+            <div id="explanationBox" class="hidden mt-5 p-4 rounded-xl border"></div>
+            <div class="mt-5 flex justify-end">
+                <button id="nextBtn"
+                    class="hidden bg-europa-base text-space-900 px-7 py-2.5 rounded-full font-bold text-sm hover:opacity-90 transition-all"
+                    onclick="nextQuestion()">
+                    ${quizState.current < total - 1 ? 'Next Question →' : 'See Results →'}
+                </button>
+            </div>
+        `;
+        quizState.answered = false;
+    }
+
+    function answerQ(selected, correct, qIdx) {
+        if (quizState.answered || qIdx !== quizState.current) return;
+        quizState.answered = true;
+
+        const buttons = document.querySelectorAll('#choiceArea button');
+        buttons.forEach((b, i) => {
+            b.disabled = true;
+            b.classList.remove('hover:bg-space-700', 'hover:border-europa-base');
+            if (i === correct) {
+                b.classList.remove('bg-space-800');
+                b.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            } else if (i === selected && selected !== correct) {
+                b.classList.remove('bg-space-800');
+                b.classList.add('bg-star-red', 'text-white', 'border-star-red');
+            } else {
+                b.classList.add('opacity-40');
+            }
+        });
+
+        const isCorrect = selected === correct;
+        if (isCorrect) { quizState.score++; addXP(20); }
+
+        const qData = quizState.questions[qIdx];
+        const expBox = document.getElementById('explanationBox');
+        expBox.classList.remove('hidden');
+        expBox.className = `mt-5 p-4 rounded-xl border ${isCorrect
+            ? 'border-star-green bg-star-green/10'
+            : 'border-star-red bg-star-red/10'}`;
+        expBox.innerHTML = `
+            <div class="flex items-start gap-3">
+                <span class="text-2xl flex-shrink-0">${isCorrect ? '✅' : '❌'}</span>
+                <div>
+                    <p class="font-bold mb-1 ${isCorrect ? 'text-star-green' : 'text-star-red'}">
+                        ${isCorrect ? 'Correct!' : 'Incorrect — the right answer is highlighted in green.'}
+                    </p>
+                    <p class="text-sm text-space-100 leading-relaxed">${qData.explanation}</p>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('nextBtn').classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        quizState.current++;
+        if (quizState.current >= quizState.questions.length) {
+            showQuizResults();
+        } else {
+            renderQuestion();
+        }
+    }
+
+    function showQuizResults() {
+        const container = document.getElementById('quizContainer');
+        const total = quizState.questions.length;
+        const pct = Math.round((quizState.score / total) * 100);
+        const passed = quizState.score >= 14;
+        const perfect = quizState.score >= 18;
+        let grade, emoji;
+        if (pct >= 90)      { grade = 'State Champion Level! 🏆'; emoji = '🥇'; }
+        else if (pct >= 80) { grade = 'Competition Ready! 🎖️'; emoji = '🏅'; }
+        else if (pct >= 70) { grade = 'Almost There — Keep Studying! 📚'; emoji = '🔬'; }
+        else                { grade = 'Keep Exploring! 🚀'; emoji = '🔭'; }
+
+        container.innerHTML = `
+            <div class="text-center py-8">
+                <div class="text-7xl mb-4">${emoji}</div>
+                <h3 class="text-3xl font-display text-star-gold mb-3">Quiz Complete!</h3>
+                <p class="text-5xl font-bold mb-2 ${passed ? 'text-star-green' : 'text-star-red'}">${quizState.score}/${total}</p>
+                <p class="text-xl text-europa-light mb-2">${pct}%</p>
+                <p class="text-lg text-white mb-8">${grade}</p>
+                <button onclick="initQuiz()"
+                    class="bg-space-700 border border-space-500 text-white px-8 py-3 rounded-full font-bold hover:bg-space-500 transition">
+                    🔄 Retake Quiz (New Order)
+                </button>
+            </div>
+        `;
+
+        if (passed && !achievements.passedQuiz) {
+            achievements.passedQuiz = true;
+            addXP(100);
+            showMsgBox("Astrobiologist badge unlocked!", `${quizState.score}/${total} correct! +100 XP`, "🌊");
+            updateProgress();
+        }
+        if (perfect && !window.perfectQuizAlerted) {
+            window.perfectQuizAlerted = true;
+            addXP(50);
+            showMsgBox("Science Olympiad Champion!", `Near-perfect score on Europa! +50 Bonus XP`, "🏆");
+        }
+    }
+
+    /* ── QUIZ START ON LOAD ──────────────────────────────────────── */
+    window.addEventListener('DOMContentLoaded', () => { initQuiz(); });
+
+    /* MINI GAME: Cryobot Deep Dive */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let bioCollected = 0;
+
+    // Player (Submarine) - Moves left/right at bottom
+    const player = {
+        x: 0, 
+        y: 0, 
+        width: 30,
+        height: 50,
+        speed: 6,
+        color: '#f8fafc' 
+    };
+
+    let obstacles = []; // Ice chunks and Bio vents
+    let bubbles = [];
+
+    // Inputs
+    let keys = { ArrowLeft: false, ArrowRight: false };
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(['ArrowLeft', 'ArrowRight'].includes(e.code)) {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(['ArrowLeft', 'ArrowRight'].includes(e.code)) keys[e.code] = false; 
+    });
+    
+    // Touch/Mouse Support
+    function handlePointerMove(e) {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let relativeX = clientX - rect.left;
+        if(relativeX < canvas.width/2) {
+            keys.ArrowLeft = true; keys.ArrowRight = false;
+        } else {
+            keys.ArrowRight = true; keys.ArrowLeft = false;
+        }
+        if(e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+    }
+    function handlePointerUp() { keys.ArrowLeft = false; keys.ArrowRight = false; }
+
+    canvas.addEventListener('touchstart', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchend', handlePointerUp);
+    canvas.addEventListener('mousedown', handlePointerMove);
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerUp);
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - player.height - 30;
+        obstacles = [];
+        bioCollected = 0;
+
+        // Background bubbles
+        bubbles = Array.from({length: 30}).map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 3 + 1,
+            speed: Math.random() * 2 + 1
+        }));
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Diving...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let isBio = Math.random() > 0.75; // 25% chance of biosignature
+        
+        let w = isBio ? 25 : Math.random() * 40 + 30; 
+        let xPos = Math.random() * (canvas.width - w);
+        
+        obstacles.push({
+            x: xPos,
+            y: canvas.height + w, // Spawn BELOW and move UP to simulate diving down
+            width: w,
+            height: w,
+            speedY: (Math.random() * 3 + 3) * speedMult,
+            isBio: isBio,
+            pulse: 0
+        });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        // Propeller wash (top since we are diving down)
+        ctx.fillStyle = 'rgba(110, 240, 255, 0.5)';
+        ctx.beginPath();
+        ctx.moveTo(-player.width/4, -player.height/2);
+        ctx.lineTo(-player.width/2 - Math.random()*5, -player.height/2 - 15);
+        ctx.lineTo(player.width/2 + Math.random()*5, -player.height/2 - 15);
+        ctx.lineTo(player.width/4, -player.height/2);
+        ctx.fill();
+
+        // Submarine body
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, player.width/2, player.height/2, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Headlights (pointing down)
+        let gradient = ctx.createLinearGradient(0, player.height/2, 0, player.height/2 + 40);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(-player.width/4, player.height/2 - 5);
+        ctx.lineTo(-player.width, player.height/2 + 40);
+        ctx.lineTo(player.width, player.height/2 + 40);
+        ctx.lineTo(player.width/4, player.height/2 - 5);
+        ctx.fill();
+
+        // Viewport
+        ctx.fillStyle = '#1e3a8a';
+        ctx.beginPath();
+        ctx.arc(0, player.height/4, 6, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    function drawEntities() {
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            
+            if (o.isBio) {
+                // Biosignature (Hydrothermal Vent plume / glowing life)
+                o.pulse += 0.1;
+                let glow = 10 + Math.sin(o.pulse) * 5;
+                
+                ctx.fillStyle = '#4ef0a8'; // Green glow
+                ctx.shadowBlur = glow;
+                ctx.shadowColor = '#4ef0a8';
+                
+                ctx.beginPath();
+                ctx.arc(o.x + o.width/2, o.y + o.height/2, o.width/2, 0, Math.PI*2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(o.x + o.width/2, o.y + o.height/2, o.width/4, 0, Math.PI*2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            } else {
+                // Ice Chunk
+                ctx.fillStyle = '#1e3a8a'; // Dark blue ice
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 2;
+                
+                ctx.beginPath();
+                ctx.moveTo(o.x, o.y + o.height/2);
+                ctx.lineTo(o.x + o.width/3, o.y);
+                ctx.lineTo(o.x + o.width, o.y + o.height/3);
+                ctx.lineTo(o.x + o.width/1.5, o.y + o.height);
+                ctx.lineTo(o.x + o.width/4, o.y + o.height);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+    }
+
+    function drawBackground() {
+        // Depth gradient gets darker
+        let depthPct = Math.min(1, scoreFrames / 1200);
+        let grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        
+        // As we dive, the top gets darker
+        let r1 = 14 - Math.floor(14 * depthPct);
+        let g1 = 42 - Math.floor(42 * depthPct);
+        let b1 = 71 - Math.floor(71 * depthPct);
+        
+        grad.addColorStop(0, `rgb(${r1}, ${g1}, ${b1})`);
+        grad.addColorStop(1, '#000000');
+        
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Bubbles move UP
+        ctx.fillStyle = 'rgba(191, 219, 254, 0.4)';
+        bubbles.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+            ctx.fill();
+            p.y -= p.speed;
+            if(p.y < 0) {
+                p.y = canvas.height;
+                p.x = Math.random() * canvas.width;
+            }
+        });
+    }
+
+    function checkCollisionRect(r1, r2) {
+        return !(r2.x > r1.x + r1.width || 
+                 r2.x + r2.width < r1.x || 
+                 r2.y > r1.y + r1.height ||
+                 r2.y + r2.height < r1.y);
+    }
+
+    function updatePhysics() {
+        // Player Movement
+        if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
+        if (keys.ArrowRight && player.x + player.width < canvas.width) player.x += player.speed;
+
+        let pRect = { x: player.x + 5, y: player.y + 5, width: player.width - 10, height: player.height - 10 };
+
+        // Spawning
+        let spawnRate = Math.max(25, 60 - Math.floor(scoreFrames/60));
+        if (frames % spawnRate === 0) spawnEntity();
+
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].y -= obstacles[i].speedY; // Moving UP
+            
+            if (checkCollisionRect(pRect, obstacles[i])) {
+                if (obstacles[i].isBio) {
+                    bioCollected++;
+                    addXP(10);
+                    ctx.fillStyle = 'rgba(78, 240, 168, 0.3)';
+                    ctx.fillRect(0,0, canvas.width, canvas.height);
+                    obstacles.splice(i, 1);
+                    continue;
+                } else {
+                    gameOver("Hull Crushed by Deep Ice!");
+                    return;
+                }
+            }
+
+            if (obstacles[i].y + obstacles[i].height < 0) {
+                obstacles.splice(i, 1);
+            }
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        drawBackground();
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawEntities();
+        drawPlayer();
+
+        // HUD
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let depth = 10 + Math.floor(secondsAlive * 4.5); // Depth in km
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Depth: ${depth} km`, 10, 25);
+        ctx.fillStyle = "#4ef0a8"; 
+        ctx.fillText(`🦠 Bio-Data: ${bioCollected}/3`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && bioCollected >= 3 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Astrobiologist Badge Unlocked!", "You found signs of life in the deep! +100 XP", "🦠");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Dive";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && bioCollected >= 3);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You survived for ${secondsAlive}s.</p>
+            <p class="text-star-green mb-4 text-sm font-bold">🦠 Collected ${bioCollected} Biosignatures</p>
+            ${!achievements.playedGame ? `<p class="text-europa-light text-sm mb-4 text-center px-2">Survive 20s AND collect 3 bio-samples for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

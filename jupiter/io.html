@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Io — Interactive Solar System Explorer</title>
+    
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#05060f', 800: '#0f1430', 700: '#1a234d', 500: '#2c3b73', 100: '#fef3c7' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        io: { base: '#eab308', dark: '#b45309', light: '#fef08a', crust: '#f97316', lava: '#ef4444' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 80s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(234, 179, 8, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(234, 179, 8, 0.6)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #05060f;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #fef08a 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #eab308 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #ef4444 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(15, 20, 48, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(234, 179, 8, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(5, 6, 15, 0.8), rgba(15, 20, 48, 0.9));
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(234, 179, 8, 0.6);
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Io Graphic - The Pizza Moon! Yellow, orange, red sulfur pockmarks */
+        .orb-io {
+            background: radial-gradient(circle at 30% 30%, #fef08a, #eab308, #f97316, #b45309, #78350f);
+            box-shadow: inset -20px -20px 40px rgba(0,0,0,0.8), 0 0 30px rgba(234, 179, 8, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* Calderas (Paterae) and sulfur deposits */
+        .orb-io::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(239, 68, 68, 0.6) 0%, transparent 15%), /* Red lava */
+                radial-gradient(circle at 70% 60%, rgba(153, 27, 27, 0.8) 0%, transparent 20%), /* Dark caldera */
+                radial-gradient(circle at 40% 80%, rgba(234, 88, 12, 0.7) 0%, transparent 15%), /* Orange sulfur */
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.4) 0%, transparent 10%); /* White SO2 frost */
+            border-radius: 50%;
+            filter: blur(1px);
+            mix-blend-mode: multiply;
+        }
+
+        .orb-io::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.8) 0%, transparent 8%), /* Pele volcano */
+                radial-gradient(circle at 15% 70%, rgba(180, 83, 9, 0.7) 0%, transparent 12%);
+            border-radius: 50%;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(234, 179, 8, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #05060f; }
+        ::-webkit-scrollbar-thumb { background: #b45309; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #eab308; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-io-base shadow-[0_0_40px_rgba(234,179,8,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-io-base text-space-900 font-bold py-3 rounded-xl hover:bg-io-light transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-io-light">🍕</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="jupiter.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-gold">
+                <span class="text-xl">🪐</span>
+                <span class="font-display font-bold text-lg">Back to Jupiter</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-io-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-io-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Io Mission Progress</span>
+                    <span id="progressText" class="text-io-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-io-dark to-io-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Surveyor Drone</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-io-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-io-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-io-lava animate-ping"></span> Galilean Moon
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Io</h1>
+                <p class="text-2xl text-io-light font-body italic mb-6">"The Pizza Moon"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    Caught in a violent gravitational tug-of-war, Io is the most volcanically active body in the entire solar system. Its surface is constantly repaved by hundreds of volcanoes spewing molten sulfur and lava!
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-io-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-io-light transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(234,179,8,0.5)]">
+                    Explore the Volcanoes 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-io animate-spin-slow"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-io-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">3,642 km</div>
+                <div class="text-xs text-space-100 mt-1">Slightly larger than Earth's Moon</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">🌋</div>
+                <div class="text-io-light font-mono text-xs uppercase mb-1">Volcanism</div>
+                <div class="font-bold text-xl text-io-lava">Most Active</div>
+                <div class="text-xs text-space-100 mt-1">400+ active volcanoes</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">⏱️</div>
+                <div class="text-io-light font-mono text-xs uppercase mb-1">Orbital Period</div>
+                <div class="font-bold text-xl">1.77 Days</div>
+                <div class="text-xs text-space-100 mt-1">Fastest Galilean moon</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🌡️</div>
+                <div class="text-io-light font-mono text-xs uppercase mb-1">Temperature Extremes</div>
+                <div class="font-bold text-xl text-io-crust">Lava vs Frost</div>
+                <div class="text-xs text-space-100 mt-1">-130°C frost, 1600°C lava</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Io data.</p>
+                </div>
+                <div class="hidden md:block text-io-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Position -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'io1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📍</div>
+                            <h3 class="font-display text-xl text-io-light">The Inner Galilean</h3>
+                            <p class="text-space-100 text-xs mt-2">Where does it orbit?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-io-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-io-dark pb-1 w-full">Extremely Close</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>It is the innermost of Jupiter's four large Galilean moons.</li>
+                                <li>It orbits at a distance of 422,000 km, zipping around the massive gas giant in just 42.5 hours!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Craters -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'io2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🍕</div>
+                            <h3 class="font-display text-xl text-io-light">The Pizza Moon</h3>
+                            <p class="text-space-100 text-xs mt-2">Why does it look like that?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-io-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-io-crust mb-2 border-b border-io-dark pb-1 w-full">Zero Craters!</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Unlike our Moon, Io has <strong>almost zero impact craters!</strong></li>
+                                <li>The surface is constantly repaved by fresh lava.</li>
+                                <li>The vibrant yellow, orange, and red colors come from sulfur and sulfur dioxide frost covering the surface.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Tidal Heating -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'io3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔥</div>
+                            <h3 class="font-display text-xl text-io-light">Tidal Heating</h3>
+                            <p class="text-space-100 text-xs mt-2">What causes the volcanoes?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-io-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-red mb-2 border-b border-io-dark pb-1 w-full">The Great Squish</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>Io is caught in a gravitational tug-of-war between massive Jupiter on one side, and Europa/Ganymede on the other.</li>
+                                <li>This constant pulling flexes the solid crust of Io up and down by up to <strong>100 meters</strong>! This intense friction melts the interior rock.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Most Volcanic -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'io4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌋</div>
+                            <h3 class="font-display text-xl text-io-light">Most Volcanic</h3>
+                            <p class="text-space-100 text-xs mt-2">A record-breaking world</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-io-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-io-lava mb-2 border-b border-io-dark pb-1 w-full">A Hellish Landscape</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Io is the most volcanically active body in the solar system.</li>
+                                <li>It has over 400 active volcanoes. Some plumes blast sulfur dioxide gas up to 500 km (300 miles) into space!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Lava Lakes -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'io5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌊</div>
+                            <h3 class="font-display text-2xl text-io-light">Loki Patera</h3>
+                            <p class="text-space-100 mt-2">The largest volcano on Io</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-io-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-io-crust mb-3 border-b border-io-dark pb-2 w-full">A Giant Lava Lake</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-io-light font-mono font-bold block mb-1">Massive Size:</span>
+                                    Loki Patera is a volcanic depression (caldera) over 200 km across!
+                                </div>
+                                <div>
+                                    <span class="text-io-light font-mono font-bold block mb-1">Overturning Crust:</span>
+                                    It is an active lava lake where the solid crust frequently founders and sinks, exposing brilliant fresh magma underneath.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Plasma Torus -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'io6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚡</div>
+                            <h3 class="font-display text-2xl text-io-light">The Plasma Torus</h3>
+                            <p class="text-space-100 mt-2">Feeding Jupiter's radiation belts</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-io-base flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-star-cyan mb-2 border-b border-io-dark pb-1 w-full">Electric Donut</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>As Io's volcanoes erupt, Jupiter's massive magnetic field sweeps past the moon, stripping away 1 ton of sulfur and oxygen ions every single second!</li>
+                                <li>This material forms a giant, glowing, donut-shaped ring of lethal radiation around Jupiter called the <strong>Io Plasma Torus</strong>.</li>
+                                <li>This radiation makes it incredibly dangerous for spacecraft to fly near Io.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Atmosphere -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'io7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">💨</div>
+                            <h3 class="font-display text-2xl text-io-light">Atmosphere</h3>
+                            <p class="text-space-100 mt-2">The collapsing sky</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-io-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-io-dark pb-2 w-full">Freezing in the Dark</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Io has an extremely thin atmosphere composed almost entirely of Sulfur Dioxide gas ($SO_2$) belched from volcanoes.</li>
+                                <li>Every day, when Io passes into Jupiter's cold shadow (an eclipse), the temperature drops so low that the <strong>entire atmosphere freezes solid and falls to the ground!</strong> When the sun returns, it sublimates back into gas.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Missions -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'io8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🚀</div>
+                            <h3 class="font-display text-2xl text-io-light">Space Missions</h3>
+                            <p class="text-space-100 mt-2">The great discovery</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-io-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-gold mb-2 border-b border-io-dark pb-2 w-full">Voyager's Shock</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-star-gold">Voyager 1 (1979):</strong> Before Voyager, scientists thought moons were dead, cratered rocks. Navigational engineer Linda Morabito noticed a weird bump on the edge of Io in a photo... it was a 300km high volcanic plume!</li>
+                                <li><strong class="text-white">Juno (2023-2024):</strong> The Juno spacecraft recently performed incredibly close flybys, capturing stunning high-resolution images of fresh lava lakes and rugged mountains.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-io-base border-2 shadow-[0_0_30px_rgba(234,179,8,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-io-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Volcanic Plume Surveyor</h2>
+                        <p class="text-space-100 mb-6">Pilot an armored drone over the dangerous surface of Io! Use your thrusters to dodge the massive <span class="text-io-lava font-bold">lava plumes</span> erupting from below, and collect 3 <span class="text-io-light font-bold">Sulfur Data Packets</span> to earn the <span class="text-io-base font-bold">Volcanologist Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-io-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys to fly sideways.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Launch Drone
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-io-base/30">
+                            <div class="text-5xl mb-2">🚁</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Pele Patera Flyover</h3>
+                            <p class="text-io-light text-sm">Click Launch to survey</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#2e1005] via-[#450a0a] to-[#7f1d1d] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-io-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-io-base/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Io module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <!-- Quiz rendered dynamically by JavaScript -->
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Io Module Complete!", "You have unlocked the 'Volcanologist' badge. Excellent exploration!", "🌋");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Io files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* ── QUIZ ──────────────────────────────────────────────────────── */
+    /* ── QUIZ DATA ────────────────────────────────────────────────────── */
+    const QUIZ_BANK = [
+        {"q": "Io is the most volcanically active body in the solar system. What is the primary energy source driving this extreme volcanic activity?", "choices": ["Tidal flexing: the gravitational pull of Jupiter and resonance with Europa and Ganymede constantly deforms Io's interior", "Radioactive decay of uranium and thorium in Io's core", "Solar heating concentrated by Jupiter's magnetic field acting as a lens", "Residual heat from Io's formation still radiating outward"], "correct": 0, "explanation": "Io's intense volcanism is driven by tidal heating. The 4:2:1 Laplace orbital resonance with Europa and Ganymede keeps Io's orbit slightly elliptical, so Jupiter's gravity constantly flexes Io like kneading dough. This friction generates enough heat to melt rock throughout Io's interior, producing 100+ active volcanoes. Io radiates ~100 trillion watts of heat — more than Earth's entire geothermal output."},
+        {"q": "What is the name of the most powerful and tallest volcanic structure ever observed on Io?", "choices": ["Olympus Mons on Mars is the tallest; on Io, the Pele volcano has eruption plumes reaching 300 km high", "Pele: a massive hot spot whose plumes reach ~300 km altitude, depositing a reddish sulfur ring ~1,200 km wide", "Loki Patera: a lava lake the size of Lake Ontario", "Prometheus: the most persistently active volcano on Io"], "correct": 1, "explanation": "Pele is Io's most dramatic volcano — a hot spot producing giant eruption plumes reaching 300 km (186 miles) high and depositing a distinctive reddish ring of short-chain sulfur compounds ~1,200 km in diameter. Its short-chain sulfur (S3 and S4) gives the ring a red/orange color rather than the yellow of common sulfur (S8). Loki Patera is the most powerful heat source, and Prometheus is the most consistently active."},
+        {"q": "Io's surface is covered in sulfur and sulfur dioxide frost, giving it distinctive yellow, orange, and red colors. What happens to sulfur dioxide (SO₂) when it deposits far from volcanic vents?", "choices": ["It freezes into white frost at Io's colder polar and equatorial regions away from active vents", "It converts to hydrogen sulfide (H₂S), producing Io's rotten egg smell", "It polymerizes into solid plastic-like compounds", "It evaporates entirely into space since Io's gravity is too weak to hold it"], "correct": 0, "explanation": "Sulfur dioxide (SO₂) erupted from Io's volcanoes either stays in the thin SO₂ atmosphere near the equator or deposits as bright white SO₂ frost in cooler regions (poles and areas far from vents). Different sulfur compounds (S2, S3, S4, S8) and different temperature regions produce Io's color palette: yellows, oranges, reds, whites, and blacks (from silicate lava)."},
+        {"q": "Which two Voyager spacecraft made the first close flyby of Io in 1979, revealing its volcanic activity for the first time?", "choices": ["Voyager 1 and Voyager 2", "Pioneer 10 and Pioneer 11", "Galileo and Cassini", "New Horizons and Juno"], "correct": 0, "explanation": "Voyager 1 flew past Io in March 1979, and navigation engineer Linda Morabito discovered a volcanic plume in a navigation photo — the first active volcano seen beyond Earth. Voyager 2 followed in July 1979, confirming multiple active volcanoes. This discovery was actually predicted just days before by Peale, Cassen, and Reynolds based on tidal heating calculations — one of planetary science's greatest predictions."},
+        {"q": "Io has essentially no water despite being similar in size to Earth's Moon. What best explains Io's complete lack of water?", "choices": ["Tidal heating was so intense early in Io's history that all water was vaporized and escaped to space; Io formed inside Jupiter's 'frost line'", "Io formed from dry rocky material and never had water", "Jupiter's gravity strips water molecules from Io's surface", "Intense radiation from Jupiter breaks water into hydrogen and oxygen which escape"], "correct": 0, "explanation": "Io formed inside Jupiter's 'frost line' (the distance where water ice can condense), so it incorporated less ice than the outer Galilean moons. Additionally, Io's extreme tidal heating very early in its history would have driven off any water it had. Today, Io is essentially a dry, rocky world — the only Galilean moon without a significant water component. Its volcanism is silicate lava (like Earth's) and sulfur-based."},
+        {"q": "Io orbits within Jupiter's intense radiation belt and magnetosphere. How does this affect Io?", "choices": ["Io acts as an electrical generator: moving through Jupiter's magnetic field drives a 400,000-volt electrical current (flux tube) connecting Io to Jupiter's poles", "Io's surface is constantly heated by the radiation, keeping it warm", "The radiation creates a protective bubble around Io, deflecting meteorites", "Io gains electric charge and is slowly repelled away from Jupiter"], "correct": 0, "explanation": "Io moves through Jupiter's magnetic field at ~57,000 km/h, acting like a conductor in a dynamo. This generates a massive electrical current (flux tube) of ~5 million amperes at 400,000 volts flowing along magnetic field lines between Io and Jupiter's polar regions. This connection creates Io footprint auroras at Jupiter's poles — bright spots visible in UV images. The interaction also strips ~1 ton/second of Io's ionized gas (plasma) into Jupiter's magnetosphere."},
+        {"q": "What is Loki Patera, and why is it scientifically significant?", "choices": ["A giant lava lake ~200 km across — the most powerful heat source on Io, periodically brightening as fresh lava resurfaces it in a clockwise wave", "The largest volcanic mountain on Io, over 20 km tall", "A massive impact crater converted to a volcanic basin", "A permanently erupting geyser of liquid sulfur"], "correct": 0, "explanation": "Loki Patera is a lava lake approximately 200 km (125 miles) across — larger than Lake Ontario — filled with dark, cooling lava crust floating on molten rock. Every 1–2 years, a wave of lava overturning sweeps around the lake clockwise, resurfacing it and causing Loki to brighten dramatically. It generates about 10% of all of Io's heat output, making it detectable by Earth-based telescopes during these brightening events."},
+        {"q": "Io's mountains are NOT volcanic — they are formed by a completely different process. What creates Io's mountains, some of which are taller than Mount Everest?", "choices": ["Compressional forces: constant volcanic resurfacing piles material on top, compressing and uplifting huge crustal blocks that form mountains", "Volcanic shield building similar to Hawaiian volcanoes", "Impact craters uplifting rim material", "Tidal bulging permanently deforming the crust upward"], "correct": 0, "explanation": "Uniquely, Io's mountains are NOT volcanic. Io's surface is continuously covered by volcanic deposits — lava and sulfur — piling up at ~1 cm per year. As this material accumulates, it compresses the older crust below, causing it to crack and thrust upward, forming mountains. Some reach 18 km (60,000 ft) — taller than Mount Everest. The mountains have steep, unstable slopes and huge landslides on their flanks."},
+        {"q": "What are 'paterae' (singular: patera) on Io?", "choices": ["Shallow, scalloped-edge volcanic depressions or calderas — there are over 400 on Io's surface, many containing lava lakes", "Mountain peaks formed by compressional tectonics", "Frost deposits of sulfur dioxide", "Elongated volcanic fissures where lava erupts in curtains"], "correct": 0, "explanation": "Paterae are irregular, shallow volcanic depressions — similar to calderas on Earth but typically larger and shallower. Io has over 400 paterae, making its surface look unlike any other body in the solar system. Many contain permanent lava lakes (like Loki Patera). The name comes from a type of shallow Roman libation dish, applied in planetary science to similar features on Io and other bodies."},
+        {"q": "Io's interior structure is unique among Galilean moons. What does current evidence suggest about Io's interior?", "choices": ["A large iron or iron-sulfide core (taking up ~50% of Io's radius), a silicate mantle partially or largely molten, and a thin cold crust covered in volcanic deposits", "A liquid water ocean beneath a thin rocky crust, similar to Europa", "A completely molten interior from surface to core with no solid regions", "A differentiated rocky interior like Earth but geologically inactive except at the surface"], "correct": 0, "explanation": "Io is fully differentiated: it has a dense iron or iron-sulfide core ~900–1,000 km in radius (~50% of Io's total 1,821 km radius), surrounded by a silicate (rocky) mantle that is at least partially molten — possibly forming a global magma ocean at depth. The thin outer crust (perhaps only a few km) is constantly covered by volcanic deposits. Io's average density of 3.53 g/cm³ confirms it is the densest Galilean moon."},
+        {"q": "Which NASA spacecraft spent years orbiting Jupiter and made multiple close flybys of Io between 1995 and 2003, providing most of our detailed knowledge of Io's volcanism?", "choices": ["Galileo spacecraft", "Voyager 1", "Cassini-Huygens", "New Horizons"], "correct": 0, "explanation": "The Galileo spacecraft orbited Jupiter from 1995 to 2003 and made multiple flybys of all four Galilean moons. Despite being damaged by Jupiter's radiation (its main antenna never fully deployed), Galileo returned enormous amounts of data on Io's volcanism, confirming hundreds of active volcanoes, measuring eruption temperatures (some exceeding 1,600°C), and discovering that Io's mountains are tectonically (not volcanically) formed."},
+        {"q": "Io's volcanic eruptions are far hotter than typical modern Earth volcanoes. Some Io lava temperatures exceed 1,600°C (2,912°F). What does this extreme temperature indicate?", "choices": ["Io's lavas are ultramafic (very high in magnesium and iron, low in silica) — similar to ancient komatiite lavas on early Earth that haven't erupted on Earth for billions of years", "Io's volcanic heat comes from nuclear fission rather than tidal heating", "Io's sulfur-based volcanoes burn hotter than Earth's silicate volcanoes", "The measurements are instrument errors since no silicate lava can reach those temperatures"], "correct": 0, "explanation": "Earth's modern basaltic lavas erupt at 1,100–1,200°C. Io's measured temperatures of 1,600°C+ suggest ultramafic or komatiitic lavas — very iron and magnesium rich, very silica poor. On Earth, komatiites erupted over 2.5 billion years ago when Earth's mantle was hotter. Io's extreme tidal heating keeps its mantle hot enough to produce these ancient lava types, making Io a window into early Earth geology."},
+        {"q": "Io contributes material to a large structure in Jupiter's magnetosphere. What is it?", "choices": ["The Io plasma torus: a donut-shaped cloud of ionized sulfur and oxygen ions that follows Io's orbital path around Jupiter", "The Great Red Spot: Io's volcanic gases fuel Jupiter's storm", "Io's dust ring: a thin ring of volcanic ash orbiting Jupiter", "The radiation belt: Io's ejected protons form Jupiter's inner radiation belt"], "correct": 0, "explanation": "Io loses about 1 ton per second of material (sulfur, oxygen, sodium) to space due to volcanic eruptions and sputtering by Jupiter's radiation. This material becomes ionized and forms the Io plasma torus — a dense, donut-shaped cloud of plasma (ionized gas) that orbits Jupiter along Io's orbital path. This torus is visible in ultraviolet light and glows auroras. The torus feeds material into Jupiter's entire magnetosphere."},
+        {"q": "What is the approximate diameter of Io, and which object in the solar system is it most similar in size to?", "choices": ["~3,643 km — very similar to Earth's Moon (3,474 km); Io is slightly larger", "~1,200 km — about the size of the asteroid Ceres", "~6,800 km — close to Mercury's size", "~12,000 km — about the size of Earth"], "correct": 0, "explanation": "Io's diameter is ~3,643 km, making it only slightly larger than Earth's Moon (3,474 km). Despite similar sizes, they are dramatically different: Io is the most volcanic body in the solar system due to tidal heating, while the Moon is cold and geologically dead. Io's slightly higher density (3.53 g/cm³ vs Moon's 3.34 g/cm³) reflects its iron-rich core."},
+        {"q": "Before the Voyager 1 flyby in 1979, scientists Stanton Peale, Patrick Cassen, and Ray Reynolds published a prediction about Io just days before the spacecraft arrived. What did they predict?", "choices": ["Intense volcanic activity on Io due to tidal heating from Jupiter and orbital resonance with Europa and Ganymede", "Io would have a subsurface ocean similar to Europa", "Io's surface would be covered in impact craters similar to the Moon", "Io would have a magnetic field stronger than Earth's"], "correct": 0, "explanation": "In a remarkable scientific prediction, Peale, Cassen, and Reynolds published 'Melting of Io by Tidal Dissipation' in Science magazine just days before Voyager 1's flyby. They calculated that tidal heating from the Laplace resonance would intensely heat Io's interior. When navigation engineer Linda Morabito found a volcanic plume in Voyager 1 images, it perfectly confirmed the prediction — one of planetary science's most striking examples of theoretical prediction preceding observational confirmation."},
+        {"q": "Io's thin atmosphere is primarily composed of what gas, and what is unique about how this atmosphere is maintained?", "choices": ["Sulfur dioxide (SO₂), which constantly cycles between being erupted by volcanoes and freezing out as frost when Io enters Jupiter's shadow", "Molecular oxygen, like Europa's thin atmosphere", "Nitrogen, similar to Titan and Earth", "Water vapor, constantly replenished by the subsurface ocean"], "correct": 0, "explanation": "Io's thin atmosphere (pressure ~1 millionth of Earth's) is primarily SO₂, maintained by volcanic outgassing. When Io passes into Jupiter's shadow (eclipse), temperatures drop enough to freeze SO₂ onto the surface, collapsing the atmosphere. When Io re-emerges into sunlight, the frost sublimates (turns directly to gas), rebuilding the atmosphere. This atmospheric 'breathing' with each orbit is unique in the solar system."},
+        {"q": "What NASA mission, launched in 2011 and currently orbiting Jupiter, has recently provided new close-up observations of Io's volcanic activity?", "choices": ["Juno spacecraft, which made its closest Io flybys in late 2023 and early 2024", "Galileo spacecraft, which is still operational", "Europa Clipper, which flies by Io en route to Europa", "New Horizons, which photographed Io during its Jupiter flyby"], "correct": 0, "explanation": "NASA's Juno spacecraft, primarily designed to study Jupiter's atmosphere and interior, extended its mission to include flybys of the Galilean moons. In December 2023 and February 2024, Juno made the closest flybys of Io since Galileo, imaging active eruptions in unprecedented detail and detecting dozens of active volcanoes. New Horizons also photographed Io's volcanic plumes during its 2007 Jupiter flyby."},
+        {"q": "How does Io's surface renewal rate compare to other bodies in the solar system?", "choices": ["Io's entire surface is resurfaced by volcanic deposits roughly once every 1 million years — faster than any other body in the solar system except active geologic regions on Earth", "Io's surface hasn't changed in over 1 billion years", "Io is resurfaced by meteorite impacts every 10,000 years", "Only 1% of Io's surface is active; most hasn't changed in millions of years"], "correct": 0, "explanation": "Io deposits volcanic material (lava and sulfur) at an average rate of ~1 cm per year globally. Over 1 million years, this completely buries Io's surface — explaining why virtually no impact craters are preserved (they get rapidly buried). This makes Io's surface the youngest in the solar system, constantly being overwritten. By contrast, the Moon's surface preserves craters billions of years old."},
+        {"q": "The surface of Io shows remarkable color diversity (yellows, oranges, whites, reds, blacks, greens). Which material produces the black surfaces visible near active volcanic vents?", "choices": ["Fresh silicate lava (basalt), which appears black before being covered by sulfur deposits", "Carbon deposits from volcanic gases", "Titanium oxide minerals that appear black", "Magnetic iron minerals concentrated by volcanic activity"], "correct": 0, "explanation": "The black regions on Io's surface are fresh silicate lava — basalt-like material that erupts at extremely high temperatures. Before volcanic gases and sulfur compounds deposit on top, cooling silicate lava appears jet black. Over time, yellow sulfur (S8) and white SO₂ frost cover the dark lava. The various colors represent different stages of cooling/deposition and different sulfur compounds: white = SO₂ frost, yellow = sulfur (S8), orange/red = short-chain sulfur (S2-S4, Sx), black = fresh silicate lava."},
+        {"q": "Io is tidally locked to Jupiter just like Earth's Moon is locked to Earth. How long does Io take to complete one full rotation on its axis?", "choices": ["1.77 Earth days — exactly equal to its orbital period around Jupiter", "24 Earth hours — the same as Earth", "7.15 Earth days — the same as Ganymede", "Io rotates quickly and is NOT tidally locked to Jupiter"], "correct": 0, "explanation": "Like all four Galilean moons, Io is tidally locked to Jupiter, meaning its rotation period equals its orbital period: approximately 1.769 Earth days (~42.5 hours). This means the same face of Io always points toward Jupiter. Io's Jupiter-facing hemisphere experiences slightly stronger tidal heating, and most of Io's largest volcanic hotspots are concentrated near the sub-Jupiter and anti-Jupiter points."}
+    ];
+
+    /* ── QUIZ STATE ──────────────────────────────────────────────────── */
+    let quizState = { questions: [], current: 0, score: 0, answered: false };
+
+    function shuffleArr(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    function initQuiz() {
+        quizState.questions = shuffleArr(QUIZ_BANK).map(q => {
+            // Shuffle choices while tracking the correct answer
+            const idxArr = shuffleArr([0, 1, 2, 3]);
+            const shuffledChoices = idxArr.map(i => q.choices[i]);
+            const newCorrect = idxArr.indexOf(q.correct);
+            return { ...q, choices: shuffledChoices, correct: newCorrect };
+        });
+        quizState.current = 0;
+        quizState.score   = 0;
+        quizState.answered = false;
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const container = document.getElementById('quizContainer');
+        const qData = quizState.questions[quizState.current];
+        const total = quizState.questions.length;
+        const pct   = Math.round((quizState.current / total) * 100);
+
+        container.innerHTML = `
+            <div class="mb-6">
+                <div class="flex justify-between text-sm font-mono mb-1">
+                    <span class="text-io-light">Question ${quizState.current + 1} of ${total}</span>
+                    <span class="text-space-100">Score: ${quizState.score}/${quizState.current}</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-2 border border-space-500 overflow-hidden">
+                    <div class="bg-io-light h-2 rounded-full transition-all duration-500" style="width:${pct}%"></div>
+                </div>
+            </div>
+            <h3 class="text-xl font-bold mb-5 text-io-light leading-snug">${qData.q}</h3>
+            <div class="space-y-3" id="choiceArea">
+                ${qData.choices.map((c, i) => `
+                    <button id="choice-${i}"
+                        class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-io-base transition-all"
+                        onclick="answerQ(${i}, ${qData.correct}, ${quizState.current})">${c}</button>
+                `).join('')}
+            </div>
+            <div id="explanationBox" class="hidden mt-5 p-4 rounded-xl border"></div>
+            <div class="mt-5 flex justify-end">
+                <button id="nextBtn"
+                    class="hidden bg-io-base text-space-900 px-7 py-2.5 rounded-full font-bold text-sm hover:opacity-90 transition-all"
+                    onclick="nextQuestion()">
+                    ${quizState.current < total - 1 ? 'Next Question →' : 'See Results →'}
+                </button>
+            </div>
+        `;
+        quizState.answered = false;
+    }
+
+    function answerQ(selected, correct, qIdx) {
+        if (quizState.answered || qIdx !== quizState.current) return;
+        quizState.answered = true;
+
+        const buttons = document.querySelectorAll('#choiceArea button');
+        buttons.forEach((b, i) => {
+            b.disabled = true;
+            b.classList.remove('hover:bg-space-700', 'hover:border-io-base');
+            if (i === correct) {
+                b.classList.remove('bg-space-800');
+                b.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            } else if (i === selected && selected !== correct) {
+                b.classList.remove('bg-space-800');
+                b.classList.add('bg-star-red', 'text-white', 'border-star-red');
+            } else {
+                b.classList.add('opacity-40');
+            }
+        });
+
+        const isCorrect = selected === correct;
+        if (isCorrect) { quizState.score++; addXP(20); }
+
+        const qData = quizState.questions[qIdx];
+        const expBox = document.getElementById('explanationBox');
+        expBox.classList.remove('hidden');
+        expBox.className = `mt-5 p-4 rounded-xl border ${isCorrect
+            ? 'border-star-green bg-star-green/10'
+            : 'border-star-red bg-star-red/10'}`;
+        expBox.innerHTML = `
+            <div class="flex items-start gap-3">
+                <span class="text-2xl flex-shrink-0">${isCorrect ? '✅' : '❌'}</span>
+                <div>
+                    <p class="font-bold mb-1 ${isCorrect ? 'text-star-green' : 'text-star-red'}">
+                        ${isCorrect ? 'Correct!' : 'Incorrect — the right answer is highlighted in green.'}
+                    </p>
+                    <p class="text-sm text-space-100 leading-relaxed">${qData.explanation}</p>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('nextBtn').classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        quizState.current++;
+        if (quizState.current >= quizState.questions.length) {
+            showQuizResults();
+        } else {
+            renderQuestion();
+        }
+    }
+
+    function showQuizResults() {
+        const container = document.getElementById('quizContainer');
+        const total = quizState.questions.length;
+        const pct = Math.round((quizState.score / total) * 100);
+        const passed = quizState.score >= 14;
+        const perfect = quizState.score >= 18;
+        let grade, emoji;
+        if (pct >= 90)      { grade = 'State Champion Level! 🏆'; emoji = '🥇'; }
+        else if (pct >= 80) { grade = 'Competition Ready! 🎖️'; emoji = '🏅'; }
+        else if (pct >= 70) { grade = 'Almost There — Keep Studying! 📚'; emoji = '🔬'; }
+        else                { grade = 'Keep Exploring! 🚀'; emoji = '🔭'; }
+
+        container.innerHTML = `
+            <div class="text-center py-8">
+                <div class="text-7xl mb-4">${emoji}</div>
+                <h3 class="text-3xl font-display text-star-gold mb-3">Quiz Complete!</h3>
+                <p class="text-5xl font-bold mb-2 ${passed ? 'text-star-green' : 'text-star-red'}">${quizState.score}/${total}</p>
+                <p class="text-xl text-io-light mb-2">${pct}%</p>
+                <p class="text-lg text-white mb-8">${grade}</p>
+                <button onclick="initQuiz()"
+                    class="bg-space-700 border border-space-500 text-white px-8 py-3 rounded-full font-bold hover:bg-space-500 transition">
+                    🔄 Retake Quiz (New Order)
+                </button>
+            </div>
+        `;
+
+        if (passed && !achievements.passedQuiz) {
+            achievements.passedQuiz = true;
+            addXP(100);
+            showMsgBox("Volcanologist badge unlocked!", `${quizState.score}/${total} correct! +100 XP`, "🌋");
+            updateProgress();
+        }
+        if (perfect && !window.perfectQuizAlerted) {
+            window.perfectQuizAlerted = true;
+            addXP(50);
+            showMsgBox("Science Olympiad Champion!", `Near-perfect score on Io! +50 Bonus XP`, "🏆");
+        }
+    }
+
+    /* ── QUIZ START ON LOAD ──────────────────────────────────────── */
+    window.addEventListener('DOMContentLoaded', () => { initQuiz(); });
+
+    /* MINI GAME: Volcanic Plume Surveyor */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    // Player (Drone) - Moves left/right near the top
+    const player = {
+        x: 0, 
+        y: 60, 
+        width: 36,
+        height: 24,
+        speed: 6,
+        color: '#f8fafc' 
+    };
+
+    let obstacles = []; // Lava Plumes
+    let bgParticles = [];
+
+    // Inputs
+    let keys = { ArrowLeft: false, ArrowRight: false };
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(['ArrowLeft', 'ArrowRight'].includes(e.code)) {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(['ArrowLeft', 'ArrowRight'].includes(e.code)) keys[e.code] = false; 
+    });
+    
+    // Touch/Mouse Support
+    function handlePointerMove(e) {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let relativeX = clientX - rect.left;
+        if(relativeX < canvas.width/2) {
+            keys.ArrowLeft = true; keys.ArrowRight = false;
+        } else {
+            keys.ArrowRight = true; keys.ArrowLeft = false;
+        }
+        if(e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+    }
+    function handlePointerUp() { keys.ArrowLeft = false; keys.ArrowRight = false; }
+
+    canvas.addEventListener('touchstart', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchend', handlePointerUp);
+    canvas.addEventListener('mousedown', handlePointerMove);
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerUp);
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        obstacles = [];
+        dataCollected = 0;
+
+        // Background ash/sulfur
+        bgParticles = Array.from({length: 40}).map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 1,
+            speed: Math.random() * 2 + 1,
+            color: Math.random() > 0.5 ? '#fef08a' : '#f97316'
+        }));
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Surveying...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let isData = Math.random() > 0.75; // 25% chance of sulfur data
+        
+        let w = isData ? 20 : Math.random() * 30 + 40; // Data is small, plumes are wide
+        let xPos = Math.random() * (canvas.width - w);
+        
+        obstacles.push({
+            x: xPos,
+            y: canvas.height, // Spawn at bottom (surface)
+            width: w,
+            height: isData ? w : Math.random() * 100 + 50, // Plumes are tall
+            speedY: (Math.random() * 4 + 4) * speedMult, // Shoot UP
+            isData: isData,
+            pulse: 0
+        });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        // Thrusters (Bottom)
+        ctx.fillStyle = '#6ef0ff';
+        ctx.beginPath();
+        ctx.moveTo(-player.width/4, player.height/2);
+        ctx.lineTo(-player.width/4 - 4, player.height/2 + 10 + Math.random()*5);
+        ctx.lineTo(-player.width/4 + 4, player.height/2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(player.width/4, player.height/2);
+        ctx.lineTo(player.width/4 - 4, player.height/2 + 10 + Math.random()*5);
+        ctx.lineTo(player.width/4 + 4, player.height/2);
+        ctx.fill();
+
+        // Drone body
+        ctx.fillStyle = '#cbd5e1';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, player.width/2, player.height/2, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Sensor Array (Bottom)
+        ctx.fillStyle = '#eab308';
+        ctx.fillRect(-6, player.height/2 - 4, 12, 6);
+
+        // Cockpit/Eye
+        ctx.fillStyle = '#1e3a8a';
+        ctx.beginPath();
+        ctx.arc(0, -2, 5, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    function drawEntities() {
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            
+            if (o.isData) {
+                // Sulfur Data Packet
+                o.pulse += 0.1;
+                let glow = 8 + Math.sin(o.pulse) * 4;
+                
+                ctx.fillStyle = '#fef08a'; // Yellow
+                ctx.shadowBlur = glow;
+                ctx.shadowColor = '#eab308';
+                
+                // Diamond shape
+                ctx.beginPath();
+                ctx.moveTo(o.x + o.width/2, o.y);
+                ctx.lineTo(o.x + o.width, o.y + o.height/2);
+                ctx.lineTo(o.x + o.width/2, o.y + o.height);
+                ctx.lineTo(o.x, o.y + o.height/2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            } else {
+                // Lava Plume
+                ctx.fillStyle = '#ef4444'; // Red base
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#f97316';
+                
+                ctx.beginPath();
+                // Flame-like shape
+                ctx.moveTo(o.x, o.y + o.height);
+                ctx.lineTo(o.x + o.width/2, o.y);
+                ctx.lineTo(o.x + o.width, o.y + o.height);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Inner core
+                ctx.fillStyle = '#fef08a';
+                ctx.beginPath();
+                ctx.moveTo(o.x + o.width*0.2, o.y + o.height);
+                ctx.lineTo(o.x + o.width/2, o.y + o.height*0.3);
+                ctx.lineTo(o.x + o.width*0.8, o.y + o.height);
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+            }
+        }
+    }
+
+    function drawBackground() {
+        // Reddish dark atmosphere
+        ctx.fillStyle = 'rgba(69, 10, 10, 0.4)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Ash particles blowing UP
+        bgParticles.forEach(p => {
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+            ctx.fill();
+            p.y -= p.speed;
+            if(p.y < 0) {
+                p.y = canvas.height;
+                p.x = Math.random() * canvas.width;
+            }
+        });
+        
+        // Ground representation at bottom
+        ctx.fillStyle = '#78350f';
+        ctx.beginPath();
+        ctx.ellipse(canvas.width/2, canvas.height + 20, canvas.width, 40, 0, 0, Math.PI*2);
+        ctx.fill();
+    }
+
+    function checkCollisionRect(r1, r2) {
+        return !(r2.x > r1.x + r1.width || 
+                 r2.x + r2.width < r1.x || 
+                 r2.y > r1.y + r1.height ||
+                 r2.y + r2.height < r1.y);
+    }
+
+    function updatePhysics() {
+        // Player Movement
+        if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
+        if (keys.ArrowRight && player.x + player.width < canvas.width) player.x += player.speed;
+
+        let pRect = { x: player.x + 5, y: player.y + 5, width: player.width - 10, height: player.height - 10 };
+
+        // Spawning
+        let spawnRate = Math.max(20, 50 - Math.floor(scoreFrames/80));
+        if (frames % spawnRate === 0) spawnEntity();
+
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].y -= obstacles[i].speedY; // Move UP
+            
+            if (checkCollisionRect(pRect, obstacles[i])) {
+                if (obstacles[i].isData) {
+                    dataCollected++;
+                    addXP(10);
+                    ctx.fillStyle = 'rgba(254, 240, 138, 0.3)'; // Yellow flash
+                    ctx.fillRect(0,0, canvas.width, canvas.height);
+                    obstacles.splice(i, 1);
+                    continue;
+                } else {
+                    gameOver("Melted by Lava Plume!");
+                    return;
+                }
+            }
+
+            if (obstacles[i].y + obstacles[i].height < 0) {
+                obstacles.splice(i, 1);
+            }
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        drawBackground();
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawEntities();
+        drawPlayer();
+
+        // HUD
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Flight Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillStyle = "#fef08a"; 
+        ctx.fillText(`🟡 Sulfur Data: ${dataCollected}/3`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && dataCollected >= 3 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Volcanologist Badge Unlocked!", "You survived the plumes and collected data! +100 XP", "🌋");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Flight";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 3);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You survived for ${secondsAlive}s.</p>
+            <p class="text-io-light mb-4 text-sm font-bold">🟡 Collected ${dataCollected} Packets</p>
+            ${!achievements.playedGame ? `<p class="text-io-base text-sm mb-4 text-center px-2">Survive 20s AND collect 3 packets for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

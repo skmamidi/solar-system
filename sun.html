@@ -1,0 +1,2078 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Sun — Solar System Explorer</title>
+    
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- MathJax for rendering LaTeX formulas -->
+    <script>
+        MathJax = {
+          tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#050300', 800: '#140c00', 700: '#2b1a00', 500: '#523200', 100: '#fffcf5' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        sun: { base: '#f59e0b', dark: '#b45309', light: '#fde047', core: '#fef08a', flare: '#ef4444' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 3s infinite alternate',
+                        'sun-spin': 'spin 120s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 40px rgba(245, 158, 11, 0.4), inset -20px -20px 60px rgba(180, 83, 9, 0.8)' },
+                            '100%': { boxShadow: '0 0 100px rgba(245, 158, 11, 0.8), inset -20px -20px 60px rgba(180, 83, 9, 0.8)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #050300;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #fde047 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #f59e0b 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #ef4444 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        .glass-panel {
+            background: rgba(43, 26, 0, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(20, 12, 0, 0.8), rgba(43, 26, 0, 0.9));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(245, 158, 11, 0.6);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* The Sun Graphic */
+        .orb-sun-main {
+            background: radial-gradient(circle at 35% 35%, #fef08a, #f59e0b, #b45309, #78350f);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        /* Solar Granulation & Spots */
+        .orb-sun-main::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 60% 40%, #78350f 0%, transparent 10%),
+                radial-gradient(circle at 20% 70%, #450a0a 0%, transparent 8%),
+                radial-gradient(circle at 80% 80%, #78350f 0%, transparent 12%);
+            filter: blur(2px);
+            opacity: 0.8;
+            animation: sun-spin 60s linear infinite;
+            background-size: 150% 150%;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px; width: 24px;
+            border-radius: 50%;
+            background: #ffd166;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 10px #f59e0b;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 8px;
+            cursor: pointer;
+            background: rgba(245, 158, 11, 0.3);
+            border-radius: 4px;
+            border: 1px solid rgba(245, 158, 11, 0.5);
+        }
+
+        /* Canvas Elements */
+        .canvas-container {
+            box-shadow: inset 0 0 30px rgba(245, 158, 11, 0.15);
+            touch-action: none;
+        }
+
+
+        .layer-number-badge {
+            position: absolute;
+            width: 34px;
+            height: 34px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            background: rgba(15, 23, 42, 0.86);
+            border: 2px solid rgba(255,255,255,0.35);
+            box-shadow: 0 0 10px rgba(0,0,0,0.35);
+            z-index: 65;
+            opacity: 0.45;
+            transform: translate(-50%, -50%) scale(0.95);
+            transition: all 0.25s ease;
+            pointer-events: none;
+        }
+        .layer-number-badge.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.08);
+            background: rgba(245, 158, 11, 0.95);
+            color: #111827;
+            border-color: rgba(254, 240, 138, 0.95);
+            box-shadow: 0 0 18px rgba(245, 158, 11, 0.65);
+        }
+
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+
+        /* Custom scrollbar for explanation */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #f59e0b; border-radius: 4px; }
+        @keyframes pulseFlow {
+            0%,100% { filter: brightness(0.9); }
+            50% { filter: brightness(1.25); }
+        }
+        .space-step {
+            transition: all 0.35s ease;
+        }
+        .space-step.active {
+            border-color: rgba(110,240,255,0.8);
+            box-shadow: 0 0 16px rgba(110,240,255,0.25);
+            transform: translateY(-2px);
+        }
+        .impact-rung {
+            transition: all 0.35s ease;
+            border: 1px solid rgba(51,65,85,1);
+            background: rgba(15,23,42,0.7);
+        }
+        .impact-rung.active {
+            transform: scale(1.02);
+            box-shadow: 0 0 18px rgba(110,240,255,0.22);
+        }
+
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-sun-base shadow-[0_0_40px_rgba(245,158,11,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-sun-base text-space-900 font-bold py-3 rounded-xl hover:bg-sun-light transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <a href="index.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+            <span class="text-2xl text-sun-light">☀️</span>
+            <span class="font-display font-bold text-xl tracking-wide hidden sm:block">Solar System Explorer</span>
+            <span class="font-display font-bold text-xl tracking-wide sm:hidden">SSE</span>
+        </a>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-sun-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-sun-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Helios Mission Progress</span>
+                    <span id="progressText" class="text-sun-base font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-sun-dark to-sun-base h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Simulators</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-sun-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-sun-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-sun-base animate-ping"></span> Center of the System
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">The Sun</h1>
+                <p class="text-2xl text-sun-light font-body italic mb-6">"Our Local Star"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    A nearly perfect sphere of incredibly hot plasma at the center of our solar system. It accounts for 99.86% of the mass in the entire solar system and drives the weather, ocean currents, seasons, and life on Earth.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-sun-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-sun-light transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(245,158,11,0.5)]">
+                    Explore the Star 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-56 h-56 md:w-72 md:h-72 animate-float">
+                    <div class="w-full h-full orb-sun-main animate-pulse-glow"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🔥</div>
+                <div class="text-sun-base font-mono text-xs uppercase mb-1">Core Temp</div>
+                <div class="font-bold text-xl">15 Million °C</div>
+                <div class="text-xs text-star-red mt-1">Nuclear Fusion</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🏎️</div>
+                <div class="text-sun-base font-mono text-xs uppercase mb-1">Equator Spin</div>
+                <div class="font-bold text-xl">25 Days</div>
+                <div class="text-xs text-space-100 mt-1">Poles spin slower!</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">⚖️</div>
+                <div class="text-sun-base font-mono text-xs uppercase mb-1">Relative Mass</div>
+                <div class="font-bold text-xl">333,000x Earth</div>
+                <div class="text-xs text-space-100 mt-1">99.8% of Solar System</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">⏳</div>
+                <div class="text-sun-base font-mono text-xs uppercase mb-1">Age</div>
+                <div class="font-bold text-xl">4.6 Billion Yrs</div>
+                <div class="text-xs text-space-100 mt-1">Middle-aged star</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt stellar data.</p>
+                </div>
+                <div class="hidden md:block text-sun-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Data Cards Remain Unchanged -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'su1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📏</div>
+                            <h3 class="font-display text-xl text-sun-light">Absolute Scale</h3>
+                            <p class="text-space-100 text-xs mt-2">How massive is it?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-sun-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-sun-dark pb-1 w-full">The Giant</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li><span class="text-sun-base font-mono font-bold">Diameter:</span> 1.39 Million km.</li>
+                                <li><span class="text-sun-base font-mono font-bold">Volume:</span> You could fit exactly <strong class="text-white">1.3 Million Earths</strong> inside the Sun!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'su2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧪</div>
+                            <h3 class="font-display text-xl text-sun-light">Composition</h3>
+                            <p class="text-space-100 text-xs mt-2">What is it made of?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-sun-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-sun-dark pb-1 w-full">Plasma Ball</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>The Sun is not solid or gas, it is <strong class="text-sun-light">plasma</strong>.</li>
+                                <li>It is roughly <strong class="text-white">73% Hydrogen ($H$)</strong> and <strong class="text-white">25% Helium ($He$)</strong>.</li>
+                                <li>The remaining 2% consists of heavier elements like Oxygen, Carbon, and Iron.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'su3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚖️</div>
+                            <h3 class="font-display text-xl text-sun-light">Gravity & Weight</h3>
+                            <p class="text-space-100 text-xs mt-2">Crushing forces</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-sun-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-sun-dark pb-1 w-full">The Anchor</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-sun-base font-mono font-bold">Surface Gravity:</span> 27.9 times that of Earth.</li>
+                                <li class="bg-space-900 p-2 rounded border border-space-500 text-center text-star-red mt-2">
+                                    If you weigh 100 lbs on Earth, you would weigh 2,790 lbs on the Sun! (Assuming you didn't burn up instantly).
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'su4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔄</div>
+                            <h3 class="font-display text-xl text-sun-light">Rotation</h3>
+                            <p class="text-space-100 text-xs mt-2">Differential Spin</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-sun-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-sun-dark pb-1 w-full">Differential Rotation</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>Because the Sun isn't solid, different parts spin at different speeds!</li>
+                                <li><strong class="text-sun-base">Equator:</strong> Takes 25 days to rotate once.</li>
+                                <li><strong class="text-sun-base">Poles:</strong> Take up to 36 days to rotate once.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'su5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧲</div>
+                            <h3 class="font-display text-2xl text-sun-light">Magnetic Tangle</h3>
+                            <p class="text-space-100 mt-2">The Solar Cycle</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-sun-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-3 border-b border-sun-dark pb-2 w-full">The 11-Year Cycle</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div class="col-span-2">
+                                    Because the equator spins faster than the poles, the Sun's magnetic field gets violently twisted and tangled up over time.
+                                </div>
+                                <div>
+                                    <span class="text-sun-base font-mono font-bold block mb-1">Solar Maximum:</span>
+                                    Every 11 years, the tangles snap, creating tons of sunspots and solar flares.
+                                </div>
+                                <div>
+                                    <span class="text-sun-base font-mono font-bold block mb-1">The Flip:</span>
+                                    At the peak of this 11-year cycle, the Sun's North and South magnetic poles literally flip places!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'su6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌌</div>
+                            <h3 class="font-display text-2xl text-sun-light">The Heliosphere</h3>
+                            <p class="text-space-100 mt-2">The Sun's Reach</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-sun-base flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-sun-dark pb-1 w-full">Our Protective Bubble</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>The Sun constantly blows out a stream of charged particles called the <strong class="text-sun-base">Solar Wind</strong>.</li>
+                                <li>This wind travels far past Pluto and the Kuiper Belt, creating a giant magnetic bubble called the <strong class="text-sun-base">Heliosphere</strong>.</li>
+                                <li>This bubble shields our entire solar system from deadly cosmic radiation coming from the rest of the galaxy! Voyager 1 and 2 just recently crossed this boundary into interstellar space.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'su7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-sun-light">Famous Missions</h3>
+                            <p class="text-space-100 mt-2">Touching the Sun</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-sun-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-sun-dark pb-2 w-full">Touching the Star</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-white">SOHO & SDO:</strong> Satellites constantly staring at the Sun from Earth's orbit, providing us with real-time space weather alerts.</li>
+                                <li><strong class="text-star-cyan">Parker Solar Probe (Launched 2018):</strong> The fastest human-made object ever! It is currently "touching the Sun" by flying directly through its outer atmosphere (the Corona) to study why it is hotter than the surface.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'su8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🤯</div>
+                            <h3 class="font-display text-2xl text-sun-light">Wild Facts</h3>
+                            <p class="text-space-100 mt-2">Tap for strange solar facts</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-sun-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-cyan mb-2 border-b border-sun-dark pb-2 w-full">Paradoxes & Energy</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-sun-light">The Temperature Paradox:</strong> The surface of the Sun is about 5,500°C, but its outer atmosphere (the Corona) is inexplicably hotter at over 1 Million °C!</li>
+                                <li><strong class="text-sun-light">Ancient Light:</strong> It takes a photon of light up to 100,000 years to bounce its way out of the dense core of the Sun. Once it reaches the surface, it takes only 8 minutes to reach Earth!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <h2 class="font-display text-3xl md:text-4xl text-white mb-6 flex items-center gap-3">
+                <span class="text-sun-base">🧅</span> Anatomy of the Sun & Space Weather
+            </h2>
+            <div class="glass-panel p-6 rounded-3xl border-sun-base relative overflow-hidden bg-gradient-to-b from-space-900 to-space-800">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                    
+                    <div class="relative w-full aspect-square max-w-[400px] mx-auto flex items-center justify-center">
+                        <div id="layer-core" class="absolute w-[20%] h-[20%] bg-white rounded-full shadow-[0_0_20px_#fff,0_0_50px_#fef08a] z-50 transition-all duration-500"></div>
+                        <div id="layer-rad" class="absolute w-[45%] h-[45%] bg-yellow-200 rounded-full shadow-[inset_0_0_20px_#eab308] z-40 transition-all duration-500"></div>
+                        <div id="layer-con" class="absolute w-[70%] h-[70%] bg-orange-400 rounded-full shadow-[inset_0_0_30px_#b45309] z-30 transition-all duration-500" style="background: repeating-radial-gradient(circle, #fb923c 0%, #ea580c 10%);"></div>
+                        <div id="layer-photo" class="absolute w-[72%] h-[72%] bg-yellow-400 rounded-full shadow-[inset_0_0_10px_#a16207] z-20 transition-all duration-500"></div>
+                        <div id="layer-chromo" class="absolute w-[75%] h-[75%] bg-red-600 rounded-full opacity-80 z-10 transition-all duration-500 blur-[2px]"></div>
+                        <div id="layer-corona" class="absolute w-[100%] h-[100%] bg-transparent rounded-full z-0 transition-all duration-500">
+                            <svg viewBox="0 0 100 100" class="w-full h-full text-white opacity-40 animate-[spin_100s_linear_infinite]">
+                                <path fill="currentColor" d="M50 0 Q55 20 60 20 Q80 15 80 30 Q70 40 85 50 Q75 60 80 80 Q60 70 50 100 Q40 80 20 80 Q30 60 15 50 Q30 40 20 20 Q40 30 50 0 Z" filter="blur(3px)"/>
+                            </svg>
+                        </div>
+                        <div id="layer-marker-1" class="layer-number-badge active" style="left:50%; top:50%;">1</div>
+                        <div id="layer-marker-2" class="layer-number-badge" style="left:68%; top:36%;">2</div>
+                        <div id="layer-marker-3" class="layer-number-badge" style="left:24%; top:66%;">3</div>
+                        <div id="layer-marker-4" class="layer-number-badge" style="left:71%; top:73%;">4</div>
+                        <div id="layer-marker-5" class="layer-number-badge" style="left:30%; top:22%;">5</div>
+                        <div id="layer-marker-6" class="layer-number-badge" style="left:84%; top:15%;">6</div>
+
+<div class="head"></div>
+                        </div>
+                        <div id="solar-flare-anim" class="absolute top-[10%] right-[10%] w-4 h-4 bg-white rounded-full shadow-[0_0_20px_#fff,0_0_40px_#6ef0ff] z-50 opacity-0 transform scale-0"></div>
+                    </div>
+
+                    <div class="flex flex-col h-full justify-center">
+                        <div class="bg-space-900/80 p-6 rounded-2xl border border-space-500 mb-6 flex flex-col justify-center">
+                            <h3 id="layer-title" class="font-display text-2xl text-sun-light mb-2">1. The Core</h3>
+                            <p id="layer-desc" class="text-sm font-body text-space-100 mb-4">The engine of the Sun. Extreme pressure and a temperature of 15 million °C force hydrogen atoms to fuse into helium, releasing massive amounts of energy (Nuclear Fusion).</p>
+                            <div id="layer-flow-note" class="text-xs font-mono text-star-cyan border-t border-space-700 pt-3">Energy focus: fusion starts in the core, then moves outward layer by layer.</div>
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-xs font-mono text-star-cyan mb-3 uppercase tracking-wider">Peel the Onion (Layers)</label>
+                            <input type="range" min="1" max="6" value="1" id="layerSlider" class="w-full" oninput="updateSunLayers()">
+                            <div class="flex justify-between text-[10px] text-space-100 font-mono mt-2 px-2">
+                                <span>Core</span>
+                                <span>Surface</span>
+                                <span>Corona</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+                            <div id="flow-card-core" class="glass-card rounded-2xl p-3">
+                                <div class="text-[10px] font-mono uppercase tracking-widest text-star-gold mb-1">Step 1</div>
+                                <div class="font-bold text-sm text-white mb-1">Fusion</div>
+                                <div class="text-xs text-space-100">Core squeezes hydrogen into helium and releases energy.</div>
+                            </div>
+                            <div id="flow-card-rad" class="glass-card rounded-2xl p-3">
+                                <div class="text-[10px] font-mono uppercase tracking-widest text-yellow-300 mb-1">Step 2</div>
+                                <div class="font-bold text-sm text-white mb-1">Photon random walk</div>
+                                <div class="text-xs text-space-100">Light zig-zags outward through the dense radiative zone.</div>
+                            </div>
+                            <div id="flow-card-con" class="glass-card rounded-2xl p-3">
+                                <div class="text-[10px] font-mono uppercase tracking-widest text-orange-300 mb-1">Step 3</div>
+                                <div class="font-bold text-sm text-white mb-1">Convection</div>
+                                <div class="text-xs text-space-100">Hot plasma rises and cool plasma sinks like boiling soup.</div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-space-500 pt-6">
+                            <div class="flex items-start justify-between gap-4 mb-3">
+                                <div>
+                                    <h4 class="font-display text-xl text-star-magenta mb-2">Space Weather Simulator</h4>
+                                    <p class="text-xs text-space-100">Follow the full chain: magnetic tangles build, reconnect, launch a CME, then Earth experiences different kinds of space-weather effects.</p>
+                                </div>
+                                <div class="relative w-16 h-16 shrink-0">
+                                    <div id="earth-magneto" class="absolute inset-0 border-2 border-transparent rounded-full transition-colors duration-300"></div>
+                                    <div class="absolute inset-2 rounded-full bg-blue-500 shadow-[inset_-2px_-2px_6px_rgba(0,0,0,0.6)]"></div>
+                                    <div id="aurora-glow" class="absolute inset-0 rounded-full shadow-[0_0_0_transparent] transition-shadow duration-300"></div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4 mb-4">
+                                <button onclick="triggerFlare()" id="flare-btn" class="btn-press bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-6 rounded-full border border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.5)]">
+                                    ⚠️ Launch CME
+                                </button>
+                                <div id="cme-status" class="text-xs font-mono text-star-cyan">Status: Stable magnetic field</div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-5">
+                                <div id="space-step-1" class="space-step glass-card rounded-2xl p-3">
+                                    <div class="text-[10px] font-mono uppercase tracking-widest text-space-100 mb-1">1</div>
+                                    <div class="font-bold text-sm text-white mb-1">Magnetic stress</div>
+                                    <div class="text-xs text-space-100">Loops twist above active regions.</div>
+                                </div>
+                                <div id="space-step-2" class="space-step glass-card rounded-2xl p-3">
+                                    <div class="text-[10px] font-mono uppercase tracking-widest text-space-100 mb-1">2</div>
+                                    <div class="font-bold text-sm text-white mb-1">Reconnection</div>
+                                    <div class="text-xs text-space-100">Field lines snap and rejoin, releasing energy.</div>
+                                </div>
+                                <div id="space-step-3" class="space-step glass-card rounded-2xl p-3">
+                                    <div class="text-[10px] font-mono uppercase tracking-widest text-space-100 mb-1">3</div>
+                                    <div class="font-bold text-sm text-white mb-1">CME launch</div>
+                                    <div class="text-xs text-space-100">A cloud of plasma erupts into space.</div>
+                                </div>
+                                <div id="space-step-4" class="space-step glass-card rounded-2xl p-3">
+                                    <div class="text-[10px] font-mono uppercase tracking-widest text-space-100 mb-1">4</div>
+                                    <div class="font-bold text-sm text-white mb-1">Earth response</div>
+                                    <div class="text-xs text-space-100">Magnetosphere deflects most particles; auroras can glow.</div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="text-xs font-mono uppercase tracking-wider text-star-gold mb-2">Earth impact ladder</div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div id="impact-rung-1" class="impact-rung rounded-2xl p-3">
+                                        <div class="font-bold text-sm text-white mb-1">R1–R3 radio blackout</div>
+                                        <div class="text-xs text-space-100">Fast X-ray and UV from a flare can disturb radio communication on Earth-facing side.</div>
+                                    </div>
+                                    <div id="impact-rung-2" class="impact-rung rounded-2xl p-3">
+                                        <div class="font-bold text-sm text-white mb-1">S radiation storm</div>
+                                        <div class="text-xs text-space-100">Energetic particles matter most for astronauts, polar flights, and spacecraft electronics.</div>
+                                    </div>
+                                    <div id="impact-rung-3" class="impact-rung rounded-2xl p-3">
+                                        <div class="font-bold text-sm text-white mb-1">G geomagnetic storm</div>
+                                        <div class="text-xs text-space-100">A CME hitting Earth's magnetic field can produce auroras, satellite drag, and power-grid stress.</div>
+                                    </div>
+                                </div>
+                                <div id="impact-summary" class="mt-3 text-xs font-mono text-space-100">Impact note: not every eruption affects Earth the same way; geometry and magnetic orientation matter.</div>
+                            </div>
+                        </div>
+                    </div></div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-3xl md:text-4xl text-white mb-2 flex items-center gap-3">
+                        <span class="text-star-cyan">🌍</span> E.S.M. Interactive Simulator
+                    </h2>
+                    <p class="text-space-100 font-mono text-sm max-w-2xl">Drag the Moon around Earth to instantly visualize Lunar Phases, Tidal Bulges, and exact Eclipse geometry! Vital for state-level exams.</p>
+                </div>
+                <div class="hidden md:block text-star-green font-mono animate-pulse">Drag to Play!</div>
+            </div>
+
+            <div class="flex flex-wrap gap-3 mb-4" id="esm-mode-controls">
+                <button onclick="setEsmMode('all')" data-mode="all" class="esm-mode-btn bg-star-cyan/20 border border-star-cyan text-star-cyan px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider">All overlays</button>
+                <button onclick="setEsmMode('phases')" data-mode="phases" class="esm-mode-btn bg-space-800 border border-space-500 text-white px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider">Phases</button>
+                <button onclick="setEsmMode('tides')" data-mode="tides" class="esm-mode-btn bg-space-800 border border-space-500 text-white px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider">Tides</button>
+                <button onclick="setEsmMode('eclipses')" data-mode="eclipses" class="esm-mode-btn bg-space-800 border border-space-500 text-white px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider">Eclipses</button>
+                <button onclick="setEsmMode('exam')" data-mode="exam" class="esm-mode-btn bg-space-800 border border-space-500 text-white px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider">Exam mode</button>
+                <button id="esm-text-toggle" onclick="toggleEsmTextOverlays()" class="bg-space-800 border border-space-500 text-white px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider">Hide text overlays</button>
+            </div>
+
+            <div id="esm-mode-caption" class="mb-4 text-xs font-mono text-space-100 bg-space-900/60 border border-space-500 rounded-xl px-4 py-3">
+                All overlays: phases, tides, eclipse geometry, and teaching labels are visible together.
+            </div>
+
+            <div id="esm-study-controls" class="mb-4 bg-space-900/70 border border-space-500 rounded-2xl px-4 py-4">
+                <div class="flex flex-col gap-4">
+                    <div class="flex flex-wrap gap-3 items-center">
+                        <button id="esm-play-toggle" onclick="toggleEsmAnimation()" class="bg-star-green/20 border border-star-green text-star-green px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider">Freeze</button>
+                        <button onclick="stepMoon(-15)" class="bg-space-800 border border-space-500 text-white px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider">⟵ Step 15°</button>
+                        <button onclick="stepMoon(15)" class="bg-space-800 border border-space-500 text-white px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider">Step 15° ⟶</button>
+                        <div id="esm-motion-status" class="text-xs font-mono text-space-100 bg-space-800/80 border border-space-500 rounded-full px-3 py-2">Auto-rotate: ON</div>
+                    </div>
+                    <div class="flex flex-wrap gap-3 items-center">
+                        <span class="text-[10px] font-mono text-star-gold uppercase tracking-wider">Snap to phase</span>
+                        <button onclick="snapMoonToPhase('new')" class="bg-space-800 border border-space-500 text-white px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider">New Moon</button>
+                        <button onclick="snapMoonToPhase('firstQuarter')" class="bg-space-800 border border-space-500 text-white px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider">First Quarter</button>
+                        <button onclick="snapMoonToPhase('full')" class="bg-space-800 border border-space-500 text-white px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider">Full Moon</button>
+                        <button onclick="snapMoonToPhase('thirdQuarter')" class="bg-space-800 border border-space-500 text-white px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider">Third Quarter</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="esm-legend" class="mb-6 bg-space-900/70 border border-space-500 rounded-2xl px-4 py-4">
+                <div class="text-[10px] font-mono text-star-gold uppercase tracking-[0.2em] mb-3">Overlay Legend</div>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-[11px] font-mono text-space-100">
+                    <div class="flex items-center gap-2"><span class="inline-block w-4 h-1 rounded-full bg-yellow-300"></span><span>Sunlight</span></div>
+                    <div class="flex items-center gap-2"><span class="inline-block w-4 h-1 rounded-full bg-cyan-300"></span><span>Earth–Moon line</span></div>
+                    <div class="flex items-center gap-2"><span class="inline-block w-4 h-1 rounded-full bg-orange-400"></span><span>Sun–Moon line</span></div>
+                    <div class="flex items-center gap-2"><span class="inline-block w-4 h-1 rounded-full bg-fuchsia-400"></span><span>Tide axis</span></div>
+                    <div class="flex items-center gap-2"><span class="inline-block w-4 h-1 rounded-full bg-red-400"></span><span>Eclipse shadows</span></div>
+                    <div class="flex items-center gap-2"><span class="inline-block w-4 h-1 border border-slate-300 border-dashed"></span><span>Orbit / nodes</span></div>
+                </div>
+            </div>
+
+            <div class="glass-panel p-2 rounded-3xl overflow-hidden border-star-cyan border-2 shadow-[0_0_30px_rgba(110,240,255,0.2)]">
+                <div class="bg-space-900 flex flex-col lg:flex-row items-center rounded-2xl relative">
+                    
+                    <div id="esm-side-panels" class="absolute top-4 right-4 z-10 flex flex-col gap-3 pointer-events-none w-48">
+                        <div class="bg-space-800/90 border border-space-500 p-3 rounded-xl backdrop-blur-md text-center shadow-lg">
+                            <div class="text-[10px] font-mono text-star-cyan uppercase tracking-wider mb-2">Telescope View</div>
+                            <div class="w-16 h-16 mx-auto bg-gray-300 rounded-full relative overflow-hidden mb-2 shadow-[inset_-3px_-3px_10px_rgba(0,0,0,0.8)]">
+                                <canvas id="phaseCanvas" width="64" height="64" class="absolute inset-0"></canvas>
+                            </div>
+                            <div id="phase-name" class="font-bold text-sm text-white">New Moon</div>
+                        </div>
+                        
+                        <div class="bg-space-800/90 border border-space-500 p-3 rounded-xl backdrop-blur-md text-center shadow-lg">
+                            <div class="text-[10px] font-mono text-star-gold uppercase tracking-wider mb-1">Ocean Tides</div>
+                            <div id="tide-name" class="font-bold text-lg text-blue-400">Spring Tide</div>
+                            <div class="text-[9px] text-space-100 mt-1">Extreme highs & lows</div>
+                        </div>
+                    </div>
+
+                    <div id="eclipse-banner" class="absolute top-4 left-4 z-10 bg-red-600/90 border border-red-300 text-white px-4 py-2 rounded-lg font-bold font-display shadow-[0_0_20px_rgba(239,68,68,0.8)] opacity-0 transition-opacity pointer-events-none">
+                        ⚠️ SOLAR ECLIPSE!
+                    </div>
+
+                    <div id="node-info" class="absolute top-20 left-4 z-10 max-w-[260px] bg-space-800/90 border border-space-500 text-space-100 px-3 py-2 rounded-xl text-[11px] font-mono leading-relaxed backdrop-blur-md shadow-lg pointer-events-none">
+                        Eclipse rule: the Moon must be near a <span class="text-star-cyan">node</span> where its tilted orbit crosses the Earth-Sun plane.
+                    </div>
+
+                    <div id="exam-prompt" class="absolute bottom-4 right-4 z-10 max-w-[260px] bg-space-800/90 border border-star-gold text-space-100 px-3 py-2 rounded-xl text-[11px] font-mono leading-relaxed backdrop-blur-md shadow-lg opacity-0 transition-opacity pointer-events-none">
+                        <span class="text-star-gold">Exam mode:</span> Predict the phase, tide type, and whether an eclipse is possible before checking the labels.
+                    </div>
+
+                    <div class="relative w-full flex justify-center bg-gradient-to-r from-space-800 to-space-900 rounded-2xl">
+                        <div id="esm-drag-hint" class="absolute bottom-4 left-4 z-10 text-xs font-mono text-space-100 pointer-events-none bg-space-900/50 px-2 py-1 rounded">
+                            <span class="text-white">🖱️ Click & Drag</span> the Moon
+                        </div>
+                        <canvas id="esmCanvas" width="800" height="500" class="w-full max-w-[800px] h-[400px] md:h-[500px] object-contain canvas-container rounded-2xl touch-none"></canvas>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-sun-base/50" id="quiz-section">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🏅</div>
+                <h2 class="font-display text-3xl text-white">State Olympiad: Helios Qualifier</h2>
+                <p class="text-space-100 text-sm max-w-2xl mx-auto mt-2">Test your knowledge with 30 rigorous competitive questions. You must score at least 80% (24/30) to unlock the final badge.</p>
+            </div>
+
+            <!-- Dynamic Quiz Container -->
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                
+                <div id="quiz-active-area">
+                    <div class="flex justify-between items-center mb-4 border-b border-space-500 pb-2">
+                        <span id="quiz-q-num" class="font-mono text-sun-base text-sm uppercase tracking-widest">Question 1 of 30</span>
+                        <span id="quiz-current-score" class="font-mono text-star-cyan text-sm">Score: 0</span>
+                    </div>
+
+                    <h3 id="quiz-question-text" class="text-xl font-bold mb-6 text-sun-light leading-snug"></h3>
+                    
+                    <div id="quiz-choices" class="space-y-3">
+                        <!-- Buttons injected via JS -->
+                    </div>
+
+                    <div id="quiz-explanation-box" class="hidden mt-6 p-5 border-l-4 border-sun-base rounded-r-xl bg-space-800 shadow-lg text-sm leading-relaxed transition-all">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span id="quiz-explanation-icon" class="text-xl">💡</span>
+                            <strong class="text-white font-display text-lg">Scientific Explanation</strong>
+                        </div>
+                        <span id="quiz-explanation-text" class="text-space-100 block mt-2"></span>
+                    </div>
+
+                    <button id="quiz-next-btn" onclick="nextQuestion()" class="hidden w-full mt-6 bg-sun-base text-space-900 font-bold py-3 rounded-xl hover:bg-sun-light transition-colors shadow-[0_0_15px_rgba(245,158,11,0.4)]">
+                        Next Question ➡️
+                    </button>
+                </div>
+
+                <!-- Quiz Results Area (Hidden initially) -->
+                <div id="quiz-result-area" class="hidden text-center py-8">
+                    <div id="result-icon" class="text-6xl mb-4">🏆</div>
+                    <h3 id="result-title" class="text-3xl font-display text-star-gold mb-2">Qualifier Complete!</h3>
+                    <p class="text-xl text-white mb-6">Final Score: <span id="finalScoreText" class="font-bold text-sun-light text-3xl">0/30</span></p>
+                    <p id="result-message" class="text-space-100 mb-8 max-w-md mx-auto"></p>
+                    <button id="retryQuizBtn" onclick="initQuiz()" class="bg-space-700 border border-space-500 text-white px-8 py-3 rounded-full hover:bg-space-500 transition shadow-lg font-bold">Try Again</button>
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+</main>
+
+<script>
+    /* =========================================================================
+       APP STATE & GAMIFICATION
+       ========================================================================= */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = { readAll: false, playedGame: false, passedQuiz: false };
+
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let completedTasks = 0;
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / 3) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.sunCompleteAlerted) {
+            window.sunCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Helios Module Complete!", "You have unlocked the 'Helios' badge. Excellent exploration of our star!", "☀️");
+            }, 500);
+        }
+    }
+
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Sun files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* =========================================================================
+       DYNAMIC 30-QUESTION SCIENCE OLYMPIAD QUIZ LOGIC
+       ========================================================================= */
+    
+    // Master Array of 30 Olympiad-Level Questions
+    const masterQuizData = [
+        {
+            q: "Which layer of the Sun is considered its 'visible surface'?",
+            c: "The Photosphere",
+            i: ["The Corona", "The Core", "The Chromosphere"],
+            exp: "The Photosphere is the layer that emits the sunlight we see. Below it, the Sun is opaque. It has a temperature of roughly 5,500 °C."
+        },
+        {
+            q: "What is the primary process that generates the Sun's immense energy?",
+            c: "Nuclear fusion of hydrogen into helium",
+            i: ["Nuclear fission of uranium", "Combustion of atmospheric gases", "Gravitational contraction"],
+            exp: "In the extreme heat and pressure of the core, hydrogen nuclei fuse together to form helium, releasing enormous amounts of energy in the process, according to E=mc²."
+        },
+        {
+            q: "Which layer of the Sun's atmosphere is paradoxically much hotter than its surface, reaching over 1,000,000 °C?",
+            c: "The Corona",
+            i: ["The Radiative Zone", "The Photosphere", "The Convective Zone"],
+            exp: "The Corona is the outermost atmosphere. Scientists believe magnetic wave energy and magnetic reconnection are responsible for heating it to temperatures far higher than the surface."
+        },
+        {
+            q: "Approximately how long does a standard solar cycle (the periodic change in sunspot numbers and magnetic activity) last?",
+            c: "11 years",
+            i: ["25 days", "100,000 years", "365 days"],
+            exp: "The solar cycle takes about 11 years to go from solar minimum (few sunspots) to solar maximum (many sunspots/flares) and back. During this time, the Sun's magnetic poles flip."
+        },
+        {
+            q: "What astronomical alignment causes extreme 'Spring Tides' on Earth?",
+            c: "When the Sun, Earth, and Moon form a straight line (Syzygy).",
+            i: ["When the Moon is at a 90-degree angle to the Sun.", "When Earth's perihelion aligns with the vernal equinox.", "When a Coronal Mass Ejection impacts the ocean."],
+            exp: "Spring tides have the highest highs and lowest lows. They occur during Full and New moons when the gravitational pull of the Sun and the Moon combine along a straight line."
+        },
+        {
+            q: "What effectively shields the Earth's atmosphere and surface from being stripped away by Coronal Mass Ejections (CMEs)?",
+            c: "Earth's Magnetosphere",
+            i: ["The Ozone Layer", "The Asteroid Belt", "Earth's Cloud Cover"],
+            exp: "Earth's core generates a magnetic field (the magnetosphere) that deflects most of the highly charged, dangerous solar particles around our planet."
+        },
+        {
+            q: "Why do sunspots appear dark against the surface of the Sun?",
+            c: "They are cooler regions created by intense, tangled magnetic fields.",
+            i: ["They are solid rock formations floating on the plasma.", "They are shadows cast by passing planets.", "They are holes exposing the dark core of the Sun."],
+            exp: "Sunspots are areas where concentrated magnetic fields inhibit the convection of hot plasma to the surface, making them relatively cooler (around 3,800 °C) and therefore darker."
+        },
+        {
+            q: "Roughly how long does it take for a photon of light leaving the Sun's surface to reach Earth?",
+            c: "8 minutes and 20 seconds",
+            i: ["1 second", "24 hours", "100,000 years"],
+            exp: "Light travels at 300,000 km/s. Since the Earth is about 150 million kilometers from the Sun, it takes light just over 8 minutes to cover that distance."
+        },
+        {
+            q: "What element was actually discovered in the solar spectrum before it was ever found on Earth?",
+            c: "Helium",
+            i: ["Hydrogen", "Oxygen", "Neon"],
+            exp: "During a solar eclipse in 1868, astronomers observed a yellow spectral line in the Sun's light that didn't match any known element. They named it 'Helium' after Helios, the Greek sun god."
+        },
+        {
+            q: "What is the continuous flow of charged particles emitted by the Sun in all directions called?",
+            c: "The Solar Wind",
+            i: ["The Solar Flare", "The Heliosphere", "The Plasma Stream"],
+            exp: "The solar wind is a stream of plasma (mostly electrons and protons) released from the upper atmosphere of the Sun (the corona), travelling at up to 900 km/s."
+        },
+        {
+            q: "Which modern spacecraft was specifically designed to 'touch the Sun' by flying directly through the extreme heat of the corona?",
+            c: "Parker Solar Probe",
+            i: ["Voyager 1", "Hubble Space Telescope", "SOHO"],
+            exp: "Launched in 2018, NASA's Parker Solar Probe uses a state-of-the-art carbon-composite heat shield to survive flying closer to the Sun than any previous mission."
+        },
+        {
+            q: "A total solar eclipse can ONLY occur during which specific phase of the Moon?",
+            c: "New Moon",
+            i: ["Full Moon", "First Quarter", "Third Quarter"],
+            exp: "A solar eclipse happens when the Moon passes exactly between the Earth and the Sun. This geometry only occurs during the New Moon phase."
+        },
+        {
+            q: "The thin, pinkish-red layer of the Sun's atmosphere visible just outside the photosphere during a total solar eclipse is the...",
+            c: "Chromosphere",
+            i: ["Corona", "Radiative Zone", "Heliosphere"],
+            exp: "The Chromosphere ('sphere of color') gets its reddish hue from the alpha emission of hydrogen atoms. It is normally invisible due to the overwhelming glare of the photosphere."
+        },
+        {
+            q: "Why does it take a photon created in the core up to 100,000 years to reach the Sun's surface?",
+            c: "It undergoes a 'random walk', constantly colliding with dense plasma particles.",
+            i: ["Because the Sun's gravity is pulling it backward.", "Because it travels slower than the speed of light in plasma.", "Because it is frozen in the core's solid center."],
+            exp: "The Radiative Zone is so incredibly dense that a photon travels only a tiny fraction of a millimeter before hitting a particle and being deflected in a random direction."
+        },
+        {
+            q: "The surface of the Sun has a mottled appearance called 'granules'. These granules are essentially the tops of...",
+            c: "Convection cells bringing hot plasma to the surface.",
+            i: ["Tiny impact craters from comets.", "Solid iron islands floating in plasma.", "Permanent magnetic poles."],
+            exp: "Like boiling water, hot plasma rises from the Convective Zone, forms a bright granule on the surface, cools, and sinks back down at the darker edges of the granule."
+        },
+        {
+            q: "When the Sun releases a massive, directional burst of plasma and magnetic field into space, it is known as a...",
+            c: "Coronal Mass Ejection (CME)",
+            i: ["Solar Prominence", "Solar Wind", "Supernova"],
+            exp: "Unlike a solar flare (which is a flash of light/radiation), a CME is a physical cloud of billions of tons of solar plasma hurled into space, which can cause severe geomagnetic storms on Earth."
+        },
+        {
+            q: "What spectacular visual phenomenon is created near Earth's magnetic poles when solar wind particles collide with atmospheric gases?",
+            c: "Auroras (Aurora Borealis & Australis)",
+            i: ["Zodiacal Light", "Noctilucent Clouds", "St. Elmo's Fire"],
+            exp: "Charged particles get trapped in Earth's magnetic field lines and are funneled toward the poles, where they excite oxygen and nitrogen atoms, causing them to emit beautiful glowing light."
+        },
+        {
+            q: "The Sun makes up approximately what percentage of the total mass of the ENTIRE solar system?",
+            c: "99.8%",
+            i: ["50%", "75%", "90%"],
+            exp: "The Sun is unimaginably massive. All the planets, moons, asteroids, and comets combined make up only about 0.2% of the solar system's mass! Jupiter accounts for most of that remaining 0.2%."
+        },
+        {
+            q: "Because the Sun is a ball of plasma and not a solid body, its equator rotates faster than its poles. This phenomenon is called...",
+            c: "Differential Rotation",
+            i: ["Orbital Precession", "Gravitational Lensing", "Magnetic Reconnection"],
+            exp: "The Sun's equator takes about 25 days to rotate, while areas near the poles can take up to 36 days. This differential rotation is what twists up the Sun's magnetic field, causing the solar cycle."
+        },
+        {
+            q: "The boundary region far beyond Pluto where the solar wind is finally stopped by the pressure of the interstellar medium is called the...",
+            c: "Heliopause",
+            i: ["Oort Cloud", "Kuiper Belt", "Magnetopause"],
+            exp: "The heliopause marks the theoretical edge of the heliosphere. The Voyager 1 and Voyager 2 spacecraft both crossed this boundary and are now in interstellar space."
+        },
+        {
+            q: "What specific state of matter makes up the vast majority of the Sun?",
+            c: "Plasma",
+            i: ["Gas", "Liquid", "Super-heated Solid"],
+            exp: "Plasma is the fourth state of matter. The heat is so intense that electrons are stripped away from their atomic nuclei, creating a highly electrically conductive 'soup' of ions and electrons."
+        },
+        {
+            q: "Neap tides, which exhibit the smallest difference between high and low tide, occur during which lunar phases?",
+            c: "First Quarter and Third Quarter",
+            i: ["New Moon and Full Moon", "Waxing Crescent and Waning Gibbous", "Only during eclipses"],
+            exp: "During quarter moons, the Sun and Moon form a 90-degree right angle relative to Earth. Their gravitational pulls partially cancel each other out, resulting in weaker (neap) tides."
+        },
+        {
+            q: "A sudden, intense flash of increased electromagnetic radiation (light) on the Sun, often associated with a sunspot group, is called a...",
+            c: "Solar Flare",
+            i: ["Solar Prominence", "Coronal Mass Ejection", "Granule Eruption"],
+            exp: "Flares release energy across the entire electromagnetic spectrum. Because they are light, the radiation from a flare hits Earth in just 8 minutes, potentially causing radio blackouts."
+        },
+        {
+            q: "Deep inside the Sun, which region transports energy outward primarily by the physical, boiling movement of hot plasma?",
+            c: "The Convective Zone",
+            i: ["The Radiative Zone", "The Core", "The Corona"],
+            exp: "Above the Radiative Zone, the plasma is cool enough to absorb photons. It heats up, becomes less dense, and physically rises to the surface like a hot air balloon, creating convection currents."
+        },
+        {
+            q: "Large, bright, looping structures of cooler plasma extending outward from the Sun's surface along magnetic field lines are called...",
+            c: "Prominences",
+            i: ["Flares", "Sunspots", "Spicules"],
+            exp: "Prominences are anchored to the Sun's surface and stretch out into the corona. They can persist for months. If they break apart, they can trigger a CME."
+        },
+        {
+            q: "If you were to observe the Sun during a 'Solar Maximum', what feature would you expect to see in high numbers on the photosphere?",
+            c: "Sunspots",
+            i: ["Craters", "Shadows", "Solidified crust"],
+            exp: "Solar maximum is the peak of the 11-year solar cycle, characterized by highly tangled magnetic fields that produce a large number of sunspots, flares, and CMEs."
+        },
+        {
+            q: "At the end of its life cycle, about 5 billion years from now, our Sun will shed its outer layers and leave behind a dense, glowing core called a...",
+            c: "White Dwarf",
+            i: ["Black Hole", "Neutron Star", "Red Supergiant"],
+            exp: "Our Sun does not have enough mass to explode as a supernova or collapse into a black hole. It will expand into a Red Giant, then gently shed its layers, leaving a White Dwarf roughly the size of Earth."
+        },
+        {
+            q: "What scientific term describes the precise, straight-line alignment of three celestial bodies, such as the Sun, Earth, and Moon?",
+            c: "Syzygy",
+            i: ["Aphelion", "Conjunction", "Precession"],
+            exp: "Syzygy (pronounced SIZ-uh-jee) is the term used for this alignment, which is the exact configuration required to produce solar and lunar eclipses, as well as spring tides."
+        },
+        {
+            q: "By mass, what are the two most abundant elements in the Sun?",
+            c: "Hydrogen and Helium",
+            i: ["Oxygen and Carbon", "Iron and Nickel", "Nitrogen and Hydrogen"],
+            exp: "The Sun is approximately 73% Hydrogen and 25% Helium by mass. The remaining 2% consists of heavier trace elements like Oxygen, Carbon, Neon, and Iron."
+        },
+        {
+            q: "What is the name of the constant stream of low-energy particles that occasionally creates temporary, short-lived spikes on the chromosphere?",
+            c: "Spicules",
+            i: ["Granules", "Flares", "Faculae"],
+            exp: "Spicules are dynamic, grass-like jets of plasma shooting up from the photosphere into the chromosphere at supersonic speeds, lasting only a few minutes before fading."
+        }
+    ];
+
+    let currentQuizData = [];
+    let currentQIndex = 0;
+    let quizScore = 0;
+    let isAnswered = false;
+
+    // Helper: Shuffle array in place
+    function shuffleArray(array) {
+        let currentIndex = array.length, randomIndex;
+        while (currentIndex !== 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        }
+        return array;
+    }
+
+    // Initialize Quiz
+    function initQuiz() {
+        // Deep copy and shuffle the questions
+        currentQuizData = JSON.parse(JSON.stringify(masterQuizData));
+        shuffleArray(currentQuizData);
+        
+        currentQIndex = 0;
+        quizScore = 0;
+        
+        // UI Resets
+        document.getElementById('quiz-result-area').classList.add('hidden');
+        document.getElementById('quiz-active-area').classList.remove('hidden');
+        
+        renderQuestion();
+        
+        // Scroll to quiz
+        document.getElementById('quiz-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderQuestion() {
+        isAnswered = false;
+        const qData = currentQuizData[currentQIndex];
+        
+        // Update Headers
+        document.getElementById('quiz-q-num').innerText = `Question ${currentQIndex + 1} of 30`;
+        document.getElementById('quiz-current-score').innerText = `Score: ${quizScore}`;
+        document.getElementById('quiz-question-text').innerText = qData.q;
+        
+        // Hide Explanation and Next Button
+        document.getElementById('quiz-explanation-box').classList.add('hidden');
+        document.getElementById('quiz-next-btn').classList.add('hidden');
+        
+        // Prepare Answers
+        let options = [{ text: qData.c, correct: true }];
+        qData.i.forEach(incText => options.push({ text: incText, correct: false }));
+        shuffleArray(options); // Randomize answer order
+        
+        const choicesContainer = document.getElementById('quiz-choices');
+        choicesContainer.innerHTML = '';
+        
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-sun-base transition-all font-body text-[15px]";
+            btn.innerText = opt.text;
+            btn.onclick = () => selectAnswer(btn, opt.correct, qData);
+            choicesContainer.appendChild(btn);
+        });
+    }
+
+    function selectAnswer(selectedBtn, isCorrect, qData) {
+        if(isAnswered) return;
+        isAnswered = true;
+        
+        const allBtns = document.getElementById('quiz-choices').children;
+        
+        // Disable all buttons and style them
+        for(let btn of allBtns) {
+            btn.disabled = true;
+            btn.classList.remove('hover:bg-space-700', 'hover:border-sun-base');
+            
+            // Mark the correct answer regardless of what user clicked
+            if(btn.innerText === qData.c) {
+                btn.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            } else {
+                btn.classList.add('opacity-50');
+            }
+        }
+        
+        // Handle User selection specific styling
+        selectedBtn.classList.remove('opacity-50');
+        
+        const expBox = document.getElementById('quiz-explanation-box');
+        const expIcon = document.getElementById('quiz-explanation-icon');
+        
+        if(isCorrect) {
+            quizScore++;
+            addXP(10); // Award XP per correct answer
+            document.getElementById('quiz-current-score').innerText = `Score: ${quizScore}`;
+            expBox.className = "mt-6 p-5 border-l-4 border-star-green rounded-r-xl bg-space-800 shadow-lg text-sm leading-relaxed transition-all animate-pulse-once";
+            expIcon.innerText = "✅";
+        } else {
+            selectedBtn.classList.add('bg-star-red', 'text-white', 'border-star-red', 'font-bold');
+            selectedBtn.classList.remove('bg-star-green', 'text-space-900', 'border-star-green'); // Overwrite if it was marked correct above
+            expBox.className = "mt-6 p-5 border-l-4 border-star-red rounded-r-xl bg-space-800 shadow-lg text-sm leading-relaxed transition-all";
+            expIcon.innerText = "❌";
+        }
+        
+        // Show Explanation and Next Button
+        document.getElementById('quiz-explanation-text').innerText = qData.exp;
+        expBox.classList.remove('hidden');
+        document.getElementById('quiz-next-btn').classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        currentQIndex++;
+        if(currentQIndex < currentQuizData.length) {
+            renderQuestion();
+        } else {
+            showQuizResults();
+        }
+    }
+
+    function showQuizResults() {
+        document.getElementById('quiz-active-area').classList.add('hidden');
+        document.getElementById('quiz-result-area').classList.remove('hidden');
+        
+        const scoreText = document.getElementById('finalScoreText');
+        const msgText = document.getElementById('result-message');
+        const icon = document.getElementById('result-icon');
+        
+        scoreText.innerText = `${quizScore}/30`;
+        
+        // Calculate Pass/Fail (80% of 30 = 24)
+        if(quizScore >= 24) {
+            scoreText.className = "font-bold text-star-green text-3xl";
+            icon.innerText = "🏅";
+            document.getElementById('result-title').innerText = "Qualifier Passed!";
+            msgText.innerText = `Outstanding! You demonstrated State Olympiad level knowledge about the Sun.`;
+            
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(200); // Massive bonus for passing Olympiad level
+                showMsgBox("Olympiad Champion", "You passed the Helios Qualifier with an elite score! +200 XP", "🎓");
+            }
+        } else {
+            scoreText.className = "font-bold text-star-red text-3xl";
+            icon.innerText = "📚";
+            document.getElementById('result-title').innerText = "Keep Studying!";
+            msgText.innerText = `You need a score of 24 or higher to pass this State Qualifier. Review the Mission Data Files and try again!`;
+        }
+    }
+
+
+    /* =========================================================================
+       ANATOMY & SPACE WEATHER (FEATURE 1 & 2)
+       ========================================================================= */
+    const layersInfo = [
+        { title: "1. The Core", desc: "The engine of the Sun. Extreme pressure and a temperature of 15 million °C force hydrogen atoms to fuse into helium, releasing massive amounts of energy (Nuclear Fusion).", flow: "Energy focus: fusion begins here. Gamma-ray energy is created in the core.", cards: ["flow-card-core"] },
+        { title: "2. Radiative Zone", desc: "Energy generated in the core travels outward as radiation. It is so dense here that it can take a single photon of light up to 100,000 years to bounce its way through this layer!", flow: "Energy focus: photons random-walk outward through dense plasma.", cards: ["flow-card-core","flow-card-rad"] },
+        { title: "3. Convective Zone", desc: "The plasma here behaves like boiling water in a pot. Hot plasma rises to the surface, cools, and then sinks back down, creating massive convective currents.", flow: "Energy focus: rising and sinking plasma physically carries heat upward.", cards: ["flow-card-core","flow-card-rad","flow-card-con"] },
+        { title: "4. Photosphere", desc: "The visible surface of the Sun. This is the layer that emits the sunlight we see on Earth. It is surprisingly cool compared to the core, at 'only' 5,500 °C. Sunspots appear here!", flow: "Energy focus: visible light escapes from the photosphere into space.", cards: ["flow-card-core","flow-card-rad","flow-card-con"] },
+        { title: "5. Chromosphere", desc: "A thin, reddish layer of atmosphere just above the photosphere. It is usually invisible due to the glare of the surface, but can be seen as a red ring during a total solar eclipse.", flow: "Energy focus: magnetic structures guide jets and heating above the visible surface.", cards: ["flow-card-core","flow-card-rad","flow-card-con"] },
+        { title: "6. The Corona", desc: "The Sun's wispy outer atmosphere. Paradoxically, it is much hotter than the surface (over 1 million °C)! It extends millions of kilometers into space and transitions into the Solar Wind.", flow: "Energy focus: magnetic fields heat the corona and can drive eruptions into the solar wind.", cards: ["flow-card-core","flow-card-rad","flow-card-con"] }
+    ];
+
+    function updateSunLayers() {
+        const val = parseInt(document.getElementById('layerSlider').value);
+
+        document.getElementById('layer-core').style.opacity = val >= 1 ? '1' : '0';
+        document.getElementById('layer-rad').style.opacity = val >= 2 ? '1' : '0';
+        document.getElementById('layer-con').style.opacity = val >= 3 ? '1' : '0';
+        document.getElementById('layer-photo').style.opacity = val >= 4 ? '1' : '0';
+        document.getElementById('layer-chromo').style.opacity = val >= 5 ? '0.8' : '0';
+        document.getElementById('layer-corona').style.opacity = val >= 6 ? '1' : '0';
+
+        const info = layersInfo[val-1];
+        document.getElementById('layer-title').innerText = info.title;
+        document.getElementById('layer-desc').innerText = info.desc;
+        document.getElementById('layer-flow-note').innerText = info.flow;
+
+        ['layer-marker-1','layer-marker-2','layer-marker-3','layer-marker-4','layer-marker-5','layer-marker-6'].forEach((id, index) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.toggle('active', index === val - 1);
+        });
+
+        ['flow-card-core','flow-card-rad','flow-card-con'].forEach(id => {
+            const el = document.getElementById(id);
+            el.classList.remove('ring-2','ring-star-cyan','shadow-[0_0_18px_rgba(110,240,255,0.25)]');
+        });
+        info.cards.forEach(id => {
+            const el = document.getElementById(id);
+            el.classList.add('ring-2','ring-star-cyan','shadow-[0_0_18px_rgba(110,240,255,0.25)]');
+        });
+
+        checkSimulatorCredit();
+    }
+
+    function setSpaceStep(step, statusText) {
+        [1,2,3,4].forEach(n => document.getElementById(`space-step-${n}`).classList.remove('active'));
+        if (step) document.getElementById(`space-step-${step}`).classList.add('active');
+        if (statusText) document.getElementById('cme-status').innerText = statusText;
+    }
+
+    function setImpactRung(rung, summary) {
+        [1,2,3].forEach(n => {
+            const el = document.getElementById(`impact-rung-${n}`);
+            el.classList.remove('active','border-red-400','border-yellow-300','border-cyan-400');
+        });
+        if (rung === 1) document.getElementById('impact-rung-1').classList.add('active','border-red-400');
+        if (rung === 2) document.getElementById('impact-rung-2').classList.add('active','border-yellow-300');
+        if (rung === 3) document.getElementById('impact-rung-3').classList.add('active','border-cyan-400');
+        if (summary) document.getElementById('impact-summary').innerText = summary;
+    }
+
+    function triggerFlare() {
+        const btn = document.getElementById('flare-btn');
+        const flare = document.getElementById('solar-flare-anim');
+        const magneto = document.getElementById('earth-magneto');
+        const aurora = document.getElementById('aurora-glow');
+
+        if(btn.disabled) return;
+        btn.disabled = true;
+        btn.classList.add('opacity-50');
+
+        setSpaceStep(1, 'Status: Magnetic loops are storing stress above an active region');
+        setImpactRung(1, 'Impact note: flare light and X-rays arrive first and can disturb radio communication on the dayside of Earth.');
+
+        setTimeout(() => {
+            setSpaceStep(2, 'Status: Magnetic reconnection releases energy and redirects plasma');
+            flare.style.transition = 'none';
+            flare.style.transform = 'translate(0, 0) scale(1)';
+            flare.style.opacity = '1';
+        }, 450);
+
+        setTimeout(() => {
+            setSpaceStep(3, 'Status: CME launched into space as an expanding plasma cloud');
+            setImpactRung(2, 'Impact note: fast energetic particles raise radiation risk for spacecraft, astronauts, and polar routes.');
+            flare.style.transition = 'transform 1.1s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.1s';
+            flare.style.transform = 'translate(150px, 120px) scale(3)';
+            flare.style.opacity = '0';
+        }, 1200);
+
+        setTimeout(() => {
+            setSpaceStep(4, 'Status: Earth magnetosphere is absorbing and deflecting most charged particles');
+            setImpactRung(3, 'Impact note: if the CME magnetic field couples well with Earth, geomagnetic storms and auroras become more likely.');
+            magneto.classList.add('border-cyan-400', 'shadow-[0_0_20px_#6ef0ff]');
+            aurora.classList.add('shadow-[inset_0_15px_20px_rgba(78,240,168,0.8),inset_0_-15px_20px_rgba(78,240,168,0.8)]');
+        }, 2200);
+
+        setTimeout(() => {
+            magneto.classList.remove('border-cyan-400', 'shadow-[0_0_20px_#6ef0ff]');
+            aurora.classList.remove('shadow-[inset_0_15px_20px_rgba(78,240,168,0.8),inset_0_-15px_20px_rgba(78,240,168,0.8)]');
+            btn.disabled = false;
+            btn.classList.remove('opacity-50');
+            setSpaceStep(0, 'Status: Stable magnetic field');
+            setImpactRung(0, 'Impact note: not every eruption affects Earth the same way; geometry and magnetic orientation matter.');
+            checkSimulatorCredit();
+        }, 4200);
+    }
+
+    /* =========================================================================
+       EARTH-SUN-MOON SIMULATOR (FEATURE 3)
+       ========================================================================= */
+    const esmCanvas = document.getElementById('esmCanvas');
+    const eCtx = esmCanvas.getContext('2d');
+    const phaseCanvas = document.getElementById('phaseCanvas');
+    const pCtx = phaseCanvas.getContext('2d');
+
+    const cx = 500; 
+    const cy = 250; 
+    const orbitR = 150; 
+    const earthR = 40;
+    const moonR = 15;
+    
+    let moonAngle = 0; 
+    let isDragging = false;
+
+    let hasUsedSlider = false;
+    let hasUsedFlare = false;
+    let hasDraggedMoon = false;
+    let esmMode = 'all';
+    let esmAutoRotate = true;
+    let esmShowText = true;
+
+    function setEsmMode(mode) {
+        esmMode = mode;
+        const captions = {
+            all: 'All overlays: phases, tides, eclipse geometry, and teaching labels are visible together.',
+            phases: 'Phases mode: focus on sunlight direction, Moon illumination, and the live phase angle.',
+            tides: 'Tides mode: focus on the bulge axis, near-side and far-side bulges, and tide-force arrows.',
+            eclipses: 'Eclipses mode: focus on orbital tilt, nodes, and umbra/penumbra shadow geometry.',
+            exam: 'Exam mode: fewer hints on the canvas. Predict phase, tides, and eclipse chances first, then verify.'
+        };
+        document.getElementById('esm-mode-caption').innerText = captions[mode] || captions.all;
+        document.querySelectorAll('.esm-mode-btn').forEach(btn => {
+            const active = btn.dataset.mode === mode;
+            btn.className = active
+                ? 'esm-mode-btn bg-star-cyan/20 border border-star-cyan text-star-cyan px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider'
+                : 'esm-mode-btn bg-space-800 border border-space-500 text-white px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider';
+        });
+        drawEsm();
+    }
+
+    function updateEsmTextOverlayUI() {
+        const toggleBtn = document.getElementById('esm-text-toggle');
+        if (toggleBtn) {
+            toggleBtn.innerText = esmShowText ? 'Hide text overlays' : 'Show text overlays';
+            toggleBtn.className = esmShowText
+                ? 'bg-space-800 border border-space-500 text-white px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider'
+                : 'bg-star-cyan/20 border border-star-cyan text-star-cyan px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider';
+        }
+        const targets = ['esm-mode-caption', 'esm-legend', 'eclipse-banner', 'node-info', 'exam-prompt', 'esm-drag-hint'];
+        const sidePanels = document.getElementById('esm-side-panels');
+        if (sidePanels) { sidePanels.style.opacity = '1'; sidePanels.style.visibility = 'visible'; }
+        targets.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.style.opacity = esmShowText ? '1' : '0';
+            el.style.visibility = esmShowText ? 'visible' : 'hidden';
+        });
+    }
+
+    function toggleEsmTextOverlays() {
+        esmShowText = !esmShowText;
+        updateEsmTextOverlayUI();
+        drawEsm();
+    }
+
+
+    function updateEsmMotionUI() {
+        const toggleBtn = document.getElementById('esm-play-toggle');
+        const status = document.getElementById('esm-motion-status');
+        if (!toggleBtn || !status) return;
+        if (esmAutoRotate) {
+            toggleBtn.innerText = 'Freeze';
+            toggleBtn.className = 'bg-star-green/20 border border-star-green text-star-green px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider';
+            status.innerText = 'Auto-rotate: ON';
+        } else {
+            toggleBtn.innerText = 'Play';
+            toggleBtn.className = 'bg-star-gold/20 border border-star-gold text-star-gold px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider';
+            status.innerText = 'Auto-rotate: OFF';
+        }
+    }
+
+    function toggleEsmAnimation() {
+        esmAutoRotate = !esmAutoRotate;
+        updateEsmMotionUI();
+        drawEsm();
+    }
+
+    function stepMoon(degrees) {
+        esmAutoRotate = false;
+        moonAngle += degrees * Math.PI / 180;
+        updateEsmMotionUI();
+        drawEsm();
+    }
+
+    function snapMoonToPhase(phaseName) {
+        esmAutoRotate = false;
+        const phaseAngles = {
+            new: Math.PI,
+            firstQuarter: -Math.PI / 2,
+            full: 0,
+            thirdQuarter: Math.PI / 2
+        };
+        if (phaseAngles[phaseName] !== undefined) {
+            moonAngle = phaseAngles[phaseName];
+            updateEsmMotionUI();
+            drawEsm();
+        }
+    }
+
+    function checkSimulatorCredit() {
+        if(event && event.target.id === 'layerSlider') hasUsedSlider = true;
+        if(event && event.target.id === 'flare-btn') hasUsedFlare = true;
+        
+        if(hasUsedSlider && hasUsedFlare && hasDraggedMoon && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Astrophysicist Badge!", "You successfully utilized all Sun simulators! +100 XP", "🔭");
+        }
+    }
+
+    function resizeEsmCanvas() {
+        const rect = esmCanvas.parentElement.getBoundingClientRect();
+        esmCanvas.width = rect.width > 800 ? 800 : rect.width;
+        esmCanvas.height = esmCanvas.width * 0.6; 
+        if(esmCanvas.height > 500) esmCanvas.height = 500;
+        drawEsm();
+    }
+    window.addEventListener('resize', resizeEsmCanvas);
+
+    function getPointerPos(e) {
+        const rect = esmCanvas.getBoundingClientRect();
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: (clientX - rect.left) * (esmCanvas.width / rect.width),
+            y: (clientY - rect.top) * (esmCanvas.height / rect.height)
+        };
+    }
+
+    function startDrag(e) {
+        e.preventDefault(); 
+        const pos = getPointerPos(e);
+        const mx = (esmCanvas.width * 0.6) + orbitR * Math.cos(moonAngle); 
+        const my = (esmCanvas.height * 0.5) + orbitR * Math.sin(moonAngle);
+        
+        const dist = Math.hypot(pos.x - mx, pos.y - my);
+        if (dist < 40) { 
+            isDragging = true;
+            hasDraggedMoon = true;
+            checkSimulatorCredit();
+        }
+    }
+
+    function doDrag(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+        const pos = getPointerPos(e);
+        
+        const center_x = esmCanvas.width * 0.6;
+        const center_y = esmCanvas.height * 0.5;
+        
+        moonAngle = Math.atan2(pos.y - center_y, pos.x - center_x);
+        drawEsm();
+    }
+
+    function endDrag() { isDragging = false; }
+
+    esmCanvas.addEventListener('mousedown', startDrag);
+    esmCanvas.addEventListener('mousemove', doDrag);
+    esmCanvas.addEventListener('mouseup', endDrag);
+    esmCanvas.addEventListener('mouseleave', endDrag);
+
+    esmCanvas.addEventListener('touchstart', startDrag, {passive: false});
+    esmCanvas.addEventListener('touchmove', doDrag, {passive: false});
+    esmCanvas.addEventListener('touchend', endDrag);
+
+    function drawLineLabel(text, x, y, color = '#ffffff') {
+        if (!esmShowText) return;
+        eCtx.save();
+        eCtx.font = 'bold 12px Nunito, sans-serif';
+        const padX = 6;
+        const width = eCtx.measureText(text).width + padX * 2;
+        eCtx.fillStyle = 'rgba(2, 6, 23, 0.82)';
+        eCtx.fillRect(x - width / 2, y - 10, width, 20);
+        eCtx.strokeStyle = color;
+        eCtx.lineWidth = 1;
+        eCtx.strokeRect(x - width / 2, y - 10, width, 20);
+        eCtx.fillStyle = color;
+        eCtx.textAlign = 'center';
+        eCtx.textBaseline = 'middle';
+        eCtx.fillText(text, x, y);
+        eCtx.restore();
+    }
+
+    function drawArrowLine(x1, y1, x2, y2, color, dash = []) {
+        const headLen = 10;
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        eCtx.save();
+        eCtx.strokeStyle = color;
+        eCtx.fillStyle = color;
+        eCtx.lineWidth = 2;
+        eCtx.setLineDash(dash);
+        eCtx.beginPath();
+        eCtx.moveTo(x1, y1);
+        eCtx.lineTo(x2, y2);
+        eCtx.stroke();
+        eCtx.setLineDash([]);
+        eCtx.beginPath();
+        eCtx.moveTo(x2, y2);
+        eCtx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+        eCtx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+        eCtx.closePath();
+        eCtx.fill();
+        eCtx.restore();
+    }
+
+    function drawMoonDisk(x, y, radius, sunAngle, earthAngle) {
+        eCtx.save();
+
+        eCtx.fillStyle = '#cbd5e1';
+        eCtx.beginPath();
+        eCtx.arc(x, y, radius, 0, Math.PI * 2);
+        eCtx.fill();
+
+        const terminatorAngle = sunAngle + Math.PI / 2;
+        eCtx.save();
+        eCtx.translate(x, y);
+        eCtx.rotate(terminatorAngle);
+        eCtx.fillStyle = 'rgba(0, 0, 0, 0.78)';
+        eCtx.beginPath();
+        eCtx.arc(0, 0, radius, -Math.PI / 2, Math.PI / 2);
+        eCtx.fill();
+        eCtx.restore();
+
+        const nearSideX = x + Math.cos(earthAngle) * (radius * 0.42);
+        const nearSideY = y + Math.sin(earthAngle) * (radius * 0.42);
+        eCtx.fillStyle = 'rgba(71, 85, 105, 0.85)';
+        eCtx.beginPath();
+        eCtx.arc(nearSideX, nearSideY, radius * 0.22, 0, Math.PI * 2);
+        eCtx.fill();
+
+        const secondaryX = x + Math.cos(earthAngle + 0.65) * (radius * 0.25);
+        const secondaryY = y + Math.sin(earthAngle + 0.65) * (radius * 0.25);
+        eCtx.fillStyle = 'rgba(100, 116, 139, 0.75)';
+        eCtx.beginPath();
+        eCtx.arc(secondaryX, secondaryY, radius * 0.11, 0, Math.PI * 2);
+        eCtx.fill();
+
+        eCtx.strokeStyle = 'rgba(255,255,255,0.35)';
+        eCtx.lineWidth = 1;
+        eCtx.beginPath();
+        eCtx.arc(x, y, radius, 0, Math.PI * 2);
+        eCtx.stroke();
+
+        eCtx.restore();
+    }
+
+    function drawEsm() {
+        eCtx.clearRect(0, 0, esmCanvas.width, esmCanvas.height);
+
+        const center_x = esmCanvas.width * 0.6; 
+        const center_y = esmCanvas.height * 0.5;
+
+        const sunX = -50;
+        const sunY = center_y;
+        const sunRadius = 150;
+
+        let gradient = eCtx.createRadialGradient(sunX, sunY, sunRadius*0.5, sunX, sunY, sunRadius*2);
+        gradient.addColorStop(0, 'rgba(253, 224, 71, 0.8)');
+        gradient.addColorStop(1, 'rgba(245, 158, 11, 0)');
+        eCtx.fillStyle = gradient;
+        eCtx.beginPath();
+        eCtx.arc(sunX, sunY, sunRadius*2, 0, Math.PI*2);
+        eCtx.fill();
+
+        eCtx.fillStyle = '#f59e0b';
+        eCtx.beginPath();
+        eCtx.arc(sunX, sunY, sunRadius, 0, Math.PI*2);
+        eCtx.fill();
+
+        eCtx.fillStyle = 'rgba(253, 224, 71, 0.05)';
+        eCtx.beginPath();
+        eCtx.moveTo(sunX, sunY - sunRadius);
+        eCtx.lineTo(center_x, center_y - earthR);
+        eCtx.lineTo(center_x, center_y + earthR);
+        eCtx.lineTo(sunX, sunY + sunRadius);
+        eCtx.fill();
+
+        eCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        eCtx.setLineDash([5, 5]);
+        eCtx.beginPath();
+        eCtx.arc(center_x, center_y, orbitR, 0, Math.PI*2);
+        eCtx.stroke();
+        eCtx.setLineDash([]);
+
+        let normalizedAngle = moonAngle; 
+        if (normalizedAngle < 0) normalizedAngle += Math.PI * 2; 
+
+        let alignment = Math.abs(Math.sin(normalizedAngle)); 
+
+        eCtx.save();
+        eCtx.translate(center_x, center_y);
+
+        eCtx.rotate(moonAngle); 
+        eCtx.fillStyle = 'rgba(59, 130, 246, 0.4)'; 
+        eCtx.beginPath();
+
+        let bulgeStrength = 15 - (alignment * 8); 
+        eCtx.ellipse(0, 0, earthR + bulgeStrength, earthR + (bulgeStrength * 0.3), 0, 0, Math.PI*2);
+        eCtx.fill();
+        eCtx.restore();
+
+        eCtx.fillStyle = '#10b981'; 
+        eCtx.beginPath();
+        eCtx.arc(center_x, center_y, earthR, 0, Math.PI*2);
+        eCtx.fill();
+
+        eCtx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        eCtx.beginPath();
+        eCtx.arc(center_x, center_y, earthR, -Math.PI/2, Math.PI/2); 
+        eCtx.fill();
+
+        if (esmMode === 'all' || esmMode === 'tides') {
+            drawTidalTeachingOverlay(center_x, center_y, earthR, bulgeStrength, moonAngle, alignment);
+        }
+
+        const mx = center_x + orbitR * Math.cos(moonAngle);
+        const my = center_y + orbitR * Math.sin(moonAngle);
+
+        const moonToSunAngle = Math.atan2(sunY - my, sunX - mx);
+        const moonToEarthAngle = Math.atan2(center_y - my, center_x - mx);
+        let phaseAngleDeg = Math.abs(((moonToEarthAngle - moonToSunAngle + Math.PI * 3) % (Math.PI * 2)) - Math.PI) * 180 / Math.PI;
+        if (phaseAngleDeg > 180) phaseAngleDeg = 360 - phaseAngleDeg;
+
+        const eclipseTiltRad = 5 * Math.PI / 180;
+        const nodeAngle = 0;
+        const distToNode1 = Math.abs(normalizeAngleDiff(moonAngle, nodeAngle));
+        const distToNode2 = Math.abs(normalizeAngleDiff(moonAngle, nodeAngle + Math.PI));
+        const nearNodeNow = Math.min(distToNode1, distToNode2) < 0.2;
+        const isNewMoonAligned = Math.abs(normalizedAngle - Math.PI) < 0.10 && nearNodeNow;
+        const isFullMoonAligned = (Math.abs(normalizedAngle) < 0.10 || Math.abs(normalizedAngle - Math.PI * 2) < 0.10) && nearNodeNow;
+
+        if (esmMode === 'all' || esmMode === 'eclipses') {
+            drawEclipseTeachingOverlay(center_x, center_y, eclipseTiltRad, nodeAngle, moonAngle);
+
+            if (isNewMoonAligned) {
+                drawSolarEclipseShadows(sunX, sunY, sunRadius, mx, my, moonR, center_x, center_y, earthR);
+            } else if (isFullMoonAligned) {
+                drawLunarEclipseShadows(sunX, sunY, sunRadius, center_x, center_y, earthR, mx, my, moonR);
+            }
+        }
+
+        if (esmMode === 'all' || esmMode === 'phases' || esmMode === 'exam') {
+            if (esmShowText) {
+                drawArrowLine(80, center_y - 95, 220, center_y - 95, '#fde047');
+                drawLineLabel('Sunlight direction', 150, center_y - 118, '#fde047');
+            }
+
+            drawArrowLine(sunX + sunRadius * 0.95, sunY, center_x - earthR - 8, center_y, '#facc15');
+            drawLineLabel('Sun → Earth line', (sunX + center_x) / 2 + 18, center_y + 24, '#facc15');
+
+            drawArrowLine(center_x, center_y, mx, my, '#6ef0ff');
+            drawLineLabel('Earth → Moon line', center_x + (mx - center_x) * 0.55, center_y + (my - center_y) * 0.55 - 18, '#6ef0ff');
+
+            drawArrowLine(sunX + sunRadius * 0.75, sunY + 10, mx - 10 * Math.cos(moonAngle), my - 10 * Math.sin(moonAngle), '#f472b6', [6, 4]);
+            drawLineLabel('Sun → Moon line', sunX + (mx - sunX) * 0.52, center_y - 42, '#f472b6');
+        }
+
+        if (esmMode === 'all' || esmMode === 'tides') {
+            if (esmShowText) {
+                drawArrowLine(center_x - (earthR + bulgeStrength + 10), center_y, center_x + earthR + bulgeStrength + 10, center_y, '#60a5fa');
+                drawLineLabel('Tidal bulge axis', center_x, center_y + earthR + bulgeStrength + 22, '#60a5fa');
+            }
+        }
+
+        drawLineLabel('Moon orbit path', center_x, center_y - orbitR - 18, '#cbd5e1');
+        drawLineLabel('Sun', 76, center_y + sunRadius - 18, '#ffffff');
+        drawLineLabel('Earth', center_x, center_y + earthR + 32, '#ffffff');
+
+        drawMoonDisk(mx, my, moonR, moonToSunAngle, moonToEarthAngle);
+
+        drawLineLabel('Moon', mx, my - moonR - 18, '#ffffff');
+
+        if (esmMode === 'all' || esmMode === 'phases') {
+            drawAngleArc(mx, my, moonToSunAngle, moonToEarthAngle, 34, '#ffffff');
+            drawLineLabel(`Phase angle: ${Math.round(phaseAngleDeg)}°`, mx + 56, my + 10, '#ffffff', 'left');
+            if (Math.abs(phaseAngleDeg - 90) <= 8) {
+                drawQuarterPhaseTeachingOverlay(mx, my, moonToSunAngle, moonToEarthAngle, 18, '#ffffff');
+                drawLineLabel('Quarter phase ≈ 90°', mx + 60, my + 30, '#fde68a', 'left');
+                drawQuarterPhaseBadge(mx + 58, my + 46, 'Right angle = Quarter Moon');
+            } else if (phaseAngleDeg <= 8) {
+                drawLineLabel('0° = New Moon geometry', mx + 60, my + 30, '#fde68a', 'left');
+            } else if (Math.abs(phaseAngleDeg - 180) <= 8) {
+                drawLineLabel('180° = Full Moon geometry', mx + 60, my + 30, '#fde68a', 'left');
+            }
+        } else if (esmMode === 'exam' && Math.abs(phaseAngleDeg - 90) <= 8) {
+            drawQuarterPhaseTeachingOverlay(mx, my, moonToSunAngle, moonToEarthAngle, 18, '#ffffff');
+        }
+
+        if(!isDragging && frames % 60 < 30) {
+            eCtx.strokeStyle = '#6ef0ff';
+            eCtx.lineWidth = 2;
+            eCtx.beginPath();
+            eCtx.arc(mx, my, moonR + 8, 0, Math.PI*2);
+            eCtx.stroke();
+        }
+
+        updateHUD(normalizedAngle, alignment);
+    }
+
+    function normalizeAngleDiff(end, start) {
+        let diff = end - start;
+        while (diff <= -Math.PI) diff += Math.PI * 2;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        return diff;
+    }
+
+    function drawAngleArc(x, y, startAngle, endAngle, radius, color) {
+        const diff = normalizeAngleDiff(endAngle, startAngle);
+        eCtx.save();
+        eCtx.beginPath();
+        eCtx.strokeStyle = color;
+        eCtx.lineWidth = 2;
+        eCtx.setLineDash([4, 4]);
+        eCtx.arc(x, y, radius, startAngle, startAngle + diff, diff < 0);
+        eCtx.stroke();
+        eCtx.setLineDash([]);
+        eCtx.restore();
+    }
+
+    function drawRightAngleMarker(x, y, startAngle, endAngle, size, color) {
+        const a1 = startAngle;
+        const a2 = endAngle;
+        const p1x = x + Math.cos(a1) * size;
+        const p1y = y + Math.sin(a1) * size;
+        const cornerX = p1x + Math.cos(a2) * size;
+        const cornerY = p1y + Math.sin(a2) * size;
+        const p2x = x + Math.cos(a2) * size;
+        const p2y = y + Math.sin(a2) * size;
+
+        eCtx.save();
+        eCtx.strokeStyle = color;
+        eCtx.lineWidth = 2;
+        eCtx.beginPath();
+        eCtx.moveTo(p1x, p1y);
+        eCtx.lineTo(cornerX, cornerY);
+        eCtx.lineTo(p2x, p2y);
+        eCtx.stroke();
+        eCtx.restore();
+    }
+
+    function drawQuarterPhaseTeachingOverlay(x, y, startAngle, endAngle, size, color) {
+        const guideLength = 34;
+        eCtx.save();
+        eCtx.strokeStyle = 'rgba(255,255,255,0.55)';
+        eCtx.lineWidth = 1.5;
+        eCtx.setLineDash([3, 3]);
+        eCtx.beginPath();
+        eCtx.moveTo(x, y);
+        eCtx.lineTo(x + Math.cos(startAngle) * guideLength, y + Math.sin(startAngle) * guideLength);
+        eCtx.moveTo(x, y);
+        eCtx.lineTo(x + Math.cos(endAngle) * guideLength, y + Math.sin(endAngle) * guideLength);
+        eCtx.stroke();
+        eCtx.setLineDash([]);
+        eCtx.restore();
+
+        drawRightAngleMarker(x, y, startAngle, endAngle, size, color);
+
+        const bisector = startAngle + normalizeAngleDiff(endAngle, startAngle) / 2;
+        eCtx.save();
+        eCtx.fillStyle = 'rgba(255,255,255,0.9)';
+        eCtx.font = 'bold 12px Nunito';
+        eCtx.textAlign = 'center';
+        eCtx.fillText('90°', x + Math.cos(bisector) * (size + 18), y + Math.sin(bisector) * (size + 18));
+        eCtx.restore();
+    }
+
+    function drawQuarterPhaseBadge(x, y, text) {
+        if (!esmShowText) return;
+        eCtx.save();
+        eCtx.font = 'bold 12px Nunito';
+        const paddingX = 10;
+        const width = eCtx.measureText(text).width + paddingX * 2;
+        const height = 24;
+        eCtx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+        eCtx.strokeStyle = 'rgba(253, 230, 138, 0.9)';
+        eCtx.lineWidth = 1.5;
+        eCtx.beginPath();
+        eCtx.roundRect(x, y, width, height, 10);
+        eCtx.fill();
+        eCtx.stroke();
+        eCtx.fillStyle = '#fde68a';
+        eCtx.textAlign = 'left';
+        eCtx.textBaseline = 'middle';
+        eCtx.fillText(text, x + paddingX, y + height / 2);
+        eCtx.restore();
+    }
+
+
+    function drawLabeledPoint(x, y, label, color) {
+        eCtx.save();
+        eCtx.fillStyle = color;
+        eCtx.beginPath();
+        eCtx.arc(x, y, 5, 0, Math.PI * 2);
+        eCtx.fill();
+        eCtx.strokeStyle = 'rgba(15,23,42,0.95)';
+        eCtx.lineWidth = 1.5;
+        eCtx.stroke();
+        eCtx.restore();
+        drawLineLabel(label, x, y - 14, color);
+    }
+
+    function drawForceArrow(x1, y1, x2, y2, color, label, labelOffsetX = 0, labelOffsetY = 0) {
+        eCtx.save();
+        eCtx.strokeStyle = color;
+        eCtx.fillStyle = color;
+        eCtx.lineWidth = 2.5;
+        eCtx.beginPath();
+        eCtx.moveTo(x1, y1);
+        eCtx.lineTo(x2, y2);
+        eCtx.stroke();
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        const head = 10;
+        eCtx.beginPath();
+        eCtx.moveTo(x2, y2);
+        eCtx.lineTo(x2 - head * Math.cos(angle - Math.PI / 6), y2 - head * Math.sin(angle - Math.PI / 6));
+        eCtx.lineTo(x2 - head * Math.cos(angle + Math.PI / 6), y2 - head * Math.sin(angle + Math.PI / 6));
+        eCtx.closePath();
+        eCtx.fill();
+        eCtx.restore();
+        if (label) {
+            drawLineLabel(label, (x1 + x2) / 2 + labelOffsetX, (y1 + y2) / 2 + labelOffsetY, color);
+        }
+    }
+
+    function drawTidalTeachingOverlay(center_x, center_y, earthR, bulgeStrength, angle, alignment) {
+        const axisCos = Math.cos(angle);
+        const axisSin = Math.sin(angle);
+        const nearBulgeX = center_x + axisCos * (earthR + bulgeStrength);
+        const nearBulgeY = center_y + axisSin * (earthR + bulgeStrength);
+        const farBulgeX = center_x - axisCos * (earthR + bulgeStrength);
+        const farBulgeY = center_y - axisSin * (earthR + bulgeStrength);
+
+        if (esmShowText) {
+            drawLineLabel('Near-side bulge', nearBulgeX + axisCos * 22, nearBulgeY + axisSin * 22 - 8, '#93c5fd');
+            drawLineLabel('Far-side bulge', farBulgeX - axisCos * 20, farBulgeY - axisSin * 20 - 8, '#93c5fd');
+
+            const moonPullStartX = center_x + axisCos * (earthR + 6);
+            const moonPullStartY = center_y + axisSin * (earthR + 6);
+            const moonPullEndX = center_x + axisCos * (earthR + 34);
+            const moonPullEndY = center_y + axisSin * (earthR + 34);
+            drawForceArrow(moonPullStartX, moonPullStartY, moonPullEndX, moonPullEndY, '#60a5fa', 'Moon gravity pull', 0, -14);
+
+            const inertiaStartX = center_x - axisCos * (earthR + 6);
+            const inertiaStartY = center_y - axisSin * (earthR + 6);
+            const inertiaEndX = center_x - axisCos * (earthR + 34);
+            const inertiaEndY = center_y - axisSin * (earthR + 34);
+            drawForceArrow(inertiaStartX, inertiaStartY, inertiaEndX, inertiaEndY, '#a78bfa', 'Inertia effect', 0, 16);
+        }
+
+        const tideType = alignment < 0.28 ? 'Spring tide: strongest bulges' : (alignment > 0.9 ? 'Neap tide: weaker bulges' : 'Intermediate tide geometry');
+        if (esmShowText && tideType !== 'Intermediate tide geometry') {
+            eCtx.save();
+            eCtx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            eCtx.strokeStyle = alignment < 0.28 ? 'rgba(96,165,250,0.9)' : 'rgba(167,139,250,0.9)';
+            eCtx.lineWidth = 1.5;
+            const boxW = 184, boxH = 26;
+            const boxX = center_x - boxW / 2;
+            const boxY = center_y + earthR + bulgeStrength + 46;
+            eCtx.beginPath();
+            eCtx.roundRect(boxX, boxY, boxW, boxH, 10);
+            eCtx.fill();
+            eCtx.stroke();
+            eCtx.fillStyle = '#ffffff';
+            eCtx.font = 'bold 12px Nunito';
+            eCtx.textAlign = 'center';
+            eCtx.textBaseline = 'middle';
+            eCtx.fillText(tideType, center_x, boxY + boxH / 2);
+            eCtx.restore();
+        }
+    }
+
+    function drawEclipseTeachingOverlay(center_x, center_y, tiltRad, nodeAngle, moonAngleNow) {
+        const node1x = center_x + orbitR * Math.cos(nodeAngle);
+        const node1y = center_y + orbitR * Math.sin(nodeAngle) * Math.cos(tiltRad);
+        const node2x = center_x + orbitR * Math.cos(nodeAngle + Math.PI);
+        const node2y = center_y + orbitR * Math.sin(nodeAngle + Math.PI) * Math.cos(tiltRad);
+
+        eCtx.save();
+        eCtx.strokeStyle = 'rgba(255,255,255,0.22)';
+        eCtx.lineWidth = 1.5;
+        eCtx.setLineDash([8, 6]);
+        eCtx.beginPath();
+        eCtx.moveTo(center_x - orbitR - 55, center_y);
+        eCtx.lineTo(center_x + orbitR + 55, center_y);
+        eCtx.stroke();
+        eCtx.setLineDash([]);
+        eCtx.restore();
+        drawLineLabel('Earth-Sun plane / line of nodes', center_x, center_y - 12, '#ffffff');
+
+        eCtx.save();
+        eCtx.translate(center_x, center_y);
+        eCtx.rotate(nodeAngle);
+        eCtx.scale(1, Math.cos(tiltRad));
+        eCtx.strokeStyle = 'rgba(168, 85, 247, 0.65)';
+        eCtx.lineWidth = 2;
+        eCtx.setLineDash([10, 6]);
+        eCtx.beginPath();
+        eCtx.arc(0, 0, orbitR, 0, Math.PI * 2);
+        eCtx.stroke();
+        eCtx.setLineDash([]);
+        eCtx.restore();
+        drawLineLabel('Moon orbit tilted ~5°', center_x - 58, center_y - orbitR - 36, '#c084fc');
+
+        drawLabeledPoint(node1x, node1y, 'Ascending node', '#6ef0ff');
+        drawLabeledPoint(node2x, node2y, 'Descending node', '#6ef0ff');
+
+        const dist1 = Math.abs(normalizeAngleDiff(moonAngleNow, nodeAngle));
+        const dist2 = Math.abs(normalizeAngleDiff(moonAngleNow, nodeAngle + Math.PI));
+        const nearNode = Math.min(dist1, dist2) < 0.2;
+        if (nearNode) {
+            drawQuarterPhaseBadge(center_x - 110, center_y + orbitR + 46, 'Moon near a node → eclipse season possible');
+        } else {
+            drawQuarterPhaseBadge(center_x - 122, center_y + orbitR + 46, 'Usually no eclipse: Moon is above or below the plane');
+        }
+    }
+
+
+    function fillConePolygon(points, fillStyle, strokeStyle = null) {
+        eCtx.save();
+        eCtx.beginPath();
+        eCtx.moveTo(points[0][0], points[0][1]);
+        for (const [px, py] of points.slice(1)) eCtx.lineTo(px, py);
+        eCtx.closePath();
+        eCtx.fillStyle = fillStyle;
+        eCtx.fill();
+        if (strokeStyle) {
+            eCtx.strokeStyle = strokeStyle;
+            eCtx.lineWidth = 1.2;
+            eCtx.stroke();
+        }
+        eCtx.restore();
+    }
+
+    function drawSolarEclipseShadows(sunX, sunY, sunR, moonX, moonY, moonR, earthX, earthY, earthR) {
+        const axisAngle = Math.atan2(moonY - sunY, moonX - sunX);
+        const perp = axisAngle + Math.PI / 2;
+        const antumbraLen = 250;
+        const penumbraLen = 235;
+        const umbraLen = 135;
+
+        const moonTop = [moonX + Math.cos(perp) * moonR, moonY + Math.sin(perp) * moonR];
+        const moonBottom = [moonX - Math.cos(perp) * moonR, moonY - Math.sin(perp) * moonR];
+        const penTopFar = [moonX + Math.cos(axisAngle) * penumbraLen + Math.cos(perp) * 54, moonY + Math.sin(axisAngle) * penumbraLen + Math.sin(perp) * 54];
+        const penBotFar = [moonX + Math.cos(axisAngle) * penumbraLen - Math.cos(perp) * 54, moonY + Math.sin(axisAngle) * penumbraLen - Math.sin(perp) * 54];
+        const umTopFar = [moonX + Math.cos(axisAngle) * umbraLen + Math.cos(perp) * 8, moonY + Math.sin(axisAngle) * umbraLen + Math.sin(perp) * 8];
+        const umBotFar = [moonX + Math.cos(axisAngle) * umbraLen - Math.cos(perp) * 8, moonY + Math.sin(axisAngle) * umbraLen - Math.sin(perp) * 8];
+        const antiTopFar = [moonX + Math.cos(axisAngle) * antumbraLen + Math.cos(perp) * 22, moonY + Math.sin(axisAngle) * antumbraLen + Math.sin(perp) * 22];
+        const antiBotFar = [moonX + Math.cos(axisAngle) * antumbraLen - Math.cos(perp) * 22, moonY + Math.sin(axisAngle) * antumbraLen - Math.sin(perp) * 22];
+
+        fillConePolygon([moonTop, penTopFar, penBotFar, moonBottom], 'rgba(239, 68, 68, 0.10)', 'rgba(248, 113, 113, 0.22)');
+        fillConePolygon([moonTop, umTopFar, umBotFar, moonBottom], 'rgba(15, 23, 42, 0.34)', 'rgba(255,255,255,0.18)');
+        fillConePolygon([umTopFar, antiTopFar, antiBotFar, umBotFar], 'rgba(250, 204, 21, 0.12)', 'rgba(253, 224, 71, 0.30)');
+
+        drawLineLabel('Penumbra', moonX + Math.cos(axisAngle) * 110 + Math.cos(perp) * 58, moonY + Math.sin(axisAngle) * 110 + Math.sin(perp) * 58, '#fca5a5', 'left');
+        drawLineLabel('Umbra', moonX + Math.cos(axisAngle) * 72, moonY + Math.sin(axisAngle) * 72 - 14, '#ffffff', 'left');
+        drawLineLabel('Antumbra', moonX + Math.cos(axisAngle) * 195, moonY + Math.sin(axisAngle) * 195 + 20, '#fde68a', 'left');
+
+        const earthShadowHit = Math.hypot((earthX - (moonX + Math.cos(axisAngle) * umbraLen)), (earthY - (moonY + Math.sin(axisAngle) * umbraLen))) < 34;
+        drawQuarterPhaseBadge(earthX - 86, earthY + earthR + 34, earthShadowHit ? 'Earth in umbra → total solar eclipse path' : 'Earth in penumbra/antumbra → partial or annular eclipse');
+    }
+
+    function drawLunarEclipseShadows(sunX, sunY, sunR, earthX, earthY, earthR, moonX, moonY, moonR) {
+        const axisAngle = Math.atan2(moonY - earthY, moonX - earthX);
+        const perp = axisAngle + Math.PI / 2;
+        const penLen = 230;
+        const umbLen = 190;
+
+        const earthTop = [earthX + Math.cos(perp) * earthR, earthY + Math.sin(perp) * earthR];
+        const earthBottom = [earthX - Math.cos(perp) * earthR, earthY - Math.sin(perp) * earthR];
+        const penTopFar = [earthX + Math.cos(axisAngle) * penLen + Math.cos(perp) * 68, earthY + Math.sin(axisAngle) * penLen + Math.sin(perp) * 68];
+        const penBotFar = [earthX + Math.cos(axisAngle) * penLen - Math.cos(perp) * 68, earthY + Math.sin(axisAngle) * penLen - Math.sin(perp) * 68];
+        const umbTopFar = [earthX + Math.cos(axisAngle) * umbLen + Math.cos(perp) * 28, earthY + Math.sin(axisAngle) * umbLen + Math.sin(perp) * 28];
+        const umbBotFar = [earthX + Math.cos(axisAngle) * umbLen - Math.cos(perp) * 28, earthY + Math.sin(axisAngle) * umbLen - Math.sin(perp) * 28];
+
+        fillConePolygon([earthTop, penTopFar, penBotFar, earthBottom], 'rgba(99, 102, 241, 0.10)', 'rgba(147, 197, 253, 0.24)');
+        fillConePolygon([earthTop, umbTopFar, umbBotFar, earthBottom], 'rgba(15, 23, 42, 0.42)', 'rgba(255,255,255,0.18)');
+
+        drawLineLabel('Earth penumbra', earthX + Math.cos(axisAngle) * 120 + Math.cos(perp) * 74, earthY + Math.sin(axisAngle) * 120 + Math.sin(perp) * 74, '#93c5fd', 'left');
+        drawLineLabel('Earth umbra', earthX + Math.cos(axisAngle) * 105, earthY + Math.sin(axisAngle) * 105 - 18, '#ffffff', 'left');
+        drawQuarterPhaseBadge(earthX - 96, earthY + earthR + 34, 'Moon crossing Earth shadow → lunar eclipse');
+    }
+
+    function updateHUD(angle, tideAlignment) {
+        const phaseNameEl = document.getElementById('phase-name');
+        const tideNameEl = document.getElementById('tide-name');
+        const eclipseBanner = document.getElementById('eclipse-banner');
+        const nodeInfo = document.getElementById('node-info');
+        const examPrompt = document.getElementById('exam-prompt');
+
+        let phase = "Full Moon";
+        if(angle > 0.1 && angle < Math.PI/2 - 0.1) phase = "Waning Gibbous";
+        else if (Math.abs(angle - Math.PI/2) <= 0.1) phase = "Third Quarter";
+        else if (angle > Math.PI/2 + 0.1 && angle < Math.PI - 0.1) phase = "Waning Crescent";
+        else if (Math.abs(angle - Math.PI) <= 0.1) phase = "New Moon";
+        else if (angle > Math.PI + 0.1 && angle < 3*Math.PI/2 - 0.1) phase = "Waxing Crescent";
+        else if (Math.abs(angle - 3*Math.PI/2) <= 0.1) phase = "First Quarter";
+        else if (angle > 3*Math.PI/2 + 0.1 && angle < 2*Math.PI - 0.1) phase = "Waxing Gibbous";
+
+        phaseNameEl.innerText = phase;
+        phaseNameEl.parentElement.parentElement.style.opacity = (!esmShowText || esmMode !== 'tides') ? '1' : '0.45';
+        phaseNameEl.parentElement.parentElement.style.visibility = 'visible';
+
+        if (tideAlignment < 0.2) {
+            tideNameEl.innerText = "Spring Tide";
+            tideNameEl.className = "font-bold text-lg text-blue-400";
+        } else if (tideAlignment > 0.8) {
+            tideNameEl.innerText = "Neap Tide";
+            tideNameEl.className = "font-bold text-lg text-green-400";
+        } else {
+            tideNameEl.innerText = "Normal Tide";
+            tideNameEl.className = "font-bold text-lg text-white";
+        }
+        tideNameEl.parentElement.parentElement.style.opacity = (!esmShowText || esmMode !== 'phases') ? '1' : '0.45';
+        tideNameEl.parentElement.parentElement.style.visibility = 'visible';
+
+        const nodeSeparation = Math.min(Math.abs(normalizeAngleDiff(angle, 0)), Math.abs(normalizeAngleDiff(angle, Math.PI)));
+        const nearNode = nodeSeparation < 0.2;
+
+        let isEclipse = false;
+        nodeInfo.style.opacity = esmShowText && (esmMode === 'all' || esmMode === 'eclipses') ? '1' : '0';
+        examPrompt.style.opacity = esmShowText && esmMode === 'exam' ? '1' : '0';
+        eclipseBanner.style.opacity = '0';
+
+        if (Math.abs(angle - Math.PI) < 0.05 && nearNode) { 
+            eclipseBanner.innerText = "⚠️ SOLAR ECLIPSE!";
+            eclipseBanner.className = `absolute top-4 left-4 z-10 bg-star-gold/90 border border-yellow-200 text-black px-4 py-2 rounded-lg font-bold font-display shadow-[0_0_20px_rgba(253,224,71,0.8)] transition-opacity pointer-events-none ${(esmShowText && (esmMode === 'all' || esmMode === 'eclipses' || esmMode === 'exam')) ? 'opacity-100' : 'opacity-0'}`;
+            nodeInfo.innerHTML = 'The Moon is at a <span class="text-star-cyan">node</span> and lined up with the Sun. Eclipse conditions are met.';
+            isEclipse = true;
+        } else if ((Math.abs(angle) < 0.05 || Math.abs(angle - 2*Math.PI) < 0.05) && nearNode) { 
+            eclipseBanner.innerText = "⚠️ LUNAR ECLIPSE!";
+            eclipseBanner.className = `absolute top-4 left-4 z-10 bg-red-600/90 border border-red-300 text-white px-4 py-2 rounded-lg font-bold font-display shadow-[0_0_20px_rgba(239,68,68,0.8)] transition-opacity pointer-events-none ${(esmShowText && (esmMode === 'all' || esmMode === 'eclipses' || esmMode === 'exam')) ? 'opacity-100' : 'opacity-0'}`;
+            nodeInfo.innerHTML = 'Full Moon near a <span class="text-star-cyan">node</span>: Earth can cast its shadow on the Moon.';
+            isEclipse = true;
+        } else {
+            eclipseBanner.style.opacity = '0';
+            if (nearNode) {
+                nodeInfo.innerHTML = 'The Moon is near a <span class="text-star-cyan">node</span>. This is eclipse season, but exact alignment still matters.';
+            } else {
+                nodeInfo.innerHTML = 'Eclipses are rare because the Moon usually travels <span class="text-star-cyan">above or below</span> the Earth-Sun plane.';
+            }
+        }
+
+        drawTelescopePhase(angle, isEclipse);
+    }
+
+    function drawTelescopePhase(angle, isEclipse) {
+        pCtx.clearRect(0, 0, 64, 64);
+        
+        pCtx.fillStyle = '#cbd5e1';
+        pCtx.beginPath();
+        pCtx.arc(32, 32, 30, 0, Math.PI*2);
+        pCtx.fill();
+        
+        pCtx.fillStyle = '#1e293b'; 
+        
+        if (isEclipse && Math.abs(angle) < 0.05) {
+            pCtx.fillStyle = 'rgba(185, 28, 28, 0.8)';
+            pCtx.beginPath();
+            pCtx.arc(32, 32, 30, 0, Math.PI*2);
+            pCtx.fill();
+            return;
+        }
+
+        let illumination = (Math.cos(angle) + 1) / 2; 
+        let isWaxing = angle > Math.PI;
+
+        pCtx.beginPath();
+        pCtx.arc(32, 32, 30, Math.PI/2, 3*Math.PI/2, !isWaxing); 
+        pCtx.fill();
+
+        pCtx.beginPath();
+        let stretch = Math.abs(Math.cos(angle)); 
+        pCtx.ellipse(32, 32, 30 * stretch, 30, 0, 0, Math.PI*2);
+        
+        if (illumination <= 0.5) {
+            pCtx.fillStyle = '#1e293b';
+        } else {
+            pCtx.fillStyle = '#cbd5e1';
+        }
+        pCtx.fill();
+    }
+
+    let frames = 0;
+    function animLoop() {
+        if(!isDragging && esmAutoRotate) {
+            moonAngle += 0.002;
+            drawEsm();
+        }
+        frames++;
+        requestAnimationFrame(animLoop);
+    }
+
+    // Main Init
+    window.addEventListener('DOMContentLoaded', () => {
+        resizeEsmCanvas();
+        moonAngle = Math.PI; 
+        drawEsm();
+        updateEsmMotionUI();
+        animLoop();
+        updateSunLayers(); 
+        
+        // Initialize the new dynamic quiz on load
+        initQuiz();
+    });
+
+</script>
+</body>
+</html>

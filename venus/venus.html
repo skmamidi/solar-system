@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Venus — Interactive Solar System Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#05040a', 800: '#140c1c', 700: '#2e1930', 500: '#522b47', 100: '#fcebe6' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        venus: { base: '#e69833', dark: '#b55b1d', acid: '#d4e633', cloud: '#f5c67a' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 40s linear infinite',
+                        'cloud-shift': 'cloudShift 20s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(230, 152, 51, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(230, 152, 51, 0.7)' },
+                        },
+                        cloudShift: {
+                            '0%': { backgroundPosition: '0% 50%' },
+                            '100%': { backgroundPosition: '100% 50%' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #05040a;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #ffd166 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #e69833 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #ff5ac6 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(46, 25, 48, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(230, 152, 51, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(82, 43, 71, 0.8), rgba(46, 25, 48, 0.9));
+            border: 1px solid rgba(230, 152, 51, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(230, 152, 51, 0.5);
+            box-shadow: 0 0 20px rgba(230, 152, 51, 0.2);
+            transform: translateY(-5px);
+        }
+
+        /* Venus Graphic - Thick atmospheric clouds */
+        .orb-venus {
+            background: linear-gradient(45deg, #b55b1d, #e69833, #f5c67a, #e69833, #b55b1d);
+            background-size: 400% 400%;
+            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(230, 152, 51, 0.4);
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            animation: cloud-shift 15s ease-in-out infinite alternate;
+        }
+        
+        /* Swirling clouds overlay */
+        .orb-venus::before {
+            content: '';
+            position: absolute;
+            top: -10%; left: -10%; right: -10%; bottom: -10%;
+            background: repeating-linear-gradient(
+                12deg,
+                transparent,
+                rgba(245, 198, 122, 0.2) 10px,
+                transparent 20px
+            );
+            filter: blur(4px);
+            border-radius: 50%;
+            opacity: 0.7;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(212, 230, 51, 0.15);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #05040a; }
+        ::-webkit-scrollbar-thumb { background: #522b47; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #e69833; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<!-- Custom Message Box (Replacing alerts) -->
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-venus-base">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-venus-base text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<!-- Header Navigation -->
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <a href="../index.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+            <span class="text-2xl text-venus-base">🌋</span>
+            <span class="font-display font-bold text-xl tracking-wide hidden sm:block">Solar System Explorer</span>
+            <span class="font-display font-bold text-xl tracking-wide sm:hidden">SSE</span>
+        </a>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-venus-cloud">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <!-- Progress/Gamification Bar -->
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-venus-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Venus Mission Progress</span>
+                    <span id="progressText" class="text-venus-base font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-venus-dark to-venus-base h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Play Mini-Game</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-venus-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-700/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-venus-base font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-star-gold animate-ping"></span> Planet 2 of 8
+                </p>
+                <h1 class="font-display text-6xl md:text-8xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Venus</h1>
+                <p class="text-2xl text-venus-cloud font-body italic mb-6">"Earth's Evil Twin"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    Beautiful from afar, hellish up close. Venus is the hottest planet in the solar system, wrapped in a crushing, toxic atmosphere of carbon dioxide and raining sulfuric acid. Also known as the Morning and Evening Star.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-venus-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-venus-cloud transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(230,152,51,0.5)]">
+                    Descend to Surface 👇
+                </button>
+            </div>
+            
+            <!-- Animated 3D-ish Planet -->
+            <div class="z-10 relative">
+                <div class="w-64 h-64 md:w-80 md:h-80 orb-venus animate-float animate-pulse-glow shadow-2xl"></div>
+                <!-- Orbit Rings Graphic behind planet -->
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] rounded-full border-2 border-dashed border-venus-dark/50 -z-10 animate-spin-slow"></div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Dashboard -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🔥</div>
+                <div class="text-venus-base font-mono text-xs uppercase mb-1">Temperature</div>
+                <div class="font-bold text-xl">900°F <span class="text-sm font-normal text-space-100">(475°C)</span></div>
+                <div class="text-xs text-star-red mt-1">Hottest in System</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🏎️</div>
+                <div class="text-venus-base font-mono text-xs uppercase mb-1">Orbital Speed</div>
+                <div class="font-bold text-xl">35 km/s</div>
+                <div class="text-xs text-space-100 mt-1">Slightly slower than Earth</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🗜️</div>
+                <div class="text-venus-base font-mono text-xs uppercase mb-1">Surface Pressure</div>
+                <div class="font-bold text-xl">92x Earth's</div>
+                <div class="text-xs text-space-100 mt-1">Crushing weight</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">💨</div>
+                <div class="text-venus-base font-mono text-xs uppercase mb-1">Wind Speeds</div>
+                <div class="font-bold text-xl">300 km/h</div>
+                <div class="text-xs text-space-100 mt-1">In upper atmosphere</div>
+            </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt planetary data.</p>
+                </div>
+                <div class="hidden md:block text-venus-cloud font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Data cards remain identical to preserve core content -->
+                <!-- Card 1 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'v1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📍</div>
+                            <h3 class="font-display text-xl text-venus-base">Position & Distance</h3>
+                            <p class="text-space-100 text-xs mt-2">Distance from Sun</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-venus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-venus-cloud mb-2 border-b border-venus-dark pb-1 w-full">Solar Orbit</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li><span class="text-venus-base font-mono font-bold">AU:</span> ~0.72 Astronomical Units</li>
+                                <li><span class="text-venus-base font-mono font-bold">KM:</span> ~108 million kilometers</li>
+                                <li class="text-xs text-space-100 italic mt-2">The second planet from the sun.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 2 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'v2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📏</div>
+                            <h3 class="font-display text-xl text-venus-base">Relative Size</h3>
+                            <p class="text-space-100 text-xs mt-2">Earth's Twin?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-venus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-venus-cloud mb-2 border-b border-venus-dark pb-1 w-full">Almost Identical</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-venus-base font-mono font-bold">Diameter:</span> ~12,104 km. That is 95% the size of Earth!</li>
+                                <li><span class="text-venus-base font-mono font-bold">Volume:</span> Contains about 86% of Earth's volume.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 3 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'v3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚖️</div>
+                            <h3 class="font-display text-xl text-venus-base">Weight & Density</h3>
+                            <p class="text-space-100 text-xs mt-2">Gravity Check</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-venus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-venus-cloud mb-2 border-b border-venus-dark pb-1 w-full">Familiar Gravity</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-venus-base font-mono font-bold">Density:</span> 5.24 g/cm³. Very similar to Earth's rock and metal makeup.</li>
+                                <li class="bg-space-900 p-2 rounded border border-space-500 text-center text-star-cyan font-bold mt-2">
+                                    If you weigh 100 lbs on Earth, you'd weigh ~90 lbs on Venus!
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 4 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'v4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🪨</div>
+                            <h3 class="font-display text-xl text-venus-base">Composition</h3>
+                            <p class="text-space-100 text-xs mt-2">Inside the planet</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-venus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-venus-cloud mb-2 border-b border-venus-dark pb-1 w-full">Rocky World</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Just like Earth, it has a central <strong class="text-white">iron core</strong> and a rocky mantle.</li>
+                                <li>Its surface is covered in volcanic rock. There are thousands of volcanoes, some of which may still be active today!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 5 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'v5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⏳</div>
+                            <h3 class="font-display text-2xl text-venus-base">Time constraints</h3>
+                            <p class="text-space-100 mt-2">Length of Day & Year (It gets weird)</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-venus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-venus-cloud mb-3 border-b border-venus-dark pb-2 w-full">A Day Longer Than A Year</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-venus-base font-mono font-bold block mb-1">Length of Year:</span>
+                                    225 Earth Days to orbit the sun once.
+                                </div>
+                                <div>
+                                    <span class="text-venus-base font-mono font-bold block mb-1">Length of Day:</span>
+                                    243 Earth Days to rotate once on its axis.
+                                </div>
+                                <div class="col-span-2 bg-space-900 p-2 rounded border border-star-red text-center">
+                                    <strong class="text-star-red">Retrograde Rotation:</strong> Venus spins backwards compared to most planets. The Sun rises in the West and sets in the East!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 6 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'v6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌧️</div>
+                            <h3 class="font-display text-2xl text-venus-base">Atmosphere & Weather</h3>
+                            <p class="text-space-100 mt-2">A toxic, crushing hellscape</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-venus-base flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-venus-cloud mb-2 border-b border-venus-dark pb-1 w-full">Runaway Greenhouse</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-venus-base">Air:</strong> 96% Carbon Dioxide (CO2), creating a severe greenhouse effect that traps heat.</li>
+                                <li><strong class="text-venus-base">Clouds:</strong> Thick, yellowish clouds made of toxic <span class="text-venus-acid font-bold">Sulfuric Acid</span>.</li>
+                                <li><strong class="text-venus-base">Pressure:</strong> 92 times greater than Earth. Walking on the surface would feel like being 1 kilometer underwater!</li>
+                                <li><strong class="text-venus-base">Wind:</strong> High altitude clouds whip around at 300km/h.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 7 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'v7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-venus-base">Missions & Moons</h3>
+                            <p class="text-space-100 mt-2">Who has visited? Who lives there?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-venus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-venus-cloud mb-2 border-b border-venus-dark pb-2 w-full">Exploration</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-star-cyan">Moons:</strong> None. Venus and Mercury are the only planets without moons.</li>
+                                <li><strong class="text-white">Venera Program (Soviets):</strong> In the 1970s/80s, they landed probes on the surface. They survived only a few hours before being crushed/melted.</li>
+                                <li><strong class="text-white">Magellan (NASA):</strong> Mapped 98% of the surface using radar through the thick clouds in the 1990s.</li>
+                                <li><strong class="text-white">Upcoming:</strong> NASA's DAVINCI and VERITAS missions will return to Venus soon!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 8 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'v8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🤯</div>
+                            <h3 class="font-display text-2xl text-venus-base">Wild Facts</h3>
+                            <p class="text-space-100 mt-2">Tap for the strangest Venus facts</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-venus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-venus-cloud mb-2 border-b border-venus-dark pb-2 w-full">Unexpected Truths</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-venus-base">No Magnetic Shield:</strong> Despite having an iron core, its extremely slow rotation means it doesn't generate a strong magnetic field like Earth does.</li>
+                                <li><strong class="text-venus-base">Metal Snow:</strong> High atop Venus's mountains, it is believed to "snow" metal (galena and bismuthinite) because the surface is so hot that metals vaporize and condense at higher altitudes!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mini Game Section -->
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-venus-base border-2 shadow-[0_0_30px_rgba(230,152,51,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-venus-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Venera Atmospheric Descent</h2>
+                        <p class="text-space-100 mb-6">Guide the Venera lander probe safely through Venus's crushing atmosphere. Dodge the thick, corrosive acid clouds. Survive for 20 seconds to reach the surface and earn the <span class="text-venus-cloud font-bold">Lander Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-venus-base mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Launch Probe
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-venus-base/30">
+                            <div class="text-5xl mb-2">🛸</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Atmospheric Entry</h3>
+                            <p class="text-venus-base text-sm">Click Launch to begin descent</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-space-800 via-venus-dark to-venus-base rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-venus-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Advanced Quiz Section -->
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-venus-base/50">
+            <div class="text-center mb-8">
+                <div class="inline-block px-4 py-1 bg-star-red/20 text-star-red text-xs font-bold font-mono border border-star-red rounded-full mb-3">STATE OLYMPIAD LEVEL</div>
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Advanced)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Venus module. Pass with 20/25 to earn the badge.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-3xl mx-auto">
+                <!-- Quiz is injected dynamically via JavaScript -->
+                <div id="quizHeader" class="flex justify-between items-center mb-4 hidden">
+                    <span id="quizProgressTracker" class="text-venus-cloud font-mono font-bold">Question 1 of 25</span>
+                    <span id="quizScoreTracker" class="text-star-green font-mono">Score: 0</span>
+                </div>
+                
+                <div id="dynamicQuizArea" class="transition-opacity duration-300">
+                    <div class="text-center py-10">
+                        <button onclick="startAdvancedQuiz()" class="bg-venus-base text-space-900 px-8 py-4 rounded-full font-bold hover:bg-venus-cloud transition-colors text-lg shadow-[0_0_15px_rgba(230,152,51,0.5)]">
+                            Begin Advanced Debrief
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Explanation Box (Hidden initially) -->
+                <div id="explanationBox" class="hidden mt-6 p-6 rounded-2xl border bg-space-800 transition-all duration-300">
+                    <div class="flex items-start gap-4">
+                        <div id="explanationIcon" class="text-3xl mt-1">📝</div>
+                        <div>
+                            <h4 id="explanationTitle" class="font-bold text-lg mb-2"></h4>
+                            <p id="explanationText" class="text-space-100 text-sm leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Next Button Container -->
+                <div class="mt-6 flex justify-end">
+                    <button id="nextQuestionBtn" onclick="goToNextQuestion()" class="hidden bg-star-green text-space-900 px-8 py-3 rounded-xl font-bold hover:bg-white transition-all transform hover:scale-105">
+                        Next Question ➔
+                    </button>
+                </div>
+                
+                <!-- Quiz Results Container -->
+                <div id="quizResultsArea" class="hidden text-center py-8">
+                    <div class="text-6xl mb-4" id="resultEmoji">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2" id="resultTitle">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-6">Final Score: <span id="finalScoreText" class="font-bold text-venus-cloud">0/25</span></p>
+                    <p class="text-space-100 mb-8" id="resultMessage"></p>
+                    <button onclick="startAdvancedQuiz()" class="bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Retry Quiz</button>
+                </div>
+            </div>
+        </div>
+
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.planetCompleteAlerted) {
+            window.planetCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Venus Module Complete!", "You have unlocked the 'Morning Star' badge. You braved the heat!", "🚀");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Venus files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* MINI GAME: Venera Atmospheric Descent */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0, scoreFrames = 0, gameLoopReq;
+
+    const player = { x: 0, y: 80, width: 30, height: 40, speed: 6, color: '#dce0fc' };
+    let clouds = [];
+    let keys = { ArrowLeft: false, ArrowRight: false };
+
+    window.addEventListener('keydown', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') keys[e.code] = false; 
+    });
+    
+    canvas.addEventListener('touchstart', (e) => {
+        if(!gameActive) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const relativeX = e.touches[0].clientX - rect.left;
+        if(relativeX < canvas.width/2) { keys.ArrowLeft = true; keys.ArrowRight = false; } 
+        else { keys.ArrowRight = true; keys.ArrowLeft = false; }
+    }, {passive: false});
+    canvas.addEventListener('touchend', (e) => { e.preventDefault(); keys.ArrowLeft = false; keys.ArrowRight = false; });
+    canvas.addEventListener('mousedown', (e) => {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        const relativeX = e.clientX - rect.left;
+        if(relativeX < canvas.width/2) { keys.ArrowLeft = true; keys.ArrowRight = false; } 
+        else { keys.ArrowRight = true; keys.ArrowLeft = false; }
+    });
+    canvas.addEventListener('mouseup', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+    canvas.addEventListener('mouseleave', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        clouds = [];
+        frames = 0; scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Descending...";
+        startBtn.disabled = true; startBtn.classList.add('opacity-50');
+        canvas.setAttribute('tabindex', '0'); canvas.focus();
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnCloud() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let w = Math.random() * (canvas.width * 0.4) + 40; 
+        let h = Math.random() * 30 + 20; 
+        let xPos = Math.random() * (canvas.width - w);
+        clouds.push({
+            x: xPos, y: canvas.height + h, width: w, height: h, speed: (Math.random() * 3 + 3) * speedMult, 
+            color: Math.random() > 0.5 ? 'rgba(212, 230, 51, 0.8)' : 'rgba(230, 152, 51, 0.8)' 
+        });
+    }
+
+    function drawPlayer() {
+        ctx.fillStyle = player.color;
+        ctx.beginPath();
+        ctx.arc(player.x + player.width/2, player.y + 10, player.width/2, Math.PI, 0);
+        ctx.rect(player.x, player.y + 10, player.width, player.height - 20);
+        ctx.arc(player.x + player.width/2, player.y + player.height - 10, player.width/2 + 5, 0, Math.PI);
+        ctx.fill(); ctx.closePath();
+        ctx.fillStyle = "#333";
+        ctx.fillRect(player.x + player.width/2 - 5, player.y + 15, 10, 10);
+    }
+
+    function drawClouds() {
+        for (let i = 0; i < clouds.length; i++) {
+            let c = clouds[i];
+            ctx.fillStyle = c.color;
+            ctx.shadowBlur = 10; ctx.shadowColor = c.color;
+            ctx.beginPath();
+            ctx.roundRect(c.x, c.y, c.width, c.height, 20);
+            ctx.fill(); ctx.closePath();
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    function checkCollision(c) {
+        return (player.x < c.x + c.width && player.x + player.width > c.x &&
+                player.y < c.y + c.height && player.y + player.height > c.y);
+    }
+
+    function updatePhysics() {
+        if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
+        if (keys.ArrowRight && player.x + player.width < canvas.width) player.x += player.speed;
+        let spawnRate = Math.max(20, 60 - Math.floor(scoreFrames/120));
+        if (frames % spawnRate === 0) spawnCloud();
+        for (let i = clouds.length - 1; i >= 0; i--) {
+            clouds[i].y -= clouds[i].speed;
+            if (checkCollision(clouds[i])) { gameOver("Hull Compromised by Acid Cloud!"); return; }
+            if (clouds[i].y + clouds[i].height < 0) clouds.splice(i, 1);
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+        let depthRatio = Math.min(1, scoreFrames / 1200); 
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = `rgba(181, 91, 29, ${depthRatio * 0.4})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawClouds(); drawPlayer();
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let pressure = 1 + Math.floor((secondsAlive / 20) * 91); 
+        
+        ctx.fillStyle = "white"; ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Descent Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillText(`Pressure: ${pressure} atm`, 10, 45);
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        if (secondsAlive >= 20 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Lander Badge Unlocked!", "You survived the descent to the surface of Venus! +100 XP", "🛬");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Retry Drop";
+        startBtn.disabled = false; startBtn.classList.remove('opacity-50');
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-4">You survived for ${secondsAlive} seconds.</p>
+            ${!achievements.playedGame ? `<p class="text-venus-cloud text-sm mb-4">Try to reach 20 seconds for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        if(secondsAlive > 5 && secondsAlive < 20) addXP(5);
+    }
+
+    startBtn.addEventListener('click', () => { initGame(); });
+
+
+    /* =========================================================
+       ADVANCED SCIENCE OLYMPIAD QUIZ LOGIC (25 Questions)
+       ========================================================= */
+
+    const quizMasterData = [
+        {
+            q: "Why is Venus hotter than Mercury despite being further from the Sun?",
+            c: "A runaway greenhouse effect from its thick CO2 atmosphere.",
+            w: ["It has a radioactive core that rapidly heats the surface.", "Friction from its extremely fast rotation generates intense heat.", "It is continuously bombarded by solar flares."],
+            exp: "Venus's atmosphere is about 96% carbon dioxide. This dense blanket traps incoming solar infrared radiation, causing a runaway greenhouse effect that raises surface temperatures to ~900°F (475°C), hotter than Mercury."
+        },
+        {
+            q: "What is the primary composition of the thick clouds enveloping Venus?",
+            c: "Sulfuric acid (H2SO4)",
+            w: ["Water vapor and ice crystals", "Methane and ammonia", "Liquid nitrogen droplets"],
+            exp: "The highly reflective, opaque clouds of Venus are primarily composed of highly corrosive sulfuric acid droplets, completely obscuring the surface in visible light."
+        },
+        {
+            q: "Venus rotates in the opposite direction of most planets in our solar system. What is this phenomenon called?",
+            c: "Retrograde rotation",
+            w: ["Prograde rotation", "Synchronous rotation", "Tidal locking"],
+            exp: "Venus exhibits retrograde rotation, meaning it spins clockwise when viewed from above its north pole. Because of this, the Sun rises in the west and sets in the east."
+        },
+        {
+            q: "What is the atmospheric pressure on the surface of Venus compared to Earth?",
+            c: "Approximately 92 times greater",
+            w: ["Approximately equal to Earth's", "About 10 times less", "Almost a vacuum (close to 0)"],
+            exp: "The surface pressure on Venus is a crushing 92 bars—equivalent to the pressure found about 900 meters (3,000 feet) underwater in Earth's oceans."
+        },
+        {
+            q: "Which Soviet probe was the first spacecraft to successfully transmit data from the surface of Venus (or any other planet)?",
+            c: "Venera 7",
+            w: ["Sputnik 1", "Mariner 2", "Voyager 1"],
+            exp: "In 1970, the Soviet Union's Venera 7 became the first human-made object to successfully land on another planet and transmit data back to Earth, surviving the heat and pressure for 23 minutes."
+        },
+        {
+            q: "Venus is often called Earth's 'sister planet' or 'twin'. Which of the following characteristics is most similar between the two?",
+            c: "Mass and radius (size)",
+            w: ["Atmospheric composition", "Rotational speed and axial tilt", "Surface temperature and atmospheric pressure"],
+            exp: "Venus has about 81% of Earth's mass and 95% of its radius, making them remarkably similar in size and bulk composition. However, their atmospheres and surface conditions are radically different."
+        },
+        {
+            q: "What is the approximate length of a Venusian year (one orbit around the Sun) in Earth days?",
+            c: "225 Earth days",
+            w: ["365 Earth days", "88 Earth days", "687 Earth days"],
+            exp: "Venus orbits the Sun at an average distance of 0.72 AU, taking approximately 225 Earth days to complete one revolution."
+        },
+        {
+            q: "What is the approximate length of a single day (one rotation on its axis) on Venus in Earth days?",
+            c: "243 Earth days",
+            w: ["24 Earth hours", "10 Earth hours", "90 Earth days"],
+            exp: "Venus rotates incredibly slowly. It takes 243 Earth days to complete one rotation on its axis, making a single Venusian day longer than a Venusian year (225 Earth days)."
+        },
+        {
+            q: "Despite possessing an iron core similar to Earth's, why does Venus lack a significant global magnetic field?",
+            c: "Its extremely slow rotation rate.",
+            w: ["Its core is entirely solid and cold.", "The thick atmosphere absorbs the magnetic field.", "It lacks iron and nickel entirely."],
+            exp: "A planetary magnetic field is generated by a dynamo effect, which requires a conducting liquid core and rapid rotation. Venus's extremely slow rotation (243 days) is insufficient to generate a strong global magnetic field."
+        },
+        {
+            q: "What type of volcano is most commonly found scattered across the surface of Venus?",
+            c: "Shield volcanoes",
+            w: ["Stratovolcanoes", "Cinder cones", "Lava domes only"],
+            exp: "Due to the lack of plate tectonics and highly fluid lava, Venus is covered in hundreds of large shield volcanoes, similar to those found in Hawaii on Earth."
+        },
+        {
+            q: "Maxwell Montes is the highest mountain range on Venus. On which continent-sized highland region is it located?",
+            c: "Ishtar Terra",
+            w: ["Aphrodite Terra", "Lada Terra", "Beta Regio"],
+            exp: "Ishtar Terra is the northernmost highland region on Venus, comparable in size to Australia, and contains the towering Maxwell Montes, which reach 11 kilometers above the planet's average elevation."
+        },
+        {
+            q: "By volume, what percentage of Venus's atmosphere is composed of Carbon Dioxide?",
+            c: "Approximately 96.5%",
+            w: ["Approximately 78%", "Approximately 21%", "Approximately 50%"],
+            exp: "The atmosphere is overwhelmingly dominated by carbon dioxide (96.5%), with most of the remaining 3.5% being molecular nitrogen."
+        },
+        {
+            q: "What geological feature, believed to be formed by upwelling mantle plumes causing the crust to bulge and fracture, is somewhat unique to Venus?",
+            c: "Coronae (crown-like features)",
+            w: ["Valles (deep canyon systems)", "Maria (dark basaltic plains)", "Rilles (narrow collapsed lava tubes)"],
+            exp: "Coronae are large, circular, crown-like geological features found extensively on Venus. They form when hot magma pushes up against the crust, causing it to dome and then collapse in the center."
+        },
+        {
+            q: "While surface winds on Venus are sluggish, winds in the upper atmosphere circle the planet in just four Earth days. What is this phenomenon known as?",
+            c: "Super-rotation",
+            w: ["The Jet Stream", "The Coriolis effect anomaly", "Atmospheric tidal locking"],
+            exp: "The upper atmosphere of Venus whips around the planet at speeds up to 300 km/h (186 mph), rotating 60 times faster than the planet's surface itself. This is known as super-rotation."
+        },
+        {
+            q: "Which NASA spacecraft arrived at Venus in 1990 and mapped 98% of its surface using Synthetic Aperture Radar (SAR)?",
+            c: "Magellan",
+            w: ["Cassini-Huygens", "Pioneer Venus", "Galileo"],
+            exp: "Because the thick clouds block visible light, NASA's Magellan orbiter used radar to peer through the atmosphere, providing us with the first high-resolution global maps of the Venusian surface."
+        },
+        {
+            q: "The surface temperature of Venus is roughly 'isothermal'. What does this mean in practical terms?",
+            c: "The temperature is relatively constant globally, even between the equator, poles, day, and night.",
+            w: ["The surface is made entirely of volcanic glass.", "The temperature fluctuates violently by hundreds of degrees daily.", "The planet is completely frozen beneath the clouds."],
+            exp: "Due to the immense thermal inertia of the dense atmosphere and rapid heat transfer via super-rotation winds, the temperature on Venus hardly changes regardless of location or time of day."
+        },
+        {
+            q: "What unusual 'snow' is theorized to fall on the highest mountain peaks of Venus?",
+            c: "Heavy metal sulfides like galena and bismuthinite.",
+            w: ["Frozen carbon dioxide (dry ice).", "Solid methane crystals.", "Microscopic diamond dust."],
+            exp: "Radar reflections from Venus's highest peaks are unusually bright. Scientists theorize this is due to metallic frost—metals that vaporize in the hot lower valleys and condense back into solid 'snow' in the cooler upper altitudes."
+        },
+        {
+            q: "If you were to stand on the surface of Venus (assuming you survive the pressure and heat), what color would the sky appear to be?",
+            c: "An eerie reddish-orange.",
+            w: ["Pitch black.", "Bright azure blue.", "Emerald green."],
+            exp: "The incredibly thick atmosphere scatters blue light completely away before it reaches the ground. Only longer wavelengths (reds and oranges) make it through, tinting the entire surface an amber/orange hue."
+        },
+        {
+            q: "Which trace gas, detected in Venus's upper atmosphere in 2020, briefly sparked intense debate about the potential for airborne microbial life?",
+            c: "Phosphine",
+            w: ["Methane", "Ozone", "Hydrogen sulfide"],
+            exp: "Astronomers announced the detection of phosphine (PH3) in the clouds of Venus. On Earth, phosphine is primarily produced by anaerobic microbes, making it a potential (though heavily debated) biosignature."
+        },
+        {
+            q: "Venus has the most circular orbit of any planet in our solar system. What term describes the deviation of an orbit from a perfect circle?",
+            c: "Eccentricity",
+            w: ["Obliquity", "Inclination", "Precession"],
+            exp: "Orbital eccentricity measures how elliptical an orbit is. Venus has an eccentricity of less than 0.01, meaning its distance from the Sun varies very little throughout its year."
+        },
+        {
+            q: "Due to the crushing atmospheric pressure, fluids on the surface of Venus exist in a state where distinct liquid and gas phases do not exist. What is this state called?",
+            c: "Supercritical fluid",
+            w: ["Plasma", "Bose-Einstein Condensate", "Non-Newtonian fluid"],
+            exp: "At the extreme pressures and temperatures on the surface, carbon dioxide behaves as a supercritical fluid, possessing properties of both a gas and a liquid, blurring the boundary between the two phases."
+        },
+        {
+            q: "Venus undergoes visible phases similar to the Moon when viewed from Earth. Who was the first astronomer to observe these phases through a telescope?",
+            c: "Galileo Galilei",
+            w: ["Nicolaus Copernicus", "Johannes Kepler", "Isaac Newton"],
+            exp: "In 1610, Galileo observed that Venus went through a full set of phases. This was a crucial piece of evidence that proved Venus orbited the Sun, dismantling the Earth-centric (geocentric) model of the universe."
+        },
+        {
+            q: "Why are there very few small impact craters (less than 3 km in diameter) on the surface of Venus?",
+            c: "Small meteoroids burn up or break apart completely in the incredibly thick atmosphere before reaching the ground.",
+            w: ["Continuous plate tectonics rapidly recycle the crust, destroying small craters.", "Venus's gravity repels small objects.", "Heavy acid rain erodes small craters in a matter of months."],
+            exp: "The dense atmosphere acts as a formidable shield. Only large, robust meteoroids survive the intense atmospheric entry to strike the surface, while smaller ones disintegrate mid-air."
+        },
+        {
+            q: "Venus is often visible to the naked eye from Earth and is the third brightest object in our sky (after the Sun and Moon). What is its approximate maximum apparent magnitude?",
+            c: "Around -4.6",
+            w: ["Around +1.5", "Around -12.0", "Around +6.0"],
+            exp: "Apparent magnitude measures an object's brightness (lower numbers are brighter). Venus can reach an astonishing -4.6, making it bright enough to cast shadows on a dark, moonless night on Earth."
+        },
+        {
+            q: "Currently, Earth's tectonic plates continuously shift and recycle the crust. What is the leading theory regarding tectonic activity on Venus?",
+            c: "Venus has a stagnant lid crust that occasionally undergoes catastrophic, global resurfacing events.",
+            w: ["Venus has identical plate tectonics to Earth.", "Venus has no crust; its surface is an entirely liquid magma ocean.", "The crust is shattered into thousands of micro-plates that move rapidly."],
+            exp: "Unlike Earth, Venus appears to lack continuous plate tectonics. Instead, heat builds up in the mantle under a solid 'stagnant lid' crust until it periodically erupts in massive, planet-wide volcanic events that resurface the globe."
+        }
+    ];
+
+    let currentQuizIndex = 0;
+    let quizScore = 0;
+    let randomizedQuestions = [];
+
+    // Utility: Fisher-Yates Shuffle
+    function shuffleArray(array) {
+        let curId = array.length;
+        while (0 !== curId) {
+            let randId = Math.floor(Math.random() * curId);
+            curId -= 1;
+            let tmp = array[curId];
+            array[curId] = array[randId];
+            array[randId] = tmp;
+        }
+        return array;
+    }
+
+    function startAdvancedQuiz() {
+        // Deep copy and shuffle questions
+        randomizedQuestions = shuffleArray(JSON.parse(JSON.stringify(quizMasterData)));
+        currentQuizIndex = 0;
+        quizScore = 0;
+
+        document.getElementById('quizHeader').classList.remove('hidden');
+        document.getElementById('quizResultsArea').classList.add('hidden');
+        
+        renderCurrentQuestion();
+    }
+
+    function renderCurrentQuestion() {
+        const qData = randomizedQuestions[currentQuizIndex];
+        const quizArea = document.getElementById('dynamicQuizArea');
+        const explBox = document.getElementById('explanationBox');
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        
+        // Reset UI states
+        explBox.classList.add('hidden');
+        explBox.classList.remove('border-star-green', 'border-star-red', 'bg-star-green/10', 'bg-star-red/10');
+        nextBtn.classList.add('hidden');
+        
+        document.getElementById('quizProgressTracker').innerText = `Question ${currentQuizIndex + 1} of 25`;
+        document.getElementById('quizScoreTracker').innerText = `Score: ${quizScore}`;
+
+        // Prepare and shuffle answers
+        let answers = [
+            { text: qData.c, isCorrect: true },
+            { text: qData.w[0], isCorrect: false },
+            { text: qData.w[1], isCorrect: false },
+            { text: qData.w[2], isCorrect: false }
+        ];
+        answers = shuffleArray(answers);
+
+        // Build HTML
+        let html = `
+            <div class="mb-6 fade-in">
+                <h3 class="text-xl md:text-2xl font-bold mb-6 text-venus-cloud leading-relaxed">${currentQuizIndex + 1}. ${qData.q}</h3>
+                <div class="space-y-3" id="answerOptionsContainer">
+        `;
+        
+        answers.forEach((ans, idx) => {
+            // Encode the string carefully to pass to handler
+            const safeText = ans.text.replace(/'/g, "\\'");
+            const safeExp = qData.exp.replace(/'/g, "\\'");
+            
+            html += `
+                <button 
+                    onclick="handleAnswerSelection(this, ${ans.isCorrect}, '${safeExp}')"
+                    data-correct="${ans.isCorrect}"
+                    class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-venus-base transition-all font-body text-base">
+                    ${ans.text}
+                </button>
+            `;
+        });
+        
+        html += `</div></div>`;
+        quizArea.innerHTML = html;
+    }
+
+    function handleAnswerSelection(btnElement, isCorrect, explanationText) {
+        const container = document.getElementById('answerOptionsContainer');
+        const allBtns = container.querySelectorAll('button');
+        
+        // Disable all buttons to prevent multiple clicks
+        allBtns.forEach(btn => {
+            btn.disabled = true;
+            btn.classList.remove('hover:bg-space-700', 'hover:border-venus-base');
+            btn.classList.add('opacity-60', 'cursor-not-allowed');
+            
+            // Highlight the correct answer regardless of choice
+            if(btn.getAttribute('data-correct') === 'true') {
+                btn.classList.remove('bg-space-800', 'border-space-500', 'opacity-60');
+                btn.classList.add('bg-star-green', 'text-space-900', 'border-star-green', 'font-bold', 'opacity-100');
+            }
+        });
+
+        const explBox = document.getElementById('explanationBox');
+        const explTitle = document.getElementById('explanationTitle');
+        const explIcon = document.getElementById('explanationIcon');
+        const explText = document.getElementById('explanationText');
+
+        if(isCorrect) {
+            quizScore++;
+            addXP(10); // 10 XP per correct advanced question
+            explBox.classList.add('border-star-green', 'bg-star-green/10');
+            explTitle.innerText = "Correct! Mission Data Verified.";
+            explTitle.classList.add('text-star-green');
+            explTitle.classList.remove('text-star-red');
+            explIcon.innerText = "✅";
+        } else {
+            // Highlight chosen wrong answer
+            btnElement.classList.remove('opacity-60');
+            btnElement.classList.add('bg-star-red', 'text-white', 'border-star-red', 'opacity-100');
+            
+            explBox.classList.add('border-star-red', 'bg-star-red/10');
+            explTitle.innerText = "Incorrect. Recalibrating Data.";
+            explTitle.classList.add('text-star-red');
+            explTitle.classList.remove('text-star-green');
+            explIcon.innerText = "❌";
+        }
+
+        // Show Explanation
+        explText.innerText = explanationText;
+        explBox.classList.remove('hidden');
+        
+        // Update Score UI
+        document.getElementById('quizScoreTracker').innerText = `Score: ${quizScore}`;
+
+        // Show Next Button
+        document.getElementById('nextQuestionBtn').classList.remove('hidden');
+    }
+
+    function goToNextQuestion() {
+        currentQuizIndex++;
+        if (currentQuizIndex < randomizedQuestions.length) {
+            renderCurrentQuestion();
+        } else {
+            showFinalQuizResults();
+        }
+    }
+
+    function showFinalQuizResults() {
+        document.getElementById('dynamicQuizArea').innerHTML = '';
+        document.getElementById('explanationBox').classList.add('hidden');
+        document.getElementById('nextQuestionBtn').classList.add('hidden');
+        document.getElementById('quizHeader').classList.add('hidden');
+        
+        const resultsArea = document.getElementById('quizResultsArea');
+        const scoreText = document.getElementById('finalScoreText');
+        const title = document.getElementById('resultTitle');
+        const msg = document.getElementById('resultMessage');
+        const emoji = document.getElementById('resultEmoji');
+        
+        resultsArea.classList.remove('hidden');
+        scoreText.innerText = `${quizScore}/25`;
+
+        if (quizScore >= 20) {
+            scoreText.classList.add('text-star-green');
+            scoreText.classList.remove('text-star-red');
+            title.innerText = "Exceptional Intel Gathering!";
+            title.classList.add('text-star-gold');
+            msg.innerText = "You have proven your mastery of Venus planetary science. Outstanding work, commander.";
+            emoji.innerText = "🏆";
+            
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(250); // Huge bonus for passing 25 questions
+                showMsgBox("Master Scientist", "You passed the advanced Venus Quiz! +250 XP", "🎓");
+                updateProgress();
+            }
+        } else {
+            scoreText.classList.add('text-star-red');
+            scoreText.classList.remove('text-star-green');
+            title.innerText = "Debrief Incomplete";
+            title.classList.remove('text-star-gold');
+            title.classList.add('text-star-red');
+            msg.innerText = "You need a score of 20 or higher to earn the Quiz Badge. Review the files and try again.";
+            emoji.innerText = "📚";
+        }
+    }
+
+</script>
+</body>
+</html>

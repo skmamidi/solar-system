@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kuiper Belt — Interactive Solar System Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#020617', 800: '#0f172a', 700: '#1e293b', 500: '#334155', 100: '#f1f5f9' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        kuiper: { base: '#0ea5e9', dark: '#0369a1', light: '#bae6fd', ice: '#e0f2fe', rock: '#334155' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'spin-slow': 'spin 50s linear infinite',
+                        'spin-reverse': 'spin 35s linear infinite reverse',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(14, 165, 233, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(14, 165, 233, 0.5)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #020617;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #0ea5e9 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #bae6fd 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #0369a1 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(14, 165, 233, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(2, 6, 23, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(14, 165, 233, 0.6);
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Kuiper Belt Graphic Custom CSS */
+        .belt-system {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px dashed rgba(14, 165, 233, 0.3);
+            box-shadow: 0 0 50px rgba(14, 165, 233, 0.1);
+        }
+
+        .ice-1 { width: 35px; height: 35px; border-radius: 30% 70% 50% 50%; background: #bae6fd; top: -15px; left: 40%; position: absolute; box-shadow: inset -5px -5px 10px rgba(0,0,0,0.4), 0 0 10px rgba(186, 230, 253, 0.5); }
+        .ice-2 { width: 25px; height: 30px; border-radius: 60% 40% 30% 70%; background: #38bdf8; top: 40%; right: -10px; position: absolute; box-shadow: inset -5px -5px 10px rgba(0,0,0,0.5); }
+        .ice-3 { width: 45px; height: 35px; border-radius: 40% 60% 50% 50%; background: #0ea5e9; bottom: -15px; left: 30%; position: absolute; box-shadow: inset -5px -5px 10px rgba(0,0,0,0.6); }
+        .ice-4 { width: 20px; height: 20px; border-radius: 50%; background: #e0f2fe; top: 60%; left: -10px; position: absolute; box-shadow: inset -3px -3px 8px rgba(0,0,0,0.3); }
+
+        .sun-glow {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px; height: 20px;
+            background: #fef08a;
+            border-radius: 50%;
+            box-shadow: 0 0 20px #fef08a, 0 0 50px #eab308;
+            opacity: 0.5; /* Very far away! */
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(14, 165, 233, 0.15);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #0ea5e9; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-kuiper-base shadow-[0_0_40px_rgba(14,165,233,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-kuiper-base text-space-900 font-bold py-3 rounded-xl hover:bg-kuiper-light transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <!-- Exact navigation back to index.html -->
+        <a href="../index.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+            <span class="text-2xl text-kuiper-light">☄️</span>
+            <span class="font-display font-bold text-xl tracking-wide hidden sm:block">Solar System Explorer</span>
+            <span class="font-display font-bold text-xl tracking-wide sm:hidden">SSE</span>
+        </a>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-kuiper-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-kuiper-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Kuiper Belt Mission Progress</span>
+                    <span id="progressText" class="text-kuiper-base font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-kuiper-dark to-kuiper-base h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Play Mini-Game</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-kuiper-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-kuiper-base font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-kuiper-light animate-ping"></span> Beyond Neptune
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Kuiper Belt</h1>
+                <p class="text-2xl text-kuiper-light font-body italic mb-6">"The Icy Frontier"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    A massive, donut-shaped ring of icy bodies extending far beyond the orbit of Neptune. It is a freezing, ancient remnant of the early solar system and the birthplace of short-period comets.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-kuiper-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-kuiper-light transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(14,165,233,0.5)]">
+                    Explore the Frontier 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-56 h-56 md:w-72 md:h-72 animate-float">
+                    <!-- Spinning Belt Animation -->
+                    <div class="belt-system animate-spin-slow">
+                        <div class="ice-1"></div>
+                        <div class="ice-2"></div>
+                        <div class="ice-3"></div>
+                        <div class="ice-4"></div>
+                    </div>
+                    <!-- Inner secondary rotating belt -->
+                    <div class="belt-system absolute top-[10%] left-[10%] w-[80%] h-[80%] animate-spin-reverse opacity-60 border-none">
+                        <div class="ice-2" style="transform: scale(0.6); top: 10%; right: 20%; background: #e0f2fe;"></div>
+                        <div class="ice-4" style="transform: scale(0.8); bottom: 10%; left: 20%;"></div>
+                    </div>
+                    <div class="sun-glow"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🥶</div>
+                <div class="text-kuiper-base font-mono text-xs uppercase mb-1">Avg Temp</div>
+                <div class="font-bold text-xl">-220°C <span class="text-sm font-normal text-space-100">(-370°F)</span></div>
+                <div class="text-xs text-star-cyan mt-1">~50 Kelvin</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🏎️</div>
+                <div class="text-kuiper-base font-mono text-xs uppercase mb-1">Avg Speed</div>
+                <div class="font-bold text-xl">~4.5 km/s</div>
+                <div class="text-xs text-space-100 mt-1">Extremely slow orbits</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">⚖️</div>
+                <div class="text-kuiper-base font-mono text-xs uppercase mb-1">Total Mass</div>
+                <div class="font-bold text-xl">10% of Earth</div>
+                <div class="text-xs text-space-100 mt-1">Bigger than Asteroid Belt</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🗜️</div>
+                <div class="text-kuiper-base font-mono text-xs uppercase mb-1">Atmosphere</div>
+                <div class="font-bold text-xl">Vacuum</div>
+                <div class="text-xs text-space-100 mt-1">Empty space</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt region data.</p>
+                </div>
+                <div class="hidden md:block text-kuiper-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Position -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'kb1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📍</div>
+                            <h3 class="font-display text-xl text-kuiper-light">Position & Distance</h3>
+                            <p class="text-space-100 text-xs mt-2">Where does it begin?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-kuiper-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-kuiper-dark pb-1 w-full">The Outer Rim</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li><span class="text-kuiper-base font-mono font-bold">Location:</span> It begins just past Neptune's orbit.</li>
+                                <li><span class="text-kuiper-base font-mono font-bold">Distance:</span> Spans roughly <strong class="text-white">30 to 50 AU</strong> from the Sun.</li>
+                                <li class="text-xs text-space-100 italic mt-2">It is incredibly dark out here; the Sun looks like just a very bright star.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Size & Mass -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'kb2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📏</div>
+                            <h3 class="font-display text-xl text-kuiper-light">Relative Size</h3>
+                            <p class="text-space-100 text-xs mt-2">How massive is it?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-kuiper-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-kuiper-dark pb-1 w-full">Bigger Than Asteroids</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-kuiper-base font-mono font-bold">Width:</span> It is about 20 times wider than the Asteroid Belt.</li>
+                                <li><span class="text-kuiper-base font-mono font-bold">Mass:</span> It is 20 to 200 times more massive than the Asteroid Belt, containing hundreds of thousands of icy bodies over 100km wide.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Weight & Gravity -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'kb3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚖️</div>
+                            <h3 class="font-display text-xl text-kuiper-light">Weight & Density</h3>
+                            <p class="text-space-100 text-xs mt-2">Gravity in the Belt</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-kuiper-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-kuiper-dark pb-1 w-full">Weak Attraction</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-kuiper-base font-mono font-bold">Density:</span> Objects here are mostly low-density ice-rock mixtures (~1.5 to 2.0 g/cm³).</li>
+                                <li class="bg-space-900 p-2 rounded border border-space-500 text-center text-star-cyan mt-2">
+                                    Gravity is so weak on smaller KBOs (Kuiper Belt Objects) that walking too fast would send you floating off into space!
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Composition -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'kb4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧪</div>
+                            <h3 class="font-display text-xl text-kuiper-light">Composition</h3>
+                            <p class="text-space-100 text-xs mt-2">Rock or Ice?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-kuiper-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-kuiper-dark pb-1 w-full">The Freezer</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>Unlike the Asteroid Belt (which is mostly rock and metal), the Kuiper Belt is composed primarily of frozen volatiles called <strong class="text-kuiper-light">"ices"</strong>.</li>
+                                <li>These ices include frozen methane, ammonia, and water.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Time -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'kb5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⏳</div>
+                            <h3 class="font-display text-2xl text-kuiper-light">Time Constraints</h3>
+                            <p class="text-space-100 mt-2">Centuries-Long Years</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-kuiper-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-3 border-b border-kuiper-dark pb-2 w-full">The Long Orbit</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-kuiper-base font-mono font-bold block mb-1">Length of Year:</span>
+                                    Because they are so incredibly far from the Sun, a single year (orbit) for objects here takes between <strong class="text-white">200 to 300+ Earth years</strong>.
+                                </div>
+                                <div>
+                                    <span class="text-kuiper-base font-mono font-bold block mb-1">Length of Day:</span>
+                                    Varies widely depending on the object, ranging from a few hours to several Earth days.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Environment -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'kb6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">☄️</div>
+                            <h3 class="font-display text-2xl text-kuiper-light">Atmosphere & Weather</h3>
+                            <p class="text-space-100 mt-2">The Birthplace of Comets</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-kuiper-base flex flex-col items-center justify-center bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-kuiper-dark pb-1 w-full">Silent and Dead</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-kuiper-base">Atmosphere:</strong> Complete vacuum. Extremely large objects (like Pluto) may develop temporary, wispy atmospheres when they get closer to the Sun.</li>
+                                <li><strong class="text-kuiper-base">Comet Factory:</strong> The Kuiper Belt is the source of many "short-period" comets (comets that take less than 200 years to orbit). When disturbed, these icy bodies fall toward the sun, melting and creating beautiful tails!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Missions -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'kb7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-kuiper-light">Famous Missions</h3>
+                            <p class="text-space-100 mt-2">Only one probe has truly explored it</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-kuiper-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-kuiper-dark pb-2 w-full">New Horizons</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-white">Pioneer/Voyager:</strong> Passed through on their way out of the solar system, but didn't target specific belt objects.</li>
+                                <li><strong class="text-star-cyan">New Horizons:</strong> The definitive Kuiper Belt mission! It flew past Pluto in 2015, and then visited the contact-binary object Arrokoth in 2019—the farthest object ever visited by humanity!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Weird Facts -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'kb8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🤯</div>
+                            <h3 class="font-display text-2xl text-kuiper-light">Wild Facts</h3>
+                            <p class="text-space-100 mt-2">The Donut and the Unseen Planet</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-kuiper-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-cyan mb-2 border-b border-kuiper-dark pb-2 w-full">Mysteries of the Edge</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-kuiper-light">It's Thick:</strong> The belt is shaped more like a puffed-up donut or torus than a flat disk.</li>
+                                <li><strong class="text-kuiper-light">Planet Nine?</strong> The strange, clustered orbits of some Kuiper Belt objects have led scientists to hypothesize the existence of a massive, unseen "Planet Nine" lurking even further out, pulling on them!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-kuiper-base border-2 shadow-[0_0_30px_rgba(14,165,233,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-kuiper-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Comet Interceptor</h2>
+                        <p class="text-space-100 mb-6">Pilot the New Horizons probe through the dense outer rim. Collect data from glowing <span class="text-kuiper-base font-bold">blue ice comets</span> while dodging jagged <span class="text-gray-400 font-bold">dark debris</span>. Survive for 20 seconds and scan 3 comets to earn the <span class="text-kuiper-light font-bold">Frontier Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-kuiper-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Engage Thrusters
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-kuiper-base/30">
+                            <div class="text-5xl mb-2">☄️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Deep Space Telemetry</h3>
+                            <p class="text-kuiper-light text-sm">Click Start to fly</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#020617] via-[#082f49] to-[#0f172a] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-kuiper-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-kuiper-base/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Kuiper Belt module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <!-- Question 1 -->
+                <div class="quiz-q block" id="q1">
+                    <h3 class="text-xl font-bold mb-4 text-kuiper-light">1. What is the Kuiper Belt primarily made of?</h3>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(1, false, this)">Rock and heavy metals.</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(1, true, this)">Frozen volatiles like water, ammonia, and methane ices.</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(1, false, this)">Hot plasma from the solar wind.</button>
+                    </div>
+                </div>
+
+                <!-- Question 2 -->
+                <div class="quiz-q hidden" id="q2">
+                    <h3 class="text-xl font-bold mb-4 text-kuiper-light">2. Which famous NASA mission flew through the Kuiper Belt to visit Pluto and Arrokoth?</h3>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(2, false, this)">Cassini</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(2, true, this)">New Horizons</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(2, false, this)">Voyager 1</button>
+                    </div>
+                </div>
+
+                <!-- Question 3 -->
+                <div class="quiz-q hidden" id="q3">
+                    <h3 class="text-xl font-bold mb-4 text-kuiper-light">3. The Kuiper Belt is believed to be the main source of what objects?</h3>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(3, false, this)">Rogue Planets</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(3, false, this)">Main Belt Asteroids</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(3, true, this)">Short-period comets</button>
+                    </div>
+                </div>
+
+                <!-- Quiz Results -->
+                <div class="quiz-q hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold text-kuiper-light">0/3</span></p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+        <h3 class="font-display text-2xl text-star-magenta mb-4 mt-8 flex items-center justify-center md:justify-start gap-2">
+            Notable Kuiper Belt Objects
+        </h3>
+        <p class="text-space-100 text-sm mb-6 text-center md:text-left max-w-3xl">While Pluto is the most famous resident, the belt is full of fascinating and diverse icy bodies.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+            <!-- Arrokoth -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-kuiper-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <!-- Snowman shaped -->
+                <div class="relative w-16 h-16 flex flex-col items-center justify-center mb-3 transform rotate-12">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-red-400 to-red-800 absolute top-0 z-10 shadow-inner"></div>
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-red-900 absolute bottom-0 shadow-inner"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Arrokoth</p>
+                    <p class="font-mono text-xs text-kuiper-light">The Red Snowman</p>
+                </div>
+                <button onclick="showMsgBox('Arrokoth Data', 'A contact-binary object. It looks like a giant red snowman! It is the farthest and most primordial object ever visited by a spacecraft. Module locked.', '⛄')" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-kuiper-light text-kuiper-light transition-colors font-bold shadow-md">
+                    Visit ▸
+                </button>
+            </div>
+
+            <!-- Quaoar -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-kuiper-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-stone-400 to-stone-700 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] rounded-full border border-stone-300 opacity-50"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Quaoar</p>
+                    <p class="font-mono text-xs text-kuiper-light">The Ringed World</p>
+                </div>
+                <button onclick="showMsgBox('Quaoar Data', 'A massive candidate dwarf planet. Scientists recently discovered it has a ring system that shouldn\'t theoretically exist where it is! Module locked.', '🪐')" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-kuiper-light text-kuiper-light transition-colors font-bold shadow-md">
+                    Visit ▸
+                </button>
+            </div>
+
+            <!-- Orcus -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-kuiper-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-gray-500 to-gray-800 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Orcus</p>
+                    <p class="font-mono text-xs text-kuiper-light">The Anti-Pluto</p>
+                </div>
+                <button onclick="showMsgBox('Orcus Data', 'Known as the anti-Pluto. It is locked in the same orbital resonance with Neptune as Pluto is, but is always on the opposite side of the sun! Module locked.', '🌑')" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-kuiper-light text-kuiper-light transition-colors font-bold shadow-md">
+                    Visit ▸
+                </button>
+            </div>
+
+            <!-- Salacia -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-kuiper-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-300 to-gray-500 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Salacia</p>
+                    <p class="font-mono text-xs text-kuiper-light">Large TNO</p>
+                </div>
+                <button onclick="showMsgBox('Salacia Data', 'A large Trans-Neptunian Object (TNO) with a single known moon, Actaea. Very little is known about its surface. Module locked.', '❄️')" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-kuiper-light text-kuiper-light transition-colors font-bold shadow-md">
+                    Visit ▸
+                </button>
+            </div>
+        </div>
+
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box (Replacement for alerts) */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.kuiperCompleteAlerted) {
+            window.kuiperCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Kuiper Belt Module Complete!", "You have unlocked the 'Frontier' badge. Incredible work navigating the icy edge!", "☄️");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Kuiper Belt files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    let currentQ = 1;
+    let score = 0;
+
+    function answer(qNum, isCorrect, btnEl) {
+        let siblings = btnEl.parentElement.children;
+        for(let s of siblings) {
+            s.disabled = true;
+            s.classList.remove('hover:bg-space-700', 'hover:border-kuiper-base');
+            s.classList.add('opacity-50');
+        }
+        btnEl.classList.remove('opacity-50', 'bg-space-800');
+        
+        if(isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            score++;
+            addXP(20);
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+        }
+
+        setTimeout(() => {
+            document.getElementById(`q${qNum}`).classList.add('hidden');
+            if(qNum < 3) {
+                document.getElementById(`q${qNum+1}`).classList.remove('hidden');
+                document.getElementById(`q${qNum+1}`).classList.add('block');
+            } else {
+                showResults();
+            }
+        }, 1000);
+    }
+
+    function showResults() {
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('q-result').classList.add('block');
+        document.getElementById('scoreText').innerText = `${score}/3`;
+        
+        if(score === 3) {
+            document.getElementById('scoreText').classList.add('text-star-green');
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Perfect Knowledge", "Perfect score on the Quiz! +100 XP", "🧠");
+            }
+        } else {
+            document.getElementById('scoreText').classList.add('text-star-red');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        score = 0;
+        currentQ = 1;
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        
+        for(let i=1; i<=3; i++) {
+            let qDiv = document.getElementById(`q${i}`);
+            qDiv.classList.add('hidden');
+            qDiv.classList.remove('block');
+            
+            let btns = qDiv.querySelectorAll('button');
+            btns.forEach(b => {
+                b.disabled = false;
+                b.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all";
+            });
+        }
+        document.getElementById('q1').classList.remove('hidden');
+        document.getElementById('q1').classList.add('block');
+    }
+
+    /* MINI GAME: Comet Interceptor */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    
+    window.onload = function() {
+        resizeCanvas();
+    }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let cometsCollected = 0;
+
+    // Player (New Horizons Probe)
+    const player = {
+        x: 0, 
+        y: 0, 
+        width: 45,
+        height: 40,
+        speed: 8,
+        color: '#f8fafc' 
+    };
+
+    // Obstacles & Targets
+    let spaceObjects = [];
+
+    // Inputs
+    let keys = { ArrowLeft: false, ArrowRight: false };
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') keys[e.code] = false; 
+    });
+    
+    // Touch Support
+    canvas.addEventListener('touchstart', (e) => {
+        if(!gameActive) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const relativeX = touch.clientX - rect.left;
+        if(relativeX < canvas.width/2) {
+            keys.ArrowLeft = true; keys.ArrowRight = false;
+        } else {
+            keys.ArrowRight = true; keys.ArrowLeft = false;
+        }
+    }, {passive: false});
+    
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys.ArrowLeft = false; keys.ArrowRight = false;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        const relativeX = e.clientX - rect.left;
+        if(relativeX < canvas.width/2) {
+            keys.ArrowLeft = true; keys.ArrowRight = false;
+        } else {
+            keys.ArrowRight = true; keys.ArrowLeft = false;
+        }
+    });
+    
+    canvas.addEventListener('mouseup', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+    canvas.addEventListener('mouseleave', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - player.height - 30;
+        spaceObjects = [];
+        cometsCollected = 0;
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Flying...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnObject() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        
+        // 25% chance for a comet, 75% chance for dark rocky debris
+        let isComet = Math.random() > 0.75; 
+        let w = isComet ? 30 : (Math.random() * 25 + 20); 
+        let xPos = Math.random() * (canvas.width - w);
+        
+        spaceObjects.push({
+            x: xPos,
+            y: -w, 
+            width: w,
+            height: w, 
+            speedY: (Math.random() * 4 + 4) * speedMult,
+            rotation: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 0.1,
+            isComet: isComet
+        });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        // Thruster
+        ctx.fillStyle = (frames % 10 < 5) ? '#3b82f6' : '#cbd5e1'; 
+        ctx.beginPath();
+        ctx.moveTo(-4, player.height/2);
+        ctx.lineTo(0, player.height/2 + 15 + Math.random()*5);
+        ctx.lineTo(4, player.height/2);
+        ctx.fill();
+
+        // Main body (Dish)
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.arc(0, -5, player.width/2, Math.PI, 0);
+        ctx.fill();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // RTG Generator
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(-6, -5, 12, 20);
+        
+        // Camera lens
+        ctx.fillStyle = '#0ea5e9'; // Cyan scan light
+        ctx.beginPath();
+        ctx.arc(0, -10, 3, 0, Math.PI*2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+
+    function drawObjects() {
+        for (let i = 0; i < spaceObjects.length; i++) {
+            let o = spaceObjects[i];
+            
+            ctx.save();
+            ctx.translate(o.x + o.width/2, o.y + o.height/2);
+            ctx.rotate(o.rotation);
+            
+            if (o.isComet) {
+                // Glowing blue comet
+                ctx.fillStyle = '#0ea5e9';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#bae6fd';
+                
+                ctx.beginPath();
+                ctx.arc(0, 0, o.width/2, 0, Math.PI*2);
+                ctx.fill();
+                
+                // Tail visual (approximate)
+                ctx.fillStyle = 'rgba(186, 230, 253, 0.4)';
+                ctx.beginPath();
+                ctx.moveTo(-o.width/2, 0);
+                ctx.lineTo(0, -o.height);
+                ctx.lineTo(o.width/2, 0);
+                ctx.fill();
+                
+            } else {
+                // Dark debris
+                ctx.fillStyle = '#1e293b'; 
+                ctx.shadowBlur = 0;
+                
+                ctx.beginPath();
+                ctx.moveTo(-o.width/2.2, -o.height/3);
+                ctx.lineTo(0, -o.height/2);
+                ctx.lineTo(o.width/2.5, -o.height/4);
+                ctx.lineTo(o.width/3, o.height/2);
+                ctx.lineTo(-o.width/2.5, o.height/2.2);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.arc(-o.width/5, -o.height/5, o.width/6, 0, Math.PI*2);
+                ctx.fill();
+            }
+            
+            ctx.restore();
+        }
+    }
+
+    function checkCollision(a) {
+        // Hitbox
+        let hitX = player.x + 5;
+        let hitW = player.width - 10;
+        let hitY = player.y + 5;
+        let hitH = player.height - 10;
+
+        if (hitX < a.x + a.width &&
+            hitX + hitW > a.x &&
+            hitY < a.y + a.height &&
+            hitY + hitH > a.y) {
+            return true;
+        }
+        return false;
+    }
+
+    function updatePhysics() {
+        if (keys.ArrowLeft && player.x > 0) {
+            player.x -= player.speed;
+        }
+        if (keys.ArrowRight && player.x + player.width < canvas.width) {
+            player.x += player.speed;
+        }
+
+        let spawnRate = Math.max(15, 35 - Math.floor(scoreFrames/150));
+        if (frames % spawnRate === 0) {
+            spawnObject();
+        }
+
+        for (let i = spaceObjects.length - 1; i >= 0; i--) {
+            spaceObjects[i].y += spaceObjects[i].speedY;
+            spaceObjects[i].rotation += spaceObjects[i].rotSpeed;
+            
+            if (checkCollision(spaceObjects[i])) {
+                if (spaceObjects[i].isComet) {
+                    cometsCollected++;
+                    addXP(10); 
+                    
+                    // Flash screen cyan
+                    ctx.fillStyle = 'rgba(14, 165, 233, 0.4)';
+                    ctx.fillRect(0,0, canvas.width, canvas.height);
+                    
+                    spaceObjects.splice(i, 1);
+                    continue;
+                } else {
+                    gameOver("Hull Compromised by Dark Debris!");
+                    return;
+                }
+            }
+
+            if (spaceObjects[i].y > canvas.height) {
+                spaceObjects.splice(i, 1);
+            }
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        // Clear canvas
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.8)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawObjects();
+        drawPlayer();
+
+        // Draw HUD
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Time in Belt: ${secondsAlive}s`, 10, 25);
+        ctx.fillStyle = "#bae6fd"; 
+        ctx.fillText(`☄️ Scanned: ${cometsCollected}/3`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && cometsCollected >= 3 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Frontier Badge Unlocked!", "You survived 20 seconds and scanned 3 comets! +100 XP", "☄️");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Relaunch Probe";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && cometsCollected >= 3);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You survived for ${secondsAlive}s.</p>
+            <p class="text-kuiper-light mb-4 text-sm font-bold">☄️ Scanned ${cometsCollected} Comets</p>
+            ${!achievements.playedGame ? `<p class="text-space-100 text-sm mb-4">Survive 20s AND scan 3 comets for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

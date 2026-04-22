@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Enceladus — Interactive Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#030712', 800: '#0f172a', 700: '#1e293b', 500: '#334155', 100: '#f8fafc' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        enceladus: { base: '#e0f2fe', dark: '#38bdf8', light: '#ffffff', plume: '#7dd3fc', stripe: '#0284c7' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'plume-erupt': 'plumeErupt 2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(224, 242, 254, 0.4)' },
+                            '100%': { boxShadow: '0 0 60px rgba(255, 255, 255, 0.8)' },
+                        },
+                        plumeErupt: {
+                            '0%': { opacity: 0.6, transform: 'scaleY(1) translateY(0)' },
+                            '100%': { opacity: 0.9, transform: 'scaleY(1.3) translateY(10%)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #030712;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #e0f2fe 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #7dd3fc 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #38bdf8 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(224, 242, 254, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(3, 7, 18, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(224, 242, 254, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 20px rgba(224, 242, 254, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Enceladus Graphic - Bright Ice with Tiger Stripes */
+        .orb-enceladus {
+            background: radial-gradient(circle at 30% 30%, #ffffff, #f0f9ff, #bae6fd, #7dd3fc, #0284c7);
+            box-shadow: inset -20px -20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(224, 242, 254, 0.6);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* The Tiger Stripes (Sulci) at the South Pole */
+        .orb-enceladus::after {
+            content: '';
+            position: absolute;
+            bottom: 5%; left: 20%;
+            width: 60%; height: 35%;
+            background: 
+                repeating-linear-gradient(-20deg, transparent, transparent 8px, rgba(2, 132, 199, 0.5) 8px, rgba(2, 132, 199, 0.5) 10px);
+            border-radius: 50%;
+            filter: blur(1px);
+            transform: rotate(10deg);
+        }
+
+        /* Cryovolcanic Plumes erupting from the South Pole */
+        .geyser-plumes {
+            position: absolute;
+            bottom: -30%; left: 30%;
+            width: 40%; height: 50%;
+            background: radial-gradient(ellipse at top, rgba(255,255,255,0.9) 0%, rgba(125, 211, 252, 0.4) 40%, transparent 70%);
+            filter: blur(8px);
+            z-index: 1;
+            animation: plume-erupt 3s ease-in-out infinite alternate;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(125, 211, 252, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #030712; }
+        ::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ffffff; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-enceladus-base shadow-[0_0_40px_rgba(224,242,254,0.4)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-enceladus-base text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-enceladus-light">✨</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="saturn.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-gold">
+                <span class="text-xl">🪐</span>
+                <span class="font-display font-bold text-lg">Back to Saturn</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-enceladus-base">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-enceladus-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Enceladus Mission Progress</span>
+                    <span id="progressText" class="text-enceladus-base font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-enceladus-dark to-enceladus-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Plume Dive</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-enceladus-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-enceladus-base font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-enceladus-light animate-ping"></span> Saturn's Brightest Moon
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Enceladus</h1>
+                <p class="text-2xl text-enceladus-base font-body italic mb-6">"The Geyser Moon"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    A tiny, brilliantly white world of clean ice. It hides a massive saltwater ocean beneath its crust, shooting towering geysers of water vapor and organic material straight into deep space!
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-enceladus-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(224,242,254,0.5)]">
+                    Analyze the Plumes 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center pt-10">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-enceladus animate-pulse-glow"></div>
+                    <div class="geyser-plumes"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">✨</div>
+                <div class="text-enceladus-base font-mono text-xs uppercase mb-1">Albedo (Reflectivity)</div>
+                <div class="font-bold text-xl text-white">~100%</div>
+                <div class="text-xs text-star-cyan mt-1 font-bold">Brightest in System</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-enceladus-base font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">504 km</div>
+                <div class="text-xs text-space-100 mt-1">Can fit inside the UK!</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🥶</div>
+                <div class="text-enceladus-base font-mono text-xs uppercase mb-1">Surface Temp</div>
+                <div class="font-bold text-xl">-201°C</div>
+                <div class="text-xs text-space-100 mt-1">Sunlight bounces right off</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🌊</div>
+                <div class="text-enceladus-base font-mono text-xs uppercase mb-1">Subsurface Ocean</div>
+                <div class="font-bold text-xl text-enceladus-dark">Confirmed</div>
+                <div class="text-xs text-space-100 mt-1">Global liquid saltwater</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Enceladus data.</p>
+                </div>
+                <div class="hidden md:block text-enceladus-base font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Size -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'en1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🤏</div>
+                            <h3 class="font-display text-xl text-enceladus-base">A Tiny World</h3>
+                            <p class="text-space-100 text-xs mt-2">Just how small is it?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-enceladus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-enceladus-dark pb-1 w-full">The Small Giant</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>Enceladus is surprisingly tiny! With a diameter of just 504 km (313 miles), it is only 1/7th the size of Earth's Moon.</li>
+                                <li>It is so small that it could easily fit inside the borders of the United Kingdom or the state of Arizona!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Highest Albedo -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'en2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">✨</div>
+                            <h3 class="font-display text-xl text-enceladus-base">The Brightest Object</h3>
+                            <p class="text-space-100 text-xs mt-2">The Solar System's Mirror</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-enceladus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-enceladus-base mb-2 border-b border-enceladus-dark pb-1 w-full">Highest Albedo</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Enceladus has the highest <strong>albedo</strong> (reflectivity) of any body in the solar system.</li>
+                                <li>Because it is covered in clean, fresh, white water ice, it reflects almost 100% of the sunlight that hits it.</li>
+                                <li>This is also why it is so incredibly cold (-201°C)—it absorbs almost no heat from the sun!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Tiger Stripes -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'en3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🐅</div>
+                            <h3 class="font-display text-xl text-enceladus-base">Tiger Stripes</h3>
+                            <p class="text-space-100 text-xs mt-2">The mysterious lines</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-enceladus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-enceladus-stripe mb-2 border-b border-enceladus-dark pb-1 w-full">Sulci Trenches</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>At the South Pole, there are four massive, parallel, bluish trenches called <strong>Sulci</strong> (often nicknamed "Tiger Stripes").</li>
+                                <li>They are over 130 km long and 2 km wide, glowing with thermal heat from the interior ocean below.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Cryovolcanism -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'en4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⛲</div>
+                            <h3 class="font-display text-xl text-enceladus-base">Cryovolcanism</h3>
+                            <p class="text-space-100 text-xs mt-2">Ice Volcanoes!</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-enceladus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-enceladus-base mb-2 border-b border-enceladus-dark pb-1 w-full">Erupting Water</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>The "Tiger Stripes" are actually active <strong>cryovolcanoes</strong>!</li>
+                                <li>Instead of lava, they shoot towering geysers of liquid water, vapor, and ice particles into space at over 800 mph!</li>
+                                <li>This happens because Saturn's gravity flexes and squeezes the moon, creating intense tidal heat.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: The E-Ring -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'en5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🪐</div>
+                            <h3 class="font-display text-2xl text-enceladus-base">Building a Ring</h3>
+                            <p class="text-space-100 mt-2">The Source of Saturn's E-Ring</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-enceladus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-gold mb-3 border-b border-enceladus-dark pb-2 w-full">Supplying Saturn</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-enceladus-base font-mono font-bold block mb-1">Escaping Gravity:</span>
+                                    Because Enceladus is so tiny, its gravity is very weak (0.011g). Most of the water shot from its geysers completely escapes the moon!
+                                </div>
+                                <div>
+                                    <span class="text-enceladus-base font-mono font-bold block mb-1">The E-Ring:</span>
+                                    This frozen geyser water gets trapped in Saturn's orbit, creating the massive, diffuse <strong>E-Ring</strong>. Enceladus literally orbits inside the ring it created!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Astrobiology -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'en6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🦠</div>
+                            <h3 class="font-display text-2xl text-enceladus-base">Astrobiology</h3>
+                            <p class="text-space-100 mt-2">Could life exist here?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-enceladus-base flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-star-green mb-2 border-b border-enceladus-dark pb-1 w-full">The Perfect Recipe</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Enceladus is considered one of the top candidates for finding extraterrestrial life.</li>
+                                <li>It has all three required ingredients: <strong>Liquid Water</strong> (a global ocean), <strong>Energy</strong> (hydrothermal vents powered by tidal heating), and <strong>Chemistry</strong> (the geysers spray complex organic molecules!).</li>
+                                <li>If life exists, it might resemble the bacteria living around dark hydrothermal vents at the bottom of Earth's oceans.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Cassini's Dives -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'en7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-enceladus-base">The Cassini Mission</h3>
+                            <p class="text-space-100 mt-2">Flying through the geysers</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-enceladus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-enceladus-dark pb-2 w-full">Tasting the Ocean</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>When NASA's <strong>Cassini</strong> spacecraft arrived at Saturn, Enceladus's geysers were a complete surprise!</li>
+                                <li>Scientists brilliantly redirected Cassini to fly incredibly low—just 30 miles above the surface—directly <strong>through the geyser plumes</strong>!</li>
+                                <li>It effectively "tasted" the ocean water without ever having to land or drill through the ice!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Future Exploration -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'en8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🚀</div>
+                            <h3 class="font-display text-2xl text-enceladus-base">Future Exploration</h3>
+                            <p class="text-space-100 mt-2">What comes next?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-enceladus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-cyan mb-2 border-b border-enceladus-dark pb-2 w-full">The Orbilander</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>NASA is currently studying a flagship mission concept called the <strong>Enceladus Orbilander</strong>.</li>
+                                <li>If launched in the 2030s, it would spend years orbiting the moon, flying through the plumes repeatedly, before finally landing directly on the ice to search for definitive signs of alien life!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-enceladus-base border-2 shadow-[0_0_30px_rgba(224,242,254,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-enceladus-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Cassini Plume Diver</h2>
+                        <p class="text-space-100 mb-6">Pilot the Cassini spacecraft through the erupting geysers of the Tiger Stripes! Dodge the massive chunks of <span class="text-white font-bold">water ice</span> and collect 5 <span class="text-star-green font-bold">Organic Molecules</span> to earn the <span class="text-enceladus-base font-bold">Astrobiologist Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-enceladus-base mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys to fly.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Enter Plume
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-enceladus-base/30">
+                            <div class="text-5xl mb-2">🛰️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Targeting Geyser</h3>
+                            <p class="text-enceladus-base text-sm">Click Enter to fly through</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#020617] via-[#0c4a6e] to-[#0284c7] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-enceladus-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-enceladus-base/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Enceladus module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="quizActiveArea">
+                    <h3 id="questionText" class="text-xl font-bold mb-4 text-enceladus-base"></h3>
+                    <div id="optionsContainer" class="space-y-3 mb-6"></div>
+                    <div id="explanationBox" class="hidden p-4 rounded-xl border border-space-500 bg-space-800 text-sm mb-6 text-space-100"></div>
+                    <button id="nextQuestionBtn" onclick="nextQuestion()" class="hidden w-full bg-enceladus-base text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Next Question</button>
+                </div>
+
+                <!-- Quiz Results -->
+                <div class="hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold text-enceladus-base">0/20</span></p>
+                    <button id="retryQuizBtn" onclick="initQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Enceladus Module Complete!", "You have unlocked the 'Astrobiologist' badge. Excellent exploration!", "✨");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Enceladus files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    const quizQuestions = [
+        {
+            q: "What unique visual feature is responsible for shooting the massive water geysers on Enceladus?",
+            options: [
+                { text: "The \"Tiger Stripes\" at the South Pole", isCorrect: true },
+                { text: "The Great Red Spot", isCorrect: false },
+                { text: "Olympus Mons", isCorrect: false },
+                { text: "Valles Marineris", isCorrect: false }
+            ],
+            explanation: "The 'Tiger Stripes' are four parallel fractures at the south pole (sulci) that act as cryovolcanoes, venting water vapor and organics."
+        },
+        {
+            q: "Enceladus has the highest Albedo of any body in the solar system. What does Albedo mean?",
+            options: [
+                { text: "How much sunlight a surface reflects.", isCorrect: true },
+                { text: "How fast a moon rotates on its axis.", isCorrect: false },
+                { text: "The amount of gravity a moon has.", isCorrect: false },
+                { text: "The density of the moon's atmosphere.", isCorrect: false }
+            ],
+            explanation: "Albedo is a measure of reflectivity. Enceladus's clean water ice surface reflects almost 100% of incident sunlight."
+        },
+        {
+            q: "The water escaping from Enceladus's geysers gets trapped in Saturn's orbit, creating which specific ring?",
+            options: [
+                { text: "The E-Ring", isCorrect: true },
+                { text: "The A-Ring", isCorrect: false },
+                { text: "The Cassini Division", isCorrect: false },
+                { text: "The F-Ring", isCorrect: false }
+            ],
+            explanation: "Enceladus is the primary source of material for Saturn's broad, diffuse E-ring, and actually orbits within it."
+        },
+        {
+            q: "Which spacecraft famously flew through the geyser plumes of Enceladus to analyze their composition?",
+            options: [
+                { text: "Cassini", isCorrect: true },
+                { text: "Voyager 1", isCorrect: false },
+                { text: "Galileo", isCorrect: false },
+                { text: "New Horizons", isCorrect: false }
+            ],
+            explanation: "NASA's Cassini spacecraft performed multiple close flybys, flying directly through the plumes to 'taste' the ocean composition."
+        },
+        {
+            q: "What provides the energy that keeps the subsurface ocean of Enceladus in a liquid state?",
+            options: [
+                { text: "Tidal heating from Saturn's gravity", isCorrect: true },
+                { text: "Nuclear fusion in its core", isCorrect: false },
+                { text: "Heat trapped from its initial formation", isCorrect: false },
+                { text: "Intense solar radiation", isCorrect: false }
+            ],
+            explanation: "As Enceladus orbits Saturn, the massive planet's gravity flexes and squeezes the moon, generating internal friction and heat."
+        },
+        {
+            q: "What type of geological activity characterizes the \"Tiger Stripes\" on Enceladus?",
+            options: [
+                { text: "Cryovolcanism", isCorrect: true },
+                { text: "Shield volcanism", isCorrect: false },
+                { text: "Tectonic subduction", isCorrect: false },
+                { text: "Impact cratering", isCorrect: false }
+            ],
+            explanation: "Cryovolcanism involves the eruption of volatiles like water, ammonia, or methane instead of molten rock (magma)."
+        },
+        {
+            q: "Approximately how large is Enceladus's diameter?",
+            options: [
+                { text: "504 km", isCorrect: true },
+                { text: "3,474 km", isCorrect: false },
+                { text: "5,150 km", isCorrect: false },
+                { text: "12,000 km", isCorrect: false }
+            ],
+            explanation: "Enceladus is remarkably small—only about 504 km across, which is roughly the width of the state of Arizona."
+        },
+        {
+            q: "Which of the following ingredients for life has NOT yet been definitively found on Enceladus?",
+            options: [
+                { text: "Complex multicellular organisms", isCorrect: true },
+                { text: "Liquid water", isCorrect: false },
+                { text: "Organic molecules", isCorrect: false },
+                { text: "Energy source (hydrothermal vents)", isCorrect: false }
+            ],
+            explanation: "While the building blocks (water, organics, energy) are present, no actual life forms have been discovered."
+        },
+        {
+            q: "What are the proper geological names for the \"Tiger Stripes\" on Enceladus?",
+            options: [
+                { text: "Sulci", isCorrect: true },
+                { text: "Chasmata", isCorrect: false },
+                { text: "Maculae", isCorrect: false },
+                { text: "Regiones", isCorrect: false }
+            ],
+            explanation: "In planetary geology, subparallel furrows and ridges are termed 'sulci' (e.g., Alexandria Sulcus)."
+        },
+        {
+            q: "Which chemical compound makes up the vast majority of Enceladus's surface?",
+            options: [
+                { text: "Water Ice", isCorrect: true },
+                { text: "Solid Methane", isCorrect: false },
+                { text: "Dry Ice (Solid Carbon Dioxide)", isCorrect: false },
+                { text: "Silicate Rock", isCorrect: false }
+            ],
+            explanation: "The surface of Enceladus is almost pure, fresh water ice, giving it its brilliant white appearance."
+        },
+        {
+            q: "Why do the geyser plumes of Enceladus primarily erupt from the South Pole?",
+            options: [
+                { text: "The ice crust is significantly thinner there.", isCorrect: true },
+                { text: "It receives more sunlight at the South Pole.", isCorrect: false },
+                { text: "Saturn's magnetic field is focused there.", isCorrect: false },
+                { text: "Meteor impacts fractured only the southern hemisphere.", isCorrect: false }
+            ],
+            explanation: "Radar and gravity measurements suggest the ice shell is only a few kilometers thick at the south pole, compared to tens of kilometers elsewhere."
+        },
+        {
+            q: "What specific evidence from the Cassini mission points to the existence of hydrothermal vents at the bottom of Enceladus's ocean?",
+            options: [
+                { text: "The presence of nanometer-sized silica particles in the plumes.", isCorrect: true },
+                { text: "Direct photographs of the ocean floor.", isCorrect: false },
+                { text: "Large deposits of pure gold detected in the geysers.", isCorrect: false },
+                { text: "Volcanic ash found on the surface ice.", isCorrect: false }
+            ],
+            explanation: "Silica nanoparticles form when hot water containing dissolved rock rapidly cools, strongly indicating active hydrothermal vents."
+        },
+        {
+            q: "How does the surface temperature of Enceladus compare to Earth's?",
+            options: [
+                { text: "It is extremely cold, around -201°C.", isCorrect: true },
+                { text: "It is roughly room temperature due to tidal heating.", isCorrect: false },
+                { text: "It is boiling hot due to the cryovolcanoes.", isCorrect: false },
+                { text: "It fluctuates from -100°C to +100°C daily.", isCorrect: false }
+            ],
+            explanation: "Because its high albedo reflects most sunlight, the surface is incredibly cold, averaging -201°C (-330°F)."
+        },
+        {
+            q: "What happens to the majority of the material ejected by Enceladus's geysers?",
+            options: [
+                { text: "It escapes the moon's weak gravity.", isCorrect: true },
+                { text: "It immediately falls back as snow.", isCorrect: false },
+                { text: "It forms a dense, thick atmosphere around the moon.", isCorrect: false },
+                { text: "It ignites in space, creating flashes of light.", isCorrect: false }
+            ],
+            explanation: "Enceladus's gravity is so low that a large percentage of the ejected vapor and ice crystals achieve escape velocity."
+        },
+        {
+            q: "What proposed future NASA mission concept aims to orbit Enceladus and eventually land on its surface?",
+            options: [
+                { text: "Enceladus Orbilander", isCorrect: true },
+                { text: "Europa Clipper", isCorrect: false },
+                { text: "Titan Dragonfly", isCorrect: false },
+                { text: "Artemis III", isCorrect: false }
+            ],
+            explanation: "The Enceladus Orbilander is a flagship mission concept that would study the plumes from orbit before landing to search for life."
+        },
+        {
+            q: "What is the approximate escape velocity of Enceladus?",
+            options: [
+                { text: "239 m/s", isCorrect: true },
+                { text: "11.2 km/s", isCorrect: false },
+                { text: "2.4 km/s", isCorrect: false },
+                { text: "5,000 m/s", isCorrect: false }
+            ],
+            explanation: "Enceladus has a very low escape velocity (about 239 meters per second), allowing geyser material to easily fly into space."
+        },
+        {
+            q: "Which chemical element, critical for habitability, was recently discovered in the ice grains from Enceladus's ocean?",
+            options: [
+                { text: "Phosphorus", isCorrect: true },
+                { text: "Uranium", isCorrect: false },
+                { text: "Helium", isCorrect: false },
+                { text: "Lead", isCorrect: false }
+            ],
+            explanation: "In 2023, scientists analyzing Cassini data found phosphates in the ice grains, completing the list of essential elements for life (CHNOPS)."
+        },
+        {
+            q: "What causes the Tiger Stripes to glow in infrared images?",
+            options: [
+                { text: "Thermal heat radiating from the warm fractures.", isCorrect: true },
+                { text: "Bioluminescent bacteria living in the ice.", isCorrect: false },
+                { text: "Reflected light from Saturn's rings.", isCorrect: false },
+                { text: "Radioactive decay of uranium on the surface.", isCorrect: false }
+            ],
+            explanation: "The fractures are significantly warmer than the surrounding ice due to the heat escaping from the subsurface ocean."
+        },
+        {
+            q: "Why is the northern hemisphere of Enceladus so different from the southern hemisphere?",
+            options: [
+                { text: "It is heavily cratered and appears much older.", isCorrect: true },
+                { text: "It is covered in liquid methane lakes.", isCorrect: false },
+                { text: "It is pitch black and covered in dust.", isCorrect: false },
+                { text: "It has an equatorial ridge of mountains.", isCorrect: false }
+            ],
+            explanation: "The northern hemisphere is heavily cratered, indicating it hasn't been resurfaced recently, unlike the active south pole."
+        },
+        {
+            q: "If you were to stand on Enceladus, what would Saturn look like in the sky?",
+            options: [
+                { text: "It would appear massive, taking up a huge portion of the sky.", isCorrect: true },
+                { text: "It would look like a small, bright star.", isCorrect: false },
+                { text: "It would never be visible due to the thick atmosphere.", isCorrect: false },
+                { text: "It would appear the same size as our Moon does from Earth.", isCorrect: false }
+            ],
+            explanation: "Because Enceladus orbits relatively close to Saturn, the giant planet would dominate the sky, appearing about 60 times larger than our Moon."
+        }
+    ];
+
+    let currentQIndex = 0;
+    let score = 0;
+    let randomizedQuestions = [];
+
+    function initQuiz() {
+        randomizedQuestions = [...quizQuestions].sort(() => Math.random() - 0.5);
+        randomizedQuestions.forEach(q => {
+            q.options.sort(() => Math.random() - 0.5);
+        });
+        currentQIndex = 0;
+        score = 0;
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('quizActiveArea').classList.remove('hidden');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = randomizedQuestions[currentQIndex];
+        document.getElementById('questionText').innerText = `${currentQIndex + 1}. ${q.q}`;
+        const optionsContainer = document.getElementById('optionsContainer');
+        optionsContainer.innerHTML = '';
+        
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-enceladus-base transition-all";
+            btn.innerHTML = opt.text;
+            btn.dataset.isCorrect = opt.isCorrect;
+            btn.onclick = () => handleAnswer(opt.isCorrect, btn, q);
+            optionsContainer.appendChild(btn);
+        });
+        
+        document.getElementById('explanationBox').classList.add('hidden');
+        document.getElementById('nextQuestionBtn').classList.add('hidden');
+    }
+
+    function handleAnswer(isCorrect, btnEl, q) {
+        const siblings = btnEl.parentElement.children;
+        for(let s of siblings) {
+            s.disabled = true;
+            s.classList.remove('hover:bg-space-700', 'hover:border-enceladus-base');
+            s.classList.add('opacity-50');
+            if(s.dataset.isCorrect === 'true') {
+                 s.classList.remove('opacity-50', 'border-space-500');
+                 s.classList.add('border-star-green', 'text-star-green');
+            }
+        }
+        btnEl.classList.remove('opacity-50', 'bg-space-800', 'border-star-green', 'text-star-green');
+        
+        if(isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            score++;
+            addXP(10);
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+        }
+
+        const expBox = document.getElementById('explanationBox');
+        expBox.innerHTML = `<strong class="${isCorrect ? 'text-star-green' : 'text-star-red'}">${isCorrect ? 'Correct!' : 'Incorrect.'}</strong> <br/> ${q.explanation}`;
+        expBox.classList.remove('hidden');
+        
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        currentQIndex++;
+        if(currentQIndex < randomizedQuestions.length) {
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('quizActiveArea').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('scoreText').innerText = `${score}/20`;
+        
+        if(score === 20) {
+            document.getElementById('scoreText').className = 'font-bold text-star-green';
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(200);
+                showMsgBox("Perfect Knowledge", "Perfect score on the Enceladus Quiz! +200 XP", "🧠");
+            }
+            document.getElementById('retryQuizBtn').classList.add('hidden');
+        } else {
+            document.getElementById('scoreText').className = 'font-bold text-star-red';
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', initQuiz);
+
+    /* MINI GAME: Cassini Plume Diver */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let organicsCollected = 0;
+
+    // Player (Cassini Probe) - Fixed Y, moves left/right
+    const player = {
+        x: 0, 
+        y: 80, // Near the top, facing down!
+        width: 38,
+        height: 48,
+        speed: 6,
+        color: '#f8fafc' 
+    };
+
+    let entities = []; // Ice chunks (obstacles) and organics (collectibles)
+    let bgPlume = []; // Fast moving vapor
+
+    // Inputs
+    let keys = { ArrowLeft: false, ArrowRight: false };
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(['ArrowLeft', 'ArrowRight'].includes(e.code)) {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(['ArrowLeft', 'ArrowRight'].includes(e.code)) keys[e.code] = false; 
+    });
+    
+    // Touch/Mouse Support
+    canvas.addEventListener('touchstart', (e) => {
+        if(!gameActive) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const relativeX = touch.clientX - rect.left;
+        if(relativeX < canvas.width/2) { keys.ArrowLeft = true; keys.ArrowRight = false; } 
+        else { keys.ArrowRight = true; keys.ArrowLeft = false; }
+    }, {passive: false});
+    
+    canvas.addEventListener('touchend', (e) => { e.preventDefault(); keys.ArrowLeft = false; keys.ArrowRight = false; });
+    canvas.addEventListener('mousedown', (e) => {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        const relativeX = e.clientX - rect.left;
+        if(relativeX < canvas.width/2) { keys.ArrowLeft = true; keys.ArrowRight = false; } 
+        else { keys.ArrowRight = true; keys.ArrowLeft = false; }
+    });
+    canvas.addEventListener('mouseup', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+    canvas.addEventListener('mouseleave', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        entities = [];
+        organicsCollected = 0;
+
+        // Background water vapor moving UP fast
+        bgPlume = Array.from({length: 40}).map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 4 + 2,
+            speed: Math.random() * 6 + 4
+        }));
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Analyzing...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let isOrganic = Math.random() > 0.75; // 25% chance of organic molecule
+        
+        let w = isOrganic ? 20 : (Math.random() * 25 + 20); // Organics are smaller, ice chunks vary
+        let xPos = Math.random() * (canvas.width - w);
+        
+        entities.push({
+            x: xPos,
+            y: canvas.height + w, // Spawn at bottom, moving UP into the probe
+            width: w,
+            height: w,
+            speedY: (Math.random() * 3 + 5) * speedMult, // Fast upward movement
+            rotation: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 0.2,
+            isOrganic: isOrganic,
+            pulse: 0
+        });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        // Since we are moving DOWN into the plume, the probe faces DOWN. 
+        // We will just draw it normally but know the particles flow UP.
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        // Main cylindrical body (Cassini)
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(-10, -player.height/2 + 10, 20, player.height - 10);
+        
+        // Huge satellite dish on TOP (trailing the dive)
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.ellipse(0, -player.height/2 + 10, 24, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Mass Spectrometer "Sniffer" pointing DOWN
+        ctx.fillStyle = '#38bdf8'; // Sensor light
+        ctx.beginPath();
+        ctx.moveTo(-4, player.height/2);
+        ctx.lineTo(4, player.height/2);
+        ctx.lineTo(0, player.height/2 + 8);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    function drawEntities() {
+        for (let i = 0; i < entities.length; i++) {
+            let e = entities[i];
+            
+            ctx.save();
+            ctx.translate(e.x + e.width/2, e.y + e.height/2);
+            ctx.rotate(e.rotation);
+            
+            if (e.isOrganic) {
+                // Organic Molecule (Glowing green/blue complex)
+                e.pulse += 0.15;
+                let glow = 8 + Math.sin(e.pulse) * 4;
+                
+                ctx.fillStyle = '#4ef0a8'; // Bright green
+                ctx.shadowBlur = glow;
+                ctx.shadowColor = '#34d399';
+                
+                // Hexagon shape (carbon ring representation)
+                ctx.beginPath();
+                for (let j = 0; j < 6; j++) {
+                    ctx.lineTo(e.width/2 * Math.cos(j * 2 * Math.PI / 6), e.width/2 * Math.sin(j * 2 * Math.PI / 6));
+                }
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(0, 0, 3, 0, Math.PI*2);
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+            } else {
+                // Sharp Ice Chunk
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; // White ice
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#bae6fd'; // Cyan glow
+                
+                ctx.beginPath();
+                ctx.moveTo(-e.width/2, -e.height/3);
+                ctx.lineTo(0, -e.height/2);
+                ctx.lineTo(e.width/2, -e.height/4);
+                ctx.lineTo(e.width/3, e.height/2);
+                ctx.lineTo(-e.width/4, e.height/2.2);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Highlight
+                ctx.fillStyle = 'rgba(125, 211, 252, 0.5)'; // Light blue shading
+                ctx.beginPath();
+                ctx.moveTo(-e.width/4, -e.height/4);
+                ctx.lineTo(e.width/4, -e.height/4);
+                ctx.lineTo(0, e.height/4);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+            }
+            
+            ctx.restore();
+        }
+    }
+
+    function drawBackground() {
+        // Vapor particles streaming UP
+        bgPlume.forEach(p => {
+            ctx.fillStyle = 'rgba(224, 242, 254, 0.4)'; // Plume white/blue
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+            ctx.fill();
+            p.y -= p.speed + (scoreFrames/1000); 
+            if(p.y + p.size < 0) {
+                p.y = canvas.height + p.size;
+                p.x = Math.random() * canvas.width;
+            }
+        });
+    }
+
+    function checkCollisionRect(r1, r2) {
+        return !(r2.x > r1.x + r1.width || 
+                 r2.x + r2.width < r1.x || 
+                 r2.y > r1.y + r1.height ||
+                 r2.y + r2.height < r1.y);
+    }
+
+    function updatePhysics() {
+        // Player Movement (Horizontal only)
+        if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
+        if (keys.ArrowRight && player.x + player.width < canvas.width) player.x += player.speed;
+
+        let pRect = { x: player.x + 5, y: player.y + 10, width: player.width - 10, height: player.height - 10 };
+
+        // Spawning
+        let spawnRate = Math.max(20, 50 - Math.floor(scoreFrames/80));
+        if (frames % spawnRate === 0) spawnEntity();
+
+        for (let i = entities.length - 1; i >= 0; i--) {
+            entities[i].y -= entities[i].speedY; // Move UP
+            entities[i].rotation += entities[i].rotSpeed;
+            
+            if (checkCollisionRect(pRect, entities[i])) {
+                if (entities[i].isOrganic) {
+                    organicsCollected++;
+                    addXP(10);
+                    ctx.fillStyle = 'rgba(78, 240, 168, 0.4)'; // Green flash
+                    ctx.fillRect(0,0, canvas.width, canvas.height);
+                    entities.splice(i, 1);
+                    continue;
+                } else {
+                    gameOver("Smashed by Plume Ice!");
+                    return;
+                }
+            }
+
+            if (entities[i].y + entities[i].height < 0) {
+                entities.splice(i, 1);
+            }
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        // Clear canvas with deep space/blue water plume color
+        let depthRatio = Math.min(1, scoreFrames / 1200); 
+        ctx.fillStyle = `rgba(2, 132, 199, ${0.3 + (depthRatio * 0.4)})`; // Gets bluer/thicker as you dive
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        drawBackground();
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawEntities();
+        drawPlayer();
+
+        // HUD
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let dist = Math.floor(secondsAlive * 25); // Faster apparent speed
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Dive Depth: ${dist} km`, 10, 25);
+        ctx.fillStyle = "#4ef0a8"; // Bio green
+        ctx.fillText(`🦠 Organics: ${organicsCollected}/5`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.6)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && organicsCollected >= 5 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Astrobiologist Badge Unlocked!", "You found the building blocks of life! +100 XP", "🦠");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Dive";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && organicsCollected >= 5);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You survived for ${secondsAlive}s.</p>
+            <p class="text-star-green mb-4 text-sm font-bold">🦠 Collected ${organicsCollected} Organics</p>
+            ${!achievements.playedGame ? `<p class="text-enceladus-base text-sm mb-4 text-center px-2">Survive 20s AND collect 5 organics for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

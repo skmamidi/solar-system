@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Uranus — Interactive Solar System Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#020617', 800: '#0f172a', 700: '#1e293b', 500: '#334155', 100: '#f8fafc' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        uranus: { base: '#06b6d4', dark: '#0891b2', light: '#67e8f9', ice: '#cffafe', ring: '#a5f3fc' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 60s linear infinite',
+                        'spin-miranda': 'spin 3s linear infinite',
+                        'spin-ariel': 'spin 5s linear infinite',
+                        'spin-umbriel': 'spin 8s linear infinite',
+                        'spin-titania': 'spin 14s linear infinite',
+                        'spin-oberon': 'spin 22s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(6, 182, 212, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(6, 182, 212, 0.5)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #020617;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #67e8f9 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #06b6d4 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #cffafe 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(2, 6, 23, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(6, 182, 212, 0.6);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Uranus Graphic - Featureless Pale Blue */
+        .orb-uranus {
+            background: radial-gradient(circle at 30% 30%, #cffafe, #67e8f9, #06b6d4, #0891b2, #164e63);
+            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(6, 182, 212, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* The Vertical Rings! Uranus is tilted 98 degrees */
+        .uranus-rings {
+            position: absolute;
+            top: 50%; left: 50%;
+            /* 98 degree tilt makes it almost vertical */
+            transform: translate(-50%, -50%) rotate(98deg) scaleY(0.2);
+            width: 250%; height: 250%;
+            border: 6px solid rgba(165, 243, 252, 0.5);
+            border-radius: 50%;
+            box-shadow: 
+                0 0 0 2px rgba(0,0,0,0.1),
+                inset 0 0 0 6px rgba(6, 182, 212, 0.2),
+                inset 0 0 0 10px rgba(0,0,0,0.2),
+                inset 0 0 0 15px rgba(103, 232, 249, 0.3);
+            z-index: 1; 
+        }
+
+        /* Orbiting Moons 3D System Container */
+        .solar-system {
+            transform-style: preserve-3d;
+            perspective: 1200px;
+            /* Matches the visual 98-degree tilt of the CSS rings roughly */
+            transform: rotateZ(98deg) rotateX(72deg);
+        }
+
+        /* Prevent Squish on orbital spheres by counter-rotating */
+        .moon-sphere {
+            transform: rotateX(-72deg) rotateZ(-98deg);
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(6, 182, 212, 0.1);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #06b6d4; }
+        
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden" onload="initQuiz()">
+
+<!-- Custom Message Box -->
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-uranus-base shadow-[0_0_40px_rgba(6,182,212,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-uranus-base text-space-900 font-bold py-3 rounded-xl hover:bg-uranus-light transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<!-- Header Navigation -->
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <a href="../index.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+            <span class="text-2xl text-uranus-light">🪩</span>
+            <span class="font-display font-bold text-xl tracking-wide hidden sm:block">Solar System Explorer</span>
+            <span class="font-display font-bold text-xl tracking-wide sm:hidden">SSE</span>
+        </a>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-uranus-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <!-- Progress/Gamification Bar -->
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-uranus-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Uranus Mission Progress</span>
+                    <span id="progressText" class="text-uranus-base font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-uranus-dark to-uranus-base h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Play Mini-Game</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Olympiad Quiz</div>
+            </div>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-uranus-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-uranus-base font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-star-cyan animate-ping"></span> Planet 7 of 8
+                </p>
+                <h1 class="font-display text-6xl md:text-8xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Uranus</h1>
+                <p class="text-2xl text-uranus-light font-body italic mb-6">"The Sideways Ice Giant"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    A pale blue world of ice and gas. It holds the record for the coldest atmosphere in the solar system and rolls around the sun completely on its side like a giant bowling ball!
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-uranus-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-uranus-light transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+                    Explore the Ice Giant 👇
+                </button>
+            </div>
+            
+            <!-- Animated 3D Planet with Vertical Rings & Accurate Moons -->
+            <div class="z-10 relative mt-16 md:mt-0 flex justify-center items-center h-80 w-80">
+                <!-- Outer 3D orbital plane for moons (extends far past rings and is rotated to match the 98 degree tilt!) -->
+                <div class="absolute w-[450px] h-[450px] md:w-[700px] md:h-[700px] solar-system animate-float">
+                    
+                    <!-- 1. Miranda Orbit (Closest, small gray) -->
+                    <div class="absolute top-1/2 left-1/2 w-[35%] h-[35%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5 animate-spin-miranda transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-2 h-2 bg-gray-400 rounded-full shadow-[0_0_8px_#9ca3af] moon-sphere"></div>
+                    </div>
+
+                    <!-- 2. Ariel Orbit (Brightest, whitish) -->
+                    <div class="absolute top-1/2 left-1/2 w-[48%] h-[48%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5 animate-spin-ariel transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-[0_0_12px_#ffffff] moon-sphere"></div>
+                    </div>
+
+                    <!-- 3. Umbriel Orbit (Darkest, dark gray) -->
+                    <div class="absolute top-1/2 left-1/2 w-[65%] h-[65%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5 animate-spin-umbriel transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-4 h-4 bg-gray-700 rounded-full shadow-[0_0_8px_#374151] moon-sphere"></div>
+                    </div>
+
+                    <!-- 4. Titania Orbit (Largest, gray/dirty ice) -->
+                    <div class="absolute top-1/2 left-1/2 w-[85%] h-[85%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-uranus-base/20 animate-spin-titania transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-5 h-5 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full shadow-[0_0_10px_#9ca3af] moon-sphere"></div>
+                    </div>
+
+                    <!-- 5. Oberon Orbit (Farthest, ancient, dark gray) -->
+                    <div class="absolute top-1/2 left-1/2 w-[110%] h-[110%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5 animate-spin-oberon transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-4.5 h-4.5 bg-gradient-to-br from-gray-500 to-gray-800 rounded-full shadow-[0_0_8px_#6b7280] moon-sphere"></div>
+                    </div>
+                </div>
+
+                <!-- Central Uranus & Vertical Rings -->
+                <div class="absolute w-40 h-40 md:w-56 md:h-56 animate-pulse-glow z-20 pointer-events-none">
+                    <div class="uranus-rings"></div>
+                    <div class="w-full h-full orb-uranus"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Dashboard -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🥶</div>
+                <div class="text-uranus-base font-mono text-xs uppercase mb-1">Coldest Temp</div>
+                <div class="font-bold text-xl">-224°C <span class="text-sm font-normal text-space-100">(-371°F)</span></div>
+                <div class="text-xs text-star-cyan mt-1">Coldest in System</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🏎️</div>
+                <div class="text-uranus-base font-mono text-xs uppercase mb-1">Orbital Speed</div>
+                <div class="font-bold text-xl">6.81 km/s</div>
+                <div class="text-xs text-space-100 mt-1">~24,500 km/h</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🧲</div>
+                <div class="text-uranus-base font-mono text-xs uppercase mb-1">Magnetic Field</div>
+                <div class="font-bold text-xl">Lopsided</div>
+                <div class="text-xs text-space-100 mt-1">Offset from center</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🌪️</div>
+                <div class="text-uranus-base font-mono text-xs uppercase mb-1">Max Wind Speed</div>
+                <div class="font-bold text-xl">900 km/h</div>
+                <div class="text-xs text-space-100 mt-1">Fierce icy winds</div>
+            </div>
+        </div>
+
+        <!-- Info Cards -->
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt planetary data.</p>
+                </div>
+                <div class="hidden md:block text-uranus-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <!-- 8 Info Flip Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Card 1 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'u1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📍</div>
+                            <h3 class="font-display text-xl text-uranus-base">Position & Distance</h3>
+                            <p class="text-space-100 text-xs mt-2">Distance from Sun</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-uranus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-uranus-light mb-2 border-b border-uranus-dark pb-1 w-full">The Deep Freeze</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li><span class="text-uranus-base font-mono font-bold">AU:</span> ~19.2 Astronomical Units</li>
+                                <li><span class="text-uranus-base font-mono font-bold">KM:</span> ~2.9 Billion kilometers</li>
+                                <li class="text-xs text-space-100 italic mt-2">Sunlight takes 2 hours and 40 minutes to reach Uranus!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'u2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📏</div>
+                            <h3 class="font-display text-xl text-uranus-base">Relative Size</h3>
+                            <p class="text-space-100 text-xs mt-2">The Third Largest</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-uranus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-uranus-light mb-2 border-b border-uranus-dark pb-1 w-full">A Giant of Ice</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-uranus-base font-mono font-bold">Diameter:</span> 50,724 km. Exactly 4 times wider than Earth.</li>
+                                <li><span class="text-uranus-base font-mono font-bold">Volume:</span> You could fit exactly <strong class="text-white">63 Earths</strong> inside it.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'u3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚖️</div>
+                            <h3 class="font-display text-xl text-uranus-base">Weight & Density</h3>
+                            <p class="text-space-100 text-xs mt-2">Surprisingly Light Gravity</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-uranus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-uranus-light mb-2 border-b border-uranus-dark pb-1 w-full">Less Pull Than Earth</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-uranus-base font-mono font-bold">Density:</span> 1.27 g/cm³. The second least dense planet after Saturn.</li>
+                                <li class="bg-space-900 p-2 rounded border border-space-500 text-center text-star-cyan mt-2">
+                                    Gravity is only 89% of Earth's! If you weigh 100 lbs on Earth, you'd weigh 89 lbs here.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'u4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧪</div>
+                            <h3 class="font-display text-xl text-uranus-base">Composition</h3>
+                            <p class="text-space-100 text-xs mt-2">What makes an Ice Giant?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-uranus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-uranus-light mb-2 border-b border-uranus-dark pb-1 w-full">Icy Slush</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-uranus-base">Makeup:</strong> Unlike Jupiter/Saturn, it's mostly a hot, dense fluid of "icy" materials: water, methane, and ammonia.</li>
+                                <li><strong class="text-uranus-base">Core:</strong> A small, rocky core at the center.</li>
+                                <li><strong class="text-uranus-base">Surface:</strong> No solid surface to stand on.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'u5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⏳</div>
+                            <h3 class="font-display text-2xl text-uranus-base">Time constraints</h3>
+                            <p class="text-space-100 mt-2">Length of Day & Extreme Seasons</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-uranus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-uranus-light mb-3 border-b border-uranus-dark pb-2 w-full">Generational Seasons</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-uranus-base font-mono font-bold block mb-1">Length of Year:</span>
+                                    84 Earth years to orbit the sun once.
+                                </div>
+                                <div>
+                                    <span class="text-uranus-base font-mono font-bold block mb-1">Length of Day:</span>
+                                    17 hours and 14 minutes.
+                                </div>
+                                <div class="col-span-2 bg-space-900 p-2 rounded border border-uranus-base text-center text-uranus-light">
+                                    Because of its severe 98° tilt, the poles get 42 years of continuous sunlight, followed by 42 years of complete darkness!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'u6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">💨</div>
+                            <h3 class="font-display text-2xl text-uranus-base">Atmosphere & Weather</h3>
+                            <p class="text-space-100 mt-2">Why is it blue? What does it smell like?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-uranus-base flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-uranus-light mb-2 border-b border-uranus-dark pb-1 w-full">A Smelly Blue World</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-uranus-base">The Blue Color:</strong> Methane gas in the upper atmosphere absorbs red light and reflects blue light.</li>
+                                <li><strong class="text-uranus-base">The Smell:</strong> Recent studies found hydrogen sulfide in the cloud tops. If you could breathe it, it would smell like rotten eggs!</li>
+                                <li><strong class="text-uranus-base">Temperature:</strong> It is the coldest planetary atmosphere, even colder than Neptune!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'u7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-uranus-base">Famous Missions</h3>
+                            <p class="text-space-100 mt-2">Exploring the Outer Reaches</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-uranus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-uranus-light mb-2 border-b border-uranus-dark pb-2 w-full">The Lone Visitor</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-white">Voyager 2 (1986):</strong> The ONLY spacecraft to ever visit Uranus.</li>
+                                <li><strong class="text-star-cyan">Discoveries:</strong> It discovered 10 new moons, 2 new rings, and a strangely off-center magnetic field during its brief flyby.</li>
+                                <li><strong class="text-space-100 italic">Future:</strong> NASA and ESA are currently designing future orbiter missions to finally return!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'u8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🤯</div>
+                            <h3 class="font-display text-2xl text-uranus-base">Wild Facts</h3>
+                            <p class="text-space-100 mt-2">Tap for the strangest Uranus facts</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-uranus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-uranus-light mb-2 border-b border-uranus-dark pb-2 w-full">Rolling and Raining Gems</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-uranus-light">The Bowling Ball:</strong> Unlike any other planet, its equator is nearly at a right angle to its orbit (97.77° tilt), meaning it rolls around the sun like a ball!</li>
+                                <li><strong class="text-uranus-light">Diamond Rain:</strong> Deep in the mantle, extreme pressure and temperature squeeze carbon atoms out of methane, causing solid diamonds to sink towards the core!</li>
+                                <li><strong class="text-uranus-light">Lopsided Magnet:</strong> The magnetic field isn't in the center of the planet—it's shifted away from the core and tilted wildly.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mini Game Section -->
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-uranus-base border-2 shadow-[0_0_30px_rgba(6,182,212,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-uranus-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Voyager Diamond Dodger</h2>
+                        <p class="text-space-100 mb-6">Pilot the Voyager 2 probe deep into the atmosphere! Dodge the freezing chunks of ammonia ice and collect the falling diamonds. Survive for 20 seconds to earn the <span class="text-uranus-light font-bold">Ice Voyager Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-uranus-base mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Begin Flyby
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-uranus-base/30">
+                            <div class="text-5xl mb-2">🛰️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Approaching System</h3>
+                            <p class="text-uranus-light text-sm">Click Begin to dive</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#083344] via-[#0e7490] to-[#06b6d4] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-uranus-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rigorous Science Olympiad Quiz Section -->
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-uranus-base/50">
+            <div class="text-center mb-8">
+                <span class="inline-block px-3 py-1 bg-star-gold text-space-900 text-xs font-bold rounded-full mb-3 uppercase tracking-widest">State Level</span>
+                <h2 class="font-display text-3xl md:text-4xl text-white">Science Olympiad Simulator</h2>
+                <p class="text-space-100 mt-2">Test your advanced knowledge across 25 grueling questions to master the Uranus module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-3xl mx-auto">
+                <div id="quizHeader" class="flex justify-between items-center mb-6">
+                    <span id="quizProgress" class="text-uranus-light font-mono font-bold">Question 1 / 25</span>
+                    <span id="quizScore" class="text-star-gold font-mono font-bold">Score: 0</span>
+                </div>
+
+                <div id="quizBody" class="glass-panel p-6 md:p-8 rounded-2xl border border-uranus-dark bg-space-800 relative transition-all">
+                    <h3 id="questionText" class="text-lg md:text-xl font-bold mb-6 text-white leading-tight">Loading Question...</h3>
+                    
+                    <div id="optionsContainer" class="space-y-3 font-body">
+                        <!-- Options injected by JS -->
+                    </div>
+                    
+                    <!-- Detailed Explanation Box -->
+                    <div id="explanationBox" class="hidden mt-6 p-5 rounded-xl bg-space-900 border border-uranus-base text-space-100 text-sm leading-relaxed relative shadow-inner">
+                        <span class="absolute -top-3 left-4 bg-uranus-dark text-white px-2 py-0.5 rounded text-xs font-bold tracking-wide">SCIENTIFIC EXPLANATION</span>
+                        <p id="explanationText" class="mt-2"></p>
+                    </div>
+
+                    <div class="mt-6 flex justify-end">
+                        <button id="nextBtn" class="hidden bg-uranus-base text-space-900 px-6 py-2 rounded-full font-bold hover:bg-uranus-light transition-transform transform hover:scale-105" onclick="nextQuestion()">Next Question ⏭️</button>
+                    </div>
+                </div>
+
+                <div id="quizResults" class="hidden text-center py-8">
+                    <!-- Final results injected by JS -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Moons of Uranus Interactive Drawer -->
+        <h3 class="font-display text-2xl text-star-magenta mb-4 mt-8 flex items-center justify-center md:justify-start gap-2">
+            Major Moons of Uranus (5 of 28)
+        </h3>
+        <p class="text-space-100 text-sm mb-6 text-center md:text-left max-w-3xl">Unlike most moons named after Greek mythology, Uranus's moons are named after characters from the works of William Shakespeare and Alexander Pope!</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
+            <!-- Miranda -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-uranus-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                    <!-- Frankenstein scars -->
+                    <div class="absolute top-2 left-0 w-full h-[2px] bg-gray-600 transform rotate-45"></div>
+                    <div class="absolute bottom-4 left-0 w-full h-[2px] bg-gray-700 transform -rotate-12"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Miranda</p>
+                    <p class="font-mono text-xs text-uranus-light">Frankenstein Moon</p>
+                </div>
+                <button onclick="window.location.href='miranda.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-uranus-light text-uranus-light transition-colors font-bold shadow-md">
+                    Visit miranda.html ▸
+                </button>
+            </div>
+
+            <!-- Ariel -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-uranus-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-gray-100 to-gray-400 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                    <div class="absolute inset-0 bg-white opacity-20"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Ariel</p>
+                    <p class="font-mono text-xs text-uranus-light">Brightest Moon</p>
+                </div>
+                <button onclick="window.location.href='ariel.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-uranus-light text-uranus-light transition-colors font-bold shadow-md">
+                    Visit ariel.html ▸
+                </button>
+            </div>
+
+            <!-- Umbriel -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-uranus-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.8)] relative overflow-hidden mb-3">
+                    <div class="absolute top-2 left-4 w-3 h-3 rounded-full bg-gray-500 border border-gray-400"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Umbriel</p>
+                    <p class="font-mono text-xs text-uranus-light">Darkest Moon</p>
+                </div>
+                <button onclick="window.location.href='umbriel.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-uranus-light text-uranus-light transition-colors font-bold shadow-md">
+                    Visit umbriel.html ▸
+                </button>
+            </div>
+
+            <!-- Titania -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-uranus-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                    <div class="absolute top-4 left-1 w-[80%] h-[1px] bg-gray-300 transform -rotate-12"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Titania</p>
+                    <p class="font-mono text-xs text-uranus-light">Largest Moon</p>
+                </div>
+                <button onclick="window.location.href='titania.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-uranus-light text-uranus-light transition-colors font-bold shadow-md">
+                    Visit titania.html ▸
+                </button>
+            </div>
+
+            <!-- Oberon -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-uranus-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-gray-500 to-gray-800 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                    <div class="absolute top-2 right-2 w-2 h-2 rounded-full bg-gray-900 border border-gray-400"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Oberon</p>
+                    <p class="font-mono text-xs text-uranus-light">Ancient Outer</p>
+                </div>
+                <button onclick="window.location.href='oberon.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-uranus-light text-uranus-light transition-colors font-bold shadow-md">
+                    Visit oberon.html ▸
+                </button>
+            </div>
+        </div>
+
+    </section>
+</main>
+
+<script>
+    /* APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.planetCompleteAlerted) {
+            window.planetCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Uranus Module Complete!", "You have unlocked the 'Ice Giant Explorer' rank! Cold and calculating work!", "🪩");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Uranus files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC: Science Olympiad (State Level) - 25 Questions */
+    const rawQuizData = [
+        {
+            q: "Why is Uranus a striking pale blue or cyan color compared to Jupiter and Saturn?",
+            options: ["It is entirely covered in liquid water.", "It is painted that way by solar radiation.", "Methane gas in its upper atmosphere absorbs red light and reflects blue light.", "Its magnetic field glows blue in the vacuum of space."],
+            correct: "Methane gas in its upper atmosphere absorbs red light and reflects blue light.",
+            explanation: "While Uranus is mostly composed of hydrogen and helium, it has a higher percentage of methane than Jupiter or Saturn. Methane molecules absorb the red portion of the visible light spectrum from the Sun, making the planet appear a beautiful cyan blue."
+        },
+        {
+            q: "Which is the ONLY spacecraft from Earth to have ever visited Uranus?",
+            options: ["Cassini", "Voyager 2", "New Horizons", "Pioneer 11"],
+            correct: "Voyager 2",
+            explanation: "Launched in 1977, NASA's Voyager 2 made its closest approach to Uranus in January 1986. During this brief flyby, it discovered 10 new moons, two new rings, and its uniquely tilted magnetic field."
+        },
+        {
+            q: "What is uniquely bizarre about how Uranus rotates on its axis?",
+            options: ["It rotates incredibly slowly, taking 243 Earth days.", "It is tilted at 97.77 degrees, meaning it practically rolls on its side along its orbital path.", "It rotates synchronously with the Sun, so one side is always day.", "It bounces up and down relative to the ecliptic plane."],
+            correct: "It is tilted at 97.77 degrees, meaning it practically rolls on its side along its orbital path.",
+            explanation: "Most planets spin somewhat upright like tops, but Uranus's axis of rotation is tilted sideways (nearly parallel to its orbital plane). Scientists theorize a massive Earth-sized object collided with it long ago, knocking it completely over."
+        },
+        {
+            q: "Who is officially credited with discovering Uranus in 1781?",
+            options: ["Galileo Galilei", "Nicolaus Copernicus", "William Herschel", "Christiaan Huygens"],
+            correct: "William Herschel",
+            explanation: "Sir William Herschel, a British astronomer, discovered Uranus on March 13, 1781, while surveying the night sky with a telescope he built himself. It was the first planet discovered with a telescope."
+        },
+        {
+            q: "Upon its discovery, what was the initially proposed name for the planet Uranus by its discoverer?",
+            options: ["Caelus", "Neptune", "Georgium Sidus (George's Star)", "Herschel"],
+            correct: "Georgium Sidus (George's Star)",
+            explanation: "William Herschel wanted to name his newly discovered planet 'Georgium Sidus' to honor his patron, King George III of Great Britain. The international astronomical community ultimately rejected this in favor of 'Uranus', the Greek god of the sky, to keep with classical mythology."
+        },
+        {
+            q: "What unique naming convention is used for the moons of Uranus?",
+            options: ["They are named after Greek Titans.", "They are named after characters from works by William Shakespeare and Alexander Pope.", "They are named after famous scientists and mathematicians.", "They are named after ocean deities."],
+            correct: "They are named after characters from works by William Shakespeare and Alexander Pope.",
+            explanation: "Unlike the rest of the solar system's moons, which are named after figures in classical mythology associated with their planet, Uranus's moons are named after literary characters (e.g., Oberon, Titania, Miranda, Ariel)."
+        },
+        {
+            q: "Despite being closer to the Sun than Neptune, Uranus holds the record for the coldest planetary atmosphere in the solar system. Why?",
+            options: ["Its rings block most of the incoming sunlight.", "Its methane layer acts as a perfect thermal insulator.", "It lacks a significant internal heat source, radiating very little heat from its core.", "It is constantly pelted by super-cooled comets."],
+            correct: "It lacks a significant internal heat source, radiating very little heat from its core.",
+            explanation: "Jupiter, Saturn, and Neptune all radiate roughly twice as much heat as they receive from the Sun. Uranus, however, radiates hardly any excess heat. Its core has seemingly cooled down entirely, dropping its atmospheric temperatures to a staggering -224°C (-371°F)."
+        },
+        {
+            q: "Which moon of Uranus features the colossal Verona Rupes, an ice cliff that is up to 20 kilometers deep—the tallest known cliff in the solar system?",
+            options: ["Ariel", "Umbriel", "Titania", "Miranda"],
+            correct: "Miranda",
+            explanation: "Miranda is a heavily deformed, 'frankenstein' moon. Its surface is a bizarre patchwork of broken terrain, leading to the towering Verona Rupes. If you jumped off it, due to low gravity, you would fall for over 10 minutes before hitting the bottom!"
+        },
+        {
+            q: "What is highly unusual about the magnetic field of Uranus?",
+            options: ["It flips polarity every 24 hours.", "It is perfectly aligned with its rotational axis.", "It is offset from the planet's physical center and tilted by 59 degrees.", "It completely lacks a magnetic field."],
+            correct: "It is offset from the planet's physical center and tilted by 59 degrees.",
+            explanation: "Unlike Earth's magnetic field, which is generated in the core and roughly aligns with the poles, Uranus's magnetic field does not originate from its geometric center. It is offset by roughly 1/3 of the planet's radius and tilted at a chaotic 59-degree angle."
+        },
+        {
+            q: "Along with hydrogen and helium, Uranus's mantle is primarily composed of an electrically conductive, hot, dense fluid made of what three 'icy' materials?",
+            options: ["Water, Ammonia, and Methane", "Nitrogen, Oxygen, and Carbon Dioxide", "Silicate, Iron, and Nickel", "Sulfur, Phosphorus, and Neon"],
+            correct: "Water, Ammonia, and Methane",
+            explanation: "In planetary science, 'ices' refer to compounds with freezing points above about 100 K. Uranus is classed as an 'Ice Giant' because its bulk consists of a supercritical fluid of water, ammonia, and methane rather than just gas like Jupiter."
+        },
+        {
+            q: "How fast do the intense, supersonic winds blow in Uranus's upper atmosphere?",
+            options: ["100 km/h", "400 km/h", "900 km/h", "2,100 km/h"],
+            correct: "900 km/h",
+            explanation: "Despite its seemingly featureless and calm blue exterior, Uranus experiences fierce, retrograde winds near its equator that can whip around the planet at speeds up to 900 km/h (560 mph)."
+        },
+        {
+            q: "How long does it take for Uranus to complete a single orbit around the Sun (one Uranian year)?",
+            options: ["29 Earth years", "84 Earth years", "165 Earth years", "248 Earth years"],
+            correct: "84 Earth years",
+            explanation: "Sitting at roughly 19.2 Astronomical Units from the Sun, Uranus takes approximately 84 Earth years to make a single, long journey around our star."
+        },
+        {
+            q: "Because of its extreme 98-degree axial tilt, how long does one pole on Uranus experience continuous sunlight during its summer?",
+            options: ["10.7 hours", "21 Earth years", "42 Earth years", "84 Earth years"],
+            correct: "42 Earth years",
+            explanation: "For half of its 84-year orbit, one pole points almost directly at the Sun, experiencing a 42-year-long 'day' of continuous sunlight, while the other pole is plunged into a 42-year-long, freezing, dark winter."
+        },
+        {
+            q: "Recent spectroscopic observations have detected what foul-smelling chemical compound in the upper cloud deck of Uranus?",
+            options: ["Ozone", "Hydrogen sulfide", "Sulfur dioxide", "Carbon monoxide"],
+            correct: "Hydrogen sulfide",
+            explanation: "In 2018, astronomers confirmed the presence of hydrogen sulfide (H2S) in the cloud tops of Uranus. This is the exact same gas that gives rotten eggs their distinct, terrible smell."
+        },
+        {
+            q: "Uranus is often compared to its twin, Neptune. Uranus has a slightly larger diameter, but how does its mass compare?",
+            options: ["Uranus is twice as massive as Neptune.", "Uranus is more massive but less dense.", "Neptune is more massive than Uranus.", "They have the exact same mass."],
+            correct: "Neptune is more massive than Uranus.",
+            explanation: "Though Uranus is wider in diameter, Neptune is denser and therefore more massive. Uranus's mass is about 14.5 times Earth's, while Neptune's is about 17.1 times Earth's."
+        },
+        {
+            q: "In what direction does Uranus rotate on its axis?",
+            options: ["Prograde (West to East)", "Retrograde (East to West)", "Polar (North to South)", "It does not rotate"],
+            correct: "Retrograde (East to West)",
+            explanation: "Like Venus, Uranus rotates retrograde. If you could stand on the clouds of Uranus and the Sun were visible, it would appear to rise in the west and set in the east."
+        },
+        {
+            q: "How were the dark, narrow rings of Uranus first discovered in 1977 by astronomers on Earth?",
+            options: ["Using the Hubble Space Telescope", "By a flyby from Pioneer 10", "Through stellar occultation (watching a star pass behind the planet)", "By analyzing radio wave reflections"],
+            correct: "Through stellar occultation (watching a star pass behind the planet)",
+            explanation: "Before Voyager 2 arrived, astronomers were watching Uranus pass in front of a distant star. Before the planet hid the star, the star 'blinked' out multiple times, revealing that narrow, invisible rings were blocking its light."
+        },
+        {
+            q: "What incredible theoretical phenomenon is believed to occur deep in the mantles of Ice Giants like Uranus and Neptune due to extreme pressure?",
+            options: ["Diamond rain", "Liquid iron volcanoes", "Supercritical gold fusion", "Anti-matter generation"],
+            correct: "Diamond rain",
+            explanation: "At immense depths, extreme pressures and temperatures are believed to break apart methane molecules (CH4). The carbon atoms condense into solid diamond crystals, which then sink slowly through the fluid mantle toward the core."
+        },
+        {
+            q: "Which is the largest of Uranus's 28 recognized moons, characterized by a dirty ice surface with deep fault valleys?",
+            options: ["Oberon", "Ariel", "Umbriel", "Titania"],
+            correct: "Titania",
+            explanation: "Titania is the largest moon of Uranus and the eighth largest in the solar system. It is covered in long canyons and scarps, suggesting the moon expanded and cracked as its interior froze over its history."
+        },
+        {
+            q: "Which dark, heavily cratered moon of Uranus features a striking, bright 131km-wide ring of material near its equator known as the Wunda crater?",
+            options: ["Umbriel", "Miranda", "Puck", "Juliet"],
+            correct: "Umbriel",
+            explanation: "Umbriel is the darkest of Uranus's major moons, reflecting very little light. The stark contrast of the bright ring of frost/ice inside the Wunda crater makes it the moon's most prominent surface feature."
+        },
+        {
+            q: "Uranus's magnetic field is generated completely differently than Earth's or Jupiter's. Where is it believed to originate?",
+            options: ["From a solid iron-nickel core", "From the convective circulation of its salty, ammonia-water fluid mantle", "From liquid metallic hydrogen at its center", "From solar wind interacting directly with the rings"],
+            correct: "From the convective circulation of its salty, ammonia-water fluid mantle",
+            explanation: "Earth's magnetic field comes from its iron core. Because Uranus's field is wildly offset, scientists believe it is generated in the electrically conductive slush of the ice mantle (a relatively shallow layer) rather than the deep core."
+        },
+        {
+            q: "Astronomers officially classify Jupiter and Saturn as 'Gas Giants', but they put Uranus and Neptune in a separate category called:",
+            options: ["Dwarf Giants", "Terrestrial Giants", "Ice Giants", "Plasma Giants"],
+            correct: "Ice Giants",
+            explanation: "In the 1990s, scientists realized Uranus and Neptune were fundamentally different from Jupiter and Saturn. Their bulk is made of heavier elements (oxygen, carbon, nitrogen) rather than just hydrogen/helium, earning them the 'Ice Giant' moniker."
+        },
+        {
+            q: "Unlike Saturn's broad, bright, dusty rings, what do Uranus's rings look like?",
+            options: ["They are extremely dark, narrow, and composed mostly of larger, boulder-sized chunks.", "They are bright red and made of pure iron oxide.", "They are composed entirely of microscopic glowing plasma.", "There is only one single, massive, solid ring."],
+            correct: "They are extremely dark, narrow, and composed mostly of larger, boulder-sized chunks.",
+            explanation: "Uranus's ring system is very dark (reflecting almost no light) and lacks the fine dust seen in Saturn's rings. The particles are mostly large, macroscopic boulders, likely the shattered remains of a moon destroyed by a high-speed impact."
+        },
+        {
+            q: "Currently, how many officially recognized moons does Uranus have in orbit around it?",
+            options: ["14", "28", "62", "95"],
+            correct: "28",
+            explanation: "As of the most recent astronomical updates, Uranus has 28 recognized moons, all sharing the unique Shakespearean/Pope naming convention. The inner ones are small and icy, while the outer ones are irregular, captured bodies."
+        },
+        {
+            q: "When Voyager 2 flew past Uranus in 1986, the planet's South Pole was pointed almost directly at the Sun. What season was it in the southern hemisphere?",
+            options: ["Winter Solstice", "Vernal Equinox", "Summer Solstice", "Autumnal Equinox"],
+            correct: "Summer Solstice",
+            explanation: "Because of its 98-degree tilt, when a pole points directly at the Sun, it is experiencing its peak Summer Solstice (the middle of its 42-year-long day). This orientation made observing the entire planet highly challenging for the probe."
+        }
+    ];
+
+    let shuffledQuiz = [];
+    let currentQIndex = 0;
+    let quizScore = 0;
+    let answeredCurrent = false;
+
+    function initQuiz() {
+        shuffledQuiz = [...rawQuizData].sort(() => Math.random() - 0.5);
+        currentQIndex = 0;
+        quizScore = 0;
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        answeredCurrent = false;
+        const qData = shuffledQuiz[currentQIndex];
+        
+        document.getElementById('questionText').innerText = qData.q;
+        document.getElementById('quizProgress').innerText = `Question ${currentQIndex + 1} / 25`;
+        document.getElementById('explanationBox').classList.add('hidden');
+        document.getElementById('nextBtn').classList.add('hidden');
+        
+        const optsContainer = document.getElementById('optionsContainer');
+        optsContainer.innerHTML = '';
+        
+        let shuffledOptions = [...qData.options].sort(() => Math.random() - 0.5);
+        
+        shuffledOptions.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-uranus-base transition-all transform hover:-translate-y-1";
+            btn.innerText = opt;
+            btn.onclick = () => selectAnswer(btn, opt, qData.correct, qData.explanation);
+            optsContainer.appendChild(btn);
+        });
+    }
+
+    function selectAnswer(btnEl, selected, correct, explanation) {
+        if (answeredCurrent) return;
+        answeredCurrent = true;
+        
+        const buttons = document.getElementById('optionsContainer').children;
+        for (let b of buttons) {
+            b.disabled = true;
+            b.classList.remove('hover:bg-space-700', 'hover:border-uranus-base', 'hover:-translate-y-1');
+            
+            if (b.innerText === correct) {
+                b.classList.add('bg-star-green', 'bg-opacity-20', 'border-star-green', 'text-star-green', 'font-bold');
+            } else {
+                b.classList.add('opacity-50');
+                if (b === btnEl && selected !== correct) {
+                    b.classList.add('bg-star-red', 'bg-opacity-20', 'border-star-red', 'text-star-red');
+                    b.classList.remove('opacity-50');
+                }
+            }
+        }
+        
+        if (selected === correct) {
+            quizScore++;
+            addXP(10);
+        }
+        document.getElementById('quizScore').innerText = `Score: ${quizScore}`;
+        
+        const isCorrectText = selected === correct ? '<span class="text-star-green font-bold text-lg">Correct!</span>' : '<span class="text-star-red font-bold text-lg">Incorrect.</span>';
+        document.getElementById('explanationText').innerHTML = `${isCorrectText} ${explanation}`;
+        document.getElementById('explanationBox').classList.remove('hidden');
+        
+        const nextBtn = document.getElementById('nextBtn');
+        nextBtn.innerText = currentQIndex === 24 ? "Finish Olympiad 🏆" : "Next Question ⏭️";
+        nextBtn.classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        currentQIndex++;
+        if (currentQIndex < 25) {
+            renderQuestion();
+        } else {
+            showQuizResults();
+        }
+    }
+
+    function showQuizResults() {
+        document.getElementById('quizHeader').classList.add('hidden');
+        document.getElementById('quizBody').classList.add('hidden');
+        
+        const resultsContainer = document.getElementById('quizResults');
+        resultsContainer.classList.remove('hidden');
+        resultsContainer.classList.add('block');
+        
+        let message = "";
+        let emoji = "";
+        if(quizScore === 25) { message = "Perfect Score! You are an Ice Giant Master! The Olympiad judges are stunned."; emoji="🥇"; }
+        else if(quizScore >= 20) { message = "Excellent work! You definitely qualify for the State Level competition."; emoji="🥈"; }
+        else if(quizScore >= 15) { message = "Good job, but keep studying those frozen data files!"; emoji="🥉"; }
+        else { message = "Looks like you need a bit more practice. Review the data and dive through the atmosphere again!"; emoji="📚"; }
+        
+        resultsContainer.innerHTML = `
+            <div class="text-6xl mb-4">${emoji}</div>
+            <h3 class="text-3xl font-display text-star-gold mb-2">Olympiad Complete!</h3>
+            <p class="text-xl text-white mb-2">Final Score: <span class="font-bold text-uranus-light">${quizScore}/25</span></p>
+            <p class="text-space-100 mb-8 italic max-w-lg mx-auto">${message}</p>
+            <button onclick="resetFullQuiz()" class="bg-space-700 border border-space-500 text-white px-8 py-3 rounded-full hover:bg-space-500 transition mx-auto font-bold shadow-lg">Retake Quiz 🔄</button>
+        `;
+        
+        if (!achievements.passedQuiz && quizScore >= 15) { 
+            achievements.passedQuiz = true;
+            addXP(100);
+            showMsgBox("Olympiad Badge Unlocked", "You passed the rigorous Uranus State-Level Quiz! +100 XP", "🏅");
+            updateProgress();
+        }
+    }
+    
+    function resetFullQuiz() {
+        document.getElementById('quizHeader').classList.remove('hidden');
+        document.getElementById('quizBody').classList.remove('hidden');
+        document.getElementById('quizResults').classList.add('hidden');
+        document.getElementById('quizResults').classList.remove('block');
+        initQuiz();
+    }
+
+    /* MINI GAME: Voyager Diamond Dodger */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    
+    window.addEventListener('load', function() {
+        resizeCanvas();
+    });
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let diamondsCollected = 0;
+
+    const player = { x: 0, y: 0, width: 38, height: 48, speed: 8, color: '#f8fafc' };
+    let obstacles = [];
+    let keys = { ArrowLeft: false, ArrowRight: false };
+
+    window.addEventListener('keydown', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') keys[e.code] = false; 
+    });
+    
+    canvas.addEventListener('touchstart', (e) => {
+        if(!gameActive) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const relativeX = touch.clientX - rect.left;
+        if(relativeX < canvas.width/2) { keys.ArrowLeft = true; keys.ArrowRight = false; } 
+        else { keys.ArrowRight = true; keys.ArrowLeft = false; }
+    }, {passive: false});
+    
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys.ArrowLeft = false; keys.ArrowRight = false;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        const relativeX = e.clientX - rect.left;
+        if(relativeX < canvas.width/2) { keys.ArrowLeft = true; keys.ArrowRight = false; } 
+        else { keys.ArrowRight = true; keys.ArrowLeft = false; }
+    });
+    
+    canvas.addEventListener('mouseup', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+    canvas.addEventListener('mouseleave', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - player.height - 20;
+        obstacles = [];
+        diamondsCollected = 0;
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Diving...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnObstacle() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let type = Math.random() > 0.8 ? 'diamond' : 'ice'; 
+        
+        let w = type === 'diamond' ? 20 : (Math.random() * 30 + 20); 
+        let xPos = Math.random() * (canvas.width - w);
+        
+        obstacles.push({
+            x: xPos, y: -w, 
+            width: w, height: w, 
+            speedY: (Math.random() * 4 + 4) * speedMult, 
+            rotation: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 0.2,
+            type: type
+        });
+    }
+
+    function drawPlayer() {
+        ctx.fillStyle = player.color;
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        ctx.fillStyle = (frames % 10 < 5) ? '#fbbf24' : '#ef4444';
+        ctx.beginPath();
+        ctx.moveTo(-6, player.height/2);
+        ctx.lineTo(0, player.height/2 + 15 + Math.random()*10);
+        ctx.lineTo(6, player.height/2);
+        ctx.fill();
+
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.moveTo(-10, -player.height/2 + 10);
+        ctx.lineTo(10, -player.height/2 + 10);
+        ctx.lineTo(14, player.height/2);
+        ctx.lineTo(-14, player.height/2);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.ellipse(0, -player.height/2 + 5, 20, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(-player.width/2 - 10, 5, 15, 4); 
+
+        ctx.restore();
+    }
+
+    function drawObstacles() {
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            
+            ctx.save();
+            ctx.translate(o.x + o.width/2, o.y + o.height/2);
+            ctx.rotate(o.rotation);
+            
+            if (o.type === 'ice') {
+                ctx.fillStyle = 'rgba(8, 145, 178, 0.9)'; 
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#06b6d4';
+                
+                ctx.beginPath();
+                ctx.moveTo(-o.width/2, -o.height/3);
+                ctx.lineTo(0, -o.height/2);
+                ctx.lineTo(o.width/2, -o.height/4);
+                ctx.lineTo(o.width/3, o.height/2);
+                ctx.lineTo(-o.width/4, o.height/2.2);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.beginPath();
+                ctx.arc(-o.width/6, -o.height/6, o.width/5, 0, Math.PI*2);
+                ctx.fill();
+                
+            } else if (o.type === 'diamond') {
+                ctx.fillStyle = '#e0f2fe'; 
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#ffffff';
+                
+                ctx.beginPath();
+                ctx.moveTo(0, -o.height/2);
+                ctx.lineTo(o.width/2, 0);
+                ctx.lineTo(0, o.height/2);
+                ctx.lineTo(-o.width/2, 0);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = '#bae6fd';
+                ctx.beginPath();
+                ctx.moveTo(0, -o.height/4);
+                ctx.lineTo(o.width/4, 0);
+                ctx.lineTo(0, o.height/4);
+                ctx.lineTo(-o.width/4, 0);
+                ctx.closePath();
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+    }
+
+    function checkCollision(o) {
+        let hitX = player.x + 4, hitW = player.width - 8;
+        let hitY = player.y + 4, hitH = player.height - 8;
+
+        if (hitX < o.x + o.width && hitX + hitW > o.x && hitY < o.y + o.height && hitY + hitH > o.y) return true;
+        return false;
+    }
+
+    function updatePhysics() {
+        if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
+        if (keys.ArrowRight && player.x + player.width < canvas.width) player.x += player.speed;
+
+        let spawnRate = Math.max(12, 35 - Math.floor(scoreFrames/150));
+        if (frames % spawnRate === 0) spawnObstacle();
+
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].y += obstacles[i].speedY;
+            obstacles[i].rotation += obstacles[i].rotSpeed;
+            
+            if (checkCollision(obstacles[i])) {
+                if (obstacles[i].type === 'ice') {
+                    gameOver("Crushed by Ammonia Ice!");
+                    return;
+                } else if (obstacles[i].type === 'diamond') {
+                    diamondsCollected++;
+                    addXP(5); 
+                    obstacles.splice(i, 1);
+                    continue;
+                }
+            }
+
+            if (obstacles[i].y > canvas.height) obstacles.splice(i, 1);
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        ctx.fillStyle = 'rgba(8, 51, 68, 0.5)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawObstacles();
+        drawPlayer();
+
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Dive Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillStyle = "#a5f3fc"; 
+        ctx.fillText(`💎 Gems: ${diamondsCollected}`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        if (secondsAlive >= 20 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Ice Voyager Badge Unlocked!", "You navigated the icy atmosphere! +100 XP", "🛰️");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Dive";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class=\"text-white mb-2\">You survived for ${secondsAlive} seconds.</p>
+            <p class=\"text-uranus-ring mb-4 text-sm font-bold\">💎 Collected ${diamondsCollected} Diamonds</p>
+            ${!achievements.playedGame ? `<p class=\"text-uranus-light text-sm mb-4\">Try to reach 20 seconds for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && secondsAlive < 20) addXP(5);
+    }
+
+    startBtn.addEventListener('click', () => { initGame(); });
+
+</script>
+</body>
+</html>

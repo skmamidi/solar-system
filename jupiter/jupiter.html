@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jupiter — Interactive Solar System Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#050403', 800: '#140c08', 700: '#26170e', 500: '#472d1f', 100: '#fcf6f2' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b', green_dark: '#1e7544' },
+                        jupiter: { base: '#d97706', dark: '#78350f', light: '#fde68a', storm: '#991b1b', band: '#b45309' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 50s linear infinite',
+                        'band-shift': 'bandShift 30s linear infinite',
+                        'spin-io': 'spin 4s linear infinite',
+                        'spin-europa': 'spin 8s linear infinite',
+                        'spin-ganymede': 'spin 16s linear infinite',
+                        'spin-callisto': 'spin 38s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(217, 119, 6, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(217, 119, 6, 0.5)' },
+                        },
+                        bandShift: {
+                            '0%': { backgroundPosition: '0% 0%' },
+                            '100%': { backgroundPosition: '100% 0%' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #050403;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #ffd166 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #d97706 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #fde68a 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(38, 23, 14, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(217, 119, 6, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(20, 12, 8, 0.8), rgba(38, 23, 14, 0.9));
+            border: 1px solid rgba(217, 119, 6, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(217, 119, 6, 0.6);
+            box-shadow: 0 0 20px rgba(217, 119, 6, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Jupiter Graphic */
+        .orb-jupiter {
+            background: linear-gradient(
+                to bottom,
+                #92400e 0%, #d97706 12%, #fcd34d 22%, #b45309 35%, 
+                #fef3c7 48%, #d97706 60%, #92400e 75%, #fde68a 88%, #78350f 100%
+            );
+            background-size: 200% 200%;
+            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(217, 119, 6, 0.4);
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            animation: band-shift 40s linear infinite alternate;
+        }
+        
+        .orb-jupiter::after {
+            content: '';
+            position: absolute;
+            top: 55%; left: 30%;
+            width: 35%; height: 18%;
+            background: radial-gradient(ellipse at center, #7f1d1d 0%, #991b1b 40%, rgba(180, 83, 9, 0.6) 70%, transparent 100%);
+            border-radius: 50%;
+            filter: blur(2px);
+            transform: rotate(-5deg);
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .jupiter-rings {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-10deg);
+            width: 180%; height: 20%;
+            border: 2px solid rgba(253, 230, 138, 0.15);
+            border-radius: 50%;
+            z-index: -1;
+            box-shadow: 0 0 10px rgba(253, 230, 138, 0.1);
+        }
+
+        /* Orbiting Moons 3D System Container */
+        .solar-system {
+            transform-style: preserve-3d;
+            perspective: 1200px;
+            transform: rotateX(72deg) rotateZ(-10deg);
+        }
+
+        /* Prevent Squish on orbital spheres by counter-rotating */
+        .moon-sphere {
+            transform: rotateX(-72deg);
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(217, 119, 6, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #050403; }
+        ::-webkit-scrollbar-thumb { background: #472d1f; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d97706; }
+        
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden" onload="initQuiz()">
+
+<!-- Custom Message Box -->
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-jupiter-base">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-jupiter-base text-space-900 font-bold py-3 rounded-xl hover:bg-jupiter-light transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<!-- Header Navigation -->
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <a href="../index.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+            <span class="text-2xl text-jupiter-base">🪐</span>
+            <span class="font-display font-bold text-xl tracking-wide hidden sm:block">Solar System Explorer</span>
+            <span class="font-display font-bold text-xl tracking-wide sm:hidden">SSE</span>
+        </a>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-jupiter-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <!-- Progress/Gamification Bar -->
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-jupiter-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Jupiter Mission Progress</span>
+                    <span id="progressText" class="text-jupiter-base font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-jupiter-dark to-jupiter-base h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Play Mini-Game</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Olympiad Quiz</div>
+            </div>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-jupiter-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-jupiter-base font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-star-gold animate-ping"></span> Planet 5 of 8
+                </p>
+                <h1 class="font-display text-6xl md:text-8xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Jupiter</h1>
+                <p class="text-2xl text-jupiter-light font-body italic mb-6">"King of the Planets"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    The largest planet in our solar system, a true gas giant. Its swirling atmosphere is decorated with stripes, violent storms like the Great Red Spot, and is surrounded by an entire mini-solar system of dozens of moons.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-jupiter-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-jupiter-light transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(217,119,6,0.5)]">
+                    Descend into the Clouds 👇
+                </button>
+            </div>
+            
+            <!-- Animated 3D Planet and Accurate Moons -->
+            <div class="z-10 relative mt-16 md:mt-0 flex justify-center items-center h-80 w-80">
+                <!-- Outer 3D orbital plane for Galilean moons -->
+                <div class="absolute w-[400px] h-[400px] md:w-[600px] md:h-[600px] solar-system animate-float">
+                    
+                    <!-- 1. Io Orbit -->
+                    <div class="absolute top-1/2 left-1/2 w-[45%] h-[45%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10 animate-spin-io transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-4 h-4 bg-gradient-to-br from-yellow-300 via-orange-500 to-red-600 rounded-full shadow-[0_0_12px_#eab308] moon-sphere" style="transform: translate(-50%, -50%) rotateX(-72deg);"></div>
+                    </div>
+
+                    <!-- 2. Europa Orbit -->
+                    <div class="absolute top-1/2 left-1/2 w-[60%] h-[60%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10 animate-spin-europa transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-3.5 h-3.5 bg-gradient-to-br from-blue-100 to-white rounded-full shadow-[0_0_8px_#e0f2fe] moon-sphere" style="transform: translate(-50%, -50%) rotateX(-72deg);"></div>
+                    </div>
+
+                    <!-- 3. Ganymede Orbit -->
+                    <div class="absolute top-1/2 left-1/2 w-[85%] h-[85%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10 animate-spin-ganymede transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-6 h-6 bg-gradient-to-br from-gray-400 to-gray-700 rounded-full shadow-[0_0_15px_#9ca3af] moon-sphere" style="transform: translate(-50%, -50%) rotateX(-72deg);"></div>
+                    </div>
+
+                    <!-- 4. Callisto Orbit -->
+                    <div class="absolute top-1/2 left-1/2 w-[110%] h-[110%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5 animate-spin-callisto transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-5 h-5 bg-gradient-to-br from-gray-600 to-gray-900 rounded-full shadow-[0_0_10px_#4b5563] moon-sphere" style="transform: translate(-50%, -50%) rotateX(-72deg);"></div>
+                    </div>
+                </div>
+
+                <!-- Central Jupiter (Counter-rotated to face the viewer) -->
+                <div class="absolute w-64 h-64 md:w-80 md:h-80 orb-jupiter animate-pulse-glow shadow-2xl z-20 pointer-events-none">
+                    <div class="jupiter-rings"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Dashboard -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🥶</div>
+                <div class="text-jupiter-base font-mono text-xs uppercase mb-1">Cloud Temp</div>
+                <div class="font-bold text-xl">-110°C <span class="text-sm font-normal text-space-100">(-166°F)</span></div>
+                <div class="text-xs text-star-cyan mt-1">Freezing upper layers</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🏎️</div>
+                <div class="text-jupiter-base font-mono text-xs uppercase mb-1">Orbital Speed</div>
+                <div class="font-bold text-xl">13.06 km/s</div>
+                <div class="text-xs text-space-100 mt-1">~47,000 km/h</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🗜️</div>
+                <div class="text-jupiter-base font-mono text-xs uppercase mb-1">Core Pressure</div>
+                <div class="font-bold text-xl">~100M atm</div>
+                <div class="text-xs text-space-100 mt-1">Turns hydrogen to metal</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🌪️</div>
+                <div class="text-jupiter-base font-mono text-xs uppercase mb-1">Max Wind Speed</div>
+                <div class="font-bold text-xl">539 km/h</div>
+                <div class="text-xs text-space-100 mt-1">Massive jet streams</div>
+            </div>
+        </div>
+
+        <!-- Info Cards -->
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt planetary data.</p>
+                </div>
+                <div class="hidden md:block text-jupiter-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <!-- 8 Info Flip Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Card 1 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'j1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📍</div>
+                            <h3 class="font-display text-xl text-jupiter-base">Position & Distance</h3>
+                            <p class="text-space-100 text-xs mt-2">Distance from Sun</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-jupiter-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-jupiter-light mb-2 border-b border-jupiter-dark pb-1 w-full">The Fifth Planet</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li><span class="text-jupiter-base font-mono font-bold">AU:</span> ~5.2 Astronomical Units</li>
+                                <li><span class="text-jupiter-base font-mono font-bold">KM:</span> ~778 million kilometers</li>
+                                <li class="text-xs text-space-100 italic mt-2">Sunlight takes about 43 minutes to travel from the Sun to Jupiter.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'j2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📏</div>
+                            <h3 class="font-display text-xl text-jupiter-base">Relative Size</h3>
+                            <p class="text-space-100 text-xs mt-2">The Absolute Behemoth</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-jupiter-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-jupiter-light mb-2 border-b border-jupiter-dark pb-1 w-full">King of the Planets</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-jupiter-base font-mono font-bold">Diameter:</span> ~139,820 km. That is 11 times wider than Earth!</li>
+                                <li><span class="text-jupiter-base font-mono font-bold">Volume:</span> So large you could fit over <strong class="text-white">1,300 Earths</strong> inside it.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'j3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚖️</div>
+                            <h3 class="font-display text-xl text-jupiter-base">Weight & Density</h3>
+                            <p class="text-space-100 text-xs mt-2">Gravity Check</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-jupiter-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-jupiter-light mb-2 border-b border-jupiter-dark pb-1 w-full">Heavy but Fluffy</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-jupiter-base font-mono font-bold">Density:</span> 1.33 g/cm³. About a quarter of Earth's density, because it's mostly gas!</li>
+                                <li class="bg-space-900 p-2 rounded border border-space-500 text-center text-star-cyan font-bold mt-2">
+                                    Gravity is 2.4x Earth's. If you weigh 100 lbs on Earth, you would weigh 240 lbs on Jupiter!
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'j4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧪</div>
+                            <h3 class="font-display text-xl text-jupiter-base">Composition</h3>
+                            <p class="text-space-100 text-xs mt-2">Inside the Gas Giant</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-jupiter-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-jupiter-light mb-2 border-b border-jupiter-dark pb-1 w-full">A Failed Star?</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-jupiter-base">Makeup:</strong> Mostly Hydrogen (~90%) and Helium (~10%). Similar composition to the Sun.</li>
+                                <li><strong class="text-jupiter-base">Core:</strong> May have a dense, rocky core surrounded by an exotic state of matter called "liquid metallic hydrogen".</li>
+                                <li><strong class="text-jupiter-base">Magnetism:</strong> Its magnetic field is up to 20,000x stronger than Earth's!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'j5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⏳</div>
+                            <h3 class="font-display text-2xl text-jupiter-base">Time constraints</h3>
+                            <p class="text-space-100 mt-2">Length of Day & Year</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-jupiter-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-jupiter-light mb-3 border-b border-jupiter-dark pb-2 w-full">Fast Days, Long Years</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-jupiter-base font-mono font-bold block mb-1">Length of Year:</span>
+                                    11.8 Earth years. It takes a long time to travel around the sun at that distance.
+                                </div>
+                                <div>
+                                    <span class="text-jupiter-base font-mono font-bold block mb-1">Length of Day:</span>
+                                    Only ~9.9 hours! This is the fastest rotating planet in the solar system.
+                                </div>
+                                <div class="col-span-2 bg-space-900 p-2 rounded border border-jupiter-base text-center">
+                                    <strong class="text-jupiter-light">The Bulge:</strong> Because it spins so incredibly fast and is made of gas, Jupiter bulges noticeably at its equator (oblate spheroid)!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'j6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">💨</div>
+                            <h3 class="font-display text-2xl text-jupiter-base">Atmosphere & Weather</h3>
+                            <p class="text-space-100 mt-2">Bands and Giant Storms</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-jupiter-base flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-jupiter-light mb-2 border-b border-jupiter-dark pb-1 w-full">Violent Skies</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-jupiter-base">No Surface:</strong> There is no solid ground. The atmosphere just gets denser and hotter the deeper you go.</li>
+                                <li><strong class="text-jupiter-base">Bands:</strong> The colorful stripes are created by strong jet streams. Dark belts are descending gas; light zones are rising gas.</li>
+                                <li><strong class="text-jupiter-storm">Great Red Spot:</strong> A gigantic anticyclonic storm wider than Earth, raging for over 300 years!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'j7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-jupiter-base">Famous Missions</h3>
+                            <p class="text-space-100 mt-2">Probing the giant</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-jupiter-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-jupiter-light mb-2 border-b border-jupiter-dark pb-2 w-full">Unlocking the Gas Giant</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-white">Pioneer 10 (1973):</strong> The first spacecraft to fly past Jupiter.</li>
+                                <li><strong class="text-white">Galileo (1995-2003):</strong> Orbited Jupiter and dropped a probe into the atmosphere; later intentionally crashed to protect Europa.</li>
+                                <li><strong class="text-star-cyan">Juno (2016-Present):</strong> Currently in polar orbit mapping its gravitational/magnetic fields.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8 -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'j8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🤯</div>
+                            <h3 class="font-display text-2xl text-jupiter-base">Wild Facts</h3>
+                            <p class="text-space-100 mt-2">Tap for the strangest Jupiter facts</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-jupiter-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-jupiter-light mb-2 border-b border-jupiter-dark pb-2 w-full">Cosmic Vacuum Cleaner</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-jupiter-light">The Protector:</strong> Its massive gravity catches or deflects comets (like Shoemaker-Levy 9 in 1994).</li>
+                                <li><strong class="text-jupiter-light">Faint Rings:</strong> Jupiter has a faint dust ring system created by meteor impacts on its small moons.</li>
+                                <li><strong class="text-jupiter-light">Auroras:</strong> It has massive, permanent auroras driven by its rotation and volcanic material from Io.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mini Game Section -->
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-jupiter-base border-2 shadow-[0_0_30px_rgba(217,119,6,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-jupiter-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Jovian Storm Flyer</h2>
+                        <p class="text-space-100 mb-6">Drop the Galileo probe into Jupiter's atmosphere! Steer clear of the turbulent ammonia clouds and massive lightning strikes. Survive the descent for 20 seconds to earn the <span class="text-jupiter-light font-bold">Storm Diver Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-jupiter-base mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Drop Probe
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-jupiter-base/30">
+                            <div class="text-5xl mb-2">🛰️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Atmospheric Drop</h3>
+                            <p class="text-jupiter-light text-sm">Click Drop to descend</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#78350f] via-[#b45309] to-[#d97706] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-jupiter-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rigorous Science Olympiad Quiz Section -->
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-jupiter-base/50">
+            <div class="text-center mb-8">
+                <span class="inline-block px-3 py-1 bg-star-gold text-space-900 text-xs font-bold rounded-full mb-3 uppercase tracking-widest">State Level</span>
+                <h2 class="font-display text-3xl md:text-4xl text-white">Science Olympiad Simulator</h2>
+                <p class="text-space-100 mt-2">Test your advanced knowledge across 25 grueling questions to master the Jupiter module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-3xl mx-auto">
+                <div id="quizHeader" class="flex justify-between items-center mb-6">
+                    <span id="quizProgress" class="text-jupiter-light font-mono font-bold">Question 1 / 25</span>
+                    <span id="quizScore" class="text-star-gold font-mono font-bold">Score: 0</span>
+                </div>
+
+                <div id="quizBody" class="glass-panel p-6 md:p-8 rounded-2xl border border-jupiter-dark bg-space-800 relative transition-all">
+                    <h3 id="questionText" class="text-lg md:text-xl font-bold mb-6 text-white leading-tight">Loading Question...</h3>
+                    
+                    <div id="optionsContainer" class="space-y-3 font-body">
+                        <!-- Options injected by JS -->
+                    </div>
+                    
+                    <!-- Detailed Explanation Box -->
+                    <div id="explanationBox" class="hidden mt-6 p-5 rounded-xl bg-space-900 border border-jupiter-base text-space-100 text-sm leading-relaxed relative shadow-inner">
+                        <span class="absolute -top-3 left-4 bg-jupiter-dark text-white px-2 py-0.5 rounded text-xs font-bold tracking-wide">SCIENTIFIC EXPLANATION</span>
+                        <p id="explanationText" class="mt-2"></p>
+                    </div>
+
+                    <div class="mt-6 flex justify-end">
+                        <button id="nextBtn" class="hidden bg-jupiter-base text-space-900 px-6 py-2 rounded-full font-bold hover:bg-jupiter-light transition-transform transform hover:scale-105" onclick="nextQuestion()">Next Question ⏭️</button>
+                    </div>
+                </div>
+
+                <div id="quizResults" class="hidden text-center py-8">
+                    <!-- Final results injected by JS -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Moons of Jupiter Interactive Drawer -->
+        <h3 class="font-display text-2xl text-star-magenta mb-4 mt-8 flex items-center justify-center md:justify-start gap-2">
+            The Galilean Moons
+        </h3>
+        <p class="text-space-100 text-sm mb-6 text-center md:text-left max-w-3xl">Jupiter has 95 recognized moons. Click on the cards below to dive deep into the files of its four largest, planet-sized Galilean moons.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+            <!-- Io -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-jupiter-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-300 to-orange-500 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                    <div class="absolute top-2 left-2 w-3 h-3 rounded-full bg-red-600 blur-sm"></div>
+                    <div class="absolute bottom-3 right-4 w-4 h-4 rounded-full bg-yellow-600 blur-sm"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Io</p>
+                    <p class="font-mono text-xs text-jupiter-light">Volcanic Hellscape</p>
+                </div>
+                <button onclick="window.location.href='io.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-sm border border-space-500 hover:border-jupiter-light text-jupiter-light transition-colors font-bold shadow-md">
+                    Visit io.html ▸
+                </button>
+            </div>
+
+            <!-- Europa -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-jupiter-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-gray-300 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                    <!-- Ice cracks -->
+                    <svg class="absolute inset-0 w-full h-full text-red-800 opacity-30" viewBox="0 0 100 100">
+                        <path d="M10,20 L40,40 L30,80 M40,40 L80,30 L90,60" stroke="currentColor" stroke-width="2" fill="none"/>
+                    </svg>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Europa</p>
+                    <p class="font-mono text-xs text-jupiter-light">Ice Ocean World</p>
+                </div>
+                <button onclick="window.location.href='europa.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-sm border border-space-500 hover:border-jupiter-light text-jupiter-light transition-colors font-bold shadow-md">
+                    Visit europa.html ▸
+                </button>
+            </div>
+
+            <!-- Ganymede -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-jupiter-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-gray-400 to-gray-700 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                    <div class="absolute top-4 left-4 w-4 h-4 rounded-full bg-gray-500 shadow-inner"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Ganymede</p>
+                    <p class="font-mono text-xs text-jupiter-light">The Largest Moon</p>
+                </div>
+                <button onclick="window.location.href='ganymede.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-sm border border-space-500 hover:border-jupiter-light text-jupiter-light transition-colors font-bold shadow-md">
+                    Visit ganymede.html ▸
+                </button>
+            </div>
+
+            <!-- Callisto -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-jupiter-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-gray-600 to-gray-900 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                    <div class="absolute top-2 left-8 w-2 h-2 rounded-full bg-gray-400"></div>
+                    <div class="absolute bottom-4 right-4 w-3 h-3 rounded-full bg-gray-500"></div>
+                    <div class="absolute top-8 left-2 w-1 h-1 rounded-full bg-gray-400"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Callisto</p>
+                    <p class="font-mono text-xs text-jupiter-light">Cratered Ancient</p>
+                </div>
+                <button onclick="window.location.href='callisto.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-sm border border-space-500 hover:border-jupiter-light text-jupiter-light transition-colors font-bold shadow-md">
+                    Visit callisto.html ▸
+                </button>
+            </div>
+        </div>
+
+    </section>
+</main>
+
+<script>
+    /* APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.planetCompleteAlerted) {
+            window.planetCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Jupiter Module Complete!", "You have unlocked the 'Jovian Master' rank! Exceptional work!", "🪐");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Jupiter files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC: Science Olympiad (State Level) - 25 Questions */
+    const rawQuizData = [
+        {
+            q: "Which spacecraft intentionally crashed into Jupiter's atmosphere in 2003 to prevent potential contamination of its moons?",
+            options: ["Juno", "Voyager 1", "Cassini", "Galileo"],
+            correct: "Galileo",
+            explanation: "The Galileo probe was deliberately plunged into Jupiter's crushing atmosphere at the end of its 8-year mission. Scientists wanted to ensure it wouldn't accidentally crash into Europa, a moon that may harbor a subsurface ocean and potentially alien life."
+        },
+        {
+            q: "What exotic state of matter makes up the deepest layer of Jupiter's interior and generates its massive magnetic field?",
+            options: ["Supercritical Plasma", "Liquid Metallic Hydrogen", "Solid Iron-Nickel", "Degenerate Helium"],
+            correct: "Liquid Metallic Hydrogen",
+            explanation: "Under the extreme pressure near Jupiter's core (millions of times Earth's atmospheric pressure), hydrogen electrons are squeezed off their atoms, allowing the liquid hydrogen to conduct electricity like a metal."
+        },
+        {
+            q: "Three of Jupiter's moons exhibit a 1:2:4 Laplace orbital resonance. Which moons are they?",
+            options: ["Io, Europa, Ganymede", "Europa, Ganymede, Callisto", "Io, Ganymede, Callisto", "Metis, Adrastea, Amalthea"],
+            correct: "Io, Europa, Ganymede",
+            explanation: "For every orbit Ganymede makes around Jupiter, Europa makes exactly two, and Io makes exactly four. This resonant gravitational tug-of-war prevents their orbits from circularizing, causing immense tidal heating."
+        },
+        {
+            q: "What primary chemical compound condenses to form the bright, white upper cloud layers of Jupiter's atmosphere?",
+            options: ["Water Ice", "Ammonia Ice", "Methane Gas", "Carbon Dioxide Ice"],
+            correct: "Ammonia Ice",
+            explanation: "The highest, coldest cloud deck on Jupiter is composed of ammonia (NH3) crystals. Below that lies a layer of ammonium hydrosulfide, and even deeper are water clouds."
+        },
+        {
+            q: "Jupiter emits more than twice as much energy as it receives from the Sun. What is the primary source of this internal heat?",
+            options: ["Nuclear Fusion", "Radioactive Decay", "Kelvin-Helmholtz Contraction", "Tidal Friction"],
+            correct: "Kelvin-Helmholtz Contraction",
+            explanation: "Jupiter is slowly shrinking (by about 2 cm a year) under its own immense gravity. This gravitational compression, known as the Kelvin-Helmholtz mechanism, converts potential energy into massive amounts of thermal energy."
+        },
+        {
+            q: "What phenomenon drives the extreme volcanic activity on Jupiter's moon, Io?",
+            options: ["Impact Cratering", "Tidal Heating", "Nuclear Decay", "Solar Radiation"],
+            correct: "Tidal Heating",
+            explanation: "Caught in a gravitational tug-of-war between Jupiter and the other Galilean moons, Io is constantly flexed and stretched. This friction generates enormous internal heat, making it the most volcanically active body in the solar system."
+        },
+        {
+            q: "How strong is Jupiter's magnetic moment compared to Earth's?",
+            options: ["About 20 times stronger", "About 500 times stronger", "About 20,000 times stronger", "About 1,000,000 times stronger"],
+            correct: "About 20,000 times stronger",
+            explanation: "Jupiter has the strongest planetary magnetic field in the solar system. Its magnetic moment is roughly 20,000 times stronger than Earth's, creating a magnetosphere so large it would be the largest object in the sky if visible to the naked eye."
+        },
+        {
+            q: "Which of Jupiter's moons is the largest in the solar system and uniquely possesses its own internally generated magnetic field?",
+            options: ["Callisto", "Titan", "Europa", "Ganymede"],
+            correct: "Ganymede",
+            explanation: "Ganymede is larger than the planet Mercury. It is the only known moon to have an internally generated, liquid-iron-core-driven magnetic field, which interacts complexly with Jupiter's own massive field."
+        },
+        {
+            q: "In 1994, which comet famously broke apart and collided with Jupiter's southern hemisphere?",
+            options: ["Halley's Comet", "Comet Hale-Bopp", "Comet Shoemaker-Levy 9", "Comet NEOWISE"],
+            correct: "Comet Shoemaker-Levy 9",
+            explanation: "Shoemaker-Levy 9 provided the first direct observation of an extraterrestrial collision of solar system objects. Jupiter's tidal forces tore the comet into fragments before they slammed into the planet, leaving dark 'scars' in the atmosphere for months."
+        },
+        {
+            q: "What is the approximate rotational period (length of one day) of Jupiter at its equator?",
+            options: ["9 hours, 55 minutes", "24 hours", "58.6 Earth days", "16 hours, 10 minutes"],
+            correct: "9 hours, 55 minutes",
+            explanation: "Jupiter rotates faster than any other planet in the solar system. This extreme rotational speed causes the planet to bulge at the equator and flattens it at the poles."
+        },
+        {
+            q: "The Great Red Spot is a high-pressure region whose cloud tops are significantly colder and higher than surrounding regions. It is technically classified as an:",
+            options: ["Anticyclone", "Hurricane", "Cyclone", "Tornado"],
+            correct: "Anticyclone",
+            explanation: "Because it is a high-pressure system spinning counter-clockwise in the southern hemisphere, it is an anticyclone. Cyclones, on the other hand, spin around low-pressure centers."
+        },
+        {
+            q: "What is the name of the region of Jupiter's magnetosphere, swept back by the solar wind, that stretches all the way past the orbit of Saturn?",
+            options: ["Bow Shock", "Magnetopause", "Magnetotail", "Heliopause"],
+            correct: "Magnetotail",
+            explanation: "The solar wind blows against Jupiter's magnetic field, stretching the 'leeward' side into a long tail. Jupiter's magnetotail is so enormous it extends nearly to Saturn's orbit, some 4 astronomical units away."
+        },
+        {
+            q: "What two light elements primarily make up Jupiter's mass?",
+            options: ["Carbon & Nitrogen", "Hydrogen & Helium", "Oxygen & Silicon", "Iron & Nickel"],
+            correct: "Hydrogen & Helium",
+            explanation: "Jupiter is essentially a failed star in terms of composition. It is made of roughly 75% Hydrogen and 24% Helium by mass, closely matching the primordial composition of the solar nebula."
+        },
+        {
+            q: "Which NASA mission arrived at Jupiter in 2016 and focuses on mapping its deep interior, gravitational, and magnetic fields from a highly elliptical polar orbit?",
+            options: ["Cassini", "Voyager 2", "New Horizons", "Juno"],
+            correct: "Juno",
+            explanation: "Juno's polar orbit allows it to safely avoid the worst of Jupiter's intense radiation belts while taking unprecedented microwave depth-soundings and high-resolution images of the poles."
+        },
+        {
+            q: "What is the primary material composing Jupiter's faint ring system?",
+            options: ["Water ice blocks", "Methane snow", "Microscopic dust", "Metallic iron fragments"],
+            correct: "Microscopic dust",
+            explanation: "Unlike Saturn's brilliant icy rings, Jupiter's 'Gossamer' rings are very faint and primarily composed of tiny dust particles kicked up by meteoroid impacts on its small inner moons (Metis, Adrastea, Amalthea, and Thebe)."
+        },
+        {
+            q: "Europa is a prime target for astrobiology primarily because scientists believe that beneath its icy, cracked crust lies a:",
+            options: ["Layer of liquid methane", "Global liquid saltwater ocean", "Core of pure uranium", "Network of hollow lava tubes"],
+            correct: "Global liquid saltwater ocean",
+            explanation: "Magnetic readings and surface fracture patterns heavily suggest Europa has a vast subsurface ocean of liquid water, kept warm by tidal heating, making it one of the best places to look for extraterrestrial life."
+        },
+        {
+            q: "Because Jupiter spins so incredibly fast and is composed mostly of gas/liquid, its shape is distorted into an:",
+            options: ["Oblate Spheroid", "Prolate Spheroid", "Perfect Sphere", "Asymmetric Ellipsoid"],
+            correct: "Oblate Spheroid",
+            explanation: "The strong centrifugal forces at Jupiter's equator cause it to bulge outward, making its equatorial diameter about 9,000 km wider than its polar diameter."
+        },
+        {
+            q: "Jupiter's atmosphere is organized into light horizontal 'zones' and dark 'belts'. What characterizes the dark belts?",
+            options: ["They are regions of rising, warm gas", "They are regions of descending, cooler gas", "They are shadows cast by the rings", "They are gaps where we see the rocky core"],
+            correct: "They are regions of descending, cooler gas",
+            explanation: "The lighter zones are higher-altitude regions of rising air where ammonia ice clouds form. The darker belts are lower-altitude regions of descending air, revealing darker compounds below."
+        },
+        {
+            q: "What is the approximate escape velocity of Jupiter? (The speed needed to break free from its gravity)",
+            options: ["11.2 km/s", "24.0 km/s", "59.5 km/s", "104.2 km/s"],
+            correct: "59.5 km/s",
+            explanation: "Earth's escape velocity is 11.2 km/s. Because Jupiter is so massive, you must travel at a staggering 59.5 km/s (over 133,000 mph) to escape its gravitational pull."
+        },
+        {
+            q: "Which spacecraft provided humanity's first close-up images of Jupiter during its flyby in the early 1970s?",
+            options: ["Mariner 4", "Pioneer 10", "Voyager 1", "Sputnik 2"],
+            correct: "Pioneer 10",
+            explanation: "Pioneer 10 flew past Jupiter in December 1973, obtaining the first close-up images, measuring its intense radiation belts, and proving that a spacecraft could survive navigating the asteroid belt."
+        },
+        {
+            q: "While the exact chemistry is debated, which element's compounds are primarily hypothesized to cause the distinct red, brown, and orange colors of Jupiter's clouds?",
+            options: ["Iron oxide", "Phosphorus and Sulfur", "Copper sulfate", "Nitric acid"],
+            correct: "Phosphorus and Sulfur",
+            explanation: "Chemicals like ammonium hydrosulfide and complex phosphorus/sulfur compounds are broken down by solar ultraviolet light (photodissociation), reacting to form the colorful 'chromophores' we see."
+        },
+        {
+            q: "Callisto is the second-largest Galilean moon. What distinguishes its surface compared to the other three?",
+            options: ["It is constantly resurfaced by volcanoes", "It has zero impact craters", "It is ancient, heavily cratered, and geologically dead", "It is covered entirely in liquid water"],
+            correct: "It is ancient, heavily cratered, and geologically dead",
+            explanation: "Callisto lacks orbital resonance with the inner moons, meaning it doesn't experience significant tidal heating. As a result, its surface is the most heavily cratered and ancient in the solar system."
+        },
+        {
+            q: "Which of these is a unique feature of Jupiter's massive auroras compared to Earth's auroras?",
+            options: ["They only happen once a decade", "They emit exclusively visible light", "They are permanent and largely internally driven", "They only occur at the equator"],
+            correct: "They are permanent and largely internally driven",
+            explanation: "Earth's auroras are sparked by solar storms. Jupiter's are permanent, primarily powered by the planet's rapid rotation tearing apart particles blasted into space by Io's volcanoes, accelerating them into the poles."
+        },
+        {
+            q: "If you descended deep into Jupiter, the hydrogen gas eventually becomes a 'supercritical fluid'. What does this mean?",
+            options: ["It freezes solid despite extreme heat", "It becomes a highly acidic liquid", "It has properties of both a gas and a liquid without a distinct boundary", "It becomes completely frictionless"],
+            correct: "It has properties of both a gas and a liquid without a distinct boundary",
+            explanation: "Beyond a certain pressure and temperature, the phase boundary between liquid and gas disappears. You would never hit an 'ocean surface'; the gas just gradually becomes thicker until it behaves like a fluid."
+        },
+        {
+            q: "How does the mass of Jupiter compare to the rest of the planets in our solar system combined?",
+            options: ["It is about half the mass of the other planets combined", "It is roughly equal to the mass of all other planets", "It is 2.5 times as massive as all other planets combined", "It is 10 times as massive as all other planets combined"],
+            correct: "It is 2.5 times as massive as all other planets combined",
+            explanation: "Jupiter's mass is staggering—approximately 318 times that of Earth. Even if you combined all the other planets, moons, and asteroids in the solar system, Jupiter would still be more than twice as massive."
+        }
+    ];
+
+    let shuffledQuiz = [];
+    let currentQIndex = 0;
+    let quizScore = 0;
+    let answeredCurrent = false;
+
+    function initQuiz() {
+        // Deep copy and shuffle questions
+        shuffledQuiz = [...rawQuizData].sort(() => Math.random() - 0.5);
+        currentQIndex = 0;
+        quizScore = 0;
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        answeredCurrent = false;
+        const qData = shuffledQuiz[currentQIndex];
+        
+        document.getElementById('questionText').innerText = qData.q;
+        document.getElementById('quizProgress').innerText = `Question ${currentQIndex + 1} / 25`;
+        document.getElementById('explanationBox').classList.add('hidden');
+        document.getElementById('nextBtn').classList.add('hidden');
+        
+        const optsContainer = document.getElementById('optionsContainer');
+        optsContainer.innerHTML = '';
+        
+        // Shuffle options
+        let shuffledOptions = [...qData.options].sort(() => Math.random() - 0.5);
+        
+        shuffledOptions.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-jupiter-base transition-all transform hover:-translate-y-1";
+            btn.innerText = opt;
+            btn.onclick = () => selectAnswer(btn, opt, qData.correct, qData.explanation);
+            optsContainer.appendChild(btn);
+        });
+    }
+
+    function selectAnswer(btnEl, selected, correct, explanation) {
+        if (answeredCurrent) return;
+        answeredCurrent = true;
+        
+        const buttons = document.getElementById('optionsContainer').children;
+        for (let b of buttons) {
+            b.disabled = true;
+            b.classList.remove('hover:bg-space-700', 'hover:border-jupiter-base', 'hover:-translate-y-1');
+            
+            if (b.innerText === correct) {
+                // Highlight correct answer in Green
+                b.classList.add('bg-star-green', 'bg-opacity-20', 'border-star-green', 'text-star-green', 'font-bold');
+            } else {
+                b.classList.add('opacity-50');
+                if (b === btnEl && selected !== correct) {
+                    // Highlight selected wrong answer in Red
+                    b.classList.add('bg-star-red', 'bg-opacity-20', 'border-star-red', 'text-star-red');
+                    b.classList.remove('opacity-50');
+                }
+            }
+        }
+        
+        if (selected === correct) {
+            quizScore++;
+            addXP(10); // Reward per correct answer
+        }
+        document.getElementById('quizScore').innerText = `Score: ${quizScore}`;
+        
+        // Setup Explanation
+        const isCorrectText = selected === correct ? '<span class="text-star-green font-bold text-lg">Correct!</span>' : '<span class="text-star-red font-bold text-lg">Incorrect.</span>';
+        document.getElementById('explanationText').innerHTML = `${isCorrectText} ${explanation}`;
+        document.getElementById('explanationBox').classList.remove('hidden');
+        
+        const nextBtn = document.getElementById('nextBtn');
+        nextBtn.innerText = currentQIndex === 24 ? "Finish Olympiad 🏆" : "Next Question ⏭️";
+        nextBtn.classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        currentQIndex++;
+        if (currentQIndex < 25) {
+            renderQuestion();
+        } else {
+            showQuizResults();
+        }
+    }
+
+    function showQuizResults() {
+        document.getElementById('quizHeader').classList.add('hidden');
+        document.getElementById('quizBody').classList.add('hidden');
+        
+        const resultsContainer = document.getElementById('quizResults');
+        resultsContainer.classList.remove('hidden');
+        resultsContainer.classList.add('block');
+        
+        let message = "";
+        let emoji = "";
+        if(quizScore === 25) { message = "Perfect Score! You are a true Jovian Master! The Olympiad judges are stunned."; emoji="🥇"; }
+        else if(quizScore >= 20) { message = "Excellent work! You definitely qualify for the State Level competition."; emoji="🥈"; }
+        else if(quizScore >= 15) { message = "Good job, but keep studying those gas giant data files!"; emoji="🥉"; }
+        else { message = "Looks like you need a bit more practice. Review the data and drop into the atmosphere again!"; emoji="📚"; }
+        
+        resultsContainer.innerHTML = `
+            <div class="text-6xl mb-4">${emoji}</div>
+            <h3 class="text-3xl font-display text-star-gold mb-2">Olympiad Complete!</h3>
+            <p class="text-xl text-white mb-2">Final Score: <span class="font-bold text-jupiter-light">${quizScore}/25</span></p>
+            <p class="text-space-100 mb-8 italic max-w-lg mx-auto">${message}</p>
+            <button onclick="resetFullQuiz()" class="bg-space-700 border border-space-500 text-white px-8 py-3 rounded-full hover:bg-space-500 transition mx-auto font-bold shadow-lg">Retake Quiz 🔄</button>
+        `;
+        
+        // Pass condition for badge
+        if (!achievements.passedQuiz && quizScore >= 15) { 
+            achievements.passedQuiz = true;
+            addXP(100);
+            showMsgBox("Olympiad Badge Unlocked", "You passed the rigorous Jupiter State-Level Quiz! +100 XP", "🏅");
+            updateProgress();
+        }
+    }
+    
+    function resetFullQuiz() {
+        document.getElementById('quizHeader').classList.remove('hidden');
+        document.getElementById('quizBody').classList.remove('hidden');
+        document.getElementById('quizResults').classList.add('hidden');
+        document.getElementById('quizResults').classList.remove('block');
+        initQuiz();
+    }
+
+
+    /* MINI GAME: Jovian Storm Flyer */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    
+    window.addEventListener('load', function() {
+        resizeCanvas();
+    });
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+
+    const player = { x: 0, y: 80, width: 34, height: 34, speed: 7, color: '#fcf6f2' };
+    let obstacles = [];
+    let keys = { ArrowLeft: false, ArrowRight: false };
+
+    window.addEventListener('keydown', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') keys[e.code] = false; 
+    });
+    
+    canvas.addEventListener('touchstart', (e) => {
+        if(!gameActive) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const relativeX = touch.clientX - rect.left;
+        if(relativeX < canvas.width/2) { keys.ArrowLeft = true; keys.ArrowRight = false; } 
+        else { keys.ArrowRight = true; keys.ArrowLeft = false; }
+    }, {passive: false});
+    
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys.ArrowLeft = false; keys.ArrowRight = false;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        const relativeX = e.clientX - rect.left;
+        if(relativeX < canvas.width/2) { keys.ArrowLeft = true; keys.ArrowRight = false; } 
+        else { keys.ArrowRight = true; keys.ArrowLeft = false; }
+    });
+    
+    canvas.addEventListener('mouseup', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+    canvas.addEventListener('mouseleave', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        obstacles = [];
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Descending...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnObstacle() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let type = Math.random() > 0.85 ? 'lightning' : 'cloud';
+        let w, h, xPos, color, speedX;
+        
+        if (type === 'cloud') {
+            w = Math.random() * (canvas.width * 0.4) + 40; 
+            h = Math.random() * 20 + 20; 
+            xPos = Math.random() * (canvas.width - w);
+            color = Math.random() > 0.5 ? 'rgba(253, 230, 138, 0.9)' : 'rgba(180, 83, 9, 0.9)'; 
+            speedX = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 2 + 1) * speedMult;
+        } else {
+            w = 15; h = 100; xPos = Math.random() * (canvas.width - w);
+            color = '#6ef0ff'; speedX = 0; 
+        }
+
+        obstacles.push({
+            x: xPos, y: canvas.height + h, 
+            width: w, height: h,
+            speedY: (Math.random() * 3 + 4) * speedMult, 
+            speedX: speedX, type: type, color: color
+        });
+    }
+
+    function drawPlayer() {
+        ctx.fillStyle = player.color;
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        ctx.fillStyle = '#a1a1aa';
+        ctx.fillRect(-2, -player.height/2 - 10, 4, 15);
+        ctx.beginPath();
+        ctx.arc(0, -player.height/2 - 10, 5, Math.PI, 0);
+        ctx.fill();
+
+        ctx.fillStyle = player.color;
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            ctx.lineTo(player.width/2 * Math.cos(i * 2 * Math.PI / 6), player.width/2 * Math.sin(i * 2 * Math.PI / 6));
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        if (frames % 20 < 10) {
+            ctx.fillStyle = '#ff6b6b';
+            ctx.beginPath();
+            ctx.arc(0, 0, 4, 0, Math.PI*2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    function drawObstacles() {
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            ctx.fillStyle = o.color;
+            ctx.shadowBlur = o.type === 'lightning' ? 20 : 5;
+            ctx.shadowColor = o.color;
+            
+            if (o.type === 'cloud') {
+                ctx.beginPath();
+                ctx.roundRect(o.x, o.y, o.width, o.height, 10);
+                ctx.fill();
+                ctx.closePath();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(o.x + o.width/2, o.y);
+                ctx.lineTo(o.x + o.width, o.y + o.height/3);
+                ctx.lineTo(o.x + o.width/2 + 2, o.y + o.height/3);
+                ctx.lineTo(o.x + o.width/2 + 5, o.y + o.height);
+                ctx.lineTo(o.x, o.y + (o.height*2)/3);
+                ctx.lineTo(o.x + o.width/2 - 2, o.y + (o.height*2)/3);
+                ctx.closePath();
+                ctx.fill();
+            }
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    function checkCollision(o) {
+        let hitX = player.x + 5, hitW = player.width - 10;
+        let hitY = player.y + 5, hitH = player.height - 10;
+
+        if (hitX < o.x + o.width && hitX + hitW > o.x && hitY < o.y + o.height && hitY + hitH > o.y) return true;
+        return false;
+    }
+
+    function updatePhysics() {
+        if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
+        if (keys.ArrowRight && player.x + player.width < canvas.width) player.x += player.speed;
+
+        let spawnRate = Math.max(15, 45 - Math.floor(scoreFrames/150));
+        if (frames % spawnRate === 0) spawnObstacle();
+
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].y -= obstacles[i].speedY;
+            obstacles[i].x += obstacles[i].speedX;
+
+            if(obstacles[i].type === 'cloud') {
+                if (obstacles[i].x > canvas.width) obstacles[i].x = -obstacles[i].width;
+                if (obstacles[i].x + obstacles[i].width < 0) obstacles[i].x = canvas.width;
+            }
+            
+            if (checkCollision(obstacles[i])) {
+                let reason = obstacles[i].type === 'lightning' ? "Fried by Lightning!" : "Crushed by Turbulence!";
+                gameOver(reason);
+                return;
+            }
+
+            if (obstacles[i].y + obstacles[i].height < 0) obstacles.splice(i, 1);
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        let depthRatio = Math.min(1, scoreFrames / 1500); 
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = `rgba(120, 53, 15, ${depthRatio * 0.7})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawObstacles();
+        drawPlayer();
+
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let depth = Math.floor(secondsAlive * 12); 
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Descent Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillText(`Depth: ${depth} km`, 10, 45);
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        if (secondsAlive >= 20 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Storm Diver Badge Unlocked!", "You survived the crushing atmosphere of Jupiter! +100 XP", "🛰️");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Relaunch Probe";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-4">You survived for ${secondsAlive} seconds.</p>
+            ${!achievements.playedGame ? `<p class="text-jupiter-light text-sm mb-4">Try to reach 20 seconds for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && secondsAlive < 20) addXP(5);
+    }
+
+    startBtn.addEventListener('click', () => { initGame(); });
+
+</script>
+</body>
+</html>

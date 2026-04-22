@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Titan — Interactive Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- MathJax for rendering LaTeX formulas -->
+    <script>
+        MathJax = {
+          tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#05060f', 800: '#0f1430', 700: '#1a234d', 500: '#2c3b73', 100: '#fef3c7' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        titan: { base: '#f59e0b', dark: '#b45309', light: '#fde68a', haze: '#d97706', lake: '#0284c7' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'haze-shift': 'hazeShift 20s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(245, 158, 11, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(245, 158, 11, 0.6)' },
+                        },
+                        hazeShift: {
+                            '0%': { filter: 'blur(3px) opacity(0.7)' },
+                            '100%': { filter: 'blur(6px) opacity(0.9)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #05060f;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #fde68a 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #f59e0b 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #0284c7 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(15, 20, 48, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(5, 6, 15, 0.8), rgba(15, 20, 48, 0.9));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(245, 158, 11, 0.6);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Titan Graphic - Opaque orange smog with faint northern lakes */
+        .orb-titan {
+            background: radial-gradient(circle at 30% 30%, #fde68a, #f59e0b, #d97706, #b45309, #78350f);
+            box-shadow: inset -20px -20px 40px rgba(0,0,0,0.8), 0 0 30px rgba(245, 158, 11, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* Atmospheric Haze */
+        .orb-titan::before {
+            content: '';
+            position: absolute;
+            inset: -5%;
+            background: radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.3), transparent 70%);
+            border-radius: 50%;
+            animation: haze-shift 15s infinite;
+            z-index: 3;
+        }
+
+        /* Faint Northern Lakes (Kraken Mare) */
+        .orb-titan::after {
+            content: '';
+            position: absolute;
+            top: 5%; left: 30%;
+            width: 40%; height: 25%;
+            background: radial-gradient(ellipse at center, rgba(2, 132, 199, 0.5) 0%, transparent 60%);
+            border-radius: 50%;
+            filter: blur(4px);
+            z-index: 1;
+            transform: rotate(-10deg);
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(245, 158, 11, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #05060f; }
+        ::-webkit-scrollbar-thumb { background: #b45309; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-titan-base shadow-[0_0_40px_rgba(245,158,11,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-titan-base text-space-900 font-bold py-3 rounded-xl hover:bg-titan-light transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-titan-light">☁️</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="saturn.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-gold">
+                <span class="text-xl">🪐</span>
+                <span class="font-display font-bold text-lg">Back to Saturn</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-titan-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-titan-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Titan Mission Progress</span>
+                    <span id="progressText" class="text-titan-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-titan-dark to-titan-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Dragonfly Flight</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-titan-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-titan-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-titan-lake animate-ping"></span> Saturn's Largest Moon
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Titan</h1>
+                <p class="text-2xl text-titan-light font-body italic mb-6">"The Smoggy Giant"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    Shrouded in a thick, orange haze, Titan is the only moon in the solar system with a dense atmosphere. It is a strange, Earth-like world where liquid methane rains from the sky and fills massive, freezing lakes.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-titan-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-titan-light transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(245,158,11,0.5)]">
+                    Descend through the Smog 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-titan animate-pulse-glow"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-titan-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">5,149 km</div>
+                <div class="text-xs text-star-red mt-1 font-bold">Bigger than Mercury!</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">☁️</div>
+                <div class="text-titan-light font-mono text-xs uppercase mb-1">Atmosphere</div>
+                <div class="font-bold text-xl text-titan-light">Thickest</div>
+                <div class="text-xs text-space-100 mt-1">1.45x Earth's pressure</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🥶</div>
+                <div class="text-titan-light font-mono text-xs uppercase mb-1">Surface Temp</div>
+                <div class="font-bold text-xl">-179°C</div>
+                <div class="text-xs text-space-100 mt-1">Freezing cold</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🪶</div>
+                <div class="text-titan-light font-mono text-xs uppercase mb-1">Gravity</div>
+                <div class="font-bold text-xl">0.14g</div>
+                <div class="text-xs text-space-100 mt-1">Less than Earth's Moon</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Titan data.</p>
+                </div>
+                <div class="hidden md:block text-titan-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Position & Size -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 't1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📍</div>
+                            <h3 class="font-display text-xl text-titan-light">The Giant Moon</h3>
+                            <p class="text-space-100 text-xs mt-2">How big is it?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-titan-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-titan-dark pb-1 w-full">Bigger Than a Planet</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>It is the largest moon of Saturn, and the 2nd largest moon in the entire solar system (behind Ganymede).</li>
+                                <li>It is physically <strong class="text-star-red">larger than the planet Mercury</strong>, though Mercury is heavier due to its iron core.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: The Atmosphere -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 't2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">☁️</div>
+                            <h3 class="font-display text-xl text-titan-light">The Atmosphere</h3>
+                            <p class="text-space-100 text-xs mt-2">Why is it so hazy?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-titan-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-titan-light mb-2 border-b border-titan-dark pb-1 w-full">A Thick Blanket</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Titan is the <strong>only moon</strong> in the solar system with a dense atmosphere.</li>
+                                <li>It is 95% Nitrogen ($N_2$) and 5% Methane ($CH_4$).</li>
+                                <li>The surface pressure is 1.45x that of Earth. If you stood there, it would feel like being at the bottom of a swimming pool!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: The Orange Smog -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 't3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🟠</div>
+                            <h3 class="font-display text-xl text-titan-light">The Orange Smog</h3>
+                            <p class="text-space-100 text-xs mt-2">Where does the color come from?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-titan-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-titan-base mb-2 border-b border-titan-dark pb-1 w-full">Tholins</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>When ultraviolet light from the Sun hits the methane and nitrogen high in the atmosphere, it breaks them apart.</li>
+                                <li>They recombine into complex organic molecules called <strong>Tholins</strong>, which create the opaque orange smog that hides the surface from telescopes.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Liquid Lakes -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 't4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌊</div>
+                            <h3 class="font-display text-xl text-titan-light">Alien Oceans</h3>
+                            <p class="text-space-100 text-xs mt-2">Liquid on the surface!</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-titan-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-titan-lake mb-2 border-b border-titan-dark pb-1 w-full">Methane Seas</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Titan is the only place besides Earth known to have stable liquids on its surface.</li>
+                                <li>However, because it is -179°C, water is frozen harder than rock. The lakes are actually filled with <strong>liquid methane and ethane</strong>!</li>
+                                <li>The largest sea is named Kraken Mare.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: The Hydrological Cycle -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 't5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌧️</div>
+                            <h3 class="font-display text-2xl text-titan-light">The "Hydrological" Cycle</h3>
+                            <p class="text-space-100 mt-2">Raining hydrocarbons</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-titan-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-titan-light mb-3 border-b border-titan-dark pb-2 w-full">Earth's Bizarre Twin</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-titan-light font-mono font-bold block mb-1">Methane Rain:</span>
+                                    Just like Earth has a water cycle, Titan has a methane cycle. Liquid methane evaporates, forms clouds, and rains back down onto the surface.
+                                </div>
+                                <div>
+                                    <span class="text-titan-light font-mono font-bold block mb-1">Carving the Land:</span>
+                                    This rain carves deep river channels and canyons into the "rock" (which is actually solid water ice), dumping into the polar lakes.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Astrobiology -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 't6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🦠</div>
+                            <h3 class="font-display text-2xl text-titan-light">Astrobiology</h3>
+                            <p class="text-space-100 mt-2">Could life exist here?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-titan-base flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-star-green mb-2 border-b border-titan-dark pb-1 w-full">Two Different Habitats</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-titan-lake">The Subsurface Ocean:</strong> Like Europa, Titan is believed to have a global ocean of liquid liquid water deep beneath its icy crust. It could support life as we know it.</li>
+                                <li><strong class="text-titan-base">The Surface Lakes:</strong> Some scientists theorize that completely alien, methane-based life forms could potentially evolve in the surface lakes of liquid hydrocarbons!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: The Huygens Probe -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 't7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🪂</div>
+                            <h3 class="font-display text-2xl text-titan-light">The Huygens Probe</h3>
+                            <p class="text-space-100 mt-2">The historic 2005 landing</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-titan-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-titan-dark pb-2 w-full">Touching Down in the Smog</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>In 2005, the European Space Agency's <strong>Huygens probe</strong> detached from the Cassini spacecraft and parachuted through Titan's thick atmosphere.</li>
+                                <li>It is the most distant landing of any spacecraft from Earth in history!</li>
+                                <li>It landed in a dry riverbed filled with smooth, rounded "pebbles" made of solid water ice.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Dragonfly Mission -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 't8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🚁</div>
+                            <h3 class="font-display text-2xl text-titan-light">Future Mission</h3>
+                            <p class="text-space-100 mt-2">NASA's Dragonfly (Launching 2028)</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-titan-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-cyan mb-2 border-b border-titan-dark pb-2 w-full">A Nuclear Drone</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Because Titan has a thick atmosphere and very low gravity, it is the easiest place in the solar system to fly!</li>
+                                <li>NASA is sending <strong>Dragonfly</strong>, a car-sized, nuclear-powered dual-quadcopter.</li>
+                                <li>Arriving in 2034, it will fly from location to location, sampling the organic sands and searching for the chemical building blocks of life.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-titan-base border-2 shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-titan-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Dragonfly Flight Simulator</h2>
+                        <p class="text-space-100 mb-6">Pilot NASA's nuclear-powered Dragonfly rotorcraft over the dunes of Titan! Use your rotors to fly up and down, dodging the tall ice mountains and methane clouds, while collecting <span class="text-titan-lake font-bold">Liquid Methane Data</span>. Collect 3 samples to earn the <span class="text-titan-light font-bold">Aeronautics Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-titan-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">↑</kbd> and <kbd class="bg-space-700 px-2 rounded">↓</kbd> Arrow Keys to fly.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold top or bottom half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Start Rotors
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-titan-base/30">
+                            <div class="text-5xl mb-2">🚁</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Rotors Online</h3>
+                            <p class="text-titan-light text-sm">Click Start to fly</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#78350f] via-[#b45309] to-[#d97706] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-titan-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-titan-base/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Titan module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="quizActiveArea">
+                    <h3 id="questionText" class="text-xl font-bold mb-4 text-titan-light"></h3>
+                    <div id="optionsContainer" class="space-y-3 mb-6"></div>
+                    <div id="explanationBox" class="hidden p-4 rounded-xl border border-space-500 bg-space-800 text-sm mb-6 text-space-100"></div>
+                    <button id="nextQuestionBtn" onclick="nextQuestion()" class="hidden w-full bg-titan-base text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Next Question</button>
+                </div>
+
+                <div class="hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold text-titan-light">0/20</span></p>
+                    <button id="retryQuizBtn" onclick="initQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Titan Module Complete!", "You have unlocked the 'Aeronautics' badge. Excellent flying in the smog!", "☁️");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Titan files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    const quizQuestions = [
+        {
+            q: "Which unique feature makes Titan stand out from every other moon in the solar system?",
+            options: [
+                { text: "A dense, thick atmosphere.", isCorrect: true },
+                { text: "Active volcanoes shooting magma.", isCorrect: false },
+                { text: "Its own strong magnetic field.", isCorrect: false },
+                { text: "A perfectly square orbit.", isCorrect: false }
+            ],
+            explanation: "Titan is the only moon in the solar system known to have a dense, substantial atmosphere, making it more planet-like than moon-like in many ways."
+        },
+        {
+            q: "What are the primary chemical components of Titan's thick atmosphere?",
+            options: [
+                { text: "Nitrogen and Methane", isCorrect: true },
+                { text: "Oxygen and Carbon Dioxide", isCorrect: false },
+                { text: "Hydrogen and Helium", isCorrect: false },
+                { text: "Sulfuric acid and Argon", isCorrect: false }
+            ],
+            explanation: "Titan's atmosphere is extremely similar to Earth's in that it is mostly Nitrogen (about 95%), with the rest being primarily Methane (CH<sub>4</sub>)."
+        },
+        {
+            q: "The Cassini-Huygens mission made history when the Huygens probe landed on Titan. What did the surface look like where it touched down?",
+            options: [
+                { text: "A dry riverbed filled with smooth, rounded ice pebbles.", isCorrect: true },
+                { text: "A boiling lake of liquid lava.", isCorrect: false },
+                { text: "A flat plane of pure, reflective glass.", isCorrect: false },
+                { text: "A dense jungle of fungal growths.", isCorrect: false }
+            ],
+            explanation: "Huygens landed in what appeared to be a dry floodplain littered with smooth, rounded 'rocks' that were actually made of solid water ice carved by liquid methane."
+        },
+        {
+            q: "What liquid fills the massive lakes and seas on Titan's surface?",
+            options: [
+                { text: "Liquid methane and ethane", isCorrect: true },
+                { text: "Liquid water", isCorrect: false },
+                { text: "Liquid iron", isCorrect: false },
+                { text: "Sulfuric acid", isCorrect: false }
+            ],
+            explanation: "Because Titan's surface is -179°C, water is frozen as hard as rock. Hydrocarbons like methane and ethane are the only things that can exist as liquids."
+        },
+        {
+            q: "Why does Titan appear as a fuzzy, opaque orange ball in visible light telescopes?",
+            options: [
+                { text: "It is covered in photochemical smog made of complex organics called tholins.", isCorrect: true },
+                { text: "It is constantly bombarded by orange sand from Saturn's rings.", isCorrect: false },
+                { text: "Its surface is entirely made of rusty iron dust.", isCorrect: false },
+                { text: "The methane burns constantly, producing orange flames.", isCorrect: false }
+            ],
+            explanation: "Ultraviolet light from the sun breaks apart methane and nitrogen in the upper atmosphere, which recombine into complex, orange-colored organic molecules known as tholins."
+        },
+        {
+            q: "How does the surface atmospheric pressure of Titan compare to Earth's?",
+            options: [
+                { text: "It is about 1.45 times greater than Earth's.", isCorrect: true },
+                { text: "It is exactly the same as Earth's.", isCorrect: false },
+                { text: "It is less than 1% of Earth's.", isCorrect: false },
+                { text: "It is 100 times greater than Earth's.", isCorrect: false }
+            ],
+            explanation: "Titan's atmosphere is surprisingly thick. Standing on the surface, the air pressure would feel like being near the bottom of a swimming pool on Earth."
+        },
+        {
+            q: "NASA's upcoming Dragonfly mission will explore Titan. What type of vehicle is Dragonfly?",
+            options: [
+                { text: "A nuclear-powered dual-quadcopter.", isCorrect: true },
+                { text: "A submarine designed to dive into Kraken Mare.", isCorrect: false },
+                { text: "A stationary drilling platform.", isCorrect: false },
+                { text: "A massive, hot-air balloon.", isCorrect: false }
+            ],
+            explanation: "Dragonfly is an innovative rotocraft (similar to a large drone) powered by an RTG, allowing it to fly from site to site across Titan's dunes."
+        },
+        {
+            q: "What is the primary reason Dragonfly can fly so easily on Titan compared to Earth?",
+            options: [
+                { text: "The dense atmosphere combined with very low gravity.", isCorrect: true },
+                { text: "There is absolutely no wind or weather on Titan.", isCorrect: false },
+                { text: "Methane gas is highly magnetic.", isCorrect: false },
+                { text: "Titan's high surface temperature provides thermal lift.", isCorrect: false }
+            ],
+            explanation: "With gravity only 14% of Earth's and air roughly 4 times as dense, Titan is the easiest place in the solar system for aerodynamic flight."
+        },
+        {
+            q: "Titan has a \"hydrological cycle\" similar to Earth, but it is based on a different compound. What substance evaporates, forms clouds, and rains down?",
+            options: [
+                { text: "Methane", isCorrect: true },
+                { text: "Water", isCorrect: false },
+                { text: "Ammonia", isCorrect: false },
+                { text: "Liquid Oxygen", isCorrect: false }
+            ],
+            explanation: "Titan's weather system runs entirely on methane, which cycles between liquid on the surface and gas in the atmosphere, just like water on Earth."
+        },
+        {
+            q: "What is the name of the largest known sea of liquid hydrocarbons on Titan?",
+            options: [
+                { text: "Kraken Mare", isCorrect: true },
+                { text: "Ligeia Mare", isCorrect: false },
+                { text: "Punga Mare", isCorrect: false },
+                { text: "Ontario Lacus", isCorrect: false }
+            ],
+            explanation: "Kraken Mare is the largest body of liquid on Titan's surface, located near its north pole and covering an area larger than the Caspian Sea."
+        },
+        {
+            q: "Titan's crust is extremely hard and acts like solid rock. What is this crust primarily composed of?",
+            options: [
+                { text: "Water ice", isCorrect: true },
+                { text: "Silicate rock", isCorrect: false },
+                { text: "Solid carbon dioxide (dry ice)", isCorrect: false },
+                { text: "Frozen iron", isCorrect: false }
+            ],
+            explanation: "At the cryogenic temperatures of Titan (-179°C), water ice is frozen so hard that it acts identically to solid rock on Earth, forming mountains and riverbeds."
+        },
+        {
+            q: "How does Titan's size compare to the planet Mercury?",
+            options: [
+                { text: "It is larger in diameter but has less mass.", isCorrect: true },
+                { text: "It is smaller in diameter but has more mass.", isCorrect: false },
+                { text: "It is exactly identical in both size and mass.", isCorrect: false },
+                { text: "It is half the size of Mercury.", isCorrect: false }
+            ],
+            explanation: "Titan (5,149 km) is larger across than Mercury (4,880 km). However, Mercury is made of dense iron and rock, while Titan is mostly lighter ice, making Mercury much more massive."
+        },
+        {
+            q: "What process is believed to replenish the methane in Titan's atmosphere over long geological timescales?",
+            options: [
+                { text: "Cryovolcanism releasing gases from the interior.", isCorrect: true },
+                { text: "Asteroids constantly dropping new methane.", isCorrect: false },
+                { text: "Solar wind depositing carbon directly into the air.", isCorrect: false },
+                { text: "Sublimation from Saturn's rings.", isCorrect: false }
+            ],
+            explanation: "Sunlight destroys methane over time. Scientists theorize that cryovolcanoes (ice volcanoes) erupting from the subsurface ocean replenish the atmospheric methane."
+        },
+        {
+            q: "Like many large moons in the solar system, Titan hides what massive feature beneath its icy crust?",
+            options: [
+                { text: "A global ocean of liquid water.", isCorrect: true },
+                { text: "A perfectly hollow core.", isCorrect: false },
+                { text: "A spinning core of liquid gold.", isCorrect: false },
+                { text: "A layer of completely solid magma.", isCorrect: false }
+            ],
+            explanation: "Gravity measurements from Cassini strongly suggest that Titan harbors a global subsurface ocean of liquid water, potentially mixed with ammonia, deep beneath the ice shell."
+        },
+        {
+            q: "The dunes around Titan's equator are not made of silica sand like on Earth. What are they made of?",
+            options: [
+                { text: "Dark, sand-sized organic particles (tholins).", isCorrect: true },
+                { text: "Shattered glass crystals.", isCorrect: false },
+                { text: "Volcanic pumice ash.", isCorrect: false },
+                { text: "Powdery water frost.", isCorrect: false }
+            ],
+            explanation: "The complex organic molecules (tholins) created in the upper atmosphere eventually clump together and rain down to the surface, where winds shape them into massive dune fields."
+        },
+        {
+            q: "Which scientist originally discovered Titan in 1655?",
+            options: [
+                { text: "Christiaan Huygens", isCorrect: true },
+                { text: "Galileo Galilei", isCorrect: false },
+                { text: "Giovanni Cassini", isCorrect: false },
+                { text: "Johannes Kepler", isCorrect: false }
+            ],
+            explanation: "Dutch astronomer Christiaan Huygens discovered Titan in 1655, which is why the probe that eventually landed on its surface was named in his honor."
+        },
+        {
+            q: "Why do the lakes on Titan only exist near its north and south poles?",
+            options: [
+                { text: "Global atmospheric circulation patterns concentrate liquids at the poles.", isCorrect: true },
+                { text: "The equator is too hot, causing the liquid to boil away.", isCorrect: false },
+                { text: "Massive craters only formed at the poles to hold the liquid.", isCorrect: false },
+                { text: "Saturn's gravity pulls the liquid away from the equator.", isCorrect: false }
+            ],
+            explanation: "Titan's global climate and wind patterns transport evaporating methane away from the equator, causing it to rain out and pool primarily at the colder polar regions."
+        },
+        {
+            q: "What keeps Titan's subsurface ocean from freezing completely solid?",
+            options: [
+                { text: "Tidal heating from Saturn and radioactive decay in the core.", isCorrect: true },
+                { text: "Intense sunlight penetrating the ice crust.", isCorrect: false },
+                { text: "Friction from the fast-moving atmosphere.", isCorrect: false },
+                { text: "Chemical reactions involving pure sodium.", isCorrect: false }
+            ],
+            explanation: "As Titan orbits, Saturn's massive gravity slightly flexes the moon, generating internal friction (tidal heating). Combined with radioactive elements in the rocky core, this keeps the ocean liquid."
+        },
+        {
+            q: "At what approximate temperature does the surface of Titan sit, allowing methane to exist as a liquid?",
+            options: [
+                { text: "-179°C (-290°F)", isCorrect: true },
+                { text: "0°C (32°F)", isCorrect: false },
+                { text: "-50°C (-58°F)", isCorrect: false },
+                { text: "-270°C (-454°F)", isCorrect: false }
+            ],
+            explanation: "Titan's thick atmosphere traps some heat (an anti-greenhouse effect), but it is still incredibly far from the Sun, resulting in a chilling surface temperature of roughly -179°C."
+        },
+        {
+            q: "Why is Titan a prime target for astrobiologists searching for life?",
+            options: [
+                { text: "It has a water ocean below and a surface rich in complex organic chemistry.", isCorrect: true },
+                { text: "It has breathable oxygen in its lower atmosphere.", isCorrect: false },
+                { text: "We have already detected fossilized plants on its surface.", isCorrect: false },
+                { text: "It receives more sunlight than Earth does.", isCorrect: false }
+            ],
+            explanation: "Titan offers two distinct possibilities: life as we know it in the subsurface water ocean, or completely alien, methane-based life evolving in the hydrocarbon lakes on the surface."
+        }
+    ];
+
+    let currentQIndex = 0;
+    let score = 0;
+    let randomizedQuestions = [];
+
+    function initQuiz() {
+        randomizedQuestions = [...quizQuestions].sort(() => Math.random() - 0.5);
+        randomizedQuestions.forEach(q => {
+            q.options.sort(() => Math.random() - 0.5);
+        });
+        currentQIndex = 0;
+        score = 0;
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('quizActiveArea').classList.remove('hidden');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = randomizedQuestions[currentQIndex];
+        document.getElementById('questionText').innerText = `${currentQIndex + 1}. ${q.q}`;
+        const optionsContainer = document.getElementById('optionsContainer');
+        optionsContainer.innerHTML = '';
+        
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-titan-light transition-all";
+            btn.innerHTML = opt.text;
+            btn.dataset.isCorrect = opt.isCorrect;
+            btn.onclick = () => handleAnswer(opt.isCorrect, btn, q);
+            optionsContainer.appendChild(btn);
+        });
+        
+        document.getElementById('explanationBox').classList.add('hidden');
+        document.getElementById('nextQuestionBtn').classList.add('hidden');
+    }
+
+    function handleAnswer(isCorrect, btnEl, q) {
+        const siblings = btnEl.parentElement.children;
+        for(let s of siblings) {
+            s.disabled = true;
+            s.classList.remove('hover:bg-space-700', 'hover:border-titan-light');
+            s.classList.add('opacity-50');
+            if(s.dataset.isCorrect === 'true') {
+                 s.classList.remove('opacity-50', 'border-space-500');
+                 s.classList.add('border-star-green', 'text-star-green');
+            }
+        }
+        btnEl.classList.remove('opacity-50', 'bg-space-800', 'border-star-green', 'text-star-green');
+        
+        if(isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            score++;
+            addXP(10);
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+        }
+
+        const expBox = document.getElementById('explanationBox');
+        expBox.innerHTML = `<strong class="${isCorrect ? 'text-star-green' : 'text-star-red'}">${isCorrect ? 'Correct!' : 'Incorrect.'}</strong> <br/> ${q.explanation}`;
+        expBox.classList.remove('hidden');
+        
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.classList.remove('hidden');
+        
+        // Re-render MathJax if equations were included in explanation
+        if(window.MathJax) {
+            MathJax.typesetPromise([expBox]).catch((err) => console.log(err.message));
+        }
+    }
+
+    function nextQuestion() {
+        currentQIndex++;
+        if(currentQIndex < randomizedQuestions.length) {
+            renderQuestion();
+            if(window.MathJax) MathJax.typesetPromise([document.getElementById('questionText'), document.getElementById('optionsContainer')]);
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('quizActiveArea').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('scoreText').innerText = `${score}/20`;
+        
+        if(score === 20) {
+            document.getElementById('scoreText').className = 'font-bold text-star-green';
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(200);
+                showMsgBox("Perfect Knowledge", "Perfect score on the Titan Quiz! +200 XP", "🧠");
+            }
+            document.getElementById('retryQuizBtn').classList.add('hidden');
+        } else {
+            document.getElementById('scoreText').className = 'font-bold text-star-red';
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', initQuiz);
+
+    /* MINI GAME: Dragonfly Flight Simulator */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    // Player (Dragonfly Drone) - Moves up/down, fixed X
+    const player = {
+        x: 50, 
+        y: 200, 
+        width: 40,
+        height: 20,
+        speed: 5,
+        color: '#f8fafc' 
+    };
+
+    let obstacles = []; // Ice Mountains / Methane Clouds
+    let bgHaze = [];
+
+    // Inputs
+    let keys = { ArrowUp: false, ArrowDown: false };
+    let isTouching = false;
+    let touchTargetY = 0;
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(['ArrowUp', 'ArrowDown'].includes(e.code)) {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(['ArrowUp', 'ArrowDown'].includes(e.code)) keys[e.code] = false; 
+    });
+    
+    // Touch/Mouse Support
+    function handlePointerMove(e) {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        touchTargetY = (clientY - rect.top) * (canvas.height / rect.height);
+        isTouching = true;
+        if(e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+    }
+    function handlePointerUp() { isTouching = false; }
+
+    canvas.addEventListener('touchstart', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchend', handlePointerUp);
+    canvas.addEventListener('mousedown', handlePointerMove);
+    canvas.addEventListener('mousemove', (e) => { if(isTouching) handlePointerMove(e); });
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerUp);
+
+    function initGame() {
+        resizeCanvas();
+        player.y = canvas.height / 2;
+        obstacles = [];
+        dataCollected = 0;
+        isTouching = false;
+
+        // Background smog
+        bgHaze = Array.from({length: 30}).map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 40 + 20,
+            speed: Math.random() * 2 + 1
+        }));
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Flying...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let globalSpeed = (Math.random() * 2 + 4) * speedMult; // Scroll speed left
+        
+        let isData = Math.random() > 0.7; // 30% chance of methane lake data
+        
+        if (isData && obstacles.filter(o => o.isData).length < 2) {
+            obstacles.push({
+                x: canvas.width + 20,
+                y: Math.random() * (canvas.height - 60) + 30, 
+                width: 25,
+                height: 25,
+                speedX: globalSpeed,
+                isData: true,
+                pulse: 0
+            });
+            return;
+        }
+
+        // Obstacles: Ice Mountains (bottom) or Smog Clouds (top/floating)
+        let isMountain = Math.random() > 0.5;
+        let h = Math.random() * 100 + 50;
+        let w = Math.random() * 40 + 30;
+
+        if (isMountain) {
+            obstacles.push({
+                x: canvas.width, y: canvas.height - h, width: w, height: h, speedX: globalSpeed, isMountain: true
+            });
+        } else {
+            // Cloud
+            obstacles.push({
+                x: canvas.width, y: Math.random() * (canvas.height - h - 50), width: w*1.5, height: h*0.6, speedX: globalSpeed * 1.2, isCloud: true
+            });
+        }
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        // Tilt slightly
+        let tilt = 0;
+        if(keys.ArrowUp || (isTouching && touchTargetY < player.y)) tilt = -0.15;
+        if(keys.ArrowDown || (isTouching && touchTargetY > player.y)) tilt = 0.15;
+        ctx.rotate(tilt);
+
+        // Dragonfly body (tube)
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, player.width/2, player.height/2.5, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Outriggers
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(-10, -player.height, 4, player.height*2); // Left bar
+        ctx.fillRect(6, -player.height, 4, player.height*2); // Right bar
+        
+        // Rotors (animated)
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        let rotorW = (frames % 4 < 2) ? 12 : 2; // Spinning blur
+        
+        // Top rotors
+        ctx.beginPath(); ctx.ellipse(-8, -player.height, rotorW, 2, 0, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(8, -player.height, rotorW, 2, 0, 0, Math.PI*2); ctx.fill();
+        
+        // Bottom rotors
+        ctx.beginPath(); ctx.ellipse(-8, player.height, rotorW, 2, 0, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(8, player.height, rotorW, 2, 0, 0, Math.PI*2); ctx.fill();
+
+        // Sensor eye
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.arc(player.width/2, 0, 3, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    function drawEntities() {
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            
+            if (o.isData) {
+                // Liquid Methane Scan Data (Blue)
+                o.pulse += 0.1;
+                let glow = 8 + Math.sin(o.pulse) * 4;
+                
+                ctx.fillStyle = '#0ea5e9'; // Light blue
+                ctx.shadowBlur = glow;
+                ctx.shadowColor = '#38bdf8';
+                
+                // Droplet shape
+                ctx.beginPath();
+                ctx.arc(o.x + o.width/2, o.y + o.height/2, o.width/2, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(o.x + o.width/2 + 3, o.y + o.height/2 - 3, 2, 0, Math.PI*2);
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+            } else if (o.isMountain) {
+                // Ice Mountain (Dark slate/blue)
+                ctx.fillStyle = '#1e293b'; 
+                ctx.beginPath();
+                ctx.moveTo(o.x, o.y + o.height);
+                ctx.lineTo(o.x + o.width/2, o.y);
+                ctx.lineTo(o.x + o.width, o.y + o.height);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Highlight
+                ctx.fillStyle = '#334155';
+                ctx.beginPath();
+                ctx.moveTo(o.x + o.width/4, o.y + o.height);
+                ctx.lineTo(o.x + o.width/2, o.y);
+                ctx.lineTo(o.x + o.width/2, o.y + o.height);
+                ctx.closePath();
+                ctx.fill();
+            } else if (o.isCloud) {
+                // Dense Methane Smog
+                ctx.fillStyle = 'rgba(180, 83, 9, 0.7)'; // Dark amber
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#92400e';
+                ctx.beginPath();
+                ctx.roundRect(o.x, o.y, o.width, o.height, 15);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+    }
+
+    function drawBackground() {
+        // Orange/Amber hazy sky
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Ground (Ice dunes)
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
+
+        // Haze particles
+        bgHaze.forEach(p => {
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.3)';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+            ctx.fill();
+            p.x -= p.speed + (scoreFrames/1000); 
+            if(p.x + p.size < 0) {
+                p.x = canvas.width + p.size;
+                p.y = Math.random() * canvas.height;
+            }
+        });
+    }
+
+    function checkCollisionRect(r1, r2) {
+        return !(r2.x > r1.x + r1.width || 
+                 r2.x + r2.width < r1.x || 
+                 r2.y > r1.y + r1.height ||
+                 r2.y + r2.height < r1.y);
+    }
+
+    function updatePhysics() {
+        // Player Movement
+        if (keys.ArrowUp) player.y -= player.speed;
+        if (keys.ArrowDown) player.y += player.speed;
+
+        if (isTouching) {
+            let dy = touchTargetY - (player.y + player.height/2);
+            if (Math.abs(dy) > player.speed) {
+                player.y += (dy / Math.abs(dy)) * player.speed;
+            }
+        }
+
+        // Clamp to screen (accounting for rotor height)
+        if(player.y < player.height) player.y = player.height;
+        if(player.y > canvas.height - player.height*2) player.y = canvas.height - player.height*2;
+
+        let pRect = { x: player.x, y: player.y - player.height, width: player.width, height: player.height*2 };
+
+        // Spawning
+        let spawnRate = Math.max(25, 60 - Math.floor(scoreFrames/60));
+        if (frames % spawnRate === 0) spawnEntity();
+
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].x -= obstacles[i].speedX; // Move LEFT
+            
+            // For mountains, do a tighter collision check (triangle approx)
+            let oRect = {x: obstacles[i].x, y: obstacles[i].y, width: obstacles[i].width, height: obstacles[i].height};
+            if(obstacles[i].isMountain) {
+                oRect.width = obstacles[i].width * 0.6;
+                oRect.x = obstacles[i].x + (obstacles[i].width*0.2);
+            }
+
+            if (checkCollisionRect(pRect, oRect)) {
+                if (obstacles[i].isData) {
+                    dataCollected++;
+                    addXP(10);
+                    ctx.fillStyle = 'rgba(2, 132, 199, 0.4)'; // Blue flash
+                    ctx.fillRect(0,0, canvas.width, canvas.height);
+                    obstacles.splice(i, 1);
+                    continue;
+                } else {
+                    gameOver(obstacles[i].isMountain ? "Crashed into Ice Mountain!" : "Lost Control in Methane Storm!");
+                    return;
+                }
+            }
+
+            if (obstacles[i].x + obstacles[i].width < 0) {
+                obstacles.splice(i, 1);
+            }
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        drawBackground();
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawEntities();
+        drawPlayer();
+
+        // HUD
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let dist = Math.floor(secondsAlive * 15);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Distance: ${dist} km`, 10, 25);
+        ctx.fillStyle = "#38bdf8"; // Lake blue
+        ctx.fillText(`💧 Scans: ${dataCollected}/3`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.6)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && dataCollected >= 3 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Aeronautics Badge Unlocked!", "You successfully flew Dragonfly on Titan! +100 XP", "🚁");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Flight";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 3);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You flew for ${secondsAlive}s.</p>
+            <p class="text-titan-lake mb-4 text-sm font-bold">💧 Collected ${dataCollected} Scans</p>
+            ${!achievements.playedGame ? `<p class="text-titan-light text-sm mb-4 text-center px-2">Survive 20s AND collect 3 scans for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

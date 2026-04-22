@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Miranda — Interactive Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#020617', 800: '#0f172a', 700: '#1e293b', 500: '#334155', 100: '#f8fafc' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        miranda: { base: '#94a3b8', dark: '#475569', light: '#e2e8f0', scar: '#1e293b', ice: '#f8fafc' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 80s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(226, 232, 240, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(226, 232, 240, 0.6)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #020617;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #67e8f9 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #cbd5e1 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #e2e8f0 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(2, 6, 23, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(226, 232, 240, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(248, 250, 252, 0.6);
+            box-shadow: 0 0 20px rgba(248, 250, 252, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Miranda Graphic - The Frankenstein Patchwork */
+        .orb-miranda {
+            background: radial-gradient(circle at 35% 35%, #e2e8f0, #94a3b8, #475569);
+            box-shadow: inset -20px -20px 40px rgba(0,0,0,0.8), 0 0 30px rgba(226, 232, 240, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* The Coronae (Grooved oval structures) */
+        .orb-miranda::before {
+            content: '';
+            position: absolute;
+            top: 15%; left: 10%;
+            width: 45%; height: 50%;
+            background: repeating-radial-gradient(ellipse, rgba(248, 250, 252, 0.3) 0px, transparent 4px, rgba(30, 41, 59, 0.4) 8px);
+            border-radius: 40% 60% 50% 50%;
+            transform: rotate(35deg);
+            mix-blend-mode: multiply;
+        }
+
+        /* Verona Rupes (Giant Cliff / Fault scarp) */
+        .orb-miranda::after {
+            content: '';
+            position: absolute;
+            bottom: 25%; right: -5%;
+            width: 70%; height: 12%;
+            background: #1e293b;
+            transform: rotate(-15deg);
+            border-top: 3px solid #f8fafc;
+            box-shadow: 0 -2px 10px rgba(255,255,255,0.5), inset 0 5px 10px rgba(0,0,0,0.8);
+        }
+        
+        /* Extra patchwork scar */
+        .miranda-scar {
+            position: absolute;
+            top: 10%; right: 20%;
+            width: 30%; height: 2px;
+            background: #f8fafc;
+            transform: rotate(60deg);
+            box-shadow: -2px 2px 0 #1e293b;
+            z-index: 3;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(226, 232, 240, 0.15);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-miranda-base shadow-[0_0_40px_rgba(226,232,240,0.4)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-miranda-light text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-miranda-light">🧗‍♂️</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="uranus.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-cyan">
+                <span class="text-xl">🪩</span>
+                <span class="font-display font-bold text-lg">Back to Uranus</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-miranda-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-miranda-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Miranda Mission Progress</span>
+                    <span id="progressText" class="text-miranda-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-miranda-dark to-miranda-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Cliff Jumper</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-miranda-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-miranda-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-miranda-light animate-ping"></span> Moon of Uranus
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Miranda</h1>
+                <p class="text-2xl text-miranda-light font-body italic mb-6">"The Frankenstein Moon"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    The smallest and innermost of Uranus's round moons. It has one of the strangest, most extreme landscapes in the solar system, appearing as if it was shattered into pieces and sloppily glued back together!
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-miranda-light text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(248,250,252,0.5)]">
+                    Explore the Scars 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-miranda animate-spin-slow animate-pulse-glow">
+                        <div class="miranda-scar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">🧗‍♂️</div>
+                <div class="text-miranda-light font-mono text-xs uppercase mb-1">Verona Rupes</div>
+                <div class="font-bold text-xl text-star-red">20 km High</div>
+                <div class="text-xs text-space-100 mt-1">Tallest cliff in system</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-miranda-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">471 km</div>
+                <div class="text-xs text-space-100 mt-1">Smallest major moon</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🥶</div>
+                <div class="text-miranda-light font-mono text-xs uppercase mb-1">Temperature</div>
+                <div class="font-bold text-xl">-213°C</div>
+                <div class="text-xs text-space-100 mt-1">Extremely cold</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🪶</div>
+                <div class="text-miranda-light font-mono text-xs uppercase mb-1">Gravity</div>
+                <div class="font-bold text-xl">0.008g</div>
+                <div class="text-xs text-space-100 mt-1">< 1% of Earth</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Miranda data.</p>
+                </div>
+                <div class="hidden md:block text-miranda-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Position & Size -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'm1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📍</div>
+                            <h3 class="font-display text-xl text-miranda-light">Size & Position</h3>
+                            <p class="text-space-100 text-xs mt-2">Where does it orbit?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-miranda-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-miranda-dark pb-1 w-full">The Smallest Sibling</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>Miranda is the innermost and smallest of Uranus's five major, round moons.</li>
+                                <li>It orbits incredibly close to Uranus, completing a full orbit in just <strong>1.4 Earth days</strong>!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: The Frankenstein Moon -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'm2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧟</div>
+                            <h3 class="font-display text-xl text-miranda-light">Frankenstein</h3>
+                            <p class="text-space-100 text-xs mt-2">Why does it look so weird?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-miranda-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-cyan mb-2 border-b border-miranda-dark pb-1 w-full">A Patchwork Surface</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Its surface is a bizarre jumble of heavily cratered plains crossed by massive, ridged fault lines and deep canyons.</li>
+                                <li>It literally looks like pieces of different moons were glued together. This is why it is nicknamed the <strong>Frankenstein Moon</strong>!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Formation Theories -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'm3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">💥</div>
+                            <h3 class="font-display text-xl text-miranda-light">Formation Theories</h3>
+                            <p class="text-space-100 text-xs mt-2">How did the scars form?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-miranda-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-miranda-light mb-2 border-b border-miranda-dark pb-1 w-full">Shattered or Stretched?</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li><strong>Theory 1:</strong> A massive asteroid completely shattered the moon, and the pieces slowly clumped back together randomly.</li>
+                                <li><strong>Theory 2 (Current favorite):</strong> Extreme tidal heating caused partially melted slush inside to erupt and stretch the crust apart, creating tectonic scars.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Coronae -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'm4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🏁</div>
+                            <h3 class="font-display text-xl text-miranda-light">Coronae</h3>
+                            <p class="text-space-100 text-xs mt-2">Giant racetracks</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-miranda-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-miranda-dark pb-1 w-full">Oval Grooves</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>The most distinctive features on Miranda are three massive, oval-shaped grooved structures called <strong>coronae</strong>.</li>
+                                <li>They look like giant, 200km-wide thumbprints or race tracks!</li>
+                                <li>They are named Arden, Elsinore, and Inverness (from Shakespeare's plays).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Extreme Seasons -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'm5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">☀️</div>
+                            <h3 class="font-display text-2xl text-miranda-light">Extreme Seasons</h3>
+                            <p class="text-space-100 mt-2">The side effects of a sideways planet</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-miranda-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-gold mb-3 border-b border-miranda-dark pb-2 w-full">42-Year Winters</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    Because Uranus rolls on its side (98° tilt), its moons orbit along its equator perpendicular to the sun.
+                                </div>
+                                <div>
+                                    This means Miranda's poles spend <strong>42 Earth years</strong> in continuous sunlight, followed by 42 Earth years of total, freezing darkness!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Verona Rupes (The Tallest Cliff) -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'm6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧗‍♂️</div>
+                            <h3 class="font-display text-2xl text-miranda-light">Verona Rupes</h3>
+                            <p class="text-space-100 mt-2">The tallest cliff in the solar system</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-miranda-dark flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-star-red mb-2 border-b border-miranda-dark pb-1 w-full">A 20-Kilometer Drop</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Miranda features a massive fault scarp called <strong>Verona Rupes</strong>.</li>
+                                <li>It is a sheer vertical drop of roughly <strong>20 kilometers (12 miles)</strong>. It is the tallest known cliff in the entire solar system!</li>
+                                <li>Because Miranda's gravity is so incredibly weak (0.008g), if you jumped off Verona Rupes, it would take you <strong>12 entire minutes</strong> to hit the bottom!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Voyager 2 Mission -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'm7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-miranda-light">Voyager 2</h3>
+                            <p class="text-space-100 mt-2">The only visitor</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-miranda-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-miranda-dark pb-2 w-full">A Brief Encounter</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>The NASA <strong>Voyager 2</strong> probe is the only spacecraft to have ever visited the Uranian system, making a flyby in January 1986.</li>
+                                <li>To get a gravity assist toward Neptune, Voyager 2 had to fly incredibly close to Miranda (just 29,000 km away), giving us our sharpest, most breathtaking photos of any Uranian moon!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Composition -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'm8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧊</div>
+                            <h3 class="font-display text-2xl text-miranda-light">Composition</h3>
+                            <p class="text-space-100 mt-2">What is it made of?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-miranda-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-miranda-light mb-2 border-b border-miranda-dark pb-2 w-full">Half Ice, Half Rock</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Like Ariel, Miranda's density suggests it consists of roughly equal parts <strong>water ice</strong> and <strong>silicate rock</strong>.</li>
+                                <li>Unlike the larger moons, scientists believe Miranda may not be fully differentiated (meaning its rock and ice are still somewhat mixed together instead of having a solid rocky core).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-miranda-dark border-2 shadow-[0_0_30px_rgba(71,85,105,0.4)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-miranda-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Verona Rupes BASE Jumper</h2>
+                        <p class="text-space-100 mb-6">Experience the 12-minute fall down the tallest cliff in the solar system! In this microgravity simulation, pilot your suit down the 20km drop. Use your lateral thrusters to dodge the jagged <span class="text-white font-bold">ice ledges</span> and collect 5 <span class="text-star-cyan font-bold">Data Cores</span> to earn the <span class="text-miranda-light font-bold">Cliff Diver Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-miranda-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Jump
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-miranda-dark/30">
+                            <div class="text-5xl mb-2">🧗‍♂️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">On the Edge</h3>
+                            <p class="text-miranda-light text-sm">Click Jump to freefall</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#020617] via-[#0f172a] to-[#1e293b] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-miranda-dark"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-miranda-dark/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Miranda module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="dynamicQuizArea" class="space-y-4">
+                    <!-- Dynamic quiz content will be injected here -->
+                </div>
+
+                <!-- Quiz Results -->
+                <div class="quiz-q hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold">0/20</span></p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Miranda Module Complete!", "You have unlocked the 'Cliff Diver' badge. Excellent exploration!", "🧗‍♂️");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Miranda files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    const moonColor = 'miranda-light';
+    const quizData = [
+        { q: "Miranda is famous for its 'Frankenstein' appearance. What is the current leading scientific theory for how these chaotic features formed?", options: [{text: "It was shattered by an asteroid and reassembled", isCorrect: false}, {text: "Extreme tidal heating caused internal slush to erupt and stretch the crust", isCorrect: true}, {text: "A collision with Ariel tore its surface apart", isCorrect: false}, {text: "Rapid cooling caused the entire moon to shrink and wrinkle", isCorrect: false}], explanation: "The leading theory is that extreme extensional tectonic forces, driven by ancient tidal heating, stretched the crust apart, causing cryovolcanic slush to upwell and form the chaotic terrain." },
+        { q: "What solar system world record does Verona Rupes hold?", options: [{text: "The deepest canyon", isCorrect: false}, {text: "The tallest known cliff or fault scarp", isCorrect: true}, {text: "The widest impact crater", isCorrect: false}, {text: "The coldest surface temperature", isCorrect: false}], explanation: "Verona Rupes is a sheer vertical drop of roughly 20 kilometers, making it the tallest known cliff in the entire solar system." },
+        { q: "Approximately how high is the vertical drop of Verona Rupes?", options: [{text: "2 kilometers", isCorrect: false}, {text: "8.8 kilometers (height of Everest)", isCorrect: false}, {text: "20 kilometers", isCorrect: true}, {text: "150 kilometers", isCorrect: false}], explanation: "Verona Rupes is estimated to be roughly 20 kilometers (12 miles) high, towering over any mountain or cliff on Earth." },
+        { q: "Due to Miranda's weak gravity (0.008g), how long would a free-fall from the top of Verona Rupes to the bottom take?", options: [{text: "12 seconds", isCorrect: false}, {text: "1 minute", isCorrect: false}, {text: "12 minutes", isCorrect: true}, {text: "1 hour", isCorrect: false}], explanation: "Because the gravitational pull is less than 1% of Earth's, an object falling from that height would accelerate very slowly, taking about 12 minutes to reach the bottom." },
+        { q: "What are the massive, oval-shaped grooved structures on Miranda's surface called?", options: [{text: "Chasmata", isCorrect: false}, {text: "Coronae", isCorrect: true}, {text: "Maculae", isCorrect: false}, {text: "Paterae", isCorrect: false}], explanation: "These unique, racetrack-like oval structures are called Coronae, the three largest being Arden, Elsinore, and Inverness." },
+        { q: "Which of the following is the name of one of Miranda's prominent coronae?", options: [{text: "Kachina", isCorrect: false}, {text: "Messina", isCorrect: false}, {text: "Arden", isCorrect: true}, {text: "Wunda", isCorrect: false}], explanation: "Arden Corona is one of the three massive grooved structures on Miranda's surface, named after the Forest of Arden in Shakespeare's 'As You Like It'." },
+        { q: "Miranda is the smallest of Uranus's five major, round moons. What is its approximate diameter?", options: [{text: "471 km", isCorrect: true}, {text: "1,159 km", isCorrect: false}, {text: "3,474 km", isCorrect: false}, {text: "5,268 km", isCorrect: false}], explanation: "Miranda is only about 471 km in diameter, making it the smallest and innermost of Uranus's major spherical moons." },
+        { q: "How long does it take Miranda to complete one orbit around Uranus?", options: [{text: "1.4 Earth days", isCorrect: true}, {text: "4.1 Earth days", isCorrect: false}, {text: "13.5 Earth days", isCorrect: false}, {text: "84 Earth years", isCorrect: false}], explanation: "Because it orbits incredibly close to Uranus (about 129,000 km away), it zips around the planet in just 1.4 Earth days." },
+        { q: "Voyager 2 flew closer to Miranda than any other Uranian moon. Why was this trajectory chosen?", options: [{text: "To safely navigate through Uranus's rings", isCorrect: false}, {text: "To get a gravity assist to bend its path toward Neptune", isCorrect: true}, {text: "Because Miranda was thought to support life", isCorrect: false}, {text: "To avoid a solar flare", isCorrect: false}], explanation: "To ensure Voyager 2 could reach Neptune, it needed a precise gravity assist from Uranus, which necessitated a flight path taking it incredibly close to Miranda." },
+        { q: "How close did Voyager 2 come to Miranda during its 1986 flyby?", options: [{text: "3,000 km", isCorrect: false}, {text: "29,000 km", isCorrect: true}, {text: "150,000 km", isCorrect: false}, {text: "365,000 km", isCorrect: false}], explanation: "Voyager 2 passed within 29,000 km of Miranda, the closest approach it made to any object in the Uranian system, resulting in spectacular high-resolution images." },
+        { q: "Unlike Titania or Oberon, scientists suspect Miranda is *not* fully differentiated. What does this mean?", options: [{text: "It has no atmosphere", isCorrect: false}, {text: "Its rock and ice are still somewhat mixed together", isCorrect: true}, {text: "It doesn't have a magnetic field", isCorrect: false}, {text: "It doesn't orbit in a perfect circle", isCorrect: false}], explanation: "Differentiation is the process where heavy rock sinks to form a core. Because Miranda is so small, it may not have generated enough internal heat to completely separate its ice and rock." },
+        { q: "What was the older, now largely discarded theory for Miranda's patchwork appearance?", options: [{text: "It was shattered by a massive asteroid and reassembled randomly", isCorrect: true}, {text: "It was formed from two separate moons colliding and fusing", isCorrect: false}, {text: "Its surface was painted by dust from Uranus's rings", isCorrect: false}, {text: "It was scorched by a passing comet", isCorrect: false}], explanation: "Initially, scientists thought Miranda had been catastrophically shattered by an impact and re-accreted into a jumbled mess, but extensional tectonics is now the preferred model." },
+        { q: "Why do Miranda's poles experience 42 Earth years of continuous darkness?", options: [{text: "Because it is tidally locked", isCorrect: false}, {text: "Because Uranus and its moons are tilted 98 degrees", isCorrect: true}, {text: "Because of thick seasonal clouds", isCorrect: false}, {text: "Because Uranus's rings cast a shadow over it", isCorrect: false}], explanation: "Uranus's extreme axial tilt means its moons orbit perpendicular to the Sun, plunging each pole into 42 years of sunlight followed by 42 years of total darkness." },
+        { q: "What literary work is the character Miranda taken from?", options: [{text: "A Midsummer Night's Dream", isCorrect: false}, {text: "The Tempest", isCorrect: true}, {text: "The Rape of the Lock", isCorrect: false}, {text: "Hamlet", isCorrect: false}], explanation: "Like most Uranian moons, it is named after an English literary character. Miranda is the daughter of Prospero in William Shakespeare's 'The Tempest'." },
+        { q: "Which of these describes the visual appearance of a Corona on Miranda?", options: [{text: "A deep, straight canyon", isCorrect: false}, {text: "A perfectly round, smooth impact basin", isCorrect: false}, {text: "A giant, oval-shaped grooved racetrack pattern", isCorrect: true}, {text: "A towering, sharp mountain peak", isCorrect: false}], explanation: "Coronae on Miranda are massive, oval-to-squarish structures of parallel ridges and valleys that look remarkably like giant racetracks or thumbprints." },
+        { q: "Miranda's surface features are named after what theme?", options: [{text: "Characters and places from Shakespeare's plays", isCorrect: true}, {text: "Benevolent spirits from global mythologies", isCorrect: false}, {text: "Famous astronomers", isCorrect: false}, {text: "Greek and Roman gods", isCorrect: false}], explanation: "Features on Miranda (like Verona Rupes or Arden Corona) are named after places and characters found in the works of William Shakespeare." },
+        { q: "Which internal material likely acted as an 'antifreeze,' allowing liquid to upwell and reshape Miranda's surface despite the extreme cold?", options: [{text: "Liquid Methane", isCorrect: false}, {text: "Ammonia", isCorrect: true}, {text: "Sulfuric Acid", isCorrect: false}, {text: "Liquid Iron", isCorrect: false}], explanation: "Ammonia mixed with water significantly lowers the freezing point of the ice, allowing a slushy cryomagma to erupt and reshape the surface even at frigid temperatures." },
+        { q: "What physical process is responsible for the creation of fault scarps like Verona Rupes?", options: [{text: "Extensional tectonic forces pulling the icy crust apart", isCorrect: true}, {text: "Glaciers carving through the ice", isCorrect: false}, {text: "Lava flows hardening into cliffs", isCorrect: false}, {text: "Meteor impacts pushing the crust upward", isCorrect: false}], explanation: "Verona Rupes is a normal fault scarp, created when the moon's crust was subjected to extreme tension, causing a block of ice to drop down and leave a massive cliff face." },
+        { q: "Why does Miranda currently lack the tidal heating that likely shaped it in the past?", options: [{text: "Its core froze solid", isCorrect: false}, {text: "It escaped the orbital resonance that was stretching its interior", isCorrect: true}, {text: "Uranus's gravity weakened", isCorrect: false}, {text: "It moved further away from the Sun", isCorrect: false}], explanation: "Millions of years ago, Miranda was likely in an orbital resonance with Umbriel or Ariel, which stretched its interior. It has since migrated out of this resonance, stopping the heating." },
+        { q: "Miranda orbits closest to Uranus among the major moons. How does this position affect its orbital velocity?", options: [{text: "It travels slower than the outer moons", isCorrect: false}, {text: "It travels faster than the outer moons to maintain its orbit", isCorrect: true}, {text: "Its velocity constantly changes wildly", isCorrect: false}, {text: "It has the exact same velocity as the others", isCorrect: false}], explanation: "According to Kepler's laws of planetary motion, objects orbiting closer to their parent body must travel faster to counteract the stronger gravitational pull." }
+    ];
+
+    let currentQ = 0;
+    let score = 0;
+    let shuffledQuestions = [];
+
+    function shuffleArray(arr) {
+        let array = [...arr];
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function initQuiz() {
+        shuffledQuestions = shuffleArray(quizData).map(q => ({
+            ...q,
+            options: shuffleArray(q.options)
+        }));
+        currentQ = 0;
+        score = 0;
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('dynamicQuizArea').classList.remove('hidden');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const qData = shuffledQuestions[currentQ];
+        const container = document.getElementById('dynamicQuizArea');
+        
+        let html = `
+            <div class="quiz-q block">
+                <h3 class="text-xl font-bold mb-4 text-${moonColor}">Question ${currentQ + 1} of 20: <br/><span class="text-white mt-2 block">${qData.q}</span></h3>
+                <div class="space-y-3" id="optionsContainer">
+                    ${qData.options.map((opt, idx) => `
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-${moonColor} transition-all opt-btn" onclick="answer(${idx}, ${opt.isCorrect}, this)">${opt.text}</button>
+                    `).join('')}
+                </div>
+                <div id="explanationArea" class="hidden mt-6 p-4 rounded-xl bg-space-800 border border-space-500">
+                    <p class="text-sm text-space-100"><strong class="text-white">Explanation:</strong> ${qData.explanation}</p>
+                </div>
+                <button id="nextQBtn" onclick="nextQuestion()" class="hidden mt-6 w-full bg-space-700 text-white font-bold py-3 rounded-xl hover:bg-space-500 transition-colors">Next Question ▶</button>
+            </div>
+        `;
+        container.innerHTML = html;
+    }
+
+    function answer(optIdx, isCorrect, btnEl) {
+        const qData = shuffledQuestions[currentQ];
+        const buttons = document.querySelectorAll('.opt-btn');
+        
+        buttons.forEach((btn, idx) => {
+            btn.disabled = true;
+            btn.classList.remove('hover:bg-space-700', `hover:border-${moonColor}`);
+            if (qData.options[idx].isCorrect) {
+                btn.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            } else {
+                btn.classList.add('opacity-50');
+            }
+        });
+
+        if (isCorrect) {
+            score++;
+            addXP(5);
+        } else {
+            btnEl.classList.remove('opacity-50', 'bg-space-800');
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+        }
+
+        document.getElementById('explanationArea').classList.remove('hidden');
+        document.getElementById('nextQBtn').classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        currentQ++;
+        if (currentQ < 20) {
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('dynamicQuizArea').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('q-result').classList.add('block');
+        document.getElementById('scoreText').innerText = `${score}/20`;
+        
+        document.getElementById('scoreText').classList.remove('text-star-green', 'text-star-red', `text-${moonColor}`);
+
+        if(score >= 15) {
+            document.getElementById('scoreText').classList.add('text-star-green');
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Olympiad Scholar!", "Excellent performance! You passed the rigorous SciOly Quiz! +100 XP", "🧠");
+            }
+            document.getElementById('retryQuizBtn').classList.add('hidden');
+        } else {
+            document.getElementById('scoreText').classList.add('text-star-red');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        initQuiz();
+    }
+
+    window.addEventListener('DOMContentLoaded', initQuiz);
+
+    /* MINI GAME: Verona Rupes BASE Jumper (Vertical Downward Scroller) */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    // Player (Astronaut/Probe) - Moves left/right, falling down (fixed high Y)
+    const player = {
+        x: 200, 
+        y: 80, 
+        width: 30,
+        height: 40,
+        speed: 6,
+        color: '#f8fafc' 
+    };
+
+    let obstacles = []; // Ledges jutting from walls
+    let collectibles = []; // Data nodes
+    
+    let bgStars = [];
+
+    // Inputs
+    let keys = { ArrowLeft: false, ArrowRight: false };
+    let isTouching = false;
+    let touchTargetX = 0;
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(['ArrowLeft', 'ArrowRight'].includes(e.code)) {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(['ArrowLeft', 'ArrowRight'].includes(e.code)) keys[e.code] = false; 
+    });
+    
+    // Touch/Mouse Support
+    function handlePointerMove(e) {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        touchTargetX = (clientX - rect.left) * (canvas.width / rect.width);
+        isTouching = true;
+        if(e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+    }
+    function handlePointerUp() { isTouching = false; }
+
+    canvas.addEventListener('touchstart', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchend', handlePointerUp);
+    canvas.addEventListener('mousedown', handlePointerMove);
+    canvas.addEventListener('mousemove', (e) => { if(isTouching) handlePointerMove(e); });
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerUp);
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        obstacles = [];
+        collectibles = [];
+        dataCollected = 0;
+        isTouching = false;
+
+        // Init background lines (speed lines falling UP)
+        bgStars = Array.from({length: 15}).map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 1,
+            speed: Math.random() * 5 + 5
+        }));
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Falling...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity() {
+        let speedMult = 1 + (scoreFrames / 2000); 
+        let globalSpeedY = (Math.random() * 2 + 6) * speedMult; // Scroll speed UP (illusion of falling)
+        
+        // Data Node (30% chance)
+        if (Math.random() > 0.7 && collectibles.length < 2) {
+            collectibles.push({
+                x: Math.random() * (canvas.width - 40) + 20,
+                y: canvas.height + 20, // Spawn at bottom
+                width: 20,
+                height: 20,
+                speedY: globalSpeedY,
+                pulse: 0
+            });
+            return;
+        }
+
+        // Ledges from walls (left or right)
+        let isLeft = Math.random() > 0.5;
+        let w = Math.random() * (canvas.width * 0.4) + 50; // up to ~50% width
+        let h = Math.random() * 30 + 20;
+
+        obstacles.push({ 
+            x: isLeft ? 0 : canvas.width - w, 
+            y: canvas.height + 10, 
+            width: w, 
+            height: h, 
+            speedY: globalSpeedY,
+            isLeft: isLeft
+        });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        // Tilt slightly based on movement
+        let tilt = 0;
+        if(keys.ArrowLeft || (isTouching && touchTargetX < player.x)) tilt = -0.2;
+        if(keys.ArrowRight || (isTouching && touchTargetX > player.x)) tilt = 0.2;
+        ctx.rotate(tilt);
+
+        // Body (Jumper suit / probe)
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.moveTo(0, player.height/2); // point at bottom
+        ctx.lineTo(-player.width/2, -player.height/2);
+        ctx.lineTo(player.width/2, -player.height/2);
+        ctx.closePath();
+        ctx.fill();
+
+        // Visor
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.moveTo(0, player.height/4);
+        ctx.lineTo(-player.width/4, -player.height/4);
+        ctx.lineTo(player.width/4, -player.height/4);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Thrusters firing UP (to slow down / move laterally)
+        ctx.fillStyle = '#38bdf8';
+        if(tilt < 0) { // moving left, right thruster fires
+            ctx.fillRect(player.width/2 + 2, -player.height/2, 4, 15 + Math.random()*5);
+        } else if (tilt > 0) { // moving right, left thruster fires
+            ctx.fillRect(-player.width/2 - 6, -player.height/2, 4, 15 + Math.random()*5);
+        }
+
+        ctx.restore();
+    }
+
+    function drawEntities() {
+        // Collectibles
+        for (let i = 0; i < collectibles.length; i++) {
+            let c = collectibles[i];
+            c.pulse += 0.1;
+            let glow = 8 + Math.sin(c.pulse) * 4;
+            
+            ctx.fillStyle = '#6ef0ff'; // Cyan
+            ctx.shadowBlur = glow;
+            ctx.shadowColor = '#6ef0ff';
+            
+            ctx.beginPath();
+            ctx.arc(c.x + c.width/2, c.y + c.height/2, c.width/2, 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.shadowBlur = 0;
+        }
+
+        // Obstacles (Ledges)
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            
+            let gradient = ctx.createLinearGradient(o.x, o.y, o.x + o.width, o.y);
+            if(o.isLeft) {
+                gradient.addColorStop(0, '#0f172a');
+                gradient.addColorStop(1, '#475569');
+            } else {
+                gradient.addColorStop(0, '#475569');
+                gradient.addColorStop(1, '#0f172a');
+            }
+            
+            ctx.fillStyle = gradient; 
+            
+            // Jagged edge
+            ctx.beginPath();
+            if(o.isLeft) {
+                ctx.moveTo(0, o.y);
+                ctx.lineTo(o.width - 10, o.y + o.height/4);
+                ctx.lineTo(o.width, o.y + o.height/2);
+                ctx.lineTo(o.width - 15, o.y + o.height);
+                ctx.lineTo(0, o.y + o.height);
+            } else {
+                ctx.moveTo(canvas.width, o.y);
+                ctx.lineTo(o.x + 10, o.y + o.height/4);
+                ctx.lineTo(o.x, o.y + o.height/2);
+                ctx.lineTo(o.x + 15, o.y + o.height);
+                ctx.lineTo(canvas.width, o.y + o.height);
+            }
+            ctx.closePath();
+            ctx.fill();
+            
+            // Top frost highlight
+            ctx.fillStyle = 'rgba(248, 250, 252, 0.4)';
+            ctx.fillRect(o.x, o.y, o.width, 3);
+        }
+    }
+
+    function drawBackground() {
+        // Deep shadow gradient
+        let grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+        grad.addColorStop(0, '#020617'); // dark walls
+        grad.addColorStop(0.5, '#0f172a'); // lighter center
+        grad.addColorStop(1, '#020617'); 
+        
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Speed lines moving UP
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        bgStars.forEach(s => {
+            ctx.fillRect(s.x, s.y, s.size, s.size * 10);
+            s.y -= s.speed + (scoreFrames/1000);
+            if(s.y + (s.size*10) < 0) {
+                s.y = canvas.height;
+                s.x = Math.random() * canvas.width;
+            }
+        });
+    }
+
+    function checkCollisionRect(r1, r2) {
+        return !(r2.x > r1.x + r1.width || 
+                 r2.x + r2.width < r1.x || 
+                 r2.y > r1.y + r1.height ||
+                 r2.y + r2.height < r1.y);
+    }
+
+    function updatePhysics() {
+        // Player Movement (Horizontal only)
+        if (keys.ArrowLeft) player.x -= player.speed;
+        if (keys.ArrowRight) player.x += player.speed;
+
+        if (isTouching) {
+            let dx = touchTargetX - (player.x + player.width/2);
+            if (Math.abs(dx) > player.speed) {
+                player.x += (dx / Math.abs(dx)) * player.speed;
+            }
+        }
+
+        // Clamp to screen
+        if(player.x < 0) player.x = 0;
+        if(player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+
+        // Hitbox
+        let pRect = { x: player.x + 5, y: player.y + 5, width: player.width - 10, height: player.height - 10 };
+
+        // Spawning
+        let spawnRate = Math.max(15, 40 - Math.floor(scoreFrames/100)); 
+        if (frames % spawnRate === 0) spawnEntity();
+
+        // Update Collectibles
+        for (let i = collectibles.length - 1; i >= 0; i--) {
+            collectibles[i].y -= collectibles[i].speedY; // Move UP
+            
+            if (checkCollisionRect(pRect, collectibles[i])) {
+                dataCollected++;
+                addXP(10);
+                ctx.fillStyle = 'rgba(110, 240, 255, 0.4)'; // Cyan flash
+                ctx.fillRect(0,0, canvas.width, canvas.height);
+                collectibles.splice(i, 1);
+                continue;
+            }
+
+            if (collectibles[i].y + collectibles[i].height < 0) {
+                collectibles.splice(i, 1);
+            }
+        }
+
+        // Update Obstacles
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].y -= obstacles[i].speedY; // Move UP
+            
+            // Trim width slightly for jagged edge forgiveness
+            let oRect = {x: obstacles[i].x, y: obstacles[i].y, width: obstacles[i].width, height: obstacles[i].height};
+            if(obstacles[i].isLeft) oRect.width -= 5;
+            else { oRect.x += 5; oRect.width -= 5; }
+
+            if (checkCollisionRect(pRect, oRect)) {
+                gameOver("Smashed into the Cliff Wall!");
+                return;
+            }
+
+            if (obstacles[i].y + obstacles[i].height < 0) {
+                obstacles.splice(i, 1);
+            }
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        drawBackground();
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawEntities();
+        drawPlayer();
+
+        // HUD
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let dist = Math.floor(secondsAlive * 1); // 20s = 20km depth
+        
+        ctx.fillStyle = "rgba(15, 23, 42, 0.8)";
+        ctx.fillRect(5, 5, 150, 60);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Fallen: ${dist} km`, 10, 25);
+        ctx.fillStyle = "#6ef0ff"; // Cyan
+        ctx.fillText(`💿 Data: ${dataCollected}/5`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && dataCollected >= 5 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Cliff Diver Badge Unlocked!", "You survived the 20km drop! +100 XP", "🧗‍♂️");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Jump Again";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 5);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You fell for ${secondsAlive}s.</p>
+            <p class="text-star-cyan mb-4 text-sm font-bold">💿 Collected ${dataCollected} Cores</p>
+            ${!achievements.playedGame ? `<p class="text-miranda-light text-sm mb-4 text-center px-2">Survive 20s AND collect 5 cores for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

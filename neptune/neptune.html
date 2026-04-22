@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neptune — Interactive Solar System Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#030712', 800: '#0f172a', 700: '#1e293b', 500: '#334155', 100: '#f8fafc' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        neptune: { base: '#3b82f6', dark: '#1d4ed8', light: '#93c5fd', storm: '#1e3a8a', ring: '#bfdbfe' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 50s linear infinite',
+                        'wind-shift': 'windShift 15s linear infinite',
+                        'spin-larissa': 'spin 4s linear infinite',
+                        'spin-proteus': 'spin 6s linear infinite',
+                        'spin-triton': 'spin 14s linear infinite reverse', /* Retrograde orbit! */
+                        'spin-nereid': 'spin 35s linear infinite', /* Distant and slow */
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(59, 130, 246, 0.5)' },
+                        },
+                        windShift: {
+                            '0%': { backgroundPosition: '0% 0%' },
+                            '100%': { backgroundPosition: '200% 0%' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #030712;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #3b82f6 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #93c5fd 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #1d4ed8 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(3, 7, 18, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(59, 130, 246, 0.6);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Neptune Graphic - Deep Blue with Wispy Clouds */
+        .orb-neptune {
+            background: radial-gradient(circle at 35% 35%, #93c5fd, #3b82f6, #1d4ed8, #1e3a8a, #0f172a);
+            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(59, 130, 246, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        /* High-altitude white methane clouds */
+        .orb-neptune::before {
+            content: '';
+            position: absolute;
+            top: 20%; left: -50%; width: 200%; height: 60%;
+            background: repeating-linear-gradient(
+                to bottom,
+                transparent,
+                rgba(255,255,255,0.15) 10%,
+                transparent 20%
+            );
+            background-size: 100% 200%;
+            animation: wind-shift 15s linear infinite;
+            filter: blur(2px);
+            transform: rotate(-10deg);
+        }
+        
+        /* The Great Dark Spot */
+        .orb-neptune::after {
+            content: '';
+            position: absolute;
+            top: 55%; left: 30%;
+            width: 30%; height: 15%;
+            background: radial-gradient(ellipse at center, #0f172a 0%, #1e3a8a 50%, transparent 100%);
+            border-radius: 50%;
+            filter: blur(3px);
+            transform: rotate(-15deg);
+        }
+
+        /* Neptune's faint ring system */
+        .neptune-rings {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(20deg) scaleY(0.2);
+            width: 280%; height: 280%;
+            border: 2px solid rgba(147, 197, 253, 0.2);
+            border-radius: 50%;
+            box-shadow: 
+                inset 0 0 0 3px rgba(147, 197, 253, 0.1),
+                0 0 0 5px rgba(59, 130, 246, 0.15);
+            z-index: 1; 
+        }
+
+        /* Orbiting Moons 3D System Container */
+        .solar-system {
+            transform-style: preserve-3d;
+            perspective: 1200px;
+            transform: rotateX(72deg) rotateZ(-15deg);
+        }
+
+        /* Prevent Squish on orbital spheres by counter-rotating */
+        .moon-sphere {
+            transform: rotateX(-72deg);
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #030712; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+        
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden" onload="initQuiz()">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-neptune-base shadow-[0_0_40px_rgba(59,130,246,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-neptune-base text-white font-bold py-3 rounded-xl hover:bg-neptune-light hover:text-space-900 transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <a href="../index.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+            <span class="text-2xl text-neptune-light">🌊</span>
+            <span class="font-display font-bold text-xl tracking-wide hidden sm:block">Solar System Explorer</span>
+            <span class="font-display font-bold text-xl tracking-wide sm:hidden">SSE</span>
+        </a>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-neptune-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-neptune-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Neptune Mission Progress</span>
+                    <span id="progressText" class="text-neptune-base font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-neptune-dark to-neptune-base h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Play Mini-Game</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Olympiad Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-neptune-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-neptune-base font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-star-cyan animate-ping"></span> Planet 8 of 8
+                </p>
+                <h1 class="font-display text-6xl md:text-8xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Neptune</h1>
+                <p class="text-2xl text-neptune-light font-body italic mb-6">"The Windy Giant"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    The eighth and farthest known planet from the Sun. A dark, cold, and supersonic world composed of thick icy materials, famous for possessing the fastest winds in the entire solar system.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-neptune-base text-white px-8 py-3 rounded-full font-bold hover:bg-neptune-light hover:text-space-900 transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+                    Enter the Storm 👇
+                </button>
+            </div>
+            
+            <!-- Animated 3D Planet & Orbiting Moons -->
+            <div class="z-10 relative mt-16 md:mt-0 flex justify-center items-center h-80 w-80">
+                <!-- Outer 3D orbital plane for moons -->
+                <div class="absolute w-[450px] h-[450px] md:w-[700px] md:h-[700px] solar-system animate-float">
+                    
+                    <!-- 1. Larissa Orbit -->
+                    <div class="absolute top-1/2 left-1/2 w-[35%] h-[35%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5 animate-spin-larissa transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-2.5 h-2.5 bg-gray-500 rounded-full shadow-[0_0_8px_#6b7280] moon-sphere" style="transform: translate(-50%, -50%) rotateX(-72deg);"></div>
+                    </div>
+
+                    <!-- 2. Proteus Orbit (Dark and boxy) -->
+                    <div class="absolute top-1/2 left-1/2 w-[50%] h-[50%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5 animate-spin-proteus transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-3.5 h-3 bg-gray-700 rounded-sm shadow-[0_0_8px_#374151] moon-sphere" style="transform: translate(-50%, -50%) rotateX(-72deg);"></div>
+                    </div>
+
+                    <!-- 3. Triton Orbit (RETROGRADE ORBIT!) -->
+                    <div class="absolute top-1/2 left-1/2 w-[70%] h-[70%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-neptune-base/20 animate-spin-triton transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-7 h-7 bg-gradient-to-br from-pink-100 to-gray-300 rounded-full shadow-[0_0_15px_#fbcfe8] moon-sphere" style="transform: translate(-50%, -50%) rotateX(-72deg);"></div>
+                    </div>
+
+                    <!-- 4. Nereid Orbit (Highly eccentric visually simplified) -->
+                    <div class="absolute top-1/2 left-1/2 w-[110%] h-[110%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5 animate-spin-nereid transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-2 h-2 bg-gray-400 rounded-full shadow-[0_0_6px_#9ca3af] moon-sphere" style="transform: translate(-50%, -50%) rotateX(-72deg);"></div>
+                    </div>
+                </div>
+
+                <!-- Central Neptune & Rings -->
+                <div class="absolute w-40 h-40 md:w-56 md:h-56 animate-pulse-glow z-20 pointer-events-none">
+                    <div class="neptune-rings"></div>
+                    <div class="w-full h-full orb-neptune"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🥶</div>
+                <div class="text-neptune-base font-mono text-xs uppercase mb-1">Avg Temp</div>
+                <div class="font-bold text-xl">-214°C <span class="text-sm font-normal text-space-100">(-353°F)</span></div>
+                <div class="text-xs text-star-cyan mt-1">Deep freeze</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🏎️</div>
+                <div class="text-neptune-base font-mono text-xs uppercase mb-1">Orbital Speed</div>
+                <div class="font-bold text-xl">5.43 km/s</div>
+                <div class="text-xs text-space-100 mt-1">Slowest planet</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🧲</div>
+                <div class="text-neptune-base font-mono text-xs uppercase mb-1">Magnetic Field</div>
+                <div class="font-bold text-xl">Tilted 47°</div>
+                <div class="text-xs text-space-100 mt-1">Offset from core</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🌪️</div>
+                <div class="text-neptune-base font-mono text-xs uppercase mb-1">Max Wind Speed</div>
+                <div class="font-bold text-xl">2,100 km/h</div>
+                <div class="text-xs text-star-red mt-1">Fastest in System</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt planetary data.</p>
+                </div>
+                <div class="hidden md:block text-neptune-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Position -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'n1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📍</div>
+                            <h3 class="font-display text-xl text-neptune-base">Position & Distance</h3>
+                            <p class="text-space-100 text-xs mt-2">Distance from Sun</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-neptune-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-neptune-light mb-2 border-b border-neptune-dark pb-1 w-full">The Outer Limit</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li><span class="text-neptune-base font-mono font-bold">AU:</span> ~30.07 Astronomical Units</li>
+                                <li><span class="text-neptune-base font-mono font-bold">KM:</span> ~4.5 Billion kilometers</li>
+                                <li class="text-xs text-space-100 italic mt-2">It is so far away that sunlight takes 4 hours to reach it!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Size -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'n2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📏</div>
+                            <h3 class="font-display text-xl text-neptune-base">Relative Size</h3>
+                            <p class="text-space-100 text-xs mt-2">The Smallest Gas Giant</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-neptune-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-neptune-light mb-2 border-b border-neptune-dark pb-1 w-full">A Dense Behemoth</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-neptune-base font-mono font-bold">Diameter:</span> 49,244 km. Nearly 4 times wider than Earth.</li>
+                                <li><span class="text-neptune-base font-mono font-bold">Volume:</span> You could fit exactly <strong class="text-white">57 Earths</strong> inside Neptune.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Weight & Density -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'n3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚖️</div>
+                            <h3 class="font-display text-xl text-neptune-base">Weight & Density</h3>
+                            <p class="text-space-100 text-xs mt-2">Gravity Check</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-neptune-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-neptune-light mb-2 border-b border-neptune-dark pb-1 w-full">Heavier than Uranus</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-neptune-base font-mono font-bold">Density:</span> 1.64 g/cm³. It is the densest of all the gas/ice giants.</li>
+                                <li class="bg-space-900 p-2 rounded border border-space-500 text-center text-star-cyan mt-2">
+                                    Gravity is 1.14x Earth's! If you weigh 100 lbs on Earth, you'd weigh 114 lbs here.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Composition -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'n4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧪</div>
+                            <h3 class="font-display text-xl text-neptune-base">Composition</h3>
+                            <p class="text-space-100 text-xs mt-2">An Ice Giant's Core</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-neptune-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-neptune-light mb-2 border-b border-neptune-dark pb-1 w-full">Crushing Ice</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-neptune-base">Makeup:</strong> A hot, dense fluid of "icy" materials (water, ammonia, methane) situated above a small rocky core.</li>
+                                <li><strong class="text-neptune-base">Mantle:</strong> The mantle is incredibly hot—often called a "water-ammonia ocean," though it's too dense to be a true liquid.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Time -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'n5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⏳</div>
+                            <h3 class="font-display text-2xl text-neptune-base">Time constraints</h3>
+                            <p class="text-space-100 mt-2">Length of Day & Extremely Long Years</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-neptune-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-neptune-light mb-3 border-b border-neptune-dark pb-2 w-full">A Lifetime Orbit</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-neptune-base font-mono font-bold block mb-1">Length of Year:</span>
+                                    ~165 Earth years! It recently completed its very first orbit since it was discovered in 1846!
+                                </div>
+                                <div>
+                                    <span class="text-neptune-base font-mono font-bold block mb-1">Length of Day:</span>
+                                    Only 16 hours. Like the other giants, it spins very quickly on its axis.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Atmosphere & Weather -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'n6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">💨</div>
+                            <h3 class="font-display text-2xl text-neptune-base">Atmosphere & Weather</h3>
+                            <p class="text-space-100 mt-2">Supersonic Winds and Dark Spots</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-neptune-base flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-neptune-light mb-2 border-b border-neptune-dark pb-1 w-full">The Windiest World</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-neptune-base">The Blue Color:</strong> Mostly Hydrogen and Helium, but Methane gas gives it its striking, deep blue color.</li>
+                                <li><strong class="text-neptune-base">Supersonic Winds:</strong> Winds rip through the clouds at over 2,000 km/h (1,200 mph)—faster than the speed of sound on Earth!</li>
+                                <li><strong class="text-neptune-base">Great Dark Spot:</strong> A massive spinning storm similar to Jupiter's Red Spot, but it frequently vanishes and reappears.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Missions -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'n7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-neptune-base">Famous Missions</h3>
+                            <p class="text-space-100 mt-2">The edge of the solar system</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-neptune-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-neptune-light mb-2 border-b border-neptune-dark pb-2 w-full">One Brief Visit</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-white">Voyager 2 (1989):</strong> The ONLY spacecraft to ever visit Neptune. It took 12 years to get there!</li>
+                                <li><strong class="text-star-cyan">Discoveries:</strong> Voyager 2 discovered five moons, four rings, the Great Dark Spot, and active geysers on the moon Triton.</li>
+                                <li><strong class="text-space-100 italic">Today:</strong> We rely entirely on the Hubble and James Webb Space Telescopes to monitor it from Earth.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Weird Facts -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'n8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🤯</div>
+                            <h3 class="font-display text-2xl text-neptune-base">Wild Facts</h3>
+                            <p class="text-space-100 mt-2">Tap for the strangest Neptune facts</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-neptune-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-neptune-light mb-2 border-b border-neptune-dark pb-2 w-full">Math and Diamonds</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-neptune-light">Discovered by Math:</strong> Neptune is the only planet located via mathematical prediction rather than observation! Astronomers noticed Uranus's orbit was wobbling and calculated another planet must be pulling on it.</li>
+                                <li><strong class="text-neptune-light">Diamond Rain:</strong> Just like Uranus, extreme pressures deep inside the planet are theorized to compress carbon into diamonds that rain down into the core!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-neptune-base border-2 shadow-[0_0_30px_rgba(59,130,246,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-neptune-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Supersonic Wind Surfer</h2>
+                        <p class="text-space-100 mb-6">Pilot the Voyager 2 probe through Neptune's treacherous upper atmosphere. Dodge the 2,000 km/h wind shear and giant chunks of methane ice. Survive for 20 seconds to earn the <span class="text-neptune-light font-bold">Storm Surfer Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-neptune-base mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Enter Atmosphere
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-neptune-base/30">
+                            <div class="text-5xl mb-2">🛰️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Approaching Storm</h3>
+                            <p class="text-neptune-light text-sm">Click to begin dive</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#0f172a] via-[#1e3a8a] to-[#1d4ed8] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-neptune-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rigorous Science Olympiad Quiz Section -->
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-neptune-base/50">
+            <div class="text-center mb-8">
+                <span class="inline-block px-3 py-1 bg-star-gold text-space-900 text-xs font-bold rounded-full mb-3 uppercase tracking-widest">State Level</span>
+                <h2 class="font-display text-3xl md:text-4xl text-white">Science Olympiad Simulator</h2>
+                <p class="text-space-100 mt-2">Test your advanced knowledge across 25 grueling questions to master the Neptune module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-3xl mx-auto">
+                <div id="quizHeader" class="flex justify-between items-center mb-6">
+                    <span id="quizProgress" class="text-neptune-light font-mono font-bold">Question 1 / 25</span>
+                    <span id="quizScore" class="text-star-gold font-mono font-bold">Score: 0</span>
+                </div>
+
+                <div id="quizBody" class="glass-panel p-6 md:p-8 rounded-2xl border border-neptune-dark bg-space-800 relative transition-all">
+                    <h3 id="questionText" class="text-lg md:text-xl font-bold mb-6 text-white leading-tight">Loading Question...</h3>
+                    
+                    <div id="optionsContainer" class="space-y-3 font-body">
+                        <!-- Options injected by JS -->
+                    </div>
+                    
+                    <!-- Detailed Explanation Box -->
+                    <div id="explanationBox" class="hidden mt-6 p-5 rounded-xl bg-space-900 border border-neptune-base text-space-100 text-sm leading-relaxed relative shadow-inner">
+                        <span class="absolute -top-3 left-4 bg-neptune-dark text-white px-2 py-0.5 rounded text-xs font-bold tracking-wide">SCIENTIFIC EXPLANATION</span>
+                        <p id="explanationText" class="mt-2"></p>
+                    </div>
+
+                    <div class="mt-6 flex justify-end">
+                        <button id="nextBtn" class="hidden bg-neptune-base text-white px-6 py-2 rounded-full font-bold hover:bg-neptune-light hover:text-space-900 transition-transform transform hover:scale-105" onclick="nextQuestion()">Next Question ⏭️</button>
+                    </div>
+                </div>
+
+                <div id="quizResults" class="hidden text-center py-8">
+                    <!-- Final results injected by JS -->
+                </div>
+            </div>
+        </div>
+        
+        <h3 class="font-display text-2xl text-star-magenta mb-4 mt-8 flex items-center justify-center md:justify-start gap-2">
+            Major Moons of Neptune (4 of 16)
+        </h3>
+        <p class="text-space-100 text-sm mb-6 text-center md:text-left max-w-3xl">Neptune has 16 currently known moons, but one of them dominates the entire system, containing 99.5% of all the mass in orbit around the planet.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+            <!-- Triton -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-neptune-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-pink-100 to-gray-300 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3 border border-pink-200">
+                    <div class="absolute bottom-2 left-1/2 w-1 h-4 bg-gray-100 blur-sm"></div>
+                    <div class="absolute top-2 left-2 w-4 h-4 rounded-full border border-gray-400 opacity-50"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Triton</p>
+                    <p class="font-mono text-xs text-neptune-light">Retrograde Orbit</p>
+                </div>
+                <button onclick="window.location.href='triton.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-neptune-light text-neptune-light transition-colors font-bold shadow-md">
+                    Visit triton.html ▸
+                </button>
+            </div>
+
+            <!-- Proteus -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-neptune-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-16 h-16 bg-gradient-to-br from-gray-600 to-gray-800 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.8)] relative overflow-hidden mb-3 rounded-xl transform rotate-12">
+                    <div class="absolute top-2 right-2 w-4 h-4 rounded-full bg-gray-900 border border-gray-700"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Proteus</p>
+                    <p class="font-mono text-xs text-neptune-light">Dark & Boxy</p>
+                </div>
+                <button onclick="window.location.href='proteus.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-neptune-light text-neptune-light transition-colors font-bold shadow-md">
+                    Visit proteus.html ▸
+                </button>
+            </div>
+
+            <!-- Nereid -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-neptune-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-gray-400 to-gray-500 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                    <div class="absolute top-1/2 left-1 w-full h-[1px] bg-gray-300 transform rotate-45"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Nereid</p>
+                    <p class="font-mono text-xs text-neptune-light">Eccentric Orbit</p>
+                </div>
+                <button onclick="window.location.href='nereid.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-neptune-light text-neptune-light transition-colors font-bold shadow-md">
+                    Visit nereid.html ▸
+                </button>
+            </div>
+
+            <!-- Larissa -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-neptune-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-gray-500 to-gray-700 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3 transform -rotate-12 scale-y-90">
+                    <div class="absolute bottom-3 right-3 w-5 h-5 rounded-full bg-gray-800"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Larissa</p>
+                    <p class="font-mono text-xs text-neptune-light">Inner Cratered</p>
+                </div>
+                <button onclick="window.location.href='larissa.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-neptune-light text-neptune-light transition-colors font-bold shadow-md">
+                    Visit larissa.html ▸
+                </button>
+            </div>
+        </div>
+
+    </section>
+</main>
+
+<script>
+    /* APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.planetCompleteAlerted) {
+            window.planetCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Neptune Module Complete!", "You have unlocked the 'Windy Giant' rank! Supersonic effort!", "🌊");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Neptune files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC: Science Olympiad (State Level) - 25 Questions */
+    const rawQuizData = [
+        {
+            q: "How was the existence of Neptune first discovered before it was ever observed through a telescope?",
+            options: ["By analyzing ancient Sumerian texts.", "Through mathematical predictions based on anomalies in Uranus's orbit.", "By measuring the gravitational pull on passing comets.", "Through anomalous radio waves picked up by early observatories."],
+            correct: "Through mathematical predictions based on anomalies in Uranus's orbit.",
+            explanation: "Neptune is unique as the first planet discovered by mathematics. Urbain Le Verrier and John Couch Adams independently calculated its exact position by noticing that Uranus was being pulled off its predicted course by an unseen gravitational mass."
+        },
+        {
+            q: "Who was the astronomer that first visually confirmed the existence of Neptune using a telescope in 1846?",
+            options: ["Johann Galle", "William Herschel", "Galileo Galilei", "Christiaan Huygens"],
+            correct: "Johann Galle",
+            explanation: "Using Urbain Le Verrier's mathematical predictions, German astronomer Johann Galle pointed his telescope at the exact coordinates provided and immediately found Neptune on the night of September 23, 1846, within just 1 degree of where Le Verrier said it would be."
+        },
+        {
+            q: "What incredibly extreme weather phenomenon is Neptune famous for?",
+            options: ["Acid rain that melts its rocky surface.", "Global dust storms that last for centuries.", "Supersonic winds reaching 2,100 km/h (1,300 mph).", "Permanent, continent-sized volcanic eruptions."],
+            correct: "Supersonic winds reaching 2,100 km/h (1,300 mph).",
+            explanation: "Neptune boasts the fastest winds in the solar system. Because it has no solid surface to cause friction and a powerful internal heat source to drive convection, its equatorial winds rip through the atmosphere at supersonic speeds."
+        },
+        {
+            q: "What is the bizarre characteristic of the orbit of Neptune's largest moon, Triton?",
+            options: ["It orbits from pole to pole instead of around the equator.", "It has a perfectly square orbit.", "It is the only large moon in the solar system with a retrograde orbit.", "It orbits twice as fast as Neptune rotates."],
+            correct: "It is the only large moon in the solar system with a retrograde orbit.",
+            explanation: "Triton orbits Neptune in the opposite direction of the planet's rotation (retrograde). This strongly suggests it did not form from the original dust disk around Neptune, but is instead a captured Kuiper Belt Object."
+        },
+        {
+            q: "Because of Triton's unusual orbit, what is its ultimate fate predicted to be in a few billion years?",
+            options: ["It will escape Neptune's gravity and become a rogue planet.", "It will spiral inward, pass the Roche limit, and be torn apart to form a massive ring.", "It will crash into Uranus.", "It will ignite into a small star."],
+            correct: "It will spiral inward, pass the Roche limit, and be torn apart to form a massive ring.",
+            explanation: "Triton's retrograde orbit means tidal forces are slowly robbing it of orbital energy. It is gradually spiraling inward. Once it crosses the Roche limit (the point where tidal forces exceed its own gravity), it will shatter and form a magnificent ring system potentially brighter than Saturn's."
+        },
+        {
+            q: "Voyager 2 observed massive, dark plumes erupting on Triton's surface. What is the primary material driving these cryovolcanoes?",
+            options: ["Liquid silicate lava", "Liquid Nitrogen gas and dust", "Boiling sulfuric acid", "Liquid metallic hydrogen"],
+            correct: "Liquid Nitrogen gas and dust",
+            explanation: "Despite a surface temperature of -235°C (-391°F), solar radiation penetrating Triton's translucent surface ice heats subsurface nitrogen. The pressure builds until it erupts through the crust in massive geysers, creating dark streaks across the ice."
+        },
+        {
+            q: "What chemical compound gives Neptune its deep, rich blue color?",
+            options: ["Liquid Water", "Ozone", "Methane", "Ammonia"],
+            correct: "Methane",
+            explanation: "Though its atmosphere is primarily hydrogen and helium, the 1.5% of methane gas absorbs the red and infrared light from the Sun, reflecting back the vivid blue color we observe."
+        },
+        {
+            q: "Unlike Uranus, which radiates almost no excess heat, what is true about Neptune's internal heat generation?",
+            options: ["It is colder internally than Uranus.", "It radiates roughly 2.6 times as much heat as it receives from the Sun.", "Its core is completely frozen solid.", "It relies entirely on solar radiation for heat."],
+            correct: "It radiates roughly 2.6 times as much heat as it receives from the Sun.",
+            explanation: "Despite being much farther from the Sun than Uranus, Neptune has a remarkably active internal heat source. It emits 2.61 times the energy it absorbs from sunlight, which drives its incredibly violent atmospheric weather."
+        },
+        {
+            q: "During the Voyager 2 flyby in 1989, a massive anti-cyclonic storm was observed on Neptune. What was it called?",
+            options: ["The Great Red Spot", "The Great Dark Spot", "The Blue Eye", "The Polar Hexagon"],
+            correct: "The Great Dark Spot",
+            explanation: "The Great Dark Spot was a huge spinning storm roughly the size of Earth. However, unlike Jupiter's Great Red Spot which has lasted centuries, when the Hubble Telescope looked for it in 1994, the Great Dark Spot had completely vanished."
+        },
+        {
+            q: "Neptune has a set of outer rings that feature strange, distinct clumps or 'arcs' of dust rather than complete, even circles. What is keeping these arcs together?",
+            options: ["Magnetic levitation from the core.", "Gravitational resonance with the moon Galatea.", "Constant asteroid impacts localized in one area.", "Solar wind pressure."],
+            correct: "Gravitational resonance with the moon Galatea.",
+            explanation: "The Adams ring features famous arcs (named Courage, Liberté, Egalité, Fraternité, and Espérance). The gravity of the small inner moon Galatea, which orbits just inside the ring, prevents these dust arcs from spreading out evenly."
+        },
+        {
+            q: "What is highly unusual about Neptune's magnetic field?",
+            options: ["It is perfectly aligned with the poles.", "It flips completely every 10 years.", "It is tilted by 47 degrees and offset from the physical center by over half the planet's radius.", "It only exists on the dark side of the planet."],
+            correct: "It is tilted by 47 degrees and offset from the physical center by over half the planet's radius.",
+            explanation: "Like Uranus, Neptune has a bizarrely distorted magnetic field. Because it doesn't originate from a solid iron core, but rather from convective currents in a fluid mantle layer, it is offset from the center by 0.55 radii and tilted wildly."
+        },
+        {
+            q: "In planetary science, why is Neptune classified as an 'Ice Giant' rather than a 'Gas Giant' like Jupiter?",
+            options: ["Because its surface is covered in solid glaciers.", "Because it consists mostly of heavier 'ices' (water, ammonia, methane) rather than just hydrogen and helium.", "Because it is far enough from the Sun to freeze.", "Because it has icy rings."],
+            correct: "Because it consists mostly of heavier 'ices' (water, ammonia, methane) rather than just hydrogen and helium.",
+            explanation: "While they have thick hydrogen/helium atmospheres, the bulk of Uranus and Neptune's mass is composed of a supercritical fluid of water, ammonia, and methane—compounds astronomers refer to as 'ices'—setting them fundamentally apart from Jupiter and Saturn."
+        },
+        {
+            q: "What strange geological feature covers large portions of Triton's western hemisphere, resembling the skin of a fruit?",
+            options: ["Cantaloupe terrain", "Orange peel valleys", "Strawberry fields", "Watermelon craters"],
+            correct: "Cantaloupe terrain",
+            explanation: "Triton features a unique, dimpled surface known as 'cantaloupe terrain' due to its resemblance to the melon. It is believed to be caused by diapirism—the rising of less dense lumps of ice through a more dense crust."
+        },
+        {
+            q: "Deep inside the mantle of Neptune, extreme pressure and temperature are theorized to cause carbon atoms to form what precious substance?",
+            options: ["Liquid Gold", "Diamond rain", "Solid Ruby cores", "Sapphire clouds"],
+            correct: "Diamond rain",
+            explanation: "The intense pressure (millions of times Earth's atmosphere) and heat break methane (CH4) down into hydrogen and carbon. The carbon compresses into diamond crystals that sink through the fluid mantle, releasing frictional heat as they 'rain' down."
+        },
+        {
+            q: "Approximately how long does it take Neptune to complete one orbit around the Sun (a Neptunian year)?",
+            options: ["29 Earth years", "84 Earth years", "165 Earth years", "248 Earth years"],
+            correct: "165 Earth years",
+            explanation: "Because it is so far from the Sun (~30 AU), it takes Neptune 164.8 Earth years to complete one orbit. It actually completed its first full orbit since its discovery (in 1846) back in the year 2011."
+        },
+        {
+            q: "Which of Neptune's moons has one of the most highly eccentric (oval-shaped) orbits of any moon in the solar system, taking 360 Earth days to orbit the planet once?",
+            options: ["Proteus", "Nereid", "Larissa", "Thalassa"],
+            correct: "Nereid",
+            explanation: "Nereid's orbit is incredibly stretched out; its distance from Neptune varies from about 1.3 million to 9.6 million kilometers. This suggests it is a captured asteroid or Kuiper Belt Object, rather than a moon that formed with the planet."
+        },
+        {
+            q: "What is the name of the bright, fast-moving, white cloud group that Voyager 2 observed zipping around Neptune much faster than the Great Dark Spot?",
+            options: ["The Speeder", "The Scooter", "The White Eye", "The Jet Stream"],
+            correct: "The Scooter",
+            explanation: "'The Scooter' is a group of white cirrus clouds situated deeper in the atmosphere than the Great Dark Spot. Because it sits at a different altitude where wind speeds are different, it overtakes the Great Dark Spot every few hours."
+        },
+        {
+            q: "What is the approximate density of Neptune, making it the densest of the giant planets?",
+            options: ["0.68 g/cm³", "1.27 g/cm³", "1.64 g/cm³", "5.51 g/cm³"],
+            correct: "1.64 g/cm³",
+            explanation: "While significantly less dense than Earth (5.51 g/cm³), Neptune (1.64 g/cm³) is denser than Jupiter, Saturn, and Uranus, primarily due to its higher proportion of heavy 'icy' and rocky materials relative to its volume."
+        },
+        {
+            q: "Triton accounts for what percentage of the total mass of all objects orbiting Neptune (including all rings and other moons)?",
+            options: ["50%", "75%", "90%", "99.5%"],
+            correct: "99.5%",
+            explanation: "Triton is utterly dominant in the Neptunian system. Its mass makes up 99.5% of all the mass in orbit around the planet. The remaining 13 moons and all the rings combined account for only 0.5%."
+        },
+        {
+            q: "What happens when ultraviolet light from the Sun interacts with the methane in Neptune's stratosphere?",
+            options: ["It produces a protective ozone layer.", "It triggers massive lightning storms.", "It produces photochemical smog composed of hydrocarbons like ethane and acetylene.", "It causes the methane to catch fire instantly."],
+            correct: "It produces photochemical smog composed of hydrocarbons like ethane and acetylene.",
+            explanation: "Similar to the process that occurs on Saturn's moon Titan, UV light breaks down methane molecules in the upper atmosphere. These reform into heavier hydrocarbons that slowly sink, creating a faint haze or 'smog' above the main cloud decks."
+        },
+        {
+            q: "Which spacecraft is the ONLY one to have visited the Neptune system?",
+            options: ["Cassini", "Voyager 1", "Voyager 2", "Pioneer 10"],
+            correct: "Voyager 2",
+            explanation: "NASA's Voyager 2 flew by Neptune in August 1989. Because no other mission has ever visited the Ice Giants since, almost all of our close-up knowledge of Uranus and Neptune comes from this single historic probe."
+        },
+        {
+            q: "Between 1979 and 1999, what highly unusual astronomical event occurred involving Neptune and Pluto?",
+            options: ["They collided briefly.", "Neptune captured Pluto as a moon.", "Pluto's eccentric orbit brought it closer to the Sun than Neptune, making Neptune the farthest planet.", "They traded magnetic fields."],
+            correct: "Pluto's eccentric orbit brought it closer to the Sun than Neptune, making Neptune the farthest planet.",
+            explanation: "Pluto has a highly elliptical orbit. For 20 years of its 248-year orbit, it actually crosses inside the orbit of Neptune. During this period (1979-1999), Neptune was officially the farthest planet from the Sun."
+        },
+        {
+            q: "Neptune is named after the Roman god of what?",
+            options: ["The Underworld", "The Sky", "The Sea", "War"],
+            correct: "The Sea",
+            explanation: "Following its discovery, several names were proposed. Johann Galle wanted to name it after Le Verrier, but the international community ultimately settled on 'Neptune', the Roman god of the sea, matching the planet's deep blue, oceanic color."
+        },
+        {
+            q: "What are the names of the three main, distinct rings of Neptune?",
+            options: ["Alpha, Beta, Gamma", "Galle, Le Verrier, Adams", "A, B, C", "Titan, Triton, Nereid"],
+            correct: "Galle, Le Verrier, Adams",
+            explanation: "The rings are named after the astronomers who made the greatest contributions to the discovery of the planet: Johann Galle (who first observed it), Urbain Le Verrier, and John Couch Adams (who both mathematically predicted its location)."
+        },
+        {
+            q: "At the core of Neptune lies a solid mass roughly 1.2 times the mass of Earth. What is this core composed of?",
+            options: ["Pure frozen methane", "Iron, nickel, and silicates (rock)", "Solid diamond", "Liquid metallic hydrogen"],
+            correct: "Iron, nickel, and silicates (rock)",
+            explanation: "Beneath the crushing weight of the hydrogen/helium atmosphere and the deep fluid mantle of water/ammonia/methane, Neptune possesses a solid, rocky core made of silicates, iron, and nickel."
+        }
+    ];
+
+    let shuffledQuiz = [];
+    let currentQIndex = 0;
+    let quizScore = 0;
+    let answeredCurrent = false;
+
+    function initQuiz() {
+        shuffledQuiz = [...rawQuizData].sort(() => Math.random() - 0.5);
+        currentQIndex = 0;
+        quizScore = 0;
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        answeredCurrent = false;
+        const qData = shuffledQuiz[currentQIndex];
+        
+        document.getElementById('questionText').innerText = qData.q;
+        document.getElementById('quizProgress').innerText = `Question ${currentQIndex + 1} / 25`;
+        document.getElementById('explanationBox').classList.add('hidden');
+        document.getElementById('nextBtn').classList.add('hidden');
+        
+        const optsContainer = document.getElementById('optionsContainer');
+        optsContainer.innerHTML = '';
+        
+        let shuffledOptions = [...qData.options].sort(() => Math.random() - 0.5);
+        
+        shuffledOptions.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-neptune-base transition-all transform hover:-translate-y-1";
+            btn.innerText = opt;
+            btn.onclick = () => selectAnswer(btn, opt, qData.correct, qData.explanation);
+            optsContainer.appendChild(btn);
+        });
+    }
+
+    function selectAnswer(btnEl, selected, correct, explanation) {
+        if (answeredCurrent) return;
+        answeredCurrent = true;
+        
+        const buttons = document.getElementById('optionsContainer').children;
+        for (let b of buttons) {
+            b.disabled = true;
+            b.classList.remove('hover:bg-space-700', 'hover:border-neptune-base', 'hover:-translate-y-1');
+            
+            if (b.innerText === correct) {
+                b.classList.add('bg-star-green', 'bg-opacity-20', 'border-star-green', 'text-star-green', 'font-bold');
+            } else {
+                b.classList.add('opacity-50');
+                if (b === btnEl && selected !== correct) {
+                    b.classList.add('bg-star-red', 'bg-opacity-20', 'border-star-red', 'text-star-red');
+                    b.classList.remove('opacity-50');
+                }
+            }
+        }
+        
+        if (selected === correct) {
+            quizScore++;
+            addXP(10);
+        }
+        document.getElementById('quizScore').innerText = `Score: ${quizScore}`;
+        
+        const isCorrectText = selected === correct ? '<span class="text-star-green font-bold text-lg">Correct!</span>' : '<span class="text-star-red font-bold text-lg">Incorrect.</span>';
+        document.getElementById('explanationText').innerHTML = `${isCorrectText} ${explanation}`;
+        document.getElementById('explanationBox').classList.remove('hidden');
+        
+        const nextBtn = document.getElementById('nextBtn');
+        nextBtn.innerText = currentQIndex === 24 ? "Finish Olympiad 🏆" : "Next Question ⏭️";
+        nextBtn.classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        currentQIndex++;
+        if (currentQIndex < 25) {
+            renderQuestion();
+        } else {
+            showQuizResults();
+        }
+    }
+
+    function showQuizResults() {
+        document.getElementById('quizHeader').classList.add('hidden');
+        document.getElementById('quizBody').classList.add('hidden');
+        
+        const resultsContainer = document.getElementById('quizResults');
+        resultsContainer.classList.remove('hidden');
+        resultsContainer.classList.add('block');
+        
+        let message = "";
+        let emoji = "";
+        if(quizScore === 25) { message = "Perfect Score! You are an Ice Giant Master! The Olympiad judges are stunned."; emoji="🥇"; }
+        else if(quizScore >= 20) { message = "Excellent work! You definitely qualify for the State Level competition."; emoji="🥈"; }
+        else if(quizScore >= 15) { message = "Good job, but keep studying those extreme weather files!"; emoji="🥉"; }
+        else { message = "Looks like you need a bit more practice. Review the data and brave the supersonic winds again!"; emoji="📚"; }
+        
+        resultsContainer.innerHTML = `
+            <div class="text-6xl mb-4">${emoji}</div>
+            <h3 class="text-3xl font-display text-star-gold mb-2">Olympiad Complete!</h3>
+            <p class="text-xl text-white mb-2">Final Score: <span class="font-bold text-neptune-light">${quizScore}/25</span></p>
+            <p class="text-space-100 mb-8 italic max-w-lg mx-auto">${message}</p>
+            <button onclick="resetFullQuiz()" class="bg-space-700 border border-space-500 text-white px-8 py-3 rounded-full hover:bg-space-500 transition mx-auto font-bold shadow-lg">Retake Quiz 🔄</button>
+        `;
+        
+        if (!achievements.passedQuiz && quizScore >= 15) { 
+            achievements.passedQuiz = true;
+            addXP(100);
+            showMsgBox("Olympiad Badge Unlocked", "You passed the rigorous Neptune State-Level Quiz! +100 XP", "🏅");
+            updateProgress();
+        }
+    }
+    
+    function resetFullQuiz() {
+        document.getElementById('quizHeader').classList.remove('hidden');
+        document.getElementById('quizBody').classList.remove('hidden');
+        document.getElementById('quizResults').classList.add('hidden');
+        document.getElementById('quizResults').classList.remove('block');
+        initQuiz();
+    }
+
+    /* MINI GAME: Supersonic Wind Surfer */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    
+    window.addEventListener('load', function() {
+        resizeCanvas();
+    });
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    
+    let windDrift = 0;
+
+    const player = { x: 0, y: 0, width: 38, height: 48, speed: 9, color: '#f8fafc' };
+    let obstacles = [];
+    let keys = { ArrowLeft: false, ArrowRight: false };
+
+    window.addEventListener('keydown', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') keys[e.code] = false; 
+    });
+    
+    canvas.addEventListener('touchstart', (e) => {
+        if(!gameActive) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const relativeX = touch.clientX - rect.left;
+        if(relativeX < canvas.width/2) { keys.ArrowLeft = true; keys.ArrowRight = false; } 
+        else { keys.ArrowRight = true; keys.ArrowLeft = false; }
+    }, {passive: false});
+    
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys.ArrowLeft = false; keys.ArrowRight = false;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        const relativeX = e.clientX - rect.left;
+        if(relativeX < canvas.width/2) { keys.ArrowLeft = true; keys.ArrowRight = false; } 
+        else { keys.ArrowRight = true; keys.ArrowLeft = false; }
+    });
+    
+    canvas.addEventListener('mouseup', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+    canvas.addEventListener('mouseleave', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - player.height - 20;
+        obstacles = [];
+        windDrift = 0;
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Diving...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnObstacle() {
+        let speedMult = 1 + (scoreFrames / 1200); 
+        let type = Math.random() > 0.3 ? 'ice' : 'storm'; 
+        
+        let w = type === 'storm' ? Math.random() * 40 + 40 : Math.random() * 20 + 15; 
+        let xPos = Math.random() * (canvas.width - w);
+        
+        obstacles.push({
+            x: xPos, y: -w, 
+            width: w, height: w,
+            speedY: type === 'storm' ? (Math.random() * 2 + 3) * speedMult : (Math.random() * 6 + 6) * speedMult, 
+            rotation: Math.random() * Math.PI * 2,
+            rotSpeed: type === 'storm' ? 0.05 : (Math.random() - 0.5) * 0.3,
+            type: type
+        });
+    }
+
+    function drawPlayer() {
+        ctx.fillStyle = player.color;
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        ctx.fillStyle = (frames % 10 < 5) ? '#fbbf24' : '#ef4444';
+        ctx.beginPath();
+        ctx.moveTo(-6, player.height/2);
+        ctx.lineTo(0, player.height/2 + 15 + Math.random()*10);
+        ctx.lineTo(6, player.height/2);
+        ctx.fill();
+
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.moveTo(-10, -player.height/2 + 10);
+        ctx.lineTo(10, -player.height/2 + 10);
+        ctx.lineTo(14, player.height/2);
+        ctx.lineTo(-14, player.height/2);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.ellipse(0, -player.height/2 + 5, 20, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+
+    function drawObstacles() {
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            ctx.save();
+            ctx.translate(o.x + o.width/2, o.y + o.height/2);
+            ctx.rotate(o.rotation);
+            
+            if (o.type === 'ice') {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; 
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#ffffff';
+                
+                ctx.beginPath();
+                ctx.moveTo(0, -o.height/2);
+                ctx.lineTo(o.width/3, 0);
+                ctx.lineTo(0, o.height/2);
+                ctx.lineTo(-o.width/3, 0);
+                ctx.closePath();
+                ctx.fill();
+                
+            } else if (o.type === 'storm') {
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.8)'; 
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#1e3a8a';
+                
+                ctx.beginPath();
+                ctx.arc(0, 0, o.width/2, 0, Math.PI*2);
+                ctx.fill();
+                
+                ctx.strokeStyle = 'rgba(59, 130, 246, 0.5)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(0, 0, o.width/4, 0, Math.PI);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+    }
+
+    function checkCollision(o) {
+        let hitX = player.x + 4, hitW = player.width - 8;
+        let hitY = player.y + 4, hitH = player.height - 8;
+
+        if (hitX < o.x + o.width && hitX + hitW > o.x && hitY < o.y + o.height && hitY + hitH > o.y) return true;
+        return false;
+    }
+
+    function updatePhysics() {
+        if (frames % 120 === 0) windDrift = (Math.random() * 4) - 2; 
+
+        if (keys.ArrowLeft) player.x -= player.speed;
+        if (keys.ArrowRight) player.x += player.speed;
+        player.x += windDrift;
+
+        if(player.x < 0) player.x = 0;
+        if(player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+        let spawnRate = Math.max(8, 30 - Math.floor(scoreFrames/150));
+        if (frames % spawnRate === 0) spawnObstacle();
+
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].y += obstacles[i].speedY;
+            obstacles[i].x += windDrift * 0.5; 
+            obstacles[i].rotation += obstacles[i].rotSpeed;
+            
+            if (checkCollision(obstacles[i])) {
+                gameOver(obstacles[i].type === 'ice' ? "Shredded by Ice Shards!" : "Lost in the Dark Spot!");
+                return;
+            }
+
+            if (obstacles[i].y > canvas.height) obstacles.splice(i, 1);
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        ctx.fillStyle = 'rgba(30, 58, 138, 0.4)'; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.strokeStyle = 'rgba(147, 197, 253, 0.2)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for(let i=0; i<5; i++){
+            let ly = (frames * 15 + i*100) % canvas.height;
+            ctx.moveTo(0, ly);
+            ctx.lineTo(canvas.width, ly);
+        }
+        ctx.stroke();
+
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawObstacles();
+        drawPlayer();
+
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let windSpeed = Math.floor(1500 + secondsAlive * 30); 
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Dive Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillStyle = "#ff6b6b"; 
+        ctx.fillText(`Wind: ${windSpeed} km/h`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        if (secondsAlive >= 20 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Storm Surfer Badge Unlocked!", "You braved the fastest winds in the solar system! +100 XP", "🌪️");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Dive";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-4">You survived for ${secondsAlive} seconds.</p>
+            ${!achievements.playedGame ? `<p class="text-neptune-light text-sm mb-4">Try to reach 20 seconds for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && secondsAlive < 20) addXP(5);
+    }
+
+    startBtn.addEventListener('click', () => { initGame(); });
+
+</script>
+</body>
+</html>

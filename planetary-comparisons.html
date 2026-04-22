@@ -1,0 +1,1779 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SciOly Planetary Comparisons</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- MathJax for rendering Chemistry Formulas perfectly -->
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#05060f', 800: '#0a0d20', 700: '#0f1430', 500: '#1a234d', 100: '#e2e8f0' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #05060f;
+            background-image: radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent), radial-gradient(1px 1px at 25% 75%, #6ef0ff 100%, transparent), radial-gradient(2px 2px at 75% 25%, #ffd166 100%, transparent);
+            background-size: 250px 250px;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-panel { background: rgba(15, 20, 48, 0.65); backdrop-filter: blur(12px); border: 1px solid rgba(110, 240, 255, 0.15); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); }
+        .tab-btn { transition: all 0.2s ease; white-space: nowrap; }
+        .tab-btn.active { background: #1a234d; border-color: #6ef0ff; color: #6ef0ff; box-shadow: 0 0 15px rgba(110, 240, 255, 0.2); }
+        
+        .planet-texture { border-radius: 50%; box-shadow: inset -5px -5px 15px rgba(0,0,0,0.8); }
+        
+        /* Scale Model TP Squares */
+        .tp-square { width: 60px; height: 60px; border: 1px dashed #cbd5e1; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: -1px; }
+
+        /* Master Table Sticky Column Fixes */
+        .sticky-col { position: sticky; left: 0; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.5); }
+        .sticky-header { position: sticky; left: 0; z-index: 20; box-shadow: 2px 0 5px rgba(0,0,0,0.5); }
+
+        /* Bar chart growth animation */
+        .data-bar { transform-origin: left; animation: growBar 1s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes growBar { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+        
+        /* Wind Animation */
+        @keyframes windStreak {
+            0% { transform: translateX(-100%); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateX(300%); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="font-body text-white antialiased">
+
+<main class="max-w-7xl mx-auto px-4 pt-8 pb-20 min-h-screen flex flex-col">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row items-center justify-between mb-8 gap-4 z-20 relative">
+        <button onclick="window.location.href='index.html'" class="glass-panel px-4 py-2 rounded-full text-star-cyan hover:bg-space-500 transition border-space-500 text-sm font-bold inline-flex items-center gap-2">
+            &larr; Back to Mission Control
+        </button>
+        <div class="text-center md:text-right">
+            <h1 class="font-display font-bold text-3xl md:text-4xl text-white tracking-wide">Planetary Comparisons</h1>
+            <p class="font-mono text-star-gold text-sm uppercase">Science Olympiad Edition 🥇</p>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="w-full overflow-x-auto hide-scrollbar mb-8 z-20 relative">
+        <div class="flex gap-3 pb-2 min-w-max" id="tab-container">
+            <!-- Tabs injected by JS -->
+        </div>
+    </div>
+
+    <!-- Content Area -->
+    <div id="content-area" class="z-20 relative flex-grow">
+        <!-- Views injected by JS -->
+    </div>
+
+</main>
+
+<!-- Global Shared Modal Overlay -->
+<div id="global-modal-overlay" class="fixed inset-0 bg-space-900/80 backdrop-blur-md z-[100] hidden flex items-center justify-center opacity-0 transition-opacity duration-300 p-4">
+    <div id="global-modal-content" class="glass-panel w-full max-w-2xl rounded-2xl border border-star-cyan shadow-[0_0_40px_rgba(110,240,255,0.2)] p-6 md:p-8 relative transform scale-95 transition-transform duration-300 overflow-hidden">
+        <!-- Content injected dynamically via JS -->
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // SCIENCE OLYMPIAD DATA SET
+    // ==========================================
+    const planetData = [
+        {
+            id: 'mercury', name: 'Mercury', color: 'bg-gray-400', colorCode: '#9ca3af',
+            nicknames: ['The Swift Planet', 'The Iron Planet'], nicknamesStr: 'The Swift Planet, The Iron Planet',
+            distanceAU: 0.39, distanceKm: '57.9 M', diameter: '4,880 km', diameterKm: 4880, volume: '0.056 Earths', volumeRatio: 0.056,
+            tempC: -173, tempF: -280, tempString: '-173 to 427', tempMin: -173, tempMax: 427, tempAnnot: 'No atmosphere, slow rotation',
+            core: 'Huge iron core ($Fe$)', 
+            coreTakeaway: 'Mostly metal',
+            coreLayers: [
+                { name: 'Core', material: 'Metal', icon: '🔩', pct: 70, color: '#94a3b8', gradient: 'radial-gradient(circle at 35% 35%, #f1f5f9, #94a3b8, #334155)' },
+                { name: 'Mantle/Crust', material: 'Rock', icon: '🪨', pct: 30, color: '#b45309', gradient: 'radial-gradient(circle at 35% 35%, #d97706, #b45309, #78350f)' }
+            ],
+            atmosphere: 'Exosphere ($O_2$, $Na$, $H_2$)',
+            atmType: 'Exosphere (Tenuous)', atmClouds: 'None',
+            atmComposition: [
+                { name: 'Oxygen', formula: '$O_2$', pct: 42.0, color: 'bg-teal-400' },
+                { name: 'Sodium', formula: '$Na$', pct: 29.0, color: 'bg-yellow-600' },
+                { name: 'Hydrogen', formula: '$H_2$', pct: 22.0, color: 'bg-purple-500' },
+                { name: 'Helium', formula: '$He$', pct: 6.0, color: 'bg-yellow-400' }
+            ],
+            pressureAtm: 0, pressureAnalogy: 'Absolute Vacuum',
+            density: 5430, weightMultiplier: 0.38, day: '58.6 Earth days', dayHours: 1406, year: '88 Earth days', yearDays: 88,
+            orbitalSpeed: '47.36 km/s', orbSpeedKm: 47.36, pressure: 'Vacuum', wind: 'No Wind', windKmh: 0, windContext: 'Surface', windMultiplier: '0× Earth', windAnalogy: 'Absolute vacuum stillness', moonsCount: 0, missions: 'Mariner 10, MESSENGER',
+            // Magnetic & Tilt Data
+            magField: 'Very weak (~1%)', magShape: 'Offset dipole', magTakeaway: 'Surprisingly active for a tiny, slow-spinning planet', 
+            magShieldIcon: '🔋', magShieldText: 'Weak Shield', magGlow: 'rgba(110,240,255,0.1)', 
+            tilt: 0.03, retrograde: false, magTiltExp: 'Mercury stands almost perfectly straight up! Because of this, it doesn\'t really have seasons like Earth does. The sun always shines straight onto its equator.',
+            danger: 8, dangerReason: 'Vacuum, extreme radiation, and boiled/frozen temperature swings.'
+        },
+        {
+            id: 'venus', name: 'Venus', color: 'bg-orange-400', colorCode: '#fb923c',
+            nicknames: ['Morning Star', 'Earth\'s Evil Twin'], nicknamesStr: 'Morning Star, Earth\'s Evil Twin',
+            distanceAU: 0.72, distanceKm: '108.2 M', diameter: '12,104 km', diameterKm: 12104, volume: '0.866 Earths', volumeRatio: 0.866,
+            tempC: 475, tempF: 887, tempString: '475', tempMin: 475, tempMax: 475, tempAnnot: 'Runaway greenhouse effect',
+            core: 'Iron-nickel core ($Fe, Ni$)', 
+            coreTakeaway: 'Dense metallic core',
+            coreLayers: [
+                { name: 'Core', material: 'Metal', icon: '🔩', pct: 30, color: '#94a3b8', gradient: 'radial-gradient(circle at 35% 35%, #f1f5f9, #94a3b8, #334155)' },
+                { name: 'Mantle/Crust', material: 'Rock', icon: '🪨', pct: 70, color: '#b45309', gradient: 'radial-gradient(circle at 35% 35%, #d97706, #b45309, #78350f)' }
+            ],
+            atmosphere: '$CO_2$, $N_2$',
+            atmType: 'Dense Atmosphere', atmClouds: 'Sulfuric Acid ($H_2SO_4$) droplets',
+            atmComposition: [
+                { name: 'Carbon Dioxide', formula: '$CO_2$', pct: 96.5, color: 'bg-orange-500' },
+                { name: 'Nitrogen', formula: '$N_2$', pct: 3.5, color: 'bg-blue-400' }
+            ],
+            pressureAtm: 92, pressureAnalogy: '≈ 900m underwater on Earth',
+            density: 5240, weightMultiplier: 0.91, day: '243 Earth days', dayHours: 5832, year: '225 Earth days', yearDays: 225,
+            orbitalSpeed: '35.02 km/s', orbSpeedKm: 35.02, pressure: '92 atm', wind: '360 km/h', windKmh: 360, windContext: 'Cloud-top jets', windMultiplier: '0.9× Earth', windAnalogy: 'Race car top speed', moonsCount: 0, missions: 'Venera, Magellan',
+            // Magnetic & Tilt Data
+            magField: 'None', magShape: '—', magTakeaway: 'No internal dynamo → no magnetic shield', 
+            magShieldIcon: '❌', magShieldText: 'No Shield', magGlow: 'transparent', 
+            tilt: 177.3, retrograde: true, magTiltExp: 'Venus is flipped completely upside down! It spins entirely backwards (retrograde) compared to Earth. If you stood on Venus, the Sun would rise in the west and set in the east!',
+            danger: 10, dangerReason: 'Crushed by 92atm pressure, melted by 475°C heat, and dissolved by sulfuric acid.'
+        },
+        {
+            id: 'earth', name: 'Earth', color: 'bg-blue-500', colorCode: '#3b82f6',
+            nicknames: ['The Blue Marble', 'Terra'], nicknamesStr: 'The Blue Marble, Terra',
+            distanceAU: 1.00, distanceKm: '149.6 M', diameter: '12,756 km', diameterKm: 12756, volume: '1 Earth', volumeRatio: 1,
+            tempC: 15, tempF: 59, tempString: '-89 to 58', tempMin: -89, tempMax: 58, tempAnnot: 'Liquid water range',
+            core: 'Iron-nickel core ($Fe, Ni$)', 
+            coreTakeaway: 'Metal core + rocky outside',
+            coreLayers: [
+                { name: 'Core', material: 'Metal', icon: '🔩', pct: 33, color: '#94a3b8', gradient: 'radial-gradient(circle at 35% 35%, #f1f5f9, #94a3b8, #334155)' },
+                { name: 'Mantle/Crust', material: 'Rock', icon: '🪨', pct: 67, color: '#b45309', gradient: 'radial-gradient(circle at 35% 35%, #d97706, #b45309, #78350f)', border: '2px solid #3b82f6' }
+            ],
+            atmosphere: '$N_2$, $O_2$, $Ar$',
+            atmType: 'Standard Atmosphere', atmClouds: 'Water ($H_2O$) droplets & ice',
+            atmComposition: [
+                { name: 'Nitrogen', formula: '$N_2$', pct: 78.0, color: 'bg-blue-400' },
+                { name: 'Oxygen', formula: '$O_2$', pct: 21.0, color: 'bg-teal-400' },
+                { name: 'Argon', formula: '$Ar$', pct: 0.9, color: 'bg-gray-400' }
+            ],
+            pressureAtm: 1, pressureAnalogy: 'Sea level standard',
+            density: 5520, weightMultiplier: 1.0, day: '24 hours', dayHours: 24, year: '365.25 days', yearDays: 365.25,
+            orbitalSpeed: '29.78 km/s', orbSpeedKm: 29.78, pressure: '1 atm', wind: 'Max ~400 km/h', windKmh: 400, windContext: 'Jet stream / storms', windMultiplier: '1× Earth', windAnalogy: 'Airplane takeoff speed', moonsCount: 1, missions: 'ISS, Apollo',
+            // Magnetic & Tilt Data
+            magField: 'Strong (1×)', magShape: 'Tilted dipole', magTakeaway: 'Protects life from deadly solar radiation', 
+            magShieldIcon: '🛡️', magShieldText: 'Strong Shield', magGlow: 'rgba(110,240,255,0.4)', 
+            tilt: 23.5, retrograde: false, magTiltExp: 'Earth leans over slightly like a leaning top. This perfect 23.5° tilt is what gives us our beautiful changing seasons (Spring, Summer, Fall, Winter)!',
+            danger: 0, dangerReason: 'You live here! The magnetosphere and atmosphere protect you perfectly.'
+        },
+        {
+            id: 'mars', name: 'Mars', color: 'bg-red-500', colorCode: '#ef4444',
+            nicknames: ['The Red Planet'], nicknamesStr: 'The Red Planet',
+            distanceAU: 1.52, distanceKm: '227.9 M', diameter: '6,792 km', diameterKm: 6792, volume: '0.151 Earths', volumeRatio: 0.151,
+            tempC: -62, tempF: -81, tempString: '-153 to 20', tempMin: -153, tempMax: 20, tempAnnot: 'Thin atmosphere',
+            core: 'Iron-nickel-sulfur core ($Fe, Ni, S$)', 
+            coreTakeaway: 'Smaller core, thick rocky mantle',
+            coreLayers: [
+                { name: 'Core', material: 'Metal', icon: '🔩', pct: 25, color: '#94a3b8', gradient: 'radial-gradient(circle at 35% 35%, #f1f5f9, #94a3b8, #334155)' },
+                { name: 'Mantle/Crust', material: 'Rock', icon: '🪨', pct: 75, color: '#b45309', gradient: 'radial-gradient(circle at 35% 35%, #d97706, #b45309, #78350f)' }
+            ],
+            atmosphere: '$CO_2$, $N_2$, $Ar$',
+            atmType: 'Thin Atmosphere', atmClouds: 'Water ($H_2O$) & Carbon Dioxide ($CO_2$) ice',
+            atmComposition: [
+                { name: 'Carbon Dioxide', formula: '$CO_2$', pct: 95.0, color: 'bg-orange-500' },
+                { name: 'Nitrogen', formula: '$N_2$', pct: 2.7, color: 'bg-blue-400' },
+                { name: 'Argon', formula: '$Ar$', pct: 1.6, color: 'bg-gray-400' }
+            ],
+            pressureAtm: 0.006, pressureAnalogy: '≈ 35km altitude on Earth',
+            density: 3930, weightMultiplier: 0.38, day: '24.6 hours', dayHours: 24.6, year: '687 Earth days', yearDays: 687,
+            orbitalSpeed: '24.07 km/s', orbSpeedKm: 24.07, pressure: '0.006 atm', wind: 'Max 100 km/h', windKmh: 100, windContext: 'Surface dust storms', windMultiplier: '0.25× Earth', windAnalogy: 'Highway driving speed', moonsCount: 2, missions: 'Viking, Curiosity, Perseverance',
+            // Magnetic & Tilt Data
+            magField: 'Very weak', magShape: 'Patchy (crustal)', magTakeaway: 'Lost its core dynamo → lost its atmosphere', 
+            magShieldIcon: '🧩', magShieldText: 'Patchy Shield', magGlow: 'rgba(110,240,255,0.05)', 
+            tilt: 25.2, retrograde: false, magTiltExp: 'Mars tilts almost exactly like Earth! Because of this similar lean, Mars actually experiences four seasons just like we do, but they last almost twice as long because its year is longer.',
+            danger: 7, dangerReason: 'Blood boils instantly due to low pressure (Armstrong Limit), freezing cold, radiation.'
+        },
+        {
+            id: 'jupiter', name: 'Jupiter', color: 'bg-yellow-600', colorCode: '#d97706',
+            nicknames: ['The Gas Giant'], nicknamesStr: 'The Gas Giant',
+            distanceAU: 5.20, distanceKm: '778.5 M', diameter: '142,984 km', diameterKm: 142984, volume: '1,321 Earths', volumeRatio: 1321,
+            tempC: -110, tempF: -166, tempString: '-110', tempMin: -110, tempMax: -110, tempAnnot: 'Cloud tops (Internal heat)',
+            core: 'Possible rocky core $\\rightarrow$ metallic hydrogen ($H_2$)', 
+            coreTakeaway: 'Mostly hydrogen inside',
+            coreLayers: [
+                { name: 'Core', material: 'Rock', icon: '🪨', pct: 5, color: '#78350f', gradient: 'radial-gradient(circle at 35% 35%, #b45309, #78350f, #451a03)' },
+                { name: 'Envelope', material: 'Gas/Liquid', icon: '💨', pct: 95, color: '#60a5fa', gradient: 'radial-gradient(circle at 35% 35%, #bfdbfe, #60a5fa, #1e40af)', border: '2px dashed rgba(255,255,255,0.3)' }
+            ],
+            atmosphere: '$H_2$, $He$',
+            atmType: 'Gas Giant', atmClouds: 'Ammonia ($NH_3$), Water ($H_2O$)',
+            atmComposition: [
+                { name: 'Hydrogen', formula: '$H_2$', pct: 89.8, color: 'bg-purple-500' },
+                { name: 'Helium', formula: '$He$', pct: 10.2, color: 'bg-yellow-400' }
+            ],
+            pressureAtm: '> 100M', pressureAnalogy: 'Crushed to metallic liquid',
+            density: 1330, weightMultiplier: 2.34, day: '9.9 hours', dayHours: 9.9, year: '11.8 Earth years', yearDays: 4333,
+            orbitalSpeed: '13.07 km/s', orbSpeedKm: 13.07, pressure: '>100M atm', wind: 'Max 620 km/h', windKmh: 620, windContext: 'Upper atmosphere jets', windMultiplier: '1.5× Earth', windAnalogy: 'Faster than a Maglev bullet train', moonsCount: 95, missions: 'Galileo, Juno',
+            // Magnetic & Tilt Data
+            magField: 'Extreme (~50×)', magShape: 'Tilted dipole', magTakeaway: 'Largest magnetic field in the solar system', 
+            magShieldIcon: '🛡️', magShieldText: 'Massive Shield', magGlow: 'rgba(110,240,255,0.9)', 
+            tilt: 3.1, retrograde: false, magTiltExp: 'Jupiter stands nearly straight up like a giant spinning top. It spins so incredibly fast that its equator bulges outward, but it has almost no seasons at all.',
+            danger: 10, dangerReason: 'Lethal radiation belts, zero solid surface, crushed to metallic hydrogen by pressure.'
+        },
+        {
+            id: 'saturn', name: 'Saturn', color: 'bg-yellow-300', colorCode: '#eab308',
+            nicknames: ['Lord of the Rings'], nicknamesStr: 'Lord of the Rings',
+            distanceAU: 9.58, distanceKm: '1.43 B', diameter: '120,536 km', diameterKm: 120536, volume: '764 Earths', volumeRatio: 764,
+            tempC: -140, tempF: -220, tempString: '-140', tempMin: -140, tempMax: -140, tempAnnot: 'Cloud tops (Internal heat)',
+            core: 'Possible rocky core $\\rightarrow$ metallic hydrogen ($H_2$)', 
+            coreTakeaway: 'Huge gas envelope, tiny core',
+            coreLayers: [
+                { name: 'Core', material: 'Rock', icon: '🪨', pct: 5, color: '#78350f', gradient: 'radial-gradient(circle at 35% 35%, #b45309, #78350f, #451a03)' },
+                { name: 'Envelope', material: 'Gas/Liquid', icon: '💨', pct: 95, color: '#60a5fa', gradient: 'radial-gradient(circle at 35% 35%, #bfdbfe, #60a5fa, #1e40af)', border: '2px dashed rgba(255,255,255,0.3)' }
+            ],
+            atmosphere: '$H_2$, $He$',
+            atmType: 'Gas Giant', atmClouds: 'Ammonia ($NH_3$), Water ($H_2O$)',
+            atmComposition: [
+                { name: 'Hydrogen', formula: '$H_2$', pct: 96.3, color: 'bg-purple-500' },
+                { name: 'Helium', formula: '$He$', pct: 3.2, color: 'bg-yellow-400' }
+            ],
+            pressureAtm: '> 10M', pressureAnalogy: 'Crushed to metallic liquid',
+            density: 690, weightMultiplier: 1.06, day: '10.7 hours', dayHours: 10.7, year: '29.5 Earth years', yearDays: 10759,
+            orbitalSpeed: '9.68 km/s', orbSpeedKm: 9.68, pressure: '>10M atm', wind: 'Max 1,800 km/h', windKmh: 1800, windContext: 'Upper atmosphere jets', windMultiplier: '4.5× Earth', windAnalogy: 'Faster than sound (Mach 1.5)', moonsCount: 146, missions: 'Cassini-Huygens',
+            // Magnetic & Tilt Data
+            magField: 'Very strong (~20×)', magShape: 'Nearly perfectly aligned', magTakeaway: 'Perfectly aligned with its rotation axis', 
+            magShieldIcon: '🛡️', magShieldText: 'Strong Shield', magGlow: 'rgba(110,240,255,0.5)', 
+            tilt: 26.7, retrograde: false, magTiltExp: 'Saturn tilts a lot like Earth and Mars, just a little more! This means Saturn\'s beautiful rings actually tip up and down from our view as it goes around the Sun, causing its seasons.',
+            danger: 9, dangerReason: 'No solid surface, supersonic winds, crushed by internal pressure.'
+        },
+        {
+            id: 'uranus', name: 'Uranus', color: 'bg-cyan-300', colorCode: '#06b6d4',
+            nicknames: ['The Sideways Planet'], nicknamesStr: 'The Sideways Planet, The Ice Giant',
+            distanceAU: 19.22, distanceKm: '2.87 B', diameter: '51,118 km', diameterKm: 51118, volume: '63 Earths', volumeRatio: 63,
+            tempC: -224, tempF: -371, tempString: '-224', tempMin: -224, tempMax: -224, tempAnnot: 'Minimal internal heat',
+            core: 'Rocky core $\\rightarrow$ icy mantle ($H_2O, NH_3, CH_4$)', 
+            coreTakeaway: 'Icy interior',
+            coreLayers: [
+                { name: 'Core', material: 'Rock', icon: '🪨', pct: 20, color: '#78350f', gradient: 'radial-gradient(circle at 35% 35%, #b45309, #78350f, #451a03)' },
+                { name: 'Mantle', material: 'Ice', icon: '❄️', pct: 60, color: '#38bdf8', gradient: 'radial-gradient(circle at 35% 35%, #bae6fd, #38bdf8, #0369a1)' },
+                { name: 'Atmosphere', material: 'Gas', icon: '💨', pct: 20, color: '#bae6fd', gradient: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.6), rgba(56,189,248,0.5), rgba(15,23,42,0.8))', border: '2px dashed rgba(255,255,255,0.3)' }
+            ],
+            atmosphere: '$H_2$, $He$, $CH_4$',
+            atmType: 'Ice Giant', atmClouds: 'Methane ($CH_4$), Hydrogen Sulfide ($H_2S$)',
+            atmComposition: [
+                { name: 'Hydrogen', formula: '$H_2$', pct: 83.0, color: 'bg-purple-500' },
+                { name: 'Helium', formula: '$He$', pct: 15.0, color: 'bg-yellow-400' },
+                { name: 'Methane', formula: '$CH_4$', pct: 2.0, color: 'bg-cyan-400' }
+            ],
+            pressureAtm: '> 1M', pressureAnalogy: 'Liquid ice mantle',
+            density: 1270, weightMultiplier: 0.89, day: '17.2 hours', dayHours: 17.2, year: '84 Earth years', yearDays: 30687,
+            orbitalSpeed: '6.80 km/s', orbSpeedKm: 6.80, pressure: 'Liquid Trans.', wind: 'Max 900 km/h', windKmh: 900, windContext: 'Upper atmosphere jets', windMultiplier: '2.25× Earth', windAnalogy: 'Cruising commercial airliner', moonsCount: 28, missions: 'Voyager 2',
+            // Magnetic & Tilt Data
+            magField: 'Strong', magShape: 'Highly tilted & offset', magTakeaway: 'Tumbled over and off-center from the core', 
+            magShieldIcon: '🛡️', magShieldText: 'Strong Shield', magGlow: 'rgba(110,240,255,0.4)', 
+            tilt: 97.7, retrograde: true, magTiltExp: 'Uranus got knocked completely on its side, probably by a giant crash long ago! It rolls around the Sun like a barrel. This causes extreme 21-year-long seasons of pure daylight or pure darkness.',
+            danger: 9, dangerReason: 'Freezing to death instantly, crushed by icy pressure mantle, no oxygen.'
+        },
+        {
+            id: 'neptune', name: 'Neptune', color: 'bg-blue-700', colorCode: '#3b82f6',
+            nicknames: ['The Windy Giant'], nicknamesStr: 'The Windy Giant, Big Blue',
+            distanceAU: 30.05, distanceKm: '4.50 B', diameter: '49,528 km', diameterKm: 49528, volume: '57 Earths', volumeRatio: 57,
+            tempC: -214, tempF: -353, tempString: '-214', tempMin: -214, tempMax: -214, tempAnnot: 'Cloud tops (Active heating)',
+            core: 'Rocky core $\\rightarrow$ icy mantle ($H_2O, NH_3, CH_4$)', 
+            coreTakeaway: 'Icy interior',
+            coreLayers: [
+                { name: 'Core', material: 'Rock', icon: '🪨', pct: 20, color: '#78350f', gradient: 'radial-gradient(circle at 35% 35%, #b45309, #78350f, #451a03)' },
+                { name: 'Mantle', material: 'Ice', icon: '❄️', pct: 60, color: '#38bdf8', gradient: 'radial-gradient(circle at 35% 35%, #bae6fd, #38bdf8, #0369a1)' },
+                { name: 'Atmosphere', material: 'Gas', icon: '💨', pct: 20, color: '#bae6fd', gradient: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.6), rgba(56,189,248,0.5), rgba(15,23,42,0.8))', border: '2px dashed rgba(255,255,255,0.3)' }
+            ],
+            atmosphere: '$H_2$, $He$, $CH_4$',
+            atmType: 'Ice Giant', atmClouds: 'Methane ($CH_4$), Hydrogen Sulfide ($H_2S$)',
+            atmComposition: [
+                { name: 'Hydrogen', formula: '$H_2$', pct: 79.5, color: 'bg-purple-500' },
+                { name: 'Helium', formula: '$He$', pct: 19.0, color: 'bg-yellow-400' },
+                { name: 'Methane', formula: '$CH_4$', pct: 1.5, color: 'bg-cyan-400' }
+            ],
+            pressureAtm: '> 1M', pressureAnalogy: 'Liquid ice mantle',
+            density: 1640, weightMultiplier: 1.14, day: '16.1 hours', dayHours: 16.1, year: '165 Earth years', yearDays: 60190,
+            orbitalSpeed: '5.43 km/s', orbSpeedKm: 5.43, pressure: 'Liquid Trans.', wind: 'Max 2,100 km/h', windKmh: 2100, windContext: 'Upper atmosphere jets', windMultiplier: '5.25× Earth', windAnalogy: 'Faster than a fighter jet', moonsCount: 16, missions: 'Voyager 2',
+            // Magnetic & Tilt Data
+            magField: 'Strong', magShape: 'Tilted & offset', magTakeaway: 'Lopsided and wildly offset from the center', 
+            magShieldIcon: '🛡️', magShieldText: 'Strong Shield', magGlow: 'rgba(110,240,255,0.4)', 
+            tilt: 28.3, retrograde: false, magTiltExp: 'Neptune leans over a bit more than Earth. Combined with its super long orbit, this tilt creates wild, decades-long seasons driving its terrifying supersonic winds.',
+            danger: 9, dangerReason: 'Supersonic winds (fastest in system), extreme cold, crushed by deep pressure.'
+        }
+    ];
+
+    const moonsData = [
+        { 
+            id: 'metis', name: 'Metis', planet: 'Jupiter', 
+            superlatives: ['Fastest Orbital Speed'], 
+            desc: 'The innermost moon of Jupiter. It whips around the massive gas giant at incredible speeds.', 
+            icon: '☄️',
+            sciOlyDetails: [
+                'Orbits Jupiter at approximately $31.5 \\text{ km/s}$, making it the fastest moon in the solar system.',
+                'Lies inside Jupiter\'s main ring and its high-velocity impacts supply the dust that creates the ring.',
+                'Orbits within Jupiter\'s Roche limit, meaning tidal forces are slowly pulling it inward to eventually crash.'
+            ]
+        },
+        { 
+            id: 'ganymede', name: 'Ganymede', planet: 'Jupiter', 
+            superlatives: ['Biggest Moon', 'Bigger than Mercury!'], 
+            desc: 'The largest moon in the solar system. It is so massive that it is larger than the planet Mercury.', 
+            icon: '🌑',
+            sciOlyDetails: [
+                'The only moon in the solar system with a fully differentiated structure that generates its own magnetosphere.',
+                'Locked in a perfect 1:2:4 Laplace orbital resonance with Europa and Io.',
+                'Its surface features alternating dark (ancient) and light (grooved, younger) terrain known as "sulci".'
+            ]
+        },
+        { 
+            id: 'titan', name: 'Titan', planet: 'Saturn', 
+            superlatives: ['Thickest Atmosphere', 'Bigger than Mercury!'], 
+            desc: 'The only moon with a dense atmosphere and lakes of liquid natural gas.', 
+            icon: '☁️',
+            sciOlyDetails: [
+                'Boasts a dense atmosphere primarily composed of nitrogen (95%) and methane (5%), creating a surface pressure 1.45x Earth\'s.',
+                'Has a fully functioning "hydrological" cycle based on liquid hydrocarbons, forming massive lakes like Kraken Mare.',
+                'Its surface is coated in complex organic molecules called tholins.'
+            ]
+        },
+        { 
+            id: 'io', name: 'Io', planet: 'Jupiter', 
+            superlatives: ['The Pizza Moon', 'Most Volcanically Active', 'Hottest Moon'], 
+            desc: 'Covered in hundreds of active volcanoes spewing lava and sulfur, making it look exactly like a moldy pizza.', 
+            icon: '🍕',
+            sciOlyDetails: [
+                'Experiences extreme tidal heating from Jupiter, causing its crust to constantly flex by up to 100 meters.',
+                'Its surface is completely coated in sulfur and sulfur dioxide frost.',
+                'Volcanic plumes strip ions into space, creating a massive plasma torus around Jupiter.'
+            ]
+        },
+        { 
+            id: 'europa', name: 'Europa', planet: 'Jupiter', 
+            superlatives: ['Smoothest Surface', 'Biggest Sub-Surface Ocean'], 
+            desc: 'Covered in a shell of incredibly smooth water ice ($H_2O$), hiding a vast global ocean of liquid water underneath.', 
+            icon: '🎱',
+            sciOlyDetails: [
+                'Its incredibly smooth ice shell lacks large craters, indicating a geologically young surface.',
+                'The surface is marked by extensive "lineae" (dark cracks) and chaotic terrain (maculae).',
+                'Contains twice as much liquid water as all of Earth\'s oceans combined—a prime target for astrobiology.'
+            ]
+        },
+        { 
+            id: 'mimas', name: 'Mimas', planet: 'Saturn', 
+            superlatives: ['The Death Star Moon', 'Smallest Spherical Moon'], 
+            desc: 'Features a giant crater called Herschel that makes it look exactly like the Death Star from Star Wars.', 
+            icon: '🛰️',
+            sciOlyDetails: [
+                'The massive Herschel Crater spans 130 km across, nearly a third of the moon\'s entire diameter.',
+                'Its gravitational resonance is directly responsible for clearing the Cassini Division in Saturn\'s rings.',
+                'It is the smallest astronomical body known to be rounded by its own gravity.'
+            ]
+        },
+        { 
+            id: 'callisto', name: 'Callisto', planet: 'Jupiter', 
+            superlatives: ['Most Cratered Object'], 
+            desc: 'A dead, silent world of ice and rock. It is the most heavily cratered object in the entire solar system.', 
+            icon: '☄️',
+            sciOlyDetails: [
+                'Its heavily cratered surface indicates it has been geologically dead since the early solar system.',
+                'Features the massive Valhalla multi-ring impact basin.',
+                'Unlike Ganymede, it is largely undifferentiated (its rock and ice are mostly mixed uniformly).'
+            ]
+        },
+        { 
+            id: 'enceladus', name: 'Enceladus', planet: 'Saturn', 
+            superlatives: ['The Brightest Moon'], 
+            desc: 'Covered in fresh, clean ice that reflects almost 100% of sunlight. It shoots giant water geysers into space.', 
+            icon: '✨',
+            sciOlyDetails: [
+                'Has the highest albedo (reflectivity) of any body in the solar system.',
+                'Features distinct "Tiger Stripes" at its south pole that erupt cryovolcanic geysers.',
+                'These geysers are the direct source of material for Saturn\'s diffuse E-ring.'
+            ]
+        },
+        { 
+            id: 'iapetus', name: 'Iapetus', planet: 'Saturn', 
+            superlatives: ['The Yin-Yang Moon'], 
+            desc: 'One half is bright white like snow, and the other half is as dark as coal. It features a massive equatorial ridge.', 
+            icon: '🌗',
+            sciOlyDetails: [
+                'Exhibits extreme albedo dichotomy: its leading hemisphere is incredibly dark, while the trailing is bright ice.',
+                'Features an equatorial ridge up to 13 km high and 20 km wide, giving it a walnut-like shape.'
+            ]
+        },
+        { 
+            id: 'hyperion', name: 'Hyperion', planet: 'Saturn', 
+            superlatives: ['The Spongiest Moon'], 
+            desc: 'Deep, sharp craters and incredibly low density give it the appearance of a giant, floating space sponge tumbling chaotically.', 
+            icon: '🧽',
+            sciOlyDetails: [
+                'One of the largest highly irregular (non-spherical) bodies in the solar system.',
+                'Its extremely low density and high porosity ($\gt 40\\%$) give it a unique, sponge-like structure.',
+                'It experiences chaotic rotation due to gravitational interactions with Titan.'
+            ]
+        },
+        { 
+            id: 'miranda', name: 'Miranda', planet: 'Uranus', 
+            superlatives: ['Inside-Out Appearance', 'Tallest Cliff'], 
+            desc: 'Looks like it was shattered and pieced back together! Home to Verona Rupes, the tallest cliff in the solar system.', 
+            icon: '🧗‍♂️',
+            sciOlyDetails: [
+                'Features Verona Rupes, an enormous fault scarp dropping roughly 20 km straight down.',
+                'The surface is a patchwork of heavily cratered terrain mixed with huge grooved structures called "coronae".'
+            ]
+        },
+        { 
+            id: 'triton', name: 'Triton', planet: 'Neptune', 
+            superlatives: ['Biggest Retrograde Moon'], 
+            desc: 'Orbits Neptune completely backwards! It is a captured dwarf planet that shoots active geysers of nitrogen ice.', 
+            icon: '🔄',
+            sciOlyDetails: [
+                'The only large moon with a retrograde orbit, strongly indicating it is a captured Kuiper Belt Object.',
+                'Features active cryovolcanism, with geysers shooting nitrogen gas and dark dust.',
+                'The western hemisphere features unique "cantaloupe terrain".'
+            ]
+        },
+        { 
+            id: 'charon', name: 'Charon', planet: 'Pluto', 
+            superlatives: ['Almost as Big as its Planet'], 
+            desc: 'At half the size of Pluto, they are so similar in mass they actually orbit a point in empty space between them.', 
+            icon: '🤝',
+            sciOlyDetails: [
+                'Form a true "double planet" system with Pluto; their center of mass (barycenter) lies outside Pluto.',
+                'Tidally locked to Pluto so perfectly that they are mutually synchronous.',
+                'Its northern pole features a dark red macula informally named "Mordor Macula," stained by complex organic tholins.'
+            ]
+        },
+        { 
+            id: 'phobos', name: 'Phobos', planet: 'Mars', 
+            superlatives: ['Orbits Faster Than Planet Spins'], 
+            desc: 'Orbits Mars so fast that it zips around the planet three times a single day! It is slowly spiraling inward.', 
+            icon: '🏎️',
+            sciOlyDetails: [
+                'Orbits Mars faster than the planet rotates on its axis.',
+                'Dominated by the massive Stickney Crater.',
+                'Due to tidal deceleration, its orbit is shrinking and it will eventually break apart.'
+            ]
+        }
+    ];
+
+    const layoutConfig = {
+        orbital: [
+            { title: 'Distance from Sun', prop: 'distanceAU', suffix: ' AU', subProp: 'distanceKm', type: 'bar' },
+            { title: 'Length of Year', prop: 'yearDays', suffix: ' Days', subProp: 'year', type: 'bar' },
+            { title: 'Length of Day', prop: 'dayHours', suffix: ' Hrs', subProp: 'day', type: 'bar' },
+            { title: 'Orbital Speed', prop: 'orbSpeedKm', suffix: ' km/s', type: 'bar' }
+        ],
+        physical: [
+            { title: 'Diameter', prop: 'diameterKm', suffix: ' km', type: 'bar' },
+            { title: 'Volume (Relative to Earth)', prop: 'volumeRatio', suffix: 'x', type: 'bar' },
+            { title: 'Density (Water = 1000 kg/m³)', prop: 'density', suffix: ' kg/m³', subProp: 'weightMultiplier', type: 'bar' },
+            { title: 'Core Composition', prop: 'core', type: 'core-cutaway' }
+        ],
+        extras: [
+            { title: 'Number of Moons', prop: 'moonsCount', type: 'bar' },
+            { title: 'Magnetic Field', prop: 'magField', type: 'mag-popup' },
+            { title: 'Famous Missions', prop: 'missions', type: 'text' },
+            { title: 'Nicknames', prop: 'nicknamesStr', type: 'badge' }
+        ]
+    };
+
+    const geologyData = [
+        { title: 'Tallest Mountain', earthLabel: 'Mt. Everest', earthVal: 8.8, spaceLabel: 'Olympus Mons (Mars)', spaceVal: 21.9, unit: 'km' },
+        { title: 'Deepest Canyon', earthLabel: 'Grand Canyon', earthVal: 446, spaceLabel: 'Valles Marineris (Mars)', spaceVal: 4000, unit: 'km length' },
+        { title: 'Highest Cliff', earthLabel: 'Thor Peak', earthVal: 1.25, spaceLabel: 'Verona Rupes (Miranda)', spaceVal: 20, unit: 'km drop' },
+        { title: 'Largest Storm', earthLabel: 'Max Earth Hurricane', earthVal: 1000, spaceLabel: 'Great Red Spot (Jupiter)', spaceVal: 16350, unit: 'km wide' },
+        { title: 'Largest Impact Basin', earthLabel: 'Vredefort Crater', earthVal: 300, spaceLabel: 'Utopia Planitia (Mars)', spaceVal: 3300, unit: 'km diameter' },
+        { title: 'Deepest Ocean', earthLabel: 'Mariana Trench', earthVal: 11, spaceLabel: 'Europa Ocean (Jupiter)', spaceVal: 100, unit: 'km deep' },
+        { title: 'Longest Lava Channel', earthLabel: 'Kazumura Cave', earthVal: 65, spaceLabel: 'Baltis Vallis (Venus)', spaceVal: 6800, unit: 'km length' },
+        { title: 'Tallest Erupting Plume', earthLabel: 'Steamboat Geyser', earthVal: 0.1, spaceLabel: 'Pele Volcano (Io)', spaceVal: 500, unit: 'km high' },
+        { title: 'Thickest Ice Shell', earthLabel: 'Antarctic Ice Sheet', earthVal: 4.7, spaceLabel: 'Callisto Ice Mantle', spaceVal: 200, unit: 'km thick' },
+        { title: 'Widest Shield Volcano', earthLabel: 'Mauna Loa', earthVal: 250, spaceLabel: 'Alba Mons (Mars)', spaceVal: 1600, unit: 'km wide' },
+        { title: 'Longest Fault System', earthLabel: 'San Andreas Fault', earthVal: 1200, spaceLabel: 'Ithaca Chasma (Tethys)', spaceVal: 2000, unit: 'km length' },
+        { title: 'Largest Volcanic Area', earthLabel: 'Siberian Traps', earthVal: 7, spaceLabel: 'Lada Terra (Venus)', spaceVal: 20, unit: 'Million km²' },
+        { title: 'Thickest Atmosphere', earthLabel: 'Earth (Kármán line)', earthVal: 100, spaceLabel: 'Jupiter (to liquid interior)', spaceVal: 50000, unit: 'km deep' },
+        { title: 'Fastest Wind Speed', earthLabel: 'Barrow Island', earthVal: 408, spaceLabel: 'Neptune Jet Streams', spaceVal: 2100, unit: 'km/h' }
+    ];
+
+    const tabs = [
+        { id: 'master', name: '📊 Master Table', render: renderMasterTable },
+        { id: 'orbital', name: '⏱️ Orbital', render: renderOrbital },
+        { id: 'physical', name: '📏 Physical', render: renderPhysical },
+        { id: 'atmosphere', name: '🌪️ Atmosphere', render: renderAtmosphere },
+        { id: 'extras', name: '🤯 Extras', render: renderExtras },
+        { id: 'moons', name: '🌕 Moons', render: renderMoons },
+        { id: 'geology', name: '🌋 Extreme Geology', render: renderGeology },
+        { id: 'calc', name: '⚖️ Calc', render: renderCalc },
+        { id: 'tilt', name: '🔄 Spin & Tilt', render: renderTilt },
+        { id: 'survival', name: '☠️ Survival Index', render: renderSurvival },
+        { id: 'scale', name: '📏 Scale', render: renderScale }
+    ];
+
+    let currentTab = 'master';
+
+    // ==========================================
+    // GLOBAL MODAL LOGIC
+    // ==========================================
+    window.openGlobalModal = function(htmlContent) {
+        const overlay = document.getElementById('global-modal-overlay');
+        const content = document.getElementById('global-modal-content');
+        
+        content.innerHTML = htmlContent;
+        overlay.classList.remove('hidden');
+        
+        // Force reflow to enable transition
+        void overlay.offsetWidth;
+        
+        overlay.classList.remove('opacity-0');
+        content.classList.remove('scale-95');
+
+        // Safe MathJax Rendering inside popup
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            MathJax.typesetPromise([content]).catch(err => console.error(err));
+        }
+    };
+
+    window.closeGlobalModal = function() {
+        const overlay = document.getElementById('global-modal-overlay');
+        const content = document.getElementById('global-modal-content');
+        
+        overlay.classList.add('opacity-0');
+        content.classList.add('scale-95');
+        
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+        }, 300);
+    };
+
+    // ==========================================
+    // INDIVIDUAL MODAL TYPES
+    // ==========================================
+    window.openCoreModal = function(planetId) {
+        const p = planetData.find(x => x.id === planetId);
+        if (!p) return;
+
+        // Calculate volumes into actual visual radii
+        let cumulativeVolume = 0;
+        const processedLayers = p.coreLayers.map(layer => {
+            cumulativeVolume += layer.pct;
+            const radiusPct = Math.cbrt(cumulativeVolume / 100) * 100;
+            return { ...layer, radiusPct };
+        });
+
+        // 1. Cutaway Diagram HTML
+        let cutawayHtml = '';
+        [...processedLayers].reverse().forEach((layer) => {
+            const shadow = `box-shadow: inset -15px -15px 30px rgba(0,0,0,0.6), inset 5px 5px 15px rgba(255,255,255,0.3), 0 10px 25px rgba(0,0,0,0.5);`;
+            const border = layer.border ? `border: ${layer.border};` : '';
+
+            cutawayHtml += `
+                <div class="absolute rounded-full left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-700 hover:scale-105"
+                     style="width: ${layer.radiusPct}%; height: ${layer.radiusPct}%; background: ${layer.gradient}; ${shadow} ${border}" title="${layer.name} (${layer.material})">
+                </div>
+            `;
+        });
+
+        // 2. Materials Legend
+        let materialsListHtml = '';
+        [...p.coreLayers].reverse().forEach(layer => {
+            materialsListHtml += `
+                <div class="flex items-center justify-between bg-space-900/60 p-3 rounded-xl border border-space-500 mb-2.5 shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl drop-shadow-md">${layer.icon}</span>
+                        <span class="text-white font-bold text-sm tracking-wide">${layer.material}</span>
+                    </div>
+                    <span class="text-star-cyan font-mono font-bold">${layer.pct}%</span>
+                </div>
+            `;
+        });
+
+        // 3. Horizontal Recipe Breakdown
+        let recipeHtml = '';
+        p.coreLayers.forEach(layer => {
+            recipeHtml += `
+                <div class="h-full"
+                     style="width: ${layer.pct}%; background-color: ${layer.color};" title="${layer.name} (${layer.pct}%)">
+                </div>
+            `;
+        });
+
+        const modalHtml = `
+            <button onclick="closeGlobalModal()" class="absolute top-4 right-4 text-space-100 hover:text-white hover:bg-space-800 rounded-full w-8 h-8 flex items-center justify-center transition-all text-xl z-20 border border-transparent hover:border-space-500">&times;</button>
+            
+            <div class="text-center mb-10 relative z-10 flex flex-col items-center">
+                <h3 class="font-display text-3xl md:text-4xl font-bold mb-4 drop-shadow-md" style="color: ${p.colorCode}">
+                    ${p.name}'s Interior
+                </h3>
+                <div class="border border-star-gold/40 px-4 py-1.5 rounded-full inline-block shadow-[0_0_15px_rgba(234,179,8,0.1)] bg-space-900/50">
+                    <span class="text-star-gold font-mono text-xs uppercase tracking-widest font-bold">"${p.coreTakeaway.toUpperCase()}"</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-10 lg:gap-16 items-center justify-center mb-10 relative z-10 px-4">
+                <!-- Cutaway Diagram -->
+                <div class="w-56 h-56 md:w-64 md:h-64 relative flex-shrink-0 flex items-center justify-center">
+                    ${cutawayHtml}
+                </div>
+
+                <!-- Legend -->
+                <div class="flex-grow w-full max-w-[280px]">
+                    <h4 class="text-[11px] uppercase tracking-widest text-space-100 mb-4 font-bold border-b border-space-500 pb-2">Materials</h4>
+                    <div class="space-y-2">
+                        ${materialsListHtml}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recipe Bar -->
+            <div class="w-full relative z-10 border-t border-space-500 pt-6 mt-4">
+                <div class="flex justify-between items-end mb-3 px-1">
+                    <h4 class="text-[11px] uppercase tracking-widest text-white font-bold">Recipe Breakdown</h4>
+                    <span class="text-[10px] text-space-100 italic font-body">*estimated by volume</span>
+                </div>
+                <div class="w-full h-4 rounded-full overflow-hidden flex bg-space-900 shadow-inner">
+                    ${recipeHtml}
+                </div>
+            </div>
+        `;
+
+        openGlobalModal(modalHtml);
+    };
+
+    window.openMagModal = function(planetId) {
+        const p = planetData.find(x => x.id === planetId);
+        if (!p) return;
+
+        // Helper to generate dynamic SVG field lines based on planetary physics
+        const generateMagLines = (planet) => {
+            if (planet.magShieldIcon === '❌') return ''; // Venus has none
+            
+            let svg = `<svg class="absolute inset-0 w-full h-full pointer-events-none z-20" viewBox="0 0 200 200">`;
+
+            const drawDipole = (tilt, offset, opacity, scale, drawAxis) => {
+                let g = `<g transform="translate(100, ${100 + offset}) rotate(${tilt}) scale(${scale})">`;
+                // Draw symmetric magnetic loops
+                for(let i=1; i<=5; i++) {
+                    let rx = 35 + i*18;
+                    let ry = 50 + i*25;
+                    let colorOpacity = Math.max(0.1, opacity - (i*0.08));
+                    g += `<ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fill="none" stroke="rgba(110, 240, 255, ${colorOpacity})" stroke-width="1.5" />`;
+                }
+                // Magnetic Axis line indicator
+                if(drawAxis) {
+                    g += `<line x1="0" y1="-120" x2="0" y2="120" stroke="rgba(255,209,102,0.8)" stroke-width="2" stroke-dasharray="4 4" />`;
+                }
+                g += `</g>`;
+                return g;
+            };
+
+            if (planet.id === 'mars') {
+                // Crustal, patchy irregular magnetic spots
+                svg += `
+                    <g stroke="rgba(110, 240, 255, 0.6)" stroke-width="2" fill="none" stroke-linecap="round">
+                        <path d="M 60 70 Q 70 50 85 65" />
+                        <path d="M 120 140 Q 140 150 145 125" />
+                        <path d="M 135 60 Q 150 50 155 70" />
+                        <path d="M 75 145 Q 60 160 55 135" />
+                        <path d="M 90 120 Q 100 130 110 115" opacity="0.5"/>
+                    </g>
+                `;
+            } else if (planet.id === 'mercury') {
+                svg += drawDipole(0, -15, 0.4, 0.8, true); 
+            } else if (planet.id === 'earth') {
+                svg += drawDipole(11.5, 0, 0.6, 1.0, false);
+            } else if (planet.id === 'jupiter') {
+                svg += drawDipole(10, 0, 0.9, 1.8, false);
+            } else if (planet.id === 'saturn') {
+                svg += drawDipole(0, 0, 0.7, 1.3, false);
+            } else if (planet.id === 'uranus') {
+                svg += drawDipole(59, 20, 0.5, 1.2, true);
+            } else if (planet.id === 'neptune') {
+                svg += drawDipole(47, 25, 0.5, 1.2, true);
+            }
+            svg += `</svg>`;
+            return svg;
+        };
+
+        const svgLines = generateMagLines(p);
+
+        const modalHtml = `
+            <button onclick="closeGlobalModal()" class="absolute top-4 right-4 text-space-100 hover:text-white hover:bg-space-800 rounded-full w-8 h-8 flex items-center justify-center transition-all text-xl z-20 border border-transparent hover:border-space-500">&times;</button>
+            
+            <div class="text-center mb-10 relative z-10 flex flex-col items-center">
+                <h3 class="font-display text-3xl md:text-4xl font-bold mb-4 drop-shadow-md text-star-cyan">
+                    ${p.name}'s Magnetic Field
+                </h3>
+                <div class="border border-star-cyan/40 px-4 py-1.5 rounded-full inline-block shadow-[0_0_15px_rgba(110,240,255,0.1)] bg-space-900/50">
+                    <span class="text-star-cyan font-mono text-xs uppercase tracking-widest font-bold">"${p.magTakeaway.toUpperCase()}"</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-10 lg:gap-16 items-center justify-center mb-10 relative z-10 px-4">
+                <!-- Field Visual Diagram -->
+                <div class="w-56 h-56 md:w-64 md:h-64 relative flex-shrink-0 flex items-center justify-center">
+                    <!-- Dynamic Aura Glow -->
+                    <div class="absolute rounded-full w-32 h-32" style="box-shadow: 0 0 80px 20px ${p.magGlow};"></div>
+                    
+                    <!-- Planet Body -->
+                    <div class="w-32 h-32 rounded-full relative z-10 planet-texture" style="background-color: ${p.colorCode}; box-shadow: inset -10px -10px 20px rgba(0,0,0,0.8);"></div>
+                    
+                    <!-- SVG Lines -->
+                    <div class="absolute inset-0 z-20 pointer-events-none">
+                        ${svgLines}
+                    </div>
+                </div>
+
+                <!-- Info Cards -->
+                <div class="flex-grow w-full max-w-[280px] space-y-4">
+                    <!-- Shield Effectiveness Icon -->
+                    <div class="flex items-center justify-center gap-3 bg-space-900/60 p-4 rounded-xl border border-space-500 shadow-sm text-center">
+                        <span class="text-4xl drop-shadow-md">${p.magShieldIcon}</span>
+                        <div class="text-left">
+                            <div class="text-[10px] uppercase text-space-100 font-mono tracking-wider">Protection</div>
+                            <div class="font-bold text-white text-lg tracking-wide">${p.magShieldText}</div>
+                        </div>
+                    </div>
+
+                    <!-- Details Box -->
+                    <div class="bg-space-900/60 p-4 rounded-xl border border-space-500 shadow-sm">
+                        <div class="flex justify-between items-center mb-3 pb-3 border-b border-space-500/50">
+                            <span class="text-[10px] text-space-100 font-mono uppercase tracking-wider">Strength</span>
+                            <span class="text-sm text-star-cyan font-bold">${p.magField}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] text-space-100 font-mono uppercase tracking-wider">Shape</span>
+                            <span class="text-sm text-white font-bold">${p.magShape}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        openGlobalModal(modalHtml);
+    };
+
+    window.openTiltModal = function(planetId) {
+        const p = planetData.find(x => x.id === planetId);
+        if (!p) return;
+
+        const rotDir = p.retrograde ? '↻ Backwards (Retrograde)' : '↺ Forward (Prograde)';
+        const colorClass = p.retrograde ? 'text-star-red' : 'text-star-green';
+
+        const modalHtml = `
+            <button onclick="closeGlobalModal()" class="absolute top-4 right-4 text-space-100 hover:text-white hover:bg-space-800 rounded-full w-8 h-8 flex items-center justify-center transition-all text-xl z-20 border border-transparent hover:border-space-500">&times;</button>
+            
+            <div class="text-center mb-8 relative z-10 flex flex-col items-center">
+                <h3 class="font-display text-3xl md:text-4xl font-bold mb-4 drop-shadow-md text-star-gold">
+                    ${p.name}'s Spin & Tilt
+                </h3>
+            </div>
+
+            <div class="flex flex-col items-center justify-center mb-8 relative z-10 px-4">
+                
+                <!-- Large Animated Planet Visualization -->
+                <div class="relative w-40 h-40 md:w-48 md:h-48 mb-12 mt-4">
+                    <!-- Orbit Path Arrow -->
+                    <div class="absolute -inset-6 border-2 border-dashed ${p.retrograde ? 'border-red-500/50' : 'border-green-500/50'} rounded-full z-0 animate-[spin_10s_linear_infinite]" style="animation-direction: ${p.retrograde ? 'reverse' : 'normal'}"></div>
+                    
+                    <!-- The Tilted Planet -->
+                    <div class="w-full h-full rounded-full relative z-10 planet-texture shadow-[0_0_30px_rgba(0,0,0,0.5)]" style="background-color: ${p.colorCode}; transform: rotate(${p.tilt}deg)">
+                        <!-- Equator Line Indicator -->
+                        <div class="absolute top-1/2 left-0 w-full h-[2px] bg-white/60 shadow-[0_0_8px_white]"></div>
+                        <!-- Extended Axis Line Indicator -->
+                        <div class="absolute left-1/2 -top-12 w-[3px] h-[calc(100%+96px)] bg-star-cyan/90 z-20 shadow-[0_0_8px_rgba(110,240,255,0.8)]" style="transform: translateX(-50%)">
+                            <div class="absolute -top-2 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-star-cyan rounded-full shadow-[0_0_10px_#6ef0ff]"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Badges -->
+                <div class="flex gap-6 mb-6">
+                    <div class="bg-space-900/60 border border-space-500 px-4 py-2 rounded-xl text-center shadow-lg">
+                        <div class="text-[10px] text-space-100 uppercase tracking-widest mb-1 font-mono">Axial Tilt</div>
+                        <div class="font-mono text-2xl text-star-gold font-bold">${p.tilt}°</div>
+                    </div>
+                    <div class="bg-space-900/60 border border-space-500 px-4 py-2 rounded-xl text-center shadow-lg">
+                        <div class="text-[10px] text-space-100 uppercase tracking-widest mb-1 font-mono">Rotation</div>
+                        <div class="font-bold text-sm mt-1 ${colorClass}">${rotDir}</div>
+                    </div>
+                </div>
+
+                <!-- Kid Friendly Explanation -->
+                <div class="max-w-xl bg-space-800/80 p-5 rounded-2xl border border-star-gold/30 shadow-inner text-center mt-2">
+                    <p class="text-white text-sm md:text-base leading-relaxed font-body">
+                        ${p.magTiltExp}
+                    </p>
+                </div>
+            </div>
+        `;
+        openGlobalModal(modalHtml);
+    };
+
+    // ==========================================
+    // RENDER LOGIC
+    // ==========================================
+
+    function init() {
+        const tabContainer = document.getElementById('tab-container');
+        tabs.forEach(tab => {
+            const btn = document.createElement('button');
+            btn.className = `tab-btn glass-panel px-4 py-2 rounded-full font-bold text-[10px] md:text-xs lg:text-sm text-space-100 ${tab.id === currentTab ? 'active' : ''}`;
+            btn.innerHTML = tab.name;
+            btn.onclick = () => switchTab(tab.id);
+            btn.id = `btn-${tab.id}`;
+            tabContainer.appendChild(btn);
+        });
+        switchTab(currentTab);
+
+        // Allow mouse-wheel horizontal scrolling for the top tab container on Desktop browsers
+        const scrollWrapper = tabContainer.parentElement;
+        scrollWrapper.addEventListener('wheel', (evt) => {
+            if (evt.deltaY !== 0) {
+                evt.preventDefault();
+                scrollWrapper.scrollLeft += evt.deltaY;
+            }
+        });
+    }
+
+    function switchTab(tabId) {
+        currentTab = tabId;
+        
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.id === `btn-${tabId}`) btn.classList.add('active');
+        });
+
+        const contentArea = document.getElementById('content-area');
+        const tabObj = tabs.find(t => t.id === tabId);
+        if(tabObj) {
+            contentArea.innerHTML = tabObj.render();
+        }
+
+        if (tabId === 'calc') initCalculator();
+
+        // Safe MathJax Rendering
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            MathJax.typesetPromise([contentArea]).catch(err => console.error(err));
+        } else {
+            setTimeout(() => {
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    MathJax.typesetPromise([contentArea]);
+                }
+            }, 500);
+        }
+    }
+
+    // ==========================================
+    // INDIVIDUAL TAB RENDERERS
+    // ==========================================
+
+    function renderMasterTable() {
+        const tableRows = [
+            { label: 'Distance from Sun', prop: 'distanceAU', suffix: ' AU' },
+            { label: 'Distance (km)', prop: 'distanceKm', suffix: ' km' },
+            { label: 'Diameter', prop: 'diameter', suffix: '' },
+            { label: 'Volume (Relative)', prop: 'volume', suffix: '' },
+            { label: 'Density', prop: 'density', suffix: ' $kg/m^3$' },
+            { label: 'Surface Gravity', prop: 'weightMultiplier', suffix: 'x Earth' },
+            { label: 'Length of Day', prop: 'day', suffix: '' },
+            { label: 'Length of Year', prop: 'year', suffix: '' },
+            { label: 'Orbital Speed', prop: 'orbitalSpeed', suffix: '' },
+            { label: 'Axial Tilt', prop: 'tilt', suffix: '°' },
+            { label: 'Temperature', prop: 'tempString', suffix: '°C' },
+            { label: 'Core Composition', prop: 'core', suffix: '' },
+            { label: 'Atmosphere Make-up', prop: 'atmosphere', suffix: '' },
+            { label: 'Atmospheric Pressure', prop: 'pressure', suffix: '' },
+            { label: 'Max Wind Speeds', prop: 'wind', suffix: '' },
+            { label: 'Magnetic Field', prop: 'magField', suffix: '' },
+            { label: 'Nicknames', prop: 'nicknames', isArray: true }
+        ];
+
+        let html = `
+        <div class="glass-panel p-6 mb-8 text-center border-star-cyan">
+            <h2 class="font-display text-2xl text-white mb-2">Master Data Table</h2>
+            <p class="text-sm text-space-100 max-w-2xl mx-auto">The classic parameter-by-parameter view. Perfect for quickly scanning facts for Science Olympiad exams.</p>
+        </div>
+        
+        <div class="glass-panel overflow-hidden rounded-xl border border-space-500">
+            <div class="overflow-x-auto hide-scrollbar w-full">
+                <table class="w-full text-left border-collapse table-fixed min-w-[800px] lg:min-w-full">
+                    <thead>
+                        <tr>
+                            <th class="w-[16%] lg:w-[15%] p-2 lg:p-3 bg-space-900 border-b border-r border-space-500 sticky-header font-display text-star-cyan shadow-lg tracking-wider text-[10px] lg:text-xs">PARAMETERS</th>
+        `;
+        
+        planetData.forEach(p => {
+            html += `<th class="w-[10.5%] p-2 lg:p-3 bg-space-800/80 border-b border-space-500 font-display text-xs lg:text-sm" style="color: ${p.colorCode}">${p.name.toUpperCase()}</th>`;
+        });
+        
+        html += `</tr></thead><tbody class="font-mono text-space-100 text-[10px] lg:text-xs">`;
+
+        tableRows.forEach((row, index) => {
+            const bgClass = index % 2 === 0 ? 'bg-space-900/60' : 'bg-transparent';
+            html += `<tr class="${bgClass} hover:bg-space-700 transition-colors">
+                <td class="p-2 lg:p-3 border-b border-r border-space-500 sticky-col bg-space-900 font-bold text-white whitespace-nowrap">${row.label}</td>
+            `;
+            
+            planetData.forEach(p => {
+                let val = p[row.prop];
+                if (row.isArray) {
+                    if(val){
+                        val = val.join('<br>• ');
+                        val = '• ' + val;
+                    }
+                } else if (typeof val === 'boolean') {
+                    val = val ? 'Yes' : 'No';
+                }
+                html += `<td class="p-2 lg:p-3 border-b border-space-500 align-top break-words">${val !== undefined ? val : 'N/A'}${row.suffix || ''}</td>`;
+            });
+            html += `</tr>`;
+        });
+
+        html += `</tbody></table></div></div>`;
+        return html;
+    }
+
+    function renderStaticGrid(tabId) {
+        const configs = layoutConfig[tabId];
+        if (!configs) return '';
+
+        let html = '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">';
+        configs.forEach((conf, index) => {
+            let maxVal = 0;
+            if (conf.type === 'bar') {
+                maxVal = Math.max(...planetData.map(p => p[conf.prop] || 0));
+            }
+
+            let rowsHtml = '';
+            planetData.forEach(p => {
+                let valueHtml = '';
+                let val = p[conf.prop];
+
+                if (conf.type === 'bar') {
+                    let safeVal = val !== undefined ? val : 0;
+                    let pct = Math.max((safeVal / maxVal) * 100, 2);
+                    if(safeVal === 0) pct = 0;
+
+                    let extraBadge = '';
+                    if (conf.prop === 'density') {
+                        if (safeVal < 1000) extraBadge = `<span class="ml-2 bg-star-cyan/20 text-star-cyan px-1.5 py-0.5 rounded text-[8px] lg:text-[10px] font-bold uppercase tracking-wider animate-pulse hidden sm:inline-block border border-star-cyan/30">Floats!</span>`;
+                        if (safeVal === 5520) extraBadge = `<span class="ml-2 bg-star-red/20 text-star-red px-1.5 py-0.5 rounded text-[8px] lg:text-[10px] font-bold uppercase tracking-wider hidden sm:inline-block border border-star-red/30">Densest</span>`;
+                    }
+
+                    valueHtml = `
+                        <div class="flex-1 flex flex-col justify-center ml-4">
+                            <div class="text-[10px] lg:text-xs font-mono text-white mb-1 flex justify-between items-center">
+                                <span class="flex items-center">${safeVal.toLocaleString()}${conf.suffix||''} ${extraBadge}</span>
+                                <span class="text-space-100 font-body text-[8px] lg:text-[10px] text-right whitespace-nowrap overflow-hidden text-ellipsis max-w-[50%]">${conf.subProp && p[conf.subProp] !== undefined ? p[conf.subProp] : ''}</span>
+                            </div>
+                            <div class="w-full bg-space-900 h-1.5 lg:h-2 rounded-full overflow-hidden border border-space-500">
+                                <div class="h-full rounded-full data-bar" style="width: ${pct}%; background-color: ${p.colorCode}; animation-delay: ${index * 0.1}s"></div>
+                            </div>
+                        </div>
+                    `;
+                } else if (conf.type === 'badge') {
+                    let safeVal = val !== undefined ? val : 'N/A';
+                    let badgeColor = 'bg-space-700 text-white border-space-500';
+                    if (conf.prop === 'nicknamesStr') {
+                        badgeColor = `bg-opacity-20 border`;
+                        valueHtml = `
+                            <div class="flex-1 flex items-center justify-end ml-4 text-right">
+                                <span class="px-2 py-1 rounded-full text-[10px] lg:text-xs font-bold font-mono ${badgeColor}" style="color: ${p.colorCode}; border-color: ${p.colorCode}; background-color: ${p.colorCode}33;">
+                                    ${safeVal}
+                                </span>
+                            </div>
+                        `;
+                    } else {
+                        if(p.id === 'venus' || p.id === 'mercury') badgeColor = 'bg-star-red/20 text-star-red border-star-red/50';
+                        else if(p.id === 'earth') badgeColor = 'bg-star-green/20 text-star-green border-star-green/50';
+                        else badgeColor = 'bg-star-cyan/20 text-star-cyan border-star-cyan/50';
+
+                        valueHtml = `
+                            <div class="flex-1 flex items-center justify-end ml-4 text-right">
+                                <span class="px-2 py-1 rounded-full text-[10px] lg:text-xs font-bold font-mono ${badgeColor} border">
+                                    ${safeVal}${conf.suffix||''} ${conf.subProp && p[conf.subProp] !== undefined ? `<span class="text-[8px] lg:text-[10px] font-normal text-space-100 ml-1">(${p[conf.subProp]}°F)</span>` : ''}
+                                </span>
+                            </div>
+                        `;
+                    }
+                } else if (conf.type === 'core-cutaway') {
+                    valueHtml = `
+                        <div class="flex-1 flex items-center justify-end ml-4 text-right relative">
+                            <button onclick="openCoreModal('${p.id}')" class="group flex items-center justify-end gap-3 px-3 py-1.5 rounded-xl bg-space-800/80 border border-space-500 hover:border-star-cyan transition-colors shadow-lg w-full max-w-[280px] relative overflow-hidden">
+                                <div class="absolute -right-2 -top-2 bg-star-cyan text-space-900 text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-md group-hover:scale-110 transition-transform">VIEW</div>
+                                <div class="flex flex-col items-end flex-grow text-right pr-2 border-r border-space-500">
+                                    <span class="font-display font-bold text-xs lg:text-sm text-star-gold group-hover:text-white transition-colors truncate w-full max-w-[150px] lg:max-w-[180px] text-right">${p.coreTakeaway}</span>
+                                    <span class="font-mono text-[8px] lg:text-[9px] text-space-100 truncate w-full max-w-[150px] lg:max-w-[180px] text-right mt-0.5">${p.core}</span>
+                                </div>
+                                <div class="flex-shrink-0 flex items-center gap-0.5 relative z-10">
+                                    ${p.coreLayers.map(l => `<span class="text-xs drop-shadow-md" title="${l.material}">${l.icon}</span>`).join('')}
+                                </div>
+                            </button>
+                        </div>
+                    `;
+                } else if (conf.type === 'mag-popup') {
+                    valueHtml = `
+                        <div class="flex-1 flex items-center justify-end ml-4 text-right relative">
+                            <button onclick="openMagModal('${p.id}')" class="group flex items-center justify-end gap-3 px-3 py-1.5 rounded-xl bg-space-800/80 border border-space-500 hover:border-star-magenta transition-colors shadow-lg w-full max-w-[280px] relative overflow-hidden">
+                                <div class="absolute -right-2 -top-2 bg-star-magenta text-space-900 text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-md group-hover:scale-110 transition-transform">VIEW</div>
+                                <div class="flex flex-col items-end flex-grow text-right pr-2">
+                                    <span class="font-display font-bold text-xs lg:text-sm text-star-cyan group-hover:text-white transition-colors truncate w-full text-right">${p.magField}</span>
+                                    <span class="font-mono text-[8px] lg:text-[9px] text-space-100 truncate w-full text-right mt-0.5">${p.magShape}</span>
+                                </div>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    let safeVal = val !== undefined ? val : 'N/A';
+                    valueHtml = `
+                        <div class="flex-1 flex items-center justify-end ml-4 text-right">
+                            <span class="text-[10px] lg:text-sm font-body text-space-100">${safeVal}</span>
+                        </div>
+                    `;
+                }
+
+                rowsHtml += `
+                    <div class="flex items-center p-2 lg:p-3 border-b border-space-500 last:border-0 hover:bg-space-800 transition-colors">
+                        <div class="w-20 lg:w-24 flex items-center gap-2 flex-shrink-0">
+                            <div class="w-4 h-4 lg:w-5 lg:h-5 rounded-full shadow-inner flex-shrink-0" style="background-color: ${p.colorCode}"></div>
+                            <span class="font-display text-xs lg:text-sm tracking-wide text-white">${p.name}</span>
+                        </div>
+                        ${valueHtml}
+                    </div>
+                `;
+            });
+
+            html += `
+                <div class="glass-panel rounded-2xl overflow-hidden shadow-lg border-space-500 mb-6">
+                    <div class="bg-space-800 p-3 lg:p-4 border-b border-space-500">
+                        <h2 class="font-display font-bold text-base lg:text-lg text-star-gold">${conf.title}</h2>
+                    </div>
+                    <div class="p-1 lg:p-2">
+                        ${rowsHtml}
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function renderPhysical() {
+        let html = `<div class="glass-panel p-6 mb-8 text-center"><h2 class="font-display text-2xl text-star-magenta mb-2 font-bold">Planetary Density Bathtub</h2><p class="text-sm text-space-100 mb-6 font-mono max-w-2xl mx-auto">Density = Mass ÷ Volume. Earth is the densest rocky planet, but Saturn is so completely gaseous that it is less dense than water ($1000 kg/m^3$). If you had a bathtub big enough, Saturn would float!</p>`;
+        
+        // Accurate CSS Bathtub matching the academic image
+        html += `
+        <div class="relative w-full h-80 max-w-4xl mx-auto bathtub-container mt-12 mb-8 hidden md:block">
+            <!-- The Tub Background -->
+            <div class="absolute inset-0 bg-[#0f1430] border-[8px] border-[#d4af37] border-t-0 rounded-b-[60px] shadow-2xl"></div>
+
+            <!-- The Water -->
+            <div class="absolute bottom-0 left-0 w-full h-[60%] bg-blue-500/40 border-t-4 border-blue-300/80 rounded-b-[52px] z-20 pointer-events-none">
+                <!-- Bubbles -->
+                <div class="absolute bottom-4 left-[20%] w-2 h-2 bg-white rounded-full opacity-50 animate-bounce"></div>
+                <div class="absolute bottom-10 left-[25%] w-3 h-3 bg-white rounded-full opacity-30 animate-pulse"></div>
+                <div class="absolute bottom-16 right-[30%] w-2 h-2 bg-white rounded-full opacity-40"></div>
+                <div class="absolute bottom-8 right-[35%] w-4 h-4 bg-white rounded-full opacity-20"></div>
+            </div>
+
+            <!-- The Planets (z-10 so they are behind water but inside tub, EXCEPT Saturn which is z-30 to float) -->
+            
+            <!-- Saturn (Floats ON water) -> Water is 60% from bottom, so top of water is 40% from top. -->
+            <div class="absolute top-[20%] left-[15%] z-30"> 
+                 <div class="bg-space-900/90 border border-star-cyan text-[10px] rounded p-1 mb-1 font-mono text-center">Saturn: 690 $kg/m^3$<br>Floats!</div>
+                 <div class="w-32 h-32 rounded-full bg-yellow-300 relative shadow-[inset_-5px_-5px_15px_rgba(0,0,0,0.5)]">
+                     <!-- Rings -->
+                     <div class="absolute top-1/2 left-1/2 w-[160%] h-[40%] border-[6px] border-yellow-200/80 rounded-[50%] -translate-x-1/2 -translate-y-1/2 -rotate-12 shadow-[0_0_10px_rgba(0,0,0,0.5)]"></div>
+                 </div>
+            </div>
+
+            <!-- Jupiter (Submerged, bottom right) -->
+            <div class="absolute bottom-2 right-[10%] z-10 flex flex-col items-center">
+                 <div class="bg-space-900/90 border border-space-500 text-[10px] rounded p-1 mb-1 font-mono text-center">Jupiter: 1330 $kg/m^3$</div>
+                 <div class="w-40 h-40 rounded-full bg-yellow-600 shadow-[inset_-10px_-10px_20px_rgba(0,0,0,0.8)]" style="background: radial-gradient(circle at 35% 35%, #fcd34d, #d97706, #92400e);"></div>
+            </div>
+
+            <!-- Earth (Submerged, bottom) -->
+            <div class="absolute bottom-2 left-[28%] z-10 flex flex-col items-center">
+                 <div class="bg-space-900/90 border border-star-red text-[10px] rounded p-1 mb-1 font-mono text-center text-star-red">Earth: 5520 $kg/m^3$<br>(Densest)</div>
+                 <div class="w-16 h-16 rounded-full bg-blue-500 shadow-[inset_-5px_-5px_15px_rgba(0,0,0,0.8)]" style="background: radial-gradient(circle at 35% 35%, #4ef0a8, #3b82f6, #1d4ed8);"></div>
+            </div>
+
+            <!-- Venus (Submerged, bottom) -->
+            <div class="absolute bottom-2 left-[44%] z-10 flex flex-col items-center">
+                 <div class="bg-space-900/90 border border-space-500 text-[10px] rounded p-1 mb-1 font-mono text-center">Venus: 5240 $kg/m^3$</div>
+                 <div class="w-14 h-14 rounded-full bg-orange-400 shadow-[inset_-5px_-5px_10px_rgba(0,0,0,0.8)]" style="background: radial-gradient(circle at 35% 35%, #fcd34d, #f97316, #9a3412);"></div>
+            </div>
+
+            <!-- Mercury (Submerged, bottom) -->
+            <div class="absolute bottom-2 left-[58%] z-10 flex flex-col items-center">
+                 <div class="bg-space-900/90 border border-space-500 text-[10px] rounded p-1 mb-1 font-mono text-center">Mercury: 5430 $kg/m^3$</div>
+                 <div class="w-10 h-10 rounded-full bg-gray-400 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.8)]" style="background: radial-gradient(circle at 35% 35%, #d1d5db, #9ca3af, #4b5563);"></div>
+            </div>
+            
+            <!-- Water Density Label -->
+            <div class="absolute top-[35%] right-[-10px] z-30 transform translate-x-full">
+                <div class="bg-blue-900/90 border border-blue-400 text-[10px] rounded p-1 font-mono text-center text-blue-200">Water Density:<br>1000 $kg/m^3$</div>
+                <div class="w-8 h-[2px] bg-blue-400 absolute top-1/2 -left-8"></div>
+            </div>
+        </div>
+        </div>`;
+
+        // Standard Stats Grid
+        html += renderStaticGrid('physical');
+        return html;
+    }
+
+    function renderOrbital() {
+        return renderStaticGrid('orbital');
+    }
+
+    function renderAtmosphere() {
+        let html = '';
+        html += renderTemperatureChart();
+        html += renderPressureChart();
+        html += renderWindChart();
+        html += renderAtmosphereMakeup();
+        return html;
+    }
+
+    function renderTemperatureChart() {
+        const minScale = -250;
+        const maxScale = 500;
+        const range = maxScale - minScale;
+        
+        // Helper to convert temperature to a percentage from 0 to 100 on our scale
+        const getPct = (temp) => ((temp - minScale) / range) * 100;
+        
+        const waterLeft = getPct(0);
+        const waterWidth = getPct(100) - waterLeft;
+
+        let html = `
+        <div class="glass-panel p-4 md:p-6 mb-8 rounded-2xl border-star-red/50 relative overflow-hidden">
+            <!-- Background Glow -->
+            <div class="absolute top-0 right-0 w-64 h-64 bg-red-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+            
+            <h2 class="font-display text-2xl text-white mb-2 relative z-10 flex items-center gap-2">
+                <span>🌡️</span> Extreme Temperatures & Variability
+            </h2>
+            <p class="text-sm text-space-100 mb-6 max-w-3xl relative z-10">
+                Unlike gas giants which maintain relatively stable temperatures at their cloud tops, rocky planets closest to the sun experience massive temperature swings due to slow rotation or lack of atmosphere.
+            </p>
+
+            <!-- Insights / Callouts -->
+            <div class="flex flex-col md:flex-row gap-4 mb-8 relative z-10">
+                <div class="flex-1 bg-space-900/60 border border-orange-500/40 p-4 rounded-xl shadow-lg hover:border-orange-500 transition-colors">
+                    <h4 class="text-orange-400 font-bold mb-1 text-sm flex items-center gap-2">🔥 Venus is hotter than Mercury</h4>
+                    <p class="text-[11px] md:text-xs text-space-100 leading-relaxed">Despite Mercury being twice as close to the Sun, Venus traps extreme heat underneath its thick CO₂ atmosphere, creating a relentless runaway greenhouse effect.</p>
+                </div>
+                <div class="flex-1 bg-space-900/60 border border-cyan-500/40 p-4 rounded-xl shadow-lg hover:border-cyan-500 transition-colors">
+                    <h4 class="text-cyan-400 font-bold mb-1 text-sm flex items-center gap-2">❄️ Uranus is colder than Neptune</h4>
+                    <p class="text-[11px] md:text-xs text-space-100 leading-relaxed">Neptune is nearly a billion miles farther away, yet Uranus reaches colder minimums (-224 °C). Scientists theorize Uranus suffered an impact that expelled most of its internal heat.</p>
+                </div>
+            </div>
+
+            <!-- Chart Area -->
+            <div class="w-full overflow-x-auto hide-scrollbar relative z-10 pb-4">
+                <div class="min-w-[700px] relative mt-10">
+                    
+                    <!-- X-Axis Background Guides -->
+                    <div class="absolute inset-0 z-0">
+                        <!-- Liquid Water Zone -->
+                        <div class="absolute h-full bg-blue-500/10 border-x border-blue-500/30 flex items-start justify-center pt-2" style="left: ${waterLeft}%; width: ${waterWidth}%;">
+                            <span class="text-[9px] text-blue-300/80 font-bold uppercase tracking-widest bg-space-900/50 px-1 rounded">Liquid Water Range</span>
+                        </div>
+                        
+                        <!-- Center Zero Line -->
+                        <div class="absolute top-0 bottom-0 w-px bg-white/20" style="left: ${getPct(0)}%"></div>
+                    </div>
+
+                    <!-- Shared Axis Header -->
+                    <div class="relative h-6 border-b border-space-500 mb-4">
+                        ${[-250, -100, 0, 100, 300, 500].map(val => `
+                            <div class="absolute text-[10px] text-space-100 font-mono transform -translate-x-1/2 flex flex-col items-center gap-1" style="left: ${getPct(val)}%">
+                                <span>${val}°C</span>
+                                <div class="h-2 w-px bg-space-500"></div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Planet Data Rows -->
+                    <div class="space-y-4">
+        `;
+
+        planetData.forEach(p => {
+            let leftPct = getPct(p.tempMin);
+            let rightPct = getPct(p.tempMax);
+            let widthPct = rightPct - leftPct;
+            let isRange = p.tempMin !== p.tempMax;
+
+            html += `
+                <div class="relative flex items-center h-10 group hover:bg-space-800/30 rounded-lg transition-colors">
+                    <!-- Label -->
+                    <div class="absolute left-0 w-24 text-right pr-4 flex items-center justify-end gap-2 z-20 h-full bg-gradient-to-r from-transparent to-space-900/80 md:bg-none">
+                        <span class="font-display text-sm font-bold text-white group-hover:text-star-cyan transition-colors">${p.name}</span>
+                        <div class="w-3 h-3 rounded-full shadow-inner" style="background-color: ${p.colorCode}"></div>
+                    </div>
+
+                    <!-- Bar Track Container -->
+                    <div class="ml-24 relative h-full flex-grow border-l border-space-500 z-10">
+                        
+            `;
+
+            if (isRange) {
+                // Render Min/Max Horizontal Bar
+                html += `
+                    <div class="absolute top-1/2 transform -translate-y-1/2 h-3 md:h-4 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)] border border-white/20 group-hover:scale-y-110 transition-transform data-bar" 
+                         style="left: ${leftPct}%; width: ${widthPct}%; background: linear-gradient(90deg, #38bdf8, ${p.colorCode}, #ef4444);">
+                    </div>
+                    
+                    <!-- Temp Labels & Context -->
+                    <div class="absolute top-1/2 transform -translate-y-1/2 whitespace-nowrap text-[9px] md:text-[10px] font-mono text-space-100 opacity-80 group-hover:opacity-100 transition-opacity" 
+                         style="left: ${rightPct}%; margin-left: 8px;">
+                        ${p.tempString} °C <span class="text-white/40 ml-1 hidden md:inline-block">— ${p.tempAnnot}</span>
+                    </div>
+                `;
+            } else {
+                // Render Single Point Diamond
+                html += `
+                    <div class="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 w-3 h-3 md:w-4 md:h-4 rotate-45 border border-white/40 shadow-[0_0_10px_rgba(0,0,0,0.5)] group-hover:scale-125 transition-transform" 
+                         style="left: ${leftPct}%; background-color: ${p.colorCode};">
+                    </div>
+                    
+                    <!-- Temp Labels & Context -->
+                    <div class="absolute top-1/2 transform -translate-y-1/2 whitespace-nowrap text-[9px] md:text-[10px] font-mono text-space-100 opacity-80 group-hover:opacity-100 transition-opacity" 
+                         style="left: ${leftPct}%; margin-left: 12px;">
+                        ${p.tempString} °C <span class="text-white/40 ml-1 hidden md:inline-block">— ${p.tempAnnot}</span>
+                    </div>
+                `;
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+        
+        return html;
+    }
+
+    function renderPressureChart() {
+        const terrestrials = planetData.slice(0, 4);
+        const giants = planetData.slice(4, 8);
+
+        let terrHtml = terrestrials.map(p => {
+            let stackHtml = '';
+            if (p.id === 'mercury') stackHtml = `<div class="w-6 md:w-10 h-px bg-gray-500/50"></div>`;
+            if (p.id === 'venus') stackHtml = `
+                <div class="w-6 md:w-10 h-[140px] bg-orange-500 rounded-t-md opacity-90 relative overflow-hidden flex flex-col shadow-[0_0_15px_rgba(249,115,22,0.4)] border border-orange-400/50" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.3) 4px, rgba(0,0,0,0.3) 6px);">
+                    <div class="absolute top-0 left-0 w-full h-12 bg-gradient-to-b from-space-900 to-transparent"></div>
+                </div>
+                <div class="absolute -top-6 text-orange-400 font-bold text-[10px] md:text-xs whitespace-nowrap drop-shadow-md">92× Earth!</div>
+            `;
+            if (p.id === 'earth') stackHtml = `<div class="w-6 md:w-10 h-4 bg-blue-500 rounded-t-md shadow-lg border border-blue-400/50" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.3) 4px, rgba(0,0,0,0.3) 6px);"></div>`;
+            if (p.id === 'mars') stackHtml = `<div class="w-6 md:w-10 h-1 bg-red-500 rounded-t-sm opacity-80 border border-red-400/50"></div>`;
+
+            return `
+                <div class="flex flex-col items-center justify-end flex-1 h-full relative group">
+                    ${stackHtml}
+                    <div class="mt-3 text-center">
+                        <div class="font-display font-bold text-white text-xs md:text-sm group-hover:text-star-cyan transition-colors">${p.name}</div>
+                        <div class="font-mono text-star-gold text-[9px] md:text-[10px]">${p.pressureAtm === 0 ? '0' : p.pressureAtm} atm</div>
+                        <div class="font-body text-space-100 text-[8px] md:text-[10px] mt-1 max-w-[60px] md:max-w-[100px] mx-auto leading-tight italic">${p.pressureAnalogy}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        let giantHtml = giants.map(p => {
+            return `
+                <div class="flex flex-col justify-between p-2 md:p-3 bg-space-800/40 rounded-lg border border-space-500/50 hover:border-star-cyan transition-colors group">
+                    <div class="flex items-center gap-1.5 mb-1">
+                        <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${p.colorCode}"></div>
+                        <div class="font-display font-bold text-white text-[10px] md:text-xs group-hover:text-star-cyan transition-colors">${p.name}</div>
+                    </div>
+                    <div class="h-10 md:h-12 w-full rounded flex-grow my-1 md:my-2 relative overflow-hidden" style="background: linear-gradient(to bottom, rgba(255,255,255,0.1), ${p.colorCode}, #000);">
+                        <div class="absolute bottom-1 w-full text-center font-mono text-[8px] md:text-[9px] text-white/90 font-bold">
+                            ${p.pressureAtm} atm
+                        </div>
+                    </div>
+                    <div class="font-body text-space-100 text-[8px] md:text-[9px] leading-tight italic text-center h-6 flex items-center justify-center">
+                        ${p.pressureAnalogy}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        return `
+        <div class="glass-panel p-4 md:p-6 mb-8 rounded-2xl border-purple-500/30 relative overflow-hidden">
+            <div class="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+            
+            <h2 class="font-display text-2xl text-white mb-2 relative z-10 flex items-center gap-2">
+                <span>⚖️</span> Atmospheric Pressure
+            </h2>
+            <p class="text-sm text-space-100 mb-8 max-w-3xl relative z-10">
+                Pressure dictates whether water can exist as a liquid and if spacecraft can survive. Venus has a crushing atmosphere comparable to deep oceans on Earth. Gas giants have no true surface, but rather transition from gas to exotic liquid metals under millions of atmospheres of pressure.
+            </p>
+
+            <div class="flex flex-col lg:flex-row gap-6 relative z-10">
+                <!-- Terrestrial Stack Section -->
+                <div class="flex-[3] bg-space-900/60 p-4 rounded-xl border border-space-500">
+                    <h3 class="text-[10px] md:text-xs uppercase tracking-widest text-space-100 font-bold mb-8 text-center">Terrestrial Planets (Surface)</h3>
+                    <div class="flex justify-between items-end h-[180px] border-b border-space-500 pb-0 px-2 md:px-6">
+                        ${terrHtml}
+                    </div>
+                </div>
+
+                <!-- Gas Giant Descent Section -->
+                <div class="flex-[4] bg-space-900/60 p-4 rounded-xl border border-space-500">
+                    <h3 class="text-[10px] md:text-xs uppercase tracking-widest text-space-100 font-bold mb-4 text-center">Giant Planets (Internal Descent)</h3>
+                    <div class="grid grid-cols-4 gap-2 md:gap-3 h-[180px] pt-4">
+                        ${giantHtml}
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+    }
+
+    function renderWindChart() {
+        let html = `
+        <div class="glass-panel p-4 md:p-6 mb-8 rounded-2xl border-star-green/30 relative overflow-hidden">
+            <!-- Background Glow -->
+            <div class="absolute top-0 right-0 w-64 h-64 bg-star-green/10 blur-[80px] rounded-full pointer-events-none"></div>
+            
+            <h2 class="font-display text-2xl text-white mb-2 relative z-10 flex items-center gap-2">
+                <span>🌪️</span> Extreme Wind Dynamics
+            </h2>
+            <p class="text-sm text-space-100 mb-8 max-w-3xl relative z-10">
+                Wind speeds vary drastically depending on where you measure them. Earth and Mars experience surface winds, while gas giants possess massive upper-atmosphere jet streams driven by deep internal heat and rapid rotation.
+            </p>
+
+            <div class="space-y-4 relative z-10">
+        `;
+
+        planetData.forEach(p => {
+            // Calculate dynamic animation speed based on windKmh
+            let duration = 0;
+            if (p.windKmh > 0) {
+                // Base line: Earth 400km/h = ~1s to cross screen. Neptune 2100km/h = ~0.2s.
+                duration = Math.max(0.2, 400 / p.windKmh);
+            }
+
+            // Generate streaks
+            let streaksHtml = '';
+            if (p.windKmh > 0) {
+                for (let i = 0; i < 4; i++) {
+                    let delay = Math.random() * 2; // offset starts
+                    let top = 20 + Math.random() * 60; // vertical scatter
+                    let width = 10 + Math.random() * 40; // varying streak lengths
+                    let height = Math.random() > 0.5 ? 'h-0.5' : 'h-px';
+                    
+                    streaksHtml += `
+                        <div class="absolute ${height} rounded-full" 
+                             style="width: ${width}%; top: ${top}%; background: linear-gradient(90deg, transparent, ${p.colorCode}, transparent); 
+                                    animation: windStreak ${duration}s linear infinite; animation-delay: ${delay}s; left: -100%;">
+                        </div>
+                    `;
+                }
+            } else {
+                streaksHtml = `<div class="absolute inset-0 flex items-center justify-center text-[10px] text-space-100/50 uppercase tracking-widest">No Wind</div>`;
+            }
+
+            html += `
+                <div class="bg-space-900/60 border border-space-500 rounded-xl p-3 flex flex-col md:flex-row gap-4 hover:border-star-cyan transition-colors shadow-lg group">
+                    
+                    <!-- Info Column -->
+                    <div class="w-full md:w-1/2 flex flex-col justify-center">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-2">
+                                <div class="w-4 h-4 rounded-full shadow-inner flex-shrink-0" style="background-color: ${p.colorCode}"></div>
+                                <h3 class="font-display font-bold text-white text-lg group-hover:text-star-cyan transition-colors">${p.name}</h3>
+                            </div>
+                            <span class="bg-space-800 text-[10px] font-mono text-star-gold px-2 py-0.5 rounded border border-space-500">
+                                ${p.windContext}
+                            </span>
+                        </div>
+                        
+                        <div class="flex items-end gap-3 mb-1">
+                            <span class="font-mono text-2xl text-white font-bold">${p.windKmh.toLocaleString()}</span>
+                            <span class="text-xs font-mono text-space-100 mb-1">km/h</span>
+                            ${p.windKmh > 0 ? `<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-space-800 border border-space-500 mb-1" style="color: ${p.colorCode}">${p.windMultiplier}</span>` : ''}
+                        </div>
+                        
+                        <div class="text-[11px] text-space-100 italic">
+                            Feels like: <span class="text-white font-semibold">${p.windAnalogy}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Visual Track Column -->
+                    <div class="w-full md:w-1/2 h-16 md:h-auto bg-space-900 rounded-lg border border-space-500/50 relative overflow-hidden flex items-center" style="box-shadow: inset 0 0 15px rgba(0,0,0,0.5);">
+                        ${streaksHtml}
+                    </div>
+
+                </div>
+            `;
+        });
+
+        html += `
+            </div>
+        </div>
+        `;
+        return html;
+    }
+
+    function renderAtmosphereMakeup() {
+        let html = `
+        <div class="glass-panel p-4 md:p-6 mb-8 rounded-2xl border-cyan-500/30 relative overflow-hidden">
+            <!-- Background Glow -->
+            <div class="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+            
+            <h2 class="font-display text-2xl text-white mb-2 relative z-10 flex items-center gap-2">
+                <span>🌬️</span> Atmospheric Composition & Clouds
+            </h2>
+            <p class="text-sm text-space-100 mb-8 max-w-3xl relative z-10">
+                A planet's atmosphere dictates its weather, climate, and ability to host life. Gas giants are massive envelopes of hydrogen and helium, while rocky worlds developed vastly different secondary atmospheres—or lost them entirely.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
+        `;
+
+        planetData.forEach(p => {
+            html += `
+                <div class="bg-space-900/60 border border-space-500 rounded-xl p-4 flex flex-col hover:border-star-cyan transition-colors shadow-lg group">
+                    <!-- Header Segment -->
+                    <div class="flex items-center gap-3 mb-3 pb-3 border-b border-space-500/50">
+                        <div class="w-8 h-8 rounded-full flex-shrink-0" style="background-color: ${p.colorCode}; box-shadow: inset -3px -3px 8px rgba(0,0,0,0.6)"></div>
+                        <div>
+                            <h3 class="font-display font-bold text-lg text-white leading-tight group-hover:text-star-cyan transition-colors">${p.name}</h3>
+                            <div class="text-[10px] uppercase tracking-wider text-star-gold font-mono">${p.atmType}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar Representation -->
+                    <div class="w-full h-3 rounded-full flex overflow-hidden mb-4 border border-space-500 bg-space-800">
+            `;
+            
+            if (p.atmComposition) {
+                p.atmComposition.forEach(gas => {
+                    html += `<div class="h-full ${gas.color} transition-all duration-1000 ease-in-out hover:brightness-125 hover:scale-y-110" style="width: ${gas.pct}%" title="${gas.name} (${gas.pct}%)"></div>`;
+                });
+            }
+            
+            html += `
+                    </div>
+                    
+                    <!-- Data List -->
+                    <div class="flex-grow space-y-2 mb-5">
+            `;
+            
+            if (p.atmComposition) {
+                p.atmComposition.forEach(gas => {
+                    html += `
+                            <div class="flex items-center justify-between text-xs">
+                                <div class="flex items-center gap-2 text-space-100">
+                                    <span class="w-2 h-2 rounded-full ${gas.color} shadow-sm"></span>
+                                    <span>${gas.name} ${gas.formula ? `<span class="font-mono text-[10px] text-white/40 ml-1">${gas.formula}</span>` : ''}</span>
+                                </div>
+                                <span class="font-mono text-white font-bold text-[11px] bg-space-800 px-1.5 py-0.5 rounded">~${gas.pct}%</span>
+                            </div>
+                    `;
+                });
+            }
+            
+            html += `
+                    </div>
+            `;
+            
+            // Clouds & Condensates Separation
+            if (p.atmClouds && p.atmClouds !== 'None') {
+                html += `
+                    <div class="mt-auto pt-3 border-t border-space-500/50 bg-space-800/30 -mx-4 -mb-4 p-4 rounded-b-xl">
+                        <div class="text-[10px] uppercase tracking-wider text-space-100 mb-1.5 flex items-center gap-1 font-bold">
+                            ☁️ Clouds & Condensates
+                        </div>
+                        <div class="text-xs text-star-cyan font-mono leading-relaxed">${p.atmClouds}</div>
+                    </div>
+                `;
+            } else {
+                 html += `
+                    <div class="mt-auto pt-3 border-t border-space-500/50 bg-space-800/30 -mx-4 -mb-4 p-4 rounded-b-xl">
+                        <div class="text-[10px] uppercase tracking-wider text-space-100 mb-1.5 flex items-center gap-1 font-bold">
+                            ☁️ Clouds & Condensates
+                        </div>
+                        <div class="text-xs text-space-500 italic font-mono">None (Surface exposed to space)</div>
+                    </div>
+                `;
+            }
+
+            html += `</div>`;
+        });
+
+        html += `
+            </div>
+        </div>
+        `;
+        return html;
+    }
+
+    function renderExtras() {
+        return renderStaticGrid('extras');
+    }
+
+    function renderMoons() {
+        let html = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">';
+        moonsData.forEach(m => {
+            let tagsHtml = m.superlatives.map(sup => {
+                if(sup === 'Bigger than Mercury!') {
+                    return `<span class="bg-star-red/20 text-star-red border border-star-red/50 px-2 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold shadow-[0_0_8px_rgba(255,107,107,0.4)] animate-pulse">${sup}</span>`;
+                }
+                return `<span class="bg-space-900 text-star-gold border border-star-gold/30 px-2 py-1 rounded-full text-[10px] font-bold shadow-md">${sup}</span>`;
+            }).join('');
+
+            let sciOlyHtml = m.sciOlyDetails ? m.sciOlyDetails.map(fact => `<li class="mb-1 pl-3 relative before:content-['▸'] before:absolute before:left-0 before:text-star-cyan leading-snug">${fact}</li>`).join('') : '';
+
+            html += `
+                <div class="glass-panel p-5 rounded-2xl border-space-500 hover:border-star-cyan transition-all group shadow-lg">
+                    <div class="flex items-center gap-4 mb-4">
+                        <span class="text-4xl group-hover:scale-110 transition-transform drop-shadow-md">${m.icon}</span>
+                        <div>
+                            <h3 class="font-display text-lg font-bold text-white group-hover:text-star-cyan transition-colors">${m.name}</h3>
+                            <span class="text-[10px] font-mono text-space-100 uppercase tracking-wider">${m.planet}'s Moon</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-1 mb-3 pb-3 border-b border-space-500">
+                        ${tagsHtml}
+                    </div>
+                    <p class="text-xs text-space-100 font-body leading-relaxed mb-3">${m.desc}</p>
+                    ${sciOlyHtml ? `<ul class="text-[10px] text-space-100 font-body">${sciOlyHtml}</ul>` : ''}
+                </div>
+            `;
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function renderCalc() {
+        return `
+        <div class="glass-panel p-6 mb-8 max-w-2xl mx-auto text-center border-star-cyan">
+            <h2 class="font-display text-2xl text-white mb-4">"You on Other Worlds" Calculator</h2>
+            <p class="text-sm text-space-100 mb-6">Enter your Earth stats below. See how gravity affects your weight and how orbital mechanics change your age!</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <div class="flex flex-col text-left">
+                    <label class="text-xs text-star-cyan font-mono mb-1">Earth Age (Years)</label>
+                    <input type="number" id="calc-age" value="11" class="bg-space-900 border border-space-500 rounded px-4 py-2 text-white font-mono w-32 focus:outline-none focus:border-star-cyan">
+                </div>
+                <div class="flex flex-col text-left">
+                    <label class="text-xs text-star-cyan font-mono mb-1">Earth Weight (lbs/kg)</label>
+                    <input type="number" id="calc-weight" value="80" class="bg-space-900 border border-space-500 rounded px-4 py-2 text-white font-mono w-32 focus:outline-none focus:border-star-cyan">
+                </div>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="calc-results">
+            <!-- Populated by JS -->
+        </div>`;
+    }
+
+    function initCalculator() {
+        const ageIn = document.getElementById('calc-age');
+        const weightIn = document.getElementById('calc-weight');
+        const renderResults = () => {
+            const a = parseFloat(ageIn.value) || 0;
+            const w = parseFloat(weightIn.value) || 0;
+            
+            const periods = { 'mercury': 0.24, 'venus': 0.615, 'earth': 1, 'mars': 1.88, 'jupiter': 11.86, 'saturn': 29.45, 'uranus': 84, 'neptune': 164.8 };
+            
+            let html = '';
+            planetData.forEach(p => {
+                const newWeight = (w * p.weightMultiplier).toFixed(1);
+                const newAge = (a / periods[p.id]).toFixed(1);
+                html += `
+                    <div class="glass-panel p-4 text-center border-t-2" style="border-top-color: ${p.colorCode}">
+                        <h3 class="font-display font-bold text-lg mb-4 text-white">${p.name}</h3>
+                        <div class="bg-space-900 rounded p-2 mb-2">
+                            <div class="text-[10px] text-space-100 uppercase tracking-wide">Your Weight</div>
+                            <div class="font-mono text-xl text-star-gold">${newWeight}</div>
+                        </div>
+                        <div class="bg-space-900 rounded p-2">
+                            <div class="text-[10px] text-space-100 uppercase tracking-wide">Your Age (Yrs)</div>
+                            <div class="font-mono text-xl text-star-cyan">${newAge}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('calc-results').innerHTML = html;
+        };
+        
+        ageIn.addEventListener('input', renderResults);
+        weightIn.addEventListener('input', renderResults);
+        renderResults();
+    }
+
+    function renderGeology() {
+        let html = `<div class="glass-panel p-6 mb-8 text-center border-star-gold">
+            <h2 class="font-display text-2xl text-white mb-2">Extreme Geology</h2>
+            <p class="text-sm text-space-100">Comparing Earth's biggest features to the titans of the Solar System.</p>
+        </div><div class="space-y-8 max-w-4xl mx-auto">`;
+        
+        geologyData.forEach(g => {
+            const max = Math.max(g.earthVal, g.spaceVal);
+            const ePct = Math.max(5, (g.earthVal / max) * 100);
+            const sPct = Math.max(5, (g.spaceVal / max) * 100);
+            
+            html += `
+            <div>
+                <h3 class="font-display text-xl text-star-cyan mb-2">${g.title}</h3>
+                
+                <div class="flex items-center gap-4 mb-2">
+                    <div class="w-32 text-right text-xs font-mono text-space-100">${g.earthLabel}</div>
+                    <div class="flex-grow bg-space-900 h-6 rounded-r overflow-hidden relative border-y border-r border-space-500">
+                        <div class="h-full bg-blue-500 transition-all duration-1000 flex items-center px-2 text-[10px] font-bold text-white shadow-[0_0_10px_rgba(59,130,246,0.8)]" style="width: ${ePct}%">${g.earthVal} ${g.unit}</div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <div class="w-32 text-right text-xs font-mono text-star-gold">${g.spaceLabel}</div>
+                    <div class="flex-grow bg-space-900 h-6 rounded-r overflow-hidden relative border-y border-r border-space-500">
+                        <div class="h-full bg-star-red transition-all duration-1000 flex items-center px-2 text-[10px] font-bold text-white shadow-[0_0_10px_rgba(255,107,107,0.8)]" style="width: ${sPct}%">${g.spaceVal} ${g.unit}</div>
+                    </div>
+                </div>
+            </div>
+            `;
+        });
+        html += `</div>`;
+        return html;
+    }
+
+    function renderTilt() {
+        let html = `<div class="glass-panel p-6 mb-8 text-center">
+            <h2 class="font-display text-2xl text-white mb-2">Spin & Tilt Visualizer</h2>
+            <p class="text-sm text-space-100">A planet's axial tilt creates its seasons. Click on any planet below to see its exact tilt and learn how it affects its weather!</p>
+        </div><div class="grid grid-cols-2 md:grid-cols-4 gap-8">`;
+        
+        planetData.forEach(p => {
+            const rotDir = p.retrograde ? '↻ Backwards' : '↺ Forward';
+            const colorClass = p.retrograde ? 'text-star-red' : 'text-star-green';
+            
+            html += `<button onclick="openTiltModal('${p.id}')" class="glass-panel p-4 text-center flex flex-col items-center cursor-pointer hover:border-star-cyan transition-colors group rounded-2xl w-full">
+                <h3 class="font-display font-bold text-lg text-white mb-6 group-hover:text-star-cyan transition-colors">${p.name}</h3>
+                
+                <div class="relative w-20 h-20 mb-8 group-hover:scale-110 transition-transform">
+                    <!-- Rotation Arrow -->
+                    <div class="absolute -inset-4 border-2 border-dashed ${p.retrograde ? 'border-red-500/50' : 'border-green-500/50'} rounded-full z-0 animate-[spin_10s_linear_infinite]" style="animation-direction: ${p.retrograde ? 'reverse' : 'normal'}"></div>
+                    
+                    <!-- The Planet with Tilt -->
+                    <div class="w-full h-full rounded-full relative z-10 planet-texture" style="background-color: ${p.colorCode}; transform: rotate(${p.tilt}deg)">
+                        <!-- Equator Line -->
+                        <div class="absolute top-1/2 left-0 w-full h-[1px] bg-white/50 shadow-[0_0_5px_white]"></div>
+                        <!-- Axis Line -->
+                        <div class="absolute left-1/2 -top-4 w-[2px] h-[calc(100%+32px)] bg-star-cyan/80 z-20" style="transform: translateX(-50%)"></div>
+                    </div>
+                </div>
+                
+                <div class="font-mono text-xl text-star-gold mb-1">${p.tilt}°</div>
+                <div class="text-[10px] font-bold uppercase tracking-wider ${colorClass} bg-space-900 px-2 py-1 rounded border border-space-500 group-hover:border-white/20 transition-colors">${rotDir}</div>
+            </button>`;
+        });
+        html += `</div>`;
+        return html;
+    }
+
+    function renderSurvival() {
+        let html = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">`;
+        planetData.forEach(p => {
+            const dangerColor = p.danger === 0 ? 'bg-star-green' : (p.danger < 8 ? 'bg-orange-500' : 'bg-star-red');
+            const w = (p.danger / 10) * 100;
+            
+            html += `<div class="glass-panel p-4 flex flex-col">
+                <h3 class="font-display font-bold text-xl text-white mb-2">${p.name}</h3>
+                
+                <div class="bg-space-900 h-4 rounded-full overflow-hidden mb-1 border border-space-500">
+                    <div class="h-full ${dangerColor} transition-all duration-1000 relative" style="width: ${p.danger === 0 ? 100 : w}%"></div>
+                </div>
+                <div class="flex justify-between text-xs font-mono mb-4">
+                    <span class="text-space-100">Danger Level:</span>
+                    <span class="text-white font-bold">${p.danger}/10</span>
+                </div>
+                
+                <div class="bg-space-900/50 p-3 rounded border border-space-500 flex-grow text-sm text-space-100 italic leading-relaxed">
+                    " ${p.dangerReason} "
+                </div>
+            </div>`;
+        });
+        html += `</div>`;
+        return html;
+    }
+
+    function renderScale() {
+        let html = `<div class="glass-panel p-6 mb-8 text-center">
+            <h2 class="font-display text-2xl text-white mb-2">The "Toilet Paper" Scale Model 🧻</h2>
+            <p class="text-sm text-space-100 max-w-2xl mx-auto">In astronomy, 1 Astronomical Unit (AU) is the distance from the Sun to Earth. If 1 AU equals 1 square of toilet paper, here is how many squares away the other planets are!</p>
+        </div><div class="space-y-6 overflow-x-auto hide-scrollbar pb-8">`;
+        
+        planetData.forEach(p => {
+            const squaresCount = Math.round(p.distanceAU);
+            const renderCount = Math.max(1, squaresCount); 
+            
+            let squaresHtml = '';
+            for(let i=0; i<renderCount; i++) {
+                squaresHtml += `<div class="tp-square"><div class="w-8 h-8 rounded-full opacity-${i === renderCount-1 ? '100 shadow-[0_0_10px_white]' : '0'}" style="background-color: ${p.colorCode}"></div></div>`;
+            }
+
+            html += `
+            <div class="flex items-center gap-4 min-w-max">
+                <div class="w-32 text-right flex-shrink-0">
+                    <div class="font-display font-bold text-lg text-white">${p.name}</div>
+                    <div class="font-mono text-xs text-star-cyan">${p.distanceAU} AU</div>
+                </div>
+                <div class="flex border-l-4 border-yellow-500 pl-1 py-2 relative">
+                    <div class="absolute -left-[14px] top-1/2 transform -translate-y-1/2 text-2xl">☀️</div>
+                    ${squaresHtml}
+                </div>
+                <div class="font-mono text-sm text-space-100 ml-2 border border-space-500 bg-space-900 px-2 py-1 rounded">
+                    ~${renderCount} square${renderCount !== 1 ? 's' : ''}
+                </div>
+            </div>
+            `;
+        });
+        html += `</div>`;
+        return html;
+    }
+
+    // Initialize the app
+    window.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>

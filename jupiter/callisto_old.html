@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Callisto — Interactive Solar System Explorer</title>
+    
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#030408', 800: '#0b101a', 700: '#151d2b', 500: '#28364a', 100: '#f1f5f9' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        callisto: { base: '#64748b', dark: '#334155', light: '#94a3b8', ice: '#cbd5e1', crater: '#0f172a' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 100s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(100, 116, 139, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(100, 116, 139, 0.5)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #030408;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #6ef0ff 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #64748b 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #334155 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(11, 16, 26, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(100, 116, 139, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(3, 4, 8, 0.8), rgba(21, 29, 43, 0.9));
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(100, 116, 139, 0.6);
+            box-shadow: 0 0 20px rgba(100, 116, 139, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Callisto Graphic - Dark, icy, and heavily cratered */
+        .orb-callisto {
+            background: radial-gradient(circle at 35% 35%, #94a3b8, #64748b, #334155, #0f172a, #020617);
+            box-shadow: inset -20px -20px 40px rgba(0,0,0,0.9), 0 0 30px rgba(100, 116, 139, 0.3);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* General Craters */
+        .orb-callisto::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(15, 23, 42, 0.6) 0%, transparent 10%),
+                radial-gradient(circle at 70% 20%, rgba(2, 6, 23, 0.7) 0%, transparent 8%),
+                radial-gradient(circle at 80% 70%, rgba(15, 23, 42, 0.8) 0%, transparent 15%),
+                radial-gradient(circle at 30% 80%, rgba(2, 6, 23, 0.5) 0%, transparent 12%),
+                radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.2) 0%, transparent 5%);
+            border-radius: 50%;
+            mix-blend-mode: multiply;
+        }
+
+        /* The Valhalla Multi-Ring Basin */
+        .valhalla-crater {
+            position: absolute;
+            top: 25%; left: 15%;
+            width: 45%; height: 45%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(2, 6, 23, 0.8) 0%, rgba(15, 23, 42, 0.4) 30%, transparent 70%);
+            box-shadow: 
+                0 0 0 4px rgba(255,255,255,0.05), 
+                0 0 0 10px rgba(0,0,0,0.2), 
+                0 0 0 18px rgba(255,255,255,0.03), 
+                0 0 0 28px rgba(0,0,0,0.1);
+            transform: rotate(-20deg);
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(100, 116, 139, 0.15);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #030408; }
+        ::-webkit-scrollbar-thumb { background: #28364a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-callisto-base shadow-[0_0_40px_rgba(100,116,139,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-callisto-light text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-callisto-light">☄️</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="jupiter.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-gold">
+                <span class="text-xl">🪐</span>
+                <span class="font-display font-bold text-lg">Back to Jupiter</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-callisto-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <!-- Progress/Gamification Bar -->
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-callisto-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Callisto Mission Progress</span>
+                    <span id="progressText" class="text-callisto-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-callisto-dark to-callisto-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Pilot Drone</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-callisto-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-callisto-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-callisto-base animate-ping"></span> Galilean Moon
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Callisto</h1>
+                <p class="text-2xl text-callisto-light font-body italic mb-6">"The Dead Moon"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    The outermost of the Galilean moons. It is a dead, silent world of ice and rock, holding the record as the most heavily cratered object in the entire solar system. Its pristine surface has remained unchanged for billions of years!
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-callisto-base text-white px-8 py-3 rounded-full font-bold hover:bg-callisto-light hover:text-space-900 transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(100,116,139,0.5)]">
+                    Explore the Craters 👇
+                </button>
+            </div>
+            
+            <!-- Animated 3D-ish Moon -->
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-callisto animate-spin-slow">
+                        <div class="valhalla-crater"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Dashboard -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-callisto-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">4,821 km</div>
+                <div class="text-xs text-space-100 mt-1">99% the size of Mercury</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-red text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">☄️</div>
+                <div class="text-callisto-light font-mono text-xs uppercase mb-1">Surface Type</div>
+                <div class="font-bold text-xl">Ancient</div>
+                <div class="text-xs text-star-cyan mt-1">Most cratered object</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🧅</div>
+                <div class="text-callisto-light font-mono text-xs uppercase mb-1">Interior</div>
+                <div class="font-bold text-xl">Mixed</div>
+                <div class="text-xs text-space-100 mt-1">Undifferentiated rock/ice</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">☢️</div>
+                <div class="text-callisto-light font-mono text-xs uppercase mb-1">Radiation</div>
+                <div class="font-bold text-xl text-star-green">Low</div>
+                <div class="text-xs text-space-100 mt-1">Safe for humans!</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Callisto data.</p>
+                </div>
+                <div class="hidden md:block text-callisto-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Position -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'c1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📍</div>
+                            <h3 class="font-display text-xl text-callisto-light">The Outcast</h3>
+                            <p class="text-space-100 text-xs mt-2">Where does it orbit?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-callisto-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-callisto-dark pb-1 w-full">The Farthest Galilean</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>It is the outermost of the four Galilean moons discovered by Galileo in 1610.</li>
+                                <li>It orbits Jupiter at a distance of about 1.88 million km, taking 16.7 days to complete one trip.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: The Missing Resonance -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'c2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🎼</div>
+                            <h3 class="font-display text-xl text-callisto-light">Orbital Dance</h3>
+                            <p class="text-space-100 text-xs mt-2">Why is it dead?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-callisto-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-red mb-2 border-b border-callisto-dark pb-1 w-full">No Tidal Heating</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Unlike Io, Europa, and Ganymede, Callisto is <strong>NOT</strong> locked in an orbital resonance.</li>
+                                <li>Because it isn't constantly being tugged by the other moons, it doesn't experience "tidal heating." This is why its interior never fully melted!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: The Most Cratered -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'c3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">☄️</div>
+                            <h3 class="font-display text-xl text-callisto-light">The Surface</h3>
+                            <p class="text-space-100 text-xs mt-2">A record-breaking landscape</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-callisto-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-cyan mb-2 border-b border-callisto-dark pb-1 w-full">The Crater King</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>Callisto is the <strong>most heavily cratered object in the entire solar system.</strong></li>
+                                <li>Because it has no geological activity (no volcanoes or shifting ice), every single asteroid strike over the last 4 billion years has left a permanent scar.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Valhalla Basin -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'c4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🎯</div>
+                            <h3 class="font-display text-xl text-callisto-light">Valhalla Basin</h3>
+                            <p class="text-space-100 text-xs mt-2">The giant target</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-callisto-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-callisto-dark pb-1 w-full">A Massive Impact</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>The largest feature on Callisto is the <strong>Valhalla</strong> multi-ring impact crater.</li>
+                                <li>When a massive asteroid hit it billions of years ago, the slushy ice rippled outward and froze, creating concentric rings that stretch up to 3,800 km across!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Internal Structure (Undifferentiated) -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'c5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🍧</div>
+                            <h3 class="font-display text-2xl text-callisto-light">Internal Structure</h3>
+                            <p class="text-space-100 mt-2">The "Undifferentiated" Slushy</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-callisto-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-gold mb-3 border-b border-callisto-dark pb-2 w-full">A Mixed-Up World</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-callisto-light font-mono font-bold block mb-1">No Clean Layers:</span>
+                                    Most planets have an iron core, a rocky mantle, and a crust. Callisto is <strong>undifferentiated</strong> (or only partially differentiated).
+                                </div>
+                                <div>
+                                    <span class="text-callisto-light font-mono font-bold block mb-1">A Giant Snowball:</span>
+                                    Because it never fully melted, its rock and ice are mostly just mixed together uniformly throughout its entire interior!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Future Human Base -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'c6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">👨‍🚀</div>
+                            <h3 class="font-display text-2xl text-callisto-light">Human Exploration</h3>
+                            <p class="text-space-100 mt-2">The best place to build a base?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-callisto-base flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-star-green mb-2 border-b border-callisto-dark pb-1 w-full">The Safe Zone</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Jupiter is surrounded by intense, deadly radiation belts that would kill an astronaut on Europa or Io in minutes.</li>
+                                <li>Because Callisto orbits so far away from Jupiter, it sits in a <strong>low radiation zone</strong>.</li>
+                                <li>NASA's HOPE study concluded that Callisto is the absolute best candidate for a future human surface base in the Jovian system, using its ice for water and rocket fuel!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Missions -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'c7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-callisto-light">Space Missions</h3>
+                            <p class="text-space-100 mt-2">Who has visited?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-callisto-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-callisto-dark pb-2 w-full">Probing the Craters</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-callisto-light">Past:</strong> The Voyager probes gave us our first clear photos. The Galileo spacecraft performed several close flybys in the 1990s.</li>
+                                <li><strong class="text-star-cyan">Upcoming:</strong> ESA's <strong>JUICE</strong> mission (arriving in 2031) will perform 21 flybys of Callisto to map its surface and confirm if it has a deep, hidden ocean!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Hidden Ocean -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'c8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌊</div>
+                            <h3 class="font-display text-2xl text-callisto-light">A Hidden Ocean?</h3>
+                            <p class="text-space-100 mt-2">Wait, does it have water?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-callisto-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-cyan mb-2 border-b border-callisto-dark pb-2 w-full">Magnetic Clues</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Even though it is a frozen, dead world on the outside, data from the Galileo spacecraft showed its magnetic field fluctuates in a way that suggests a conductive liquid inside.</li>
+                                <li>Scientists believe there might be a vast, salty ocean hiding extremely deep (250 km) beneath its thick crust, kept from freezing by radioactive decay in the rocks!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-callisto-base border-2 shadow-[0_0_30px_rgba(100,116,139,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-callisto-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Valhalla Crater Surveyor</h2>
+                        <p class="text-space-100 mb-6">Pilot a scout drone over the ancient, heavily cratered surface of Callisto. Use your thrusters to fly up and down, dodging the jagged crater peaks while collecting <span class="text-star-cyan font-bold">Ice Core Samples</span>. Collect 3 samples to earn the <span class="text-callisto-light font-bold">Surveyor Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-callisto-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">↑</kbd> and <kbd class="bg-space-700 px-2 rounded">↓</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold top or bottom half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Launch Drone
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-callisto-base/30">
+                            <div class="text-5xl mb-2">🚁</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Drone Ready</h3>
+                            <p class="text-callisto-light text-sm">Click Launch to survey</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#020617] via-[#0f172a] to-[#1e293b] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-callisto-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-callisto-base/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Callisto module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <!-- Question 1 -->
+                <div class="quiz-q block" id="q1">
+                    <h3 class="text-xl font-bold mb-4 text-callisto-light">1. Why is Callisto the most heavily cratered object in the solar system?</h3>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-callisto-base transition-all" onclick="answer(1, false, this)">Its strong gravity constantly pulls in asteroids.</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-callisto-base transition-all" onclick="answer(1, true, this)">It is geologically dead, so nothing erases the old craters.</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-callisto-base transition-all" onclick="answer(1, false, this)">It sits in the middle of the Asteroid Belt.</button>
+                    </div>
+                </div>
+
+                <!-- Question 2 -->
+                <div class="quiz-q hidden" id="q2">
+                    <h3 class="text-xl font-bold mb-4 text-callisto-light">2. Unlike Earth and Ganymede, Callisto is considered "undifferentiated". What does this mean?</h3>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-callisto-base transition-all" onclick="answer(2, false, this)">It doesn't have a magnetic field.</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-callisto-base transition-all" onclick="answer(2, false, this)">It is completely invisible to telescopes.</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-callisto-base transition-all" onclick="answer(2, true, this)">Its rock and ice are mostly mixed together, rather than separated into neat layers.</button>
+                    </div>
+                </div>
+
+                <!-- Question 3 -->
+                <div class="quiz-q hidden" id="q3">
+                    <h3 class="text-xl font-bold mb-4 text-callisto-light">3. Why is Callisto considered a prime candidate for a future human base in the Jupiter system?</h3>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-callisto-base transition-all" onclick="answer(3, true, this)">It sits safely outside Jupiter's deadly radiation belts.</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-callisto-base transition-all" onclick="answer(3, false, this)">It has a warm, breathable atmosphere.</button>
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-callisto-base transition-all" onclick="answer(3, false, this)">It is currently inhabited by aliens.</button>
+                    </div>
+                </div>
+
+                <!-- Quiz Results -->
+                <div class="quiz-q hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold text-callisto-light">0/3</span></p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Callisto Module Complete!", "You have unlocked the 'Crater King' badge. Excellent exploration!", "☄️");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Callisto files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    let currentQ = 1;
+    let score = 0;
+
+    function answer(qNum, isCorrect, btnEl) {
+        let siblings = btnEl.parentElement.children;
+        for(let s of siblings) {
+            s.disabled = true;
+            s.classList.remove('hover:bg-space-700', 'hover:border-callisto-base');
+            s.classList.add('opacity-50');
+        }
+        btnEl.classList.remove('opacity-50', 'bg-space-800');
+        
+        if(isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            score++;
+            addXP(20);
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+        }
+
+        setTimeout(() => {
+            document.getElementById(`q${qNum}`).classList.add('hidden');
+            if(qNum < 3) {
+                document.getElementById(`q${qNum+1}`).classList.remove('hidden');
+                document.getElementById(`q${qNum+1}`).classList.add('block');
+            } else {
+                showResults();
+            }
+        }, 1000);
+    }
+
+    function showResults() {
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('q-result').classList.add('block');
+        document.getElementById('scoreText').innerText = `${score}/3`;
+        
+        if(score === 3) {
+            document.getElementById('scoreText').classList.add('text-star-green');
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Perfect Knowledge", "Perfect score on the Callisto Quiz! +100 XP", "🧠");
+            }
+        } else {
+            document.getElementById('scoreText').classList.add('text-star-red');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        score = 0;
+        currentQ = 1;
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        
+        for(let i=1; i<=3; i++) {
+            let qDiv = document.getElementById(`q${i}`);
+            qDiv.classList.add('hidden');
+            qDiv.classList.remove('block');
+            
+            let btns = qDiv.querySelectorAll('button');
+            btns.forEach(b => {
+                b.disabled = false;
+                b.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-callisto-base transition-all";
+            });
+        }
+        document.getElementById('q1').classList.remove('hidden');
+        document.getElementById('q1').classList.add('block');
+    }
+
+    /* MINI GAME: Valhalla Crater Surveyor */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let samplesCollected = 0;
+
+    // Player (Scout Drone) - Moves up/down, stationary in X
+    const player = {
+        x: 50, 
+        y: 0, 
+        width: 30,
+        height: 20,
+        speed: 6,
+        color: '#f8fafc' 
+    };
+
+    let obstacles = []; // Crater rims (top/bottom blocks)
+    let collectibles = []; // Ice samples
+    let bgParticles = [];
+
+    // Inputs
+    let keys = { ArrowUp: false, ArrowDown: false };
+    let isTouching = false;
+    let touchTargetY = 0;
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(['ArrowUp', 'ArrowDown'].includes(e.code)) {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(['ArrowUp', 'ArrowDown'].includes(e.code)) keys[e.code] = false; 
+    });
+    
+    // Touch/Mouse Support
+    function handlePointerMove(e) {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        touchTargetY = (clientY - rect.top) * (canvas.height / rect.height);
+        isTouching = true;
+        if(e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+    }
+    function handlePointerUp() { isTouching = false; }
+
+    canvas.addEventListener('touchstart', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchend', handlePointerUp);
+    canvas.addEventListener('mousedown', handlePointerMove);
+    canvas.addEventListener('mousemove', (e) => { if(isTouching) handlePointerMove(e); });
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerUp);
+
+    function initGame() {
+        resizeCanvas();
+        player.y = canvas.height / 2;
+        obstacles = [];
+        collectibles = [];
+        samplesCollected = 0;
+        isTouching = false;
+
+        // Background crater dust
+        bgParticles = Array.from({length: 40}).map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 1,
+            speed: Math.random() * 2 + 1
+        }));
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Surveying...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let globalSpeed = (Math.random() * 2 + 4) * speedMult; // Scroll speed left
+        
+        // Collectible (Ice Sample)
+        if (Math.random() > 0.7 && collectibles.length < 2) {
+            collectibles.push({
+                x: canvas.width + 20,
+                y: Math.random() * (canvas.height - 60) + 30, 
+                radius: 10,
+                speedX: globalSpeed,
+                pulse: 0
+            });
+            // Don't spawn an obstacle right on top of a collectible
+            return; 
+        }
+
+        // Obstacle (Crater Rim - Flappy bird style gaps)
+        // Ensure gap is passable
+        let gapSize = Math.max(100, 180 - (scoreFrames / 20)); 
+        let topHeight = Math.random() * (canvas.height - gapSize - 40) + 20;
+        let bottomY = topHeight + gapSize;
+        let bottomHeight = canvas.height - bottomY;
+
+        // Top Rim
+        obstacles.push({
+            x: canvas.width, y: 0, width: 40, height: topHeight, speedX: globalSpeed
+        });
+        // Bottom Rim
+        obstacles.push({
+            x: canvas.width, y: bottomY, width: 40, height: bottomHeight, speedX: globalSpeed
+        });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        // Tilt slightly based on movement
+        let tilt = 0;
+        if(keys.ArrowUp || (isTouching && touchTargetY < player.y)) tilt = -0.2;
+        if(keys.ArrowDown || (isTouching && touchTargetY > player.y)) tilt = 0.2;
+        ctx.rotate(tilt);
+
+        // Drone body
+        ctx.fillStyle = player.color;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, player.width/2, player.height/2, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Drone light/eye
+        ctx.fillStyle = '#6ef0ff';
+        ctx.beginPath();
+        ctx.arc(player.width/4, 0, 4, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Thruster trail
+        ctx.fillStyle = 'rgba(110, 240, 255, 0.6)';
+        ctx.beginPath();
+        ctx.moveTo(-player.width/2, -player.height/4);
+        ctx.lineTo(-player.width/2 - 15 - Math.random()*10, 0);
+        ctx.lineTo(-player.width/2, player.height/4);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    function drawEntities() {
+        // Collectibles (Ice Samples)
+        for (let i = 0; i < collectibles.length; i++) {
+            let c = collectibles[i];
+            c.pulse += 0.15;
+            let glow = 8 + Math.sin(c.pulse) * 4;
+            
+            ctx.fillStyle = '#6ef0ff';
+            ctx.shadowBlur = glow;
+            ctx.shadowColor = '#6ef0ff';
+            
+            // Diamond shape
+            ctx.beginPath();
+            ctx.moveTo(c.x, c.y - c.radius);
+            ctx.lineTo(c.x + c.radius, c.y);
+            ctx.lineTo(c.x, c.y + c.radius);
+            ctx.lineTo(c.x - c.radius, c.y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        // Obstacles (Crater Rims)
+        ctx.fillStyle = '#1e293b'; // Dark crater rock
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            ctx.fillRect(o.x, o.y, o.width, o.height);
+            
+            // Rim highlight
+            ctx.fillStyle = '#334155';
+            if(o.y === 0) {
+                // Top obstacle, highlight bottom edge
+                ctx.fillRect(o.x, o.height - 5, o.width, 5);
+            } else {
+                // Bottom obstacle, highlight top edge
+                ctx.fillRect(o.x, o.y, o.width, 5);
+            }
+            ctx.fillStyle = '#1e293b'; // Reset
+        }
+    }
+
+    function drawBackground() {
+        bgParticles.forEach(p => {
+            ctx.fillStyle = '#334155';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+            ctx.fill();
+            p.x -= p.speed + (scoreFrames/2000); // Speed up parallax
+            if(p.x < 0) {
+                p.x = canvas.width;
+                p.y = Math.random() * canvas.height;
+            }
+        });
+    }
+
+    function checkCollisionRect(r1, r2) {
+        return !(r2.x > r1.x + r1.width || 
+                 r2.x + r2.width < r1.x || 
+                 r2.y > r1.y + r1.height ||
+                 r2.y + r2.height < r1.y);
+    }
+
+    function updatePhysics() {
+        // Player Movement
+        if (keys.ArrowUp) player.y -= player.speed;
+        if (keys.ArrowDown) player.y += player.speed;
+
+        if (isTouching) {
+            let dy = touchTargetY - (player.y + player.height/2);
+            if (Math.abs(dy) > player.speed) {
+                player.y += (dy / Math.abs(dy)) * player.speed;
+            }
+        }
+
+        // Clamp to screen
+        if(player.y < 0) player.y = 0;
+        if(player.y > canvas.height - player.height) player.y = canvas.height - player.height;
+
+        let pRect = { x: player.x + 5, y: player.y + 5, width: player.width - 10, height: player.height - 10 };
+
+        // Spawning
+        let spawnRate = Math.max(30, 80 - Math.floor(scoreFrames/50));
+        if (frames % spawnRate === 0) spawnEntity();
+
+        // Update Collectibles
+        for (let i = collectibles.length - 1; i >= 0; i--) {
+            collectibles[i].x -= collectibles[i].speedX;
+            
+            // AABB with diamond bounding box roughly
+            let cRect = {x: collectibles[i].x - collectibles[i].radius, y: collectibles[i].y - collectibles[i].radius, width: collectibles[i].radius*2, height: collectibles[i].radius*2};
+
+            if (checkCollisionRect(pRect, cRect)) {
+                samplesCollected++;
+                addXP(10);
+                ctx.fillStyle = 'rgba(110, 240, 255, 0.3)';
+                ctx.fillRect(0,0, canvas.width, canvas.height);
+                collectibles.splice(i, 1);
+                continue;
+            }
+            if (collectibles[i].x + collectibles[i].radius < 0) collectibles.splice(i, 1);
+        }
+
+        // Update Obstacles
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].x -= obstacles[i].speedX;
+            
+            if (checkCollisionRect(pRect, obstacles[i])) {
+                gameOver("Crashed into Crater Wall!");
+                return;
+            }
+            if (obstacles[i].x + obstacles[i].width < 0) obstacles.splice(i, 1);
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        ctx.fillStyle = '#020617';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        drawBackground();
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawEntities();
+        drawPlayer();
+
+        // HUD
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Flight Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillStyle = "#6ef0ff"; 
+        ctx.fillText(`🧊 Samples: ${samplesCollected}/3`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && samplesCollected >= 3 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Surveyor Badge Unlocked!", "You navigated Valhalla and found the ice! +100 XP", "🚁");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Drone";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && samplesCollected >= 3);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You surveyed for ${secondsAlive}s.</p>
+            <p class="text-star-cyan mb-4 text-sm font-bold">🧊 Collected ${samplesCollected} Ice Cores</p>
+            ${!achievements.playedGame ? `<p class="text-callisto-light text-sm mb-4 text-center px-2">Survive 20s AND collect 3 samples for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Earth — Interactive Solar System Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#030712', 800: '#0f172a', 700: '#1e293b', 500: '#334155', 100: '#f1f5f9' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        earth: { base: '#3b82f6', dark: '#1d4ed8', land: '#10b981', cloud: '#f0fdf4' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 60s linear infinite',
+                        'cloud-shift': 'cloudShift 30s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(59, 130, 246, 0.6)' },
+                        },
+                        cloudShift: {
+                            '0%': { backgroundPosition: '0% 50%' },
+                            '100%': { backgroundPosition: '100% 50%' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #030712;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #6ef0ff 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #ffd166 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #10b981 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.9));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(59, 130, 246, 0.6);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Earth Graphic - Blue marble with green land and white clouds */
+        .orb-earth {
+            background: radial-gradient(circle at 35% 35%, #60a5fa, #3b82f6, #1d4ed8, #1e3a8a);
+            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(59, 130, 246, 0.4);
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Landmasses */
+        .orb-earth::after {
+            content: '';
+            position: absolute;
+            top: 10%; left: -20%; right: 10%; bottom: 20%;
+            background: radial-gradient(circle at 40% 40%, #10b981 0%, transparent 40%),
+                        radial-gradient(circle at 80% 60%, #059669 0%, transparent 50%),
+                        radial-gradient(circle at 20% 80%, #34d399 0%, transparent 30%);
+            border-radius: 50%;
+            filter: blur(2px);
+            opacity: 0.85;
+            animation: cloud-shift 40s linear infinite;
+            background-size: 200% 200%;
+        }
+
+        /* Clouds overlay */
+        .orb-earth::before {
+            content: '';
+            position: absolute;
+            inset: -5%;
+            background: radial-gradient(circle at 50% 20%, rgba(255,255,255,0.8) 0%, transparent 20%),
+                        radial-gradient(circle at 20% 50%, rgba(255,255,255,0.6) 0%, transparent 25%),
+                        radial-gradient(circle at 70% 70%, rgba(255,255,255,0.7) 0%, transparent 30%);
+            border-radius: 50%;
+            filter: blur(4px);
+            z-index: 2;
+            animation: cloud-shift 25s ease-in-out infinite alternate;
+            background-size: 150% 150%;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #030712; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<!-- Custom Message Box -->
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-earth-base">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-earth-base text-white font-bold py-3 rounded-xl hover:bg-earth-dark transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<!-- Header Navigation -->
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <a href="../index.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+            <span class="text-2xl text-earth-base">🌍</span>
+            <span class="font-display font-bold text-xl tracking-wide hidden sm:block">Solar System Explorer</span>
+            <span class="font-display font-bold text-xl tracking-wide sm:hidden">SSE</span>
+        </a>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-earth-cloud">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <!-- Progress/Gamification Bar -->
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-earth-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Earth Mission Progress</span>
+                    <span id="progressText" class="text-earth-base font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-earth-dark to-earth-base h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Play Mini-Game</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz (20/25)</div>
+            </div>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-earth-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-earth-base font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-star-green animate-ping"></span> Planet 3 of 8
+                </p>
+                <h1 class="font-display text-6xl md:text-8xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Earth</h1>
+                <p class="text-2xl text-star-cyan font-body italic mb-6">"The Blue Marble"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    Our home. The only world known to harbor life. It is an active, vibrant planet with liquid oceans, lush landmasses, and a protective atmosphere that makes our existence possible.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-earth-base text-white px-8 py-3 rounded-full font-bold hover:bg-earth-dark transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+                    Explore Home 👇
+                </button>
+            </div>
+            
+            <!-- Animated 3D-ish Planet -->
+            <div class="z-10 relative">
+                <div class="w-64 h-64 md:w-80 md:h-80 orb-earth animate-float animate-pulse-glow shadow-2xl"></div>
+                <!-- Orbit Rings Graphic behind planet -->
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] rounded-full border-2 border-dashed border-earth-dark/50 -z-10 animate-spin-slow"></div>
+                <!-- Tiny moon orbiting -->
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[160%] h-[160%] rounded-full -z-10 animate-[spin_10s_linear_infinite]">
+                    <div class="w-6 h-6 bg-gray-300 rounded-full absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 shadow-[0_0_10px_rgba(255,255,255,0.5)]"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Dashboard -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🌡️</div>
+                <div class="text-earth-base font-mono text-xs uppercase mb-1">Avg Temperature</div>
+                <div class="font-bold text-xl">15°C <span class="text-sm font-normal text-space-100">(59°F)</span></div>
+                <div class="text-xs text-star-green mt-1">Perfect for life</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🏎️</div>
+                <div class="text-earth-base font-mono text-xs uppercase mb-1">Orbital Speed</div>
+                <div class="font-bold text-xl">29.78 km/s</div>
+                <div class="text-xs text-space-100 mt-1">~107,000 km/h</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🗜️</div>
+                <div class="text-earth-base font-mono text-xs uppercase mb-1">Surface Pressure</div>
+                <div class="font-bold text-xl">1 atm</div>
+                <div class="text-xs text-space-100 mt-1">The baseline standard</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">💨</div>
+                <div class="text-earth-base font-mono text-xs uppercase mb-1">Max Wind Speed</div>
+                <div class="font-bold text-xl">~400 km/h</div>
+                <div class="text-xs text-space-100 mt-1">In severe cyclones</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt planetary data.</p>
+                </div>
+                <div class="hidden md:block text-star-green font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Position & Distance -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'e1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📍</div>
+                            <h3 class="font-display text-xl text-earth-base">Position & Distance</h3>
+                            <p class="text-space-100 text-xs mt-2">Distance from Sun</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-earth-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-earth-cloud mb-2 border-b border-earth-dark pb-1 w-full">The Goldilocks Zone</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li><span class="text-earth-base font-mono font-bold">AU:</span> Exactly 1.0 Astronomical Unit (we define the AU!)</li>
+                                <li><span class="text-earth-base font-mono font-bold">KM:</span> ~149.6 million kilometers</li>
+                                <li class="text-xs text-space-100 italic mt-2">The perfect distance for liquid water to exist.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Size & Volume -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'e2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📏</div>
+                            <h3 class="font-display text-xl text-earth-base">Relative Size</h3>
+                            <p class="text-space-100 text-xs mt-2">The Baseline Metric</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-earth-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-earth-cloud mb-2 border-b border-earth-dark pb-1 w-full">Largest Rocky Planet</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-earth-base font-mono font-bold">Diameter:</span> 12,742 km. It is an "oblate spheroid", meaning it bulges slightly at the equator!</li>
+                                <li><span class="text-earth-base font-mono font-bold">Volume:</span> 1 Earth Volume. (We use Earth to measure the size of exoplanets!)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Density & Gravity -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'e3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚖️</div>
+                            <h3 class="font-display text-xl text-earth-base">Weight & Density</h3>
+                            <p class="text-space-100 text-xs mt-2">Gravity Check</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-earth-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-earth-cloud mb-2 border-b border-earth-dark pb-1 w-full">The Densest Planet</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-earth-base font-mono font-bold">Density:</span> 5.51 g/cm³. The densest planet in the Solar System!</li>
+                                <li class="bg-space-900 p-2 rounded border border-space-500 text-center text-star-cyan font-bold mt-2">
+                                    If you weigh 100 lbs on Earth... well, you weigh exactly 100 lbs. Because you are on Earth.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Composition & Magnetism -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'e4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧲</div>
+                            <h3 class="font-display text-xl text-earth-base">Composition</h3>
+                            <p class="text-space-100 text-xs mt-2">Inside the planet</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-earth-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-earth-cloud mb-2 border-b border-earth-dark pb-1 w-full">Magnetic Dynamo</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-earth-base font-mono font-bold">Core:</span> Solid inner iron core, liquid outer core.</li>
+                                <li><span class="text-earth-base font-mono font-bold">Crust:</span> Divided into constantly moving tectonic plates.</li>
+                                <li><span class="text-earth-base font-mono font-bold">Magnetosphere:</span> The spinning liquid core creates a strong magnetic shield protecting us from solar radiation.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Time Constraints (Day/Year) -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'e5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⏳</div>
+                            <h3 class="font-display text-2xl text-earth-base">Time constraints</h3>
+                            <p class="text-space-100 mt-2">Length of Day & Year</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-earth-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-earth-cloud mb-3 border-b border-earth-dark pb-2 w-full">Precision Timing</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-earth-base font-mono font-bold block mb-1">Length of Year:</span>
+                                    365.24 days. That extra 0.24 is why we have Leap Years!
+                                </div>
+                                <div>
+                                    <span class="text-earth-base font-mono font-bold block mb-1">Length of Day:</span>
+                                    Exactly 23 hours, 56 minutes, and 4 seconds (a sidereal day).
+                                </div>
+                                <div class="col-span-2 bg-space-900 p-2 rounded border border-earth-base text-center">
+                                    <strong class="text-earth-base">The Tilt:</strong> Earth is tilted on its axis at 23.5 degrees, which is the sole reason we experience seasons!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Atmosphere & Biosphere -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'e6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌱</div>
+                            <h3 class="font-display text-2xl text-earth-base">Atmosphere & Life</h3>
+                            <p class="text-space-100 mt-2">The Breathable Blanket</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-earth-base flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-earth-cloud mb-2 border-b border-earth-dark pb-1 w-full">A Perfect Balance</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-earth-base">Air:</strong> 78% Nitrogen, 21% Oxygen, 1% other (Argon, CO2). </li>
+                                <li><strong class="text-earth-base">Water:</strong> 71% of the surface is covered in oceans. It is the only place in the universe known to have liquid water on its surface.</li>
+                                <li><strong class="text-earth-base">Biosphere:</strong> Estimated to contain 8.7 million species of life, supported entirely by the atmospheric oxygen and water cycle.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Missions & Moons -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'e7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-earth-base">Missions & Moons</h3>
+                            <p class="text-space-100 mt-2">Satellites and Luna</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-earth-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-earth-cloud mb-2 border-b border-earth-dark pb-2 w-full">The Crowded Orbit</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-star-cyan">Moons:</strong> One (Luna). It stabilizes our axial tilt and creates the ocean tides.</li>
+                                <li><strong class="text-white">Exploration:</strong> Instead of sending probes *to* Earth, we send thousands of satellites *around* it to monitor weather, climate, and communications.</li>
+                                <li><strong class="text-white">Notable Missions:</strong> The International Space Station (ISS) orbits Earth 16 times a day with a permanent human crew!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Weird Facts -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'e8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🤯</div>
+                            <h3 class="font-display text-2xl text-earth-base">Wild Facts</h3>
+                            <p class="text-space-100 mt-2">Tap for the strangest Earth facts</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-earth-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-earth-cloud mb-2 border-b border-earth-dark pb-2 w-full">Unexpected Truths</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-earth-base">The Name:</strong> Earth is the ONLY planet in our solar system not named after a Greek or Roman deity. The name comes from the Old English and Germanic words meaning "the ground".</li>
+                                <li><strong class="text-earth-base">Gravity Variations:</strong> Because Earth is bumpy and unevenly dense, gravity actually varies slightly depending on where you stand (like in Hudson Bay, Canada, where gravity is slightly lower)!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-earth-base border-2 shadow-[0_0_30px_rgba(59,130,246,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-earth-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Orbital Debris Dodger</h2>
+                        <p class="text-space-100 mb-6">Earth's orbit is getting crowded! Pilot the research shuttle safely through a field of space junk and old satellites. Survive for 20 seconds to earn the <span class="text-earth-cloud font-bold">Orbital Pilot Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-earth-base mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Launch Shuttle
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-earth-base/30">
+                            <div class="text-5xl mb-2">🚀</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Pre-flight Check</h3>
+                            <p class="text-earth-base text-sm">Click Launch to begin</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-space-900 via-space-800 to-earth-dark rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-earth-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-earth-base/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Science Olympiad Challenge</h2>
+                <p class="text-space-100">State-Level Earth Science Debrief. Prove your mastery across 25 dynamic questions. Score 20+ to pass.</p>
+                <div class="mt-4">
+                    <span id="quizCounterUI" class="inline-block bg-space-700 text-earth-base px-4 py-1 rounded-full font-mono text-sm border border-space-500 hidden">Question 1 / 25</span>
+                </div>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto min-h-[400px] flex flex-col justify-center">
+                <!-- Start Quiz State -->
+                <div id="quizStartPanel" class="text-center">
+                    <p class="text-lg text-white mb-6">Are you ready for a rigorous 25-question test on geology, orbital mechanics, and Earth systems?</p>
+                    <button onclick="startQuiz()" class="bg-earth-base text-white px-10 py-4 rounded-xl font-bold text-xl hover:bg-earth-dark transition-colors shadow-lg border border-blue-400">Initiate Debrief Sequence</button>
+                </div>
+
+                <!-- Dynamic Question Container -->
+                <div id="dynamicQuestionArea" class="hidden">
+                    <!-- Javascript will populate this -->
+                </div>
+
+                <!-- Quiz Results -->
+                <div class="text-center py-8 hidden" id="q-result">
+                    <div class="text-6xl mb-4" id="resultIcon">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2" id="resultTitle">Debrief Complete!</h3>
+                    <p class="text-xl text-white mb-6">Final Score: <span id="scoreText" class="font-bold text-earth-cloud">0/25</span></p>
+                    <p id="resultMessage" class="text-space-100 mb-8 max-w-lg mx-auto">...</p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Retake Exam</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Moon Info Drawer -->
+        <div class="flex justify-center md:justify-end mb-10">
+            <div class="glass-panel p-4 w-full md:w-80 flex items-center justify-between border-earth-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-gray-300 shadow-[inset_-5px_-5px_10px_rgba(0,0,0,0.5)] relative overflow-hidden">
+                        <div class="absolute top-2 left-2 w-2 h-2 rounded-full bg-gray-400"></div>
+                        <div class="absolute bottom-2 right-3 w-3 h-3 rounded-full bg-gray-400"></div>
+                        <div class="absolute top-5 right-2 w-1.5 h-1.5 rounded-full bg-gray-400"></div>
+                    </div>
+                    <div>
+                        <p class="font-display font-bold text-lg leading-tight text-white">Luna</p>
+                        <p class="font-mono text-xs text-earth-base">1 Natural Satellite</p>
+                    </div>
+                </div>
+                <!-- Updated Luna Link -->
+                <a href="luna.html" class="bg-space-700 p-2 px-4 rounded-lg text-sm border border-space-500 hover:border-earth-base text-earth-base transition-colors font-bold shadow-md inline-block">
+                    Visit ▸
+                </a>
+            </div>
+        </div>
+
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box (Replacement for alerts) */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.planetCompleteAlerted) {
+            window.planetCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Earth Module Complete!", "You have unlocked the 'Blue Marble' badge. Outstanding performance!", "🌍");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Earth files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* 5th Grade State Science Olympiad Level Quiz Data (25 Questions) */
+    const masterQuizData = [
+        {
+            q: "Which layer of Earth's atmosphere contains the highest concentration of ozone?",
+            answers: [
+                { text: "Stratosphere", correct: true },
+                { text: "Troposphere", correct: false },
+                { text: "Mesosphere", correct: false },
+                { text: "Thermosphere", correct: false }
+            ],
+            explanation: "The ozone layer is primarily found in the lower portion of the stratosphere, from approximately 15 to 35 kilometers above Earth. It acts as a vital shield, absorbing the majority of the Sun's harmful ultraviolet (UV) radiation."
+        },
+        {
+            q: "The Coriolis effect, responsible for the rotational direction of cyclones, is primarily caused by what phenomenon?",
+            answers: [
+                { text: "Earth's rotation on its axis", correct: true },
+                { text: "The gravitational pull of the Moon", correct: false },
+                { text: "Convection currents in the mantle", correct: false },
+                { text: "Solar wind interacting with the magnetosphere", correct: false }
+            ],
+            explanation: "As the Earth rotates on its axis, circulating air is deflected toward the right in the Northern Hemisphere and toward the left in the Southern Hemisphere. This deflection is known as the Coriolis effect."
+        },
+        {
+            q: "What type of tectonic plate boundary formed the Mid-Atlantic Ridge?",
+            answers: [
+                { text: "Divergent boundary", correct: true },
+                { text: "Convergent boundary", correct: false },
+                { text: "Transform boundary", correct: false },
+                { text: "Subduction zone", correct: false }
+            ],
+            explanation: "The Mid-Atlantic Ridge is a divergent boundary, meaning tectonic plates are actively pulling apart. As they separate, magma rises from the mantle to create new oceanic crust."
+        },
+        {
+            q: "Which mineral, scoring a 7 on the Mohs hardness scale, is highly resistant to weathering and is a primary component of ordinary sand?",
+            answers: [
+                { text: "Quartz", correct: true },
+                { text: "Feldspar", correct: false },
+                { text: "Calcite", correct: false },
+                { text: "Talc", correct: false }
+            ],
+            explanation: "Quartz is composed of silicon and oxygen (SiO2). Because it has a hardness of 7 and lacks cleavage (meaning it doesn't break along weak planes easily), it survives physical and chemical weathering to become sand."
+        },
+        {
+            q: "What is the primary driving force behind deep-water thermohaline ocean currents?",
+            answers: [
+                { text: "Differences in water temperature and salinity", correct: true },
+                { text: "Surface winds like the Trade Winds", correct: false },
+                { text: "The gravitational pull of celestial bodies", correct: false },
+                { text: "Geothermal heating from underwater vents", correct: false }
+            ],
+            explanation: "Thermohaline circulation ('thermo' for temperature, 'haline' for salt) is driven by global density gradients. Cold, highly saline water is denser and sinks, driving these massive deep-ocean conveyor belts."
+        },
+        {
+            q: "At an oceanic-continental subduction zone, a trench forms. Which feature is most likely to form on the overriding continental plate?",
+            answers: [
+                { text: "A volcanic mountain range", correct: true },
+                { text: "A mid-ocean ridge", correct: false },
+                { text: "A rift valley", correct: false },
+                { text: "A barrier island", correct: false }
+            ],
+            explanation: "As the denser oceanic plate subducts beneath the continental plate, it melts due to extreme heat and pressure. The resulting magma rises to form a volcanic mountain arc, like the Andes Mountains."
+        },
+        {
+            q: "The Milankovitch cycles, which dictate Earth's long-term glacial periods, are caused by variations in what?",
+            answers: [
+                { text: "Earth's orbital eccentricity, axial tilt, and precession", correct: true },
+                { text: "The total energy output of the Sun over centuries", correct: false },
+                { text: "The rate of global tectonic plate subduction", correct: false },
+                { text: "Periodic shifts in the Earth's magnetic poles", correct: false }
+            ],
+            explanation: "Milutin Milankovitch theorized that cyclical changes in Earth's orbit (eccentricity), the angle of its axis (obliquity/tilt), and the wobble of its axis (precession) collectively alter the amount of solar radiation reaching Earth, triggering ice ages."
+        },
+        {
+            q: "What kind of rock forms from the slow cooling and solidification of magma deep beneath the Earth's surface?",
+            answers: [
+                { text: "Intrusive igneous rock", correct: true },
+                { text: "Extrusive igneous rock", correct: false },
+                { text: "Foliated metamorphic rock", correct: false },
+                { text: "Clastic sedimentary rock", correct: false }
+            ],
+            explanation: "Intrusive (or plutonic) igneous rocks form deep underground. Because the magma cools very slowly, large, visible crystals have time to form—granite is a classic example."
+        },
+        {
+            q: "During a Neap Tide, resulting in the smallest difference between high and low tides, the Sun, Earth, and Moon are in what configuration?",
+            answers: [
+                { text: "At a 90-degree right angle", correct: true },
+                { text: "In a straight line (Syzygy)", correct: false },
+                { text: "The Moon is at perigee", correct: false },
+                { text: "The Sun is at aphelion", correct: false }
+            ],
+            explanation: "Neap tides occur during the first and third quarter moons. The gravitational pulls of the Sun and Moon act at right angles to each other, partially canceling each other out and creating lower high tides and higher low tides."
+        },
+        {
+            q: "What is the primary cause of Earth's protective magnetic field (magnetosphere)?",
+            answers: [
+                { text: "The geodynamo effect in the liquid outer core", correct: true },
+                { text: "Permanent magnetism embedded in the solid inner core", correct: false },
+                { text: "Friction generated by the rotating crust", correct: false },
+                { text: "The interaction of solar radiation with the ionosphere", correct: false }
+            ],
+            explanation: "The geodynamo is driven by convection currents of molten iron and nickel in Earth's outer core. Combined with Earth's rotation, these moving conductive fluids generate an electromagnetic field."
+        },
+        {
+            q: "The phase change process where water vapor converts directly into ice without passing through the liquid phase is called:",
+            answers: [
+                { text: "Deposition", correct: true },
+                { text: "Sublimation", correct: false },
+                { text: "Condensation", correct: false },
+                { text: "Transpiration", correct: false }
+            ],
+            explanation: "Deposition (or desublimation) is the thermodynamic process where a gas transforms directly into a solid. Frost forming on a cold window in winter is a common example."
+        },
+        {
+            q: "Which geologic era is colloquially known as the 'Age of Reptiles' and encompasses the Triassic, Jurassic, and Cretaceous periods?",
+            answers: [
+                { text: "Mesozoic Era", correct: true },
+                { text: "Paleozoic Era", correct: false },
+                { text: "Cenozoic Era", correct: false },
+                { text: "Precambrian Eon", correct: false }
+            ],
+            explanation: "The Mesozoic Era spanned from about 252 million to 66 million years ago. It saw the rise and dominance of dinosaurs before ending with the K-Pg mass extinction event."
+        },
+        {
+            q: "What is the specific term for the point on the Earth's surface directly vertically above an earthquake's point of origin?",
+            answers: [
+                { text: "Epicenter", correct: true },
+                { text: "Hypocenter (Focus)", correct: false },
+                { text: "Fault Scarp", correct: false },
+                { text: "Seismic Node", correct: false }
+            ],
+            explanation: "The 'focus' or 'hypocenter' is the actual location underground where the rock fractures. The 'epicenter' is the point on the surface directly above it, usually where the strongest shaking is felt."
+        },
+        {
+            q: "Karst topography, characterized by features like underground caves and sinkholes, is most commonly formed by the chemical weathering of which rock type?",
+            answers: [
+                { text: "Limestone", correct: true },
+                { text: "Basalt", correct: false },
+                { text: "Sandstone", correct: false },
+                { text: "Gneiss", correct: false }
+            ],
+            explanation: "Limestone (calcium carbonate) is highly susceptible to dissolution by slightly acidic groundwater (carbonic acid). Over thousands of years, this dissolution carves out massive cave systems."
+        },
+        {
+            q: "In stratigraphy, an 'unconformity' in the geologic record represents what?",
+            answers: [
+                { text: "A gap in time where no rock layers were deposited or where erosion occurred", correct: true },
+                { text: "An area where metamorphic rock intrudes into sedimentary rock", correct: false },
+                { text: "A boundary where a fault line has cleanly severed a rock face", correct: false },
+                { text: "A layer of rock that contains fossils from multiple different eras", correct: false }
+            ],
+            explanation: "An unconformity is a surface of contact between two groups of unconformable strata, representing a period of time where sediment deposition stopped and erosion took place, creating a 'missing page' in Earth's history."
+        },
+        {
+            q: "The 'Albedo effect' describes what specific property of Earth's surface systems?",
+            answers: [
+                { text: "The measure of reflectivity of different surfaces", correct: true },
+                { text: "The rate at which oceans absorb carbon dioxide", correct: false },
+                { text: "The deflection of wind caused by mountain ranges", correct: false },
+                { text: "The heat released by decaying organic matter", correct: false }
+            ],
+            explanation: "Albedo is the fraction of solar energy reflected from Earth back into space. Ice and snow have a high albedo (highly reflective), while oceans and forests have a low albedo (highly absorptive)."
+        },
+        {
+            q: "Which cloud classification is found highest in the troposphere and is composed entirely of ice crystals?",
+            answers: [
+                { text: "Cirrus", correct: true },
+                { text: "Stratus", correct: false },
+                { text: "Cumulus", correct: false },
+                { text: "Nimbostratus", correct: false }
+            ],
+            explanation: "Cirrus clouds form at altitudes above 20,000 feet where temperatures are extremely cold. Because of this, they are made entirely of ice crystals, giving them their characteristic thin, wispy appearance."
+        },
+        {
+            q: "The sharp boundary between the Earth's crust and the underlying mantle is known as the:",
+            answers: [
+                { text: "Mohorovičić discontinuity (Moho)", correct: true },
+                { text: "Gutenberg discontinuity", correct: false },
+                { text: "Asthenosphere boundary", correct: false },
+                { text: "Lithospheric shelf", correct: false }
+            ],
+            explanation: "Named after seismologist Andrija Mohorovičić, the Moho marks the boundary where seismic waves abruptly accelerate due to the higher density of the mantle compared to the crust."
+        },
+        {
+            q: "What chemical process causes the distinct red color of many sedimentary rocks found in arid or desert environments (like those in the Grand Canyon)?",
+            answers: [
+                { text: "Oxidation of iron minerals", correct: true },
+                { text: "Carbonation of limestone", correct: false },
+                { text: "Hydration of feldspar", correct: false },
+                { text: "Sulphate reduction by bacteria", correct: false }
+            ],
+            explanation: "When iron-bearing minerals in rocks are exposed to oxygen in the atmosphere or water, they oxidize (essentially rusting), which creates the vivid red, orange, and yellow hues seen in desert geology."
+        },
+        {
+            q: "In the Northern Hemisphere, the longest day of the year, marking the point when the North Pole is tilted closest to the Sun, is called the:",
+            answers: [
+                { text: "Summer Solstice", correct: true },
+                { text: "Vernal Equinox", correct: false },
+                { text: "Winter Solstice", correct: false },
+                { text: "Autumnal Equinox", correct: false }
+            ],
+            explanation: "Occurring around June 20-22, the summer solstice happens when the Earth's axial tilt is maximally inclined toward the Sun, providing the Northern Hemisphere with the most daylight hours of the year."
+        },
+        {
+            q: "Which deep oceanic zone represents the pitch-black ocean floor where no sunlight penetrates, characterized by near-freezing temperatures and extreme pressure?",
+            answers: [
+                { text: "Abyssal zone", correct: true },
+                { text: "Epipelagic zone", correct: false },
+                { text: "Mesopelagic zone", correct: false },
+                { text: "Neritic zone", correct: false }
+            ],
+            explanation: "The abyssal zone (from 4,000 to 6,000 meters deep) makes up a vast portion of the ocean floor. It is devoid of sunlight, meaning organisms there must rely on 'marine snow' or chemosynthesis to survive."
+        },
+        {
+            q: "By mass, what is the most abundant element found in the Earth's crust?",
+            answers: [
+                { text: "Oxygen", correct: true },
+                { text: "Silicon", correct: false },
+                { text: "Iron", correct: false },
+                { text: "Aluminum", correct: false }
+            ],
+            explanation: "Oxygen comprises about 46.6% of the Earth's crust by weight. It easily forms compounds with other elements, particularly silicon, to create silicate minerals like quartz and feldspar."
+        },
+        {
+            q: "Radiometric dating using Carbon-14 is extremely accurate but is only useful for dating relatively recent geological or biological samples (up to ~50,000 years old). Why?",
+            answers: [
+                { text: "Carbon-14 has a relatively short half-life of about 5,730 years", correct: true },
+                { text: "Older samples turn into graphite and lose their carbon content", correct: false },
+                { text: "Carbon-14 was not present in the atmosphere prior to 50,000 years ago", correct: false },
+                { text: "Older rocks emit background radiation that interferes with the measurement", correct: false }
+            ],
+            explanation: "Because half of the Carbon-14 decays every 5,730 years, after about 10 half-lives (~50,000 years), the remaining amount of Carbon-14 is too infinitesimally small to measure accurately."
+        },
+        {
+            q: "The oceanographic phenomenon where strong surface winds push surface water away from the shore, drawing cold, nutrient-rich water up from the depths is called:",
+            answers: [
+                { text: "Upwelling", correct: true },
+                { text: "Downwelling", correct: false },
+                { text: "Ekman transport", correct: false },
+                { text: "Spring tide", correct: false }
+            ],
+            explanation: "Upwelling is critical for marine ecosystems. The cold, deep water brings up massive amounts of nutrients (like nitrates and phosphates) which trigger phytoplankton blooms, supporting the entire food web."
+        },
+        {
+            q: "Earth's axial precession, often described as the 'wobble' of its axis of rotation (similar to a spinning top), completes one full cycle approximately every:",
+            answers: [
+                { text: "26,000 years", correct: true },
+                { text: "100,000 years", correct: false },
+                { text: "41,000 years", correct: false },
+                { text: "1,500 years", correct: false }
+            ],
+            explanation: "Caused primarily by the gravitational forces of the Sun and Moon on Earth's equatorial bulge, axial precession slowly alters which star is the 'North Star'. In about 12,000 years, Vega will be our North Star instead of Polaris."
+        }
+    ];
+
+    let shuffledQuiz = [];
+    let currentQIndex = 0;
+    let quizScore = 0;
+
+    function shuffleArray(array) {
+        let currentIndex = array.length, randomIndex;
+        while (currentIndex !== 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        }
+        return array;
+    }
+
+    function startQuiz() {
+        document.getElementById('quizStartPanel').classList.add('hidden');
+        document.getElementById('quizCounterUI').classList.remove('hidden');
+        document.getElementById('dynamicQuestionArea').classList.remove('hidden');
+        
+        // Clone and deeply shuffle questions and their answers
+        shuffledQuiz = shuffleArray([...masterQuizData]).map(q => {
+            return {
+                ...q,
+                answers: shuffleArray([...q.answers])
+            };
+        });
+
+        currentQIndex = 0;
+        quizScore = 0;
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const container = document.getElementById('dynamicQuestionArea');
+        const qData = shuffledQuiz[currentQIndex];
+        
+        document.getElementById('quizCounterUI').innerText = `Question ${currentQIndex + 1} / 25`;
+
+        let html = `
+            <div class="mb-6 animate-fade-in">
+                <h3 class="text-xl font-bold mb-6 text-earth-cloud">${currentQIndex + 1}. ${qData.q}</h3>
+                <div class="space-y-3" id="answerOptions">
+        `;
+
+        qData.answers.forEach((ans, index) => {
+            html += `
+                <button 
+                    class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-earth-base transition-all font-body text-white" 
+                    onclick="handleAnswerSelection(${index}, ${ans.correct}, this)">
+                    ${ans.text}
+                </button>
+            `;
+        });
+
+        html += `
+                </div>
+                
+                <!-- Explanation Panel (Hidden initially) -->
+                <div id="explanationPanel" class="mt-6 hidden bg-space-800 border-l-4 border-earth-base rounded-r-xl p-4 shadow-lg">
+                    <div class="flex items-start gap-3">
+                        <div class="text-2xl">ℹ️</div>
+                        <div>
+                            <h4 class="font-bold text-earth-base mb-1" id="correctnessHeading">Explanation</h4>
+                            <p class="text-sm text-space-100">${qData.explanation}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Next Button (Hidden initially) -->
+                <div id="nextBtnContainer" class="mt-8 hidden text-right">
+                    <button onclick="goToNextQuestion()" class="bg-earth-base text-white px-8 py-3 rounded-full font-bold hover:bg-earth-dark transition-colors shadow-md">
+                        Next Question ❯
+                    </button>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = html;
+    }
+
+    function handleAnswerSelection(selectedIndex, isCorrect, btnElement) {
+        const optionsContainer = document.getElementById('answerOptions');
+        const buttons = optionsContainer.querySelectorAll('button');
+        
+        // Disable all buttons to prevent multiple clicks
+        buttons.forEach(b => {
+            b.disabled = true;
+            b.classList.remove('hover:bg-space-700', 'hover:border-earth-base');
+            b.classList.add('opacity-50', 'cursor-not-allowed');
+        });
+
+        // Style the clicked button
+        btnElement.classList.remove('opacity-50', 'bg-space-800');
+        
+        const correctnessHeading = document.getElementById('correctnessHeading');
+
+        if (isCorrect) {
+            btnElement.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            correctnessHeading.innerText = "Correct! ✅";
+            correctnessHeading.classList.replace('text-earth-base', 'text-star-green');
+            quizScore++;
+        } else {
+            btnElement.classList.add('bg-star-red', 'text-white', 'border-star-red');
+            correctnessHeading.innerText = "Incorrect ❌";
+            correctnessHeading.classList.replace('text-earth-base', 'text-star-red');
+            
+            // Highlight the actual correct answer for them
+            const currentQAnswers = shuffledQuiz[currentQIndex].answers;
+            buttons.forEach((b, i) => {
+                if(currentQAnswers[i].correct) {
+                    b.classList.remove('opacity-50', 'bg-space-800');
+                    b.classList.add('border-star-green', 'border-2');
+                }
+            });
+        }
+
+        // Show Explanation and Next Button
+        document.getElementById('explanationPanel').classList.remove('hidden');
+        // Add a tiny delay to the next button appearing to focus attention on explanation
+        setTimeout(() => {
+            document.getElementById('nextBtnContainer').classList.remove('hidden');
+        }, 300);
+    }
+
+    function goToNextQuestion() {
+        currentQIndex++;
+        if (currentQIndex < shuffledQuiz.length) {
+            renderQuestion();
+        } else {
+            showQuizResults();
+        }
+    }
+
+    function showQuizResults() {
+        document.getElementById('dynamicQuestionArea').classList.add('hidden');
+        document.getElementById('quizCounterUI').classList.add('hidden');
+        
+        const resultDiv = document.getElementById('q-result');
+        resultDiv.classList.remove('hidden');
+        
+        document.getElementById('scoreText').innerText = `${quizScore} / 25`;
+        
+        const msgEl = document.getElementById('resultMessage');
+        const retryBtn = document.getElementById('retryQuizBtn');
+        const iconEl = document.getElementById('resultIcon');
+        const titleEl = document.getElementById('resultTitle');
+
+        if(quizScore >= 20) { // Passing score for State Level
+            document.getElementById('scoreText').className = "font-bold text-star-green";
+            titleEl.innerText = "Exceptional Debrief!";
+            iconEl.innerText = "🎖️";
+            msgEl.innerText = "Incredible work! You demonstrated state-level Science Olympiad proficiency. Earth's mysteries are yours to command.";
+            retryBtn.classList.add('hidden');
+            
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(250); // Big reward for hard quiz
+                showMsgBox("Master of Earth Sciences", "You passed the rigorous 25-question debrief! +250 XP", "🧠");
+            }
+        } else {
+            document.getElementById('scoreText').className = "font-bold text-star-red";
+            titleEl.innerText = "Debrief Failed";
+            iconEl.innerText = "📚";
+            msgEl.innerText = "You need a score of at least 20 to earn the mastery badge. Review the mission data files and try again.";
+            retryBtn.classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        document.getElementById('q-result').classList.add('hidden');
+        startQuiz(); // Re-shuffles and starts over
+    }
+
+    /* MINI GAME: Orbital Debris Dodger */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    
+    window.onload = function() {
+        resizeCanvas();
+    }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+
+    const player = {
+        x: 0, 
+        y: 0, 
+        width: 40,
+        height: 50,
+        speed: 7,
+        color: '#f8fafc' 
+    };
+
+    let debrisList = [];
+    let stars = [];
+    let keys = { ArrowLeft: false, ArrowRight: false };
+
+    window.addEventListener('keydown', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') keys[e.code] = false; 
+    });
+    
+    canvas.addEventListener('touchstart', (e) => {
+        if(!gameActive) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const relativeX = touch.clientX - rect.left;
+        if(relativeX < canvas.width/2) {
+            keys.ArrowLeft = true; keys.ArrowRight = false;
+        } else {
+            keys.ArrowRight = true; keys.ArrowLeft = false;
+        }
+    }, {passive: false});
+    
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys.ArrowLeft = false; keys.ArrowRight = false;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        const relativeX = e.clientX - rect.left;
+        if(relativeX < canvas.width/2) {
+            keys.ArrowLeft = true; keys.ArrowRight = false;
+        } else {
+            keys.ArrowRight = true; keys.ArrowLeft = false;
+        }
+    });
+    
+    canvas.addEventListener('mouseup', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+    canvas.addEventListener('mouseleave', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - player.height - 20;
+        debrisList = [];
+        stars = Array.from({length: 50}).map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 1,
+            speed: Math.random() * 2 + 0.5
+        }));
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "In Orbit...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnDebris() {
+        let speedMult = 1 + (scoreFrames / 1800); 
+        let size = Math.random() * 20 + 15;
+        let xPos = Math.random() * (canvas.width - size);
+        
+        debrisList.push({
+            x: xPos,
+            y: -size,
+            width: size,
+            height: size,
+            speed: (Math.random() * 4 + 3) * speedMult,
+            rotation: Math.random() * Math.PI,
+            rotSpeed: (Math.random() - 0.5) * 0.2,
+            type: Math.floor(Math.random() * 3) 
+        });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        
+        ctx.fillStyle = (frames % 10 < 5) ? '#fbbf24' : '#ef4444';
+        ctx.beginPath();
+        ctx.moveTo(player.width/2 - 10, player.height);
+        ctx.lineTo(player.width/2, player.height + 15 + Math.random()*10);
+        ctx.lineTo(player.width/2 + 10, player.height);
+        ctx.fill();
+        
+        ctx.fillStyle = player.color;
+        ctx.beginPath();
+        ctx.moveTo(player.width/2, 0); 
+        ctx.lineTo(player.width, player.height); 
+        ctx.lineTo(0, player.height); 
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#6ef0ff';
+        ctx.beginPath();
+        ctx.moveTo(player.width/2, 15);
+        ctx.lineTo(player.width/2 + 6, 30);
+        ctx.lineTo(player.width/2 - 6, 30);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.restore();
+    }
+
+    function drawDebris() {
+        for (let i = 0; i < debrisList.length; i++) {
+            let d = debrisList[i];
+            ctx.save();
+            ctx.translate(d.x + d.width/2, d.y + d.height/2);
+            ctx.rotate(d.rotation);
+            
+            if(d.type === 0) { 
+                ctx.fillStyle = '#78716c';
+                ctx.beginPath();
+                ctx.arc(0, 0, d.width/2, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = '#57534e';
+                ctx.beginPath();
+                ctx.arc(-d.width/6, -d.height/6, d.width/5, 0, Math.PI*2);
+                ctx.fill();
+            } else if (d.type === 1) { 
+                ctx.fillStyle = '#1e3a8a';
+                ctx.fillRect(-d.width/2, -d.height/4, d.width, d.height/2);
+                ctx.strokeStyle = '#60a5fa';
+                ctx.strokeRect(-d.width/2, -d.height/4, d.width, d.height/2);
+            } else { 
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillRect(-d.width/2, -d.height/2, d.width, d.height);
+                ctx.fillStyle = '#475569';
+                ctx.fillRect(-d.width/4, -d.height/4, d.width/2, d.height/2);
+            }
+            
+            ctx.restore();
+        }
+    }
+
+    function drawBackground() {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = '#ffffff';
+        stars.forEach(s => {
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
+            ctx.fill();
+            s.y += s.speed;
+            if(s.y > canvas.height) {
+                s.y = 0;
+                s.x = Math.random() * canvas.width;
+            }
+        });
+        
+        ctx.beginPath();
+        ctx.arc(canvas.width/2, canvas.height + canvas.width*1.5, canvas.width*1.6, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(110, 240, 255, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    function checkCollision(d) {
+        let pCX = player.x + player.width/2;
+        let pCY = player.y + player.height/2;
+        let dCX = d.x + d.width/2;
+        let dCY = d.y + d.height/2;
+        
+        let dx = pCX - dCX;
+        let dy = pCY - dCY;
+        let distance = Math.sqrt(dx*dx + dy*dy);
+        
+        return distance < (player.width/2.5 + d.width/2);
+    }
+
+    function updatePhysics() {
+        if (keys.ArrowLeft && player.x > 0) {
+            player.x -= player.speed;
+        }
+        if (keys.ArrowRight && player.x + player.width < canvas.width) {
+            player.x += player.speed;
+        }
+
+        let spawnRate = Math.max(15, 50 - Math.floor(scoreFrames/100));
+        if (frames % spawnRate === 0) {
+            spawnDebris();
+        }
+
+        for (let i = debrisList.length - 1; i >= 0; i--) {
+            debrisList[i].y += debrisList[i].speed;
+            debrisList[i].rotation += debrisList[i].rotSpeed;
+            
+            if (checkCollision(debrisList[i])) {
+                gameOver("Hull Breached by Orbital Debris!");
+                return;
+            }
+
+            if (debrisList[i].y > canvas.height) {
+                debrisList.splice(i, 1);
+            }
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        drawBackground();
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawDebris();
+        drawPlayer();
+
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let alt = 400 + Math.floor(secondsAlive * 2);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Orbit Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillText(`Altitude: ${alt}km`, 10, 45);
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        if (secondsAlive >= 20 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Orbital Pilot Badge Unlocked!", "You survived the debris field! +100 XP", "🚀");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Relaunch";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-4">You survived for ${secondsAlive} seconds.</p>
+            ${!achievements.playedGame ? `<p class="text-earth-cloud text-sm mb-4">Try to reach 20 seconds for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && secondsAlive < 20) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+
+</script>
+</body>
+</html>

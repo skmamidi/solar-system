@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Saturn — Interactive Solar System Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#03050a', 800: '#0a0d1c', 700: '#141a33', 500: '#232c4d', 100: '#fcfaf2' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        saturn: { base: '#eab308', dark: '#a16207', light: '#fef08a', ring: '#d97706', storm: '#b45309' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 60s linear infinite',
+                        'band-shift': 'bandShift 40s linear infinite',
+                        'spin-mimas': 'spin 4s linear infinite',
+                        'spin-enceladus': 'spin 6s linear infinite',
+                        'spin-rhea': 'spin 12s linear infinite',
+                        'spin-titan': 'spin 22s linear infinite',
+                        'spin-iapetus': 'spin 45s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(234, 179, 8, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(234, 179, 8, 0.5)' },
+                        },
+                        bandShift: {
+                            '0%': { backgroundPosition: '0% 0%' },
+                            '100%': { backgroundPosition: '100% 0%' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #03050a;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #fef08a 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #eab308 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #fcd34d 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(20, 26, 51, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(234, 179, 8, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(10, 13, 28, 0.8), rgba(20, 26, 51, 0.9));
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(234, 179, 8, 0.6);
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Saturn Graphic - Golden/Yellow bands */
+        .orb-saturn {
+            background: linear-gradient(
+                to bottom,
+                #a16207 0%, #eab308 15%, #fef08a 25%, #ca8a04 40%, 
+                #fcd34d 55%, #eab308 70%, #854d0e 85%, #d97706 100%
+            );
+            background-size: 200% 200%;
+            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(234, 179, 8, 0.4);
+            border-radius: 50%;
+            position: relative;
+            animation: band-shift 50s linear infinite alternate;
+            z-index: 2;
+        }
+        
+        /* The Rings! */
+        .saturn-rings {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-20deg) scaleY(0.3);
+            width: 250%; height: 250%;
+            border: 15px solid rgba(253, 230, 138, 0.8);
+            border-radius: 50%;
+            box-shadow: 
+                0 0 0 5px rgba(0,0,0,0.2),
+                inset 0 0 0 8px rgba(217, 119, 6, 0.6),
+                inset 0 0 0 12px rgba(0,0,0,0.4),
+                inset 0 0 0 25px rgba(252, 211, 77, 0.5),
+                inset 0 0 0 35px rgba(254, 240, 138, 0.3);
+            z-index: 1;
+        }
+        
+        /* Hexagon Storm North Pole */
+        .orb-saturn::after {
+            content: '';
+            position: absolute;
+            top: -2%; left: 40%;
+            width: 20%; height: 10%;
+            background: #713f12;
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+            opacity: 0.6;
+            filter: blur(1px);
+        }
+
+        /* Orbiting Moons 3D System Container */
+        .solar-system {
+            transform-style: preserve-3d;
+            perspective: 1200px;
+            /* Matches the visual tilt of the CSS rings roughly */
+            transform: rotateX(72deg) rotateZ(-20deg);
+        }
+
+        /* Prevent Squish on orbital spheres by counter-rotating */
+        .moon-sphere {
+            transform: rotateX(-72deg);
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(234, 179, 8, 0.1);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #03050a; }
+        ::-webkit-scrollbar-thumb { background: #141a33; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #eab308; }
+        
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden" onload="initQuiz()">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-saturn-base shadow-[0_0_40px_rgba(234,179,8,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-saturn-base text-space-900 font-bold py-3 rounded-xl hover:bg-saturn-light transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <a href="../index.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+            <span class="text-2xl text-saturn-base">🪐</span>
+            <span class="font-display font-bold text-xl tracking-wide hidden sm:block">Solar System Explorer</span>
+            <span class="font-display font-bold text-xl tracking-wide sm:hidden">SSE</span>
+        </a>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-saturn-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-saturn-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Saturn Mission Progress</span>
+                    <span id="progressText" class="text-saturn-base font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-saturn-dark to-saturn-base h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Play Mini-Game</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Olympiad Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-saturn-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-saturn-base font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-star-gold animate-ping"></span> Planet 6 of 8
+                </p>
+                <h1 class="font-display text-6xl md:text-8xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Saturn</h1>
+                <p class="text-2xl text-saturn-light font-body italic mb-6">"The Lord of the Rings"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    The jewel of the solar system. Famous for its dazzling, complex system of icy rings, this massive gas giant is so light and fluffy that it would float in a giant bathtub!
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-saturn-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-saturn-light transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(234,179,8,0.5)]">
+                    Explore the Rings 👇
+                </button>
+            </div>
+            
+            <!-- Animated 3D Planet with Accurate Moons & Rings -->
+            <div class="z-10 relative mt-16 md:mt-0 flex justify-center items-center h-80 w-80">
+                <!-- Outer 3D orbital plane for moons (extends far past rings) -->
+                <div class="absolute w-[450px] h-[450px] md:w-[700px] md:h-[700px] solar-system animate-float">
+                    
+                    <!-- 1. Mimas Orbit (Closest, small gray) -->
+                    <div class="absolute top-1/2 left-1/2 w-[35%] h-[35%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5 animate-spin-mimas transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-2 h-2 bg-gray-400 rounded-full shadow-[0_0_8px_#9ca3af] moon-sphere" style="transform: translate(-50%, -50%) rotateX(-72deg);">
+                            <div class="absolute top-0 right-0 w-1 h-1 bg-gray-700 rounded-full"></div> <!-- Herschel Crater -->
+                        </div>
+                    </div>
+
+                    <!-- 2. Enceladus Orbit (Bright white, ice geysers) -->
+                    <div class="absolute top-1/2 left-1/2 w-[48%] h-[48%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5 animate-spin-enceladus transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-3 h-3 bg-white rounded-full shadow-[0_0_12px_#ffffff] moon-sphere" style="transform: translate(-50%, -50%) rotateX(-72deg);"></div>
+                    </div>
+
+                    <!-- 3. Rhea Orbit (Medium gray) -->
+                    <div class="absolute top-1/2 left-1/2 w-[65%] h-[65%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10 animate-spin-rhea transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-4 h-4 bg-gray-300 rounded-full shadow-[0_0_10px_#d1d5db] moon-sphere" style="transform: translate(-50%, -50%) rotateX(-72deg);"></div>
+                    </div>
+
+                    <!-- 4. Titan Orbit (Largest, orange haze) -->
+                    <div class="absolute top-1/2 left-1/2 w-[85%] h-[85%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-saturn-base/20 animate-spin-titan transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-8 h-8 bg-gradient-to-br from-yellow-500 to-orange-400 rounded-full shadow-[0_0_18px_#f59e0b] moon-sphere blur-[0.5px]" style="transform: translate(-50%, -50%) rotateX(-72deg);"></div>
+                    </div>
+
+                    <!-- 5. Iapetus Orbit (Farthest, two-toned) -->
+                    <div class="absolute top-1/2 left-1/2 w-[110%] h-[110%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5 animate-spin-iapetus transform-style-3d">
+                        <div class="absolute top-0 left-1/2 w-4 h-4 bg-gradient-to-r from-gray-200 to-gray-800 rounded-full shadow-[0_0_10px_#4b5563] moon-sphere" style="transform: translate(-50%, -50%) rotateX(-72deg);"></div>
+                    </div>
+                </div>
+
+                <!-- Central Saturn & Rings -->
+                <div class="absolute w-40 h-40 md:w-56 md:h-56 animate-pulse-glow z-20 pointer-events-none">
+                    <div class="saturn-rings"></div>
+                    <div class="w-full h-full orb-saturn"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🥶</div>
+                <div class="text-saturn-base font-mono text-xs uppercase mb-1">Avg Temp</div>
+                <div class="font-bold text-xl">-140°C <span class="text-sm font-normal text-space-100">(-220°F)</span></div>
+                <div class="text-xs text-star-cyan mt-1">Deep freeze</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🏎️</div>
+                <div class="text-saturn-base font-mono text-xs uppercase mb-1">Orbital Speed</div>
+                <div class="font-bold text-xl">9.68 km/s</div>
+                <div class="text-xs text-space-100 mt-1">~34,800 km/h</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🧲</div>
+                <div class="text-saturn-base font-mono text-xs uppercase mb-1">Magnetic Field</div>
+                <div class="font-bold text-xl">578x Earth's</div>
+                <div class="text-xs text-space-100 mt-1">Perfectly aligned to axis</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🌪️</div>
+                <div class="text-saturn-base font-mono text-xs uppercase mb-1">Max Wind Speed</div>
+                <div class="font-bold text-xl">1,800 km/h</div>
+                <div class="text-xs text-space-100 mt-1">Supersonic equatorial winds</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt planetary data.</p>
+                </div>
+                <div class="hidden md:block text-saturn-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Position & Distance -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 's1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📍</div>
+                            <h3 class="font-display text-xl text-saturn-base">Position & Distance</h3>
+                            <p class="text-space-100 text-xs mt-2">Distance from Sun</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-saturn-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-saturn-light mb-2 border-b border-saturn-dark pb-1 w-full">The Outer Giant</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li><span class="text-saturn-base font-mono font-bold">AU:</span> ~9.5 Astronomical Units</li>
+                                <li><span class="text-saturn-base font-mono font-bold">KM:</span> ~1.4 Billion kilometers</li>
+                                <li class="text-xs text-space-100 italic mt-2">Sunlight takes about 80 minutes to reach Saturn!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Size & Volume -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 's2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📏</div>
+                            <h3 class="font-display text-xl text-saturn-base">Relative Size</h3>
+                            <p class="text-space-100 text-xs mt-2">The Second Largest</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-saturn-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-saturn-light mb-2 border-b border-saturn-dark pb-1 w-full">Massive Proportions</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-saturn-base font-mono font-bold">Diameter:</span> ~116,460 km. About 9 times wider than Earth.</li>
+                                <li><span class="text-saturn-base font-mono font-bold">Volume:</span> You could fit exactly <strong class="text-white">764 Earths</strong> inside it.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Density & Gravity -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 's3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚖️</div>
+                            <h3 class="font-display text-xl text-saturn-base">Weight & Density</h3>
+                            <p class="text-space-100 text-xs mt-2">The Fluffy Planet</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-saturn-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-saturn-light mb-2 border-b border-saturn-dark pb-1 w-full">Lighter Than Water</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><span class="text-saturn-base font-mono font-bold">Density:</span> 0.687 g/cm³. It is the ONLY planet less dense than water. It would float in a giant bathtub!</li>
+                                <li class="bg-space-900 p-2 rounded border border-space-500 text-center text-star-cyan mt-2">
+                                    Gravity is 1.06x Earth's. If you weigh 100 lbs on Earth, you'd weigh 106 lbs here!
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Composition -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 's4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧪</div>
+                            <h3 class="font-display text-xl text-saturn-base">Composition</h3>
+                            <p class="text-space-100 text-xs mt-2">Gas Giant Anatomy</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-saturn-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-saturn-light mb-2 border-b border-saturn-dark pb-1 w-full">Hydrogen World</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-saturn-base">Makeup:</strong> Primarily Hydrogen (96%) and Helium (3%).</li>
+                                <li><strong class="text-saturn-base">Core:</strong> Likely a dense core of rock, ice, and liquid metallic hydrogen, subjected to intense pressure.</li>
+                                <li><strong class="text-saturn-base">Surface:</strong> No solid surface to stand on.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Time Constraints (Day/Year) -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 's5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⏳</div>
+                            <h3 class="font-display text-2xl text-saturn-base">Time constraints</h3>
+                            <p class="text-space-100 mt-2">Length of Day & Year</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-saturn-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-saturn-light mb-3 border-b border-saturn-dark pb-2 w-full">Fast Spin, Slow Orbit</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-saturn-base font-mono font-bold block mb-1">Length of Year:</span>
+                                    29.4 Earth years. A very long journey around the sun.
+                                </div>
+                                <div>
+                                    <span class="text-saturn-base font-mono font-bold block mb-1">Length of Day:</span>
+                                    Only 10.7 hours! It spins so fast that it visibly flattens at the poles.
+                                </div>
+                                <div class="col-span-2 bg-space-900 p-2 rounded border border-saturn-base text-center text-saturn-light">
+                                    It took years for scientists to figure out the day length because gas giants don't have solid surface features to track! They had to use radio emissions.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: The Rings -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 's6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">💿</div>
+                            <h3 class="font-display text-2xl text-saturn-base">The Rings</h3>
+                            <p class="text-space-100 mt-2">What are they made of?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-saturn-base flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-saturn-light mb-2 border-b border-saturn-dark pb-1 w-full">Billions of Snowballs</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-saturn-base">Composition:</strong> Not solid rings! They are made of billions of pieces of water ice, dust, and rock.</li>
+                                <li><strong class="text-saturn-base">Size:</strong> They extend up to 282,000 km from the planet, but are incredibly thin—mostly only <span class="text-white font-bold">10 meters</span> thick!</li>
+                                <li><strong class="text-saturn-base">Shepherd Moons:</strong> Tiny moons live *inside* the gaps of the rings, using their gravity to keep the ring particles in neat lines.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Missions -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 's7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-saturn-base">Famous Missions</h3>
+                            <p class="text-space-100 mt-2">Exploring the Ringed Giant</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-saturn-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-saturn-light mb-2 border-b border-saturn-dark pb-2 w-full">The Grand Tour</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-white">Pioneer 11 (1979):</strong> The first spacecraft to fly by and study the rings up close.</li>
+                                <li><strong class="text-white">Voyager 1 & 2 (1980-81):</strong> Revealed the rings are made of thousands of smaller ringlets.</li>
+                                <li><strong class="text-star-cyan">Cassini-Huygens (2004-2017):</strong> Orbited Saturn for 13 years, took breathtaking photos, and actually dropped a probe (Huygens) onto the moon Titan!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Weird Facts -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 's8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🤯</div>
+                            <h3 class="font-display text-2xl text-saturn-base">Wild Facts</h3>
+                            <p class="text-space-100 mt-2">Tap for the strangest Saturn facts</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-saturn-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-saturn-light mb-2 border-b border-saturn-dark pb-2 w-full">Geometry in Space</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong class="text-saturn-light">The Hexagon:</strong> Saturn has a massive, persistent storm at its North Pole that is shaped like a perfect hexagon. It is wider than Earth!</li>
+                                <li><strong class="text-saturn-light">Disappearing Rings:</strong> Because Saturn is tilted, every 14-15 years we view its rings completely edge-on from Earth, making them seem to magically disappear!</li>
+                                <li><strong class="text-saturn-light">Diamond Rain:</strong> Lightning storms turn methane gas into soot, which compresses into diamonds as it falls deep into the atmosphere!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-saturn-base border-2 shadow-[0_0_30px_rgba(234,179,8,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-saturn-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Cassini Ring Dive</h2>
+                        <p class="text-space-100 mb-6">Pilot the Cassini spacecraft through the gap in Saturn's rings (The Cassini Division). Dodge the massive chunks of water ice and rocky debris. Survive for 20 seconds to earn the <span class="text-saturn-light font-bold">Ring Weaver Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-saturn-base mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Begin Dive
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-saturn-base/30">
+                            <div class="text-5xl mb-2">🛰️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Approaching Rings</h3>
+                            <p class="text-saturn-light text-sm">Click Begin to dive</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-space-900 via-[#3f3f2a] to-saturn-dark rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-saturn-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rigorous Science Olympiad Quiz Section -->
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-saturn-base/50">
+            <div class="text-center mb-8">
+                <span class="inline-block px-3 py-1 bg-star-gold text-space-900 text-xs font-bold rounded-full mb-3 uppercase tracking-widest">State Level</span>
+                <h2 class="font-display text-3xl md:text-4xl text-white">Science Olympiad Simulator</h2>
+                <p class="text-space-100 mt-2">Test your advanced knowledge across 25 grueling questions to master the Saturn module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-3xl mx-auto">
+                <div id="quizHeader" class="flex justify-between items-center mb-6">
+                    <span id="quizProgress" class="text-saturn-light font-mono font-bold">Question 1 / 25</span>
+                    <span id="quizScore" class="text-star-gold font-mono font-bold">Score: 0</span>
+                </div>
+
+                <div id="quizBody" class="glass-panel p-6 md:p-8 rounded-2xl border border-saturn-dark bg-space-800 relative transition-all">
+                    <h3 id="questionText" class="text-lg md:text-xl font-bold mb-6 text-white leading-tight">Loading Question...</h3>
+                    
+                    <div id="optionsContainer" class="space-y-3 font-body">
+                        <!-- Options injected by JS -->
+                    </div>
+                    
+                    <!-- Detailed Explanation Box -->
+                    <div id="explanationBox" class="hidden mt-6 p-5 rounded-xl bg-space-900 border border-saturn-base text-space-100 text-sm leading-relaxed relative shadow-inner">
+                        <span class="absolute -top-3 left-4 bg-saturn-dark text-white px-2 py-0.5 rounded text-xs font-bold tracking-wide">SCIENTIFIC EXPLANATION</span>
+                        <p id="explanationText" class="mt-2"></p>
+                    </div>
+
+                    <div class="mt-6 flex justify-end">
+                        <button id="nextBtn" class="hidden bg-saturn-base text-space-900 px-6 py-2 rounded-full font-bold hover:bg-saturn-light transition-transform transform hover:scale-105" onclick="nextQuestion()">Next Question ⏭️</button>
+                    </div>
+                </div>
+
+                <div id="quizResults" class="hidden text-center py-8">
+                    <!-- Final results injected by JS -->
+                </div>
+            </div>
+        </div>
+        
+        <h3 class="font-display text-2xl text-star-magenta mb-4 mt-8 flex items-center justify-center md:justify-start gap-2">
+            The Moons of Saturn
+        </h3>
+        <p class="text-space-100 text-sm mb-6 text-center md:text-left max-w-3xl">Saturn currently holds the record for the most moons in the solar system (146 recognized). Click on the cards below to dive deep into the files of its most famous satellites.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
+            <!-- Titan -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-saturn-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-yellow-500 to-orange-400 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3 blur-[1px]">
+                    <!-- Thick hazy atmosphere representation -->
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Titan</p>
+                    <p class="font-mono text-xs text-saturn-light">Thick Atmosphere</p>
+                </div>
+                <button onclick="window.location.href='titan.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-saturn-light text-saturn-light transition-colors font-bold shadow-md">
+                    Visit titan.html ▸
+                </button>
+            </div>
+
+            <!-- Enceladus -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-saturn-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-100 to-white shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                    <!-- Geysers -->
+                    <div class="absolute bottom-0 left-1/2 w-1 h-3 bg-white blur-sm"></div>
+                    <div class="absolute bottom-1 left-1/3 w-1 h-4 bg-blue-200 blur-sm"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Enceladus</p>
+                    <p class="font-mono text-xs text-saturn-light">Ice Geysers</p>
+                </div>
+                <button onclick="window.location.href='enceladus.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-saturn-light text-saturn-light transition-colors font-bold shadow-md">
+                    Visit enceladus.html ▸
+                </button>
+            </div>
+
+            <!-- Mimas -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-saturn-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                    <!-- Death Star Crater -->
+                    <div class="absolute top-2 left-2 w-5 h-5 rounded-full bg-gray-700 shadow-inner"></div>
+                    <div class="absolute top-3 left-3 w-2 h-2 rounded-full bg-gray-800"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Mimas</p>
+                    <p class="font-mono text-xs text-saturn-light">Death Star Moon</p>
+                </div>
+                <button onclick="window.location.href='mimas.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-saturn-light text-saturn-light transition-colors font-bold shadow-md">
+                    Visit mimas.html ▸
+                </button>
+            </div>
+
+            <!-- Rhea -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-saturn-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                    <!-- Craters -->
+                    <div class="absolute bottom-2 right-2 w-3 h-3 rounded-full bg-gray-600 shadow-inner"></div>
+                    <div class="absolute top-4 right-4 w-2 h-2 rounded-full bg-gray-600 shadow-inner"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Rhea</p>
+                    <p class="font-mono text-xs text-saturn-light">Cratered Ice</p>
+                </div>
+                <button onclick="window.location.href='rhea.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-saturn-light text-saturn-light transition-colors font-bold shadow-md">
+                    Visit rhea.html ▸
+                </button>
+            </div>
+
+            <!-- Iapetus -->
+            <div class="glass-panel p-4 flex flex-col items-center justify-between border-saturn-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-gray-200 to-gray-800 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                    <!-- Two-toned -->
+                    <div class="absolute top-0 right-0 w-[60%] h-full bg-gray-900 opacity-90"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="font-display font-bold text-lg leading-tight text-white">Iapetus</p>
+                    <p class="font-mono text-xs text-saturn-light">Two-Toned Moon</p>
+                </div>
+                <button onclick="window.location.href='iapetus.html'" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-saturn-light text-saturn-light transition-colors font-bold shadow-md">
+                    Visit iapetus.html ▸
+                </button>
+            </div>
+        </div>
+
+    </section>
+</main>
+
+<script>
+    /* APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.planetCompleteAlerted) {
+            window.planetCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Saturn Module Complete!", "You have unlocked the 'Lord of the Rings' rank! Exceptional work!", "🪐");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Saturn files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC: Science Olympiad (State Level) - 25 Questions */
+    const rawQuizData = [
+        {
+            q: "Which property makes Saturn entirely unique regarding density compared to every other planet in the solar system?",
+            options: ["It is denser than Earth's core", "Its density changes radically by season", "It is less dense than liquid water", "It contains no heavy elements at all"],
+            correct: "It is less dense than liquid water",
+            explanation: "Saturn has an overall density of 0.687 g/cm³. Because this is less than the density of water (1 g/cm³), the entire planet would theoretically float if placed in a sufficiently massive ocean."
+        },
+        {
+            q: "The Cassini Division is a large, dark gap between Saturn's A and B rings. What primarily causes this gap?",
+            options: ["A massive impact event 10,000 years ago", "Gravitational resonance with the moon Mimas", "Intense magnetic field repulsion", "Solar wind sweeping away the dust"],
+            correct: "Gravitational resonance with the moon Mimas",
+            explanation: "Particles within the Cassini Division are in a 2:1 orbital resonance with Mimas. Mimas's gravity systematically tugs on these particles, pulling them into new orbits and clearing out the 4,800-km-wide gap."
+        },
+        {
+            q: "Saturn's moon Titan is the only moon in the solar system known to have:",
+            options: ["Active silicate volcanoes", "A dense atmosphere and stable surface liquid", "An internally generated magnetic field", "A completely retrograde orbit"],
+            correct: "A dense atmosphere and stable surface liquid",
+            explanation: "Titan boasts a thick, nitrogen-rich atmosphere. It also features a complete hydrological cycle, but instead of water, it rains liquid methane and ethane, which form massive lakes on its surface."
+        },
+        {
+            q: "In 2005, the Cassini spacecraft discovered that Saturn's moon Enceladus is geologically active. What phenomena did it observe?",
+            options: ["Massive silicate lava flows", "Geysers erupting water vapor and ice from the south pole", "A constantly shifting ring of active dust storms", "Radioactive geysers emitting uranium vapor"],
+            correct: "Geysers erupting water vapor and ice from the south pole",
+            explanation: "Enceladus hides a global subsurface saltwater ocean beneath its icy crust. Tidal heating causes this water to erupt through massive fissures called 'tiger stripes' near its south pole, which in turn creates Saturn's E ring."
+        },
+        {
+            q: "Saturn possesses a massive, persistent storm pattern at its north pole. What shape does this storm take?",
+            options: ["A perfect circle", "A triangle", "A hexagon", "A figure-eight"],
+            correct: "A hexagon",
+            explanation: "Saturn's North Polar Hexagon is a persistent standing wave pattern in the atmosphere. The sides of the hexagon are about 14,500 km long—wider than Earth—and the entire structure rotates with the planet's interior."
+        },
+        {
+            q: "What defines the 'Roche Limit' in relation to Saturn's rings?",
+            options: ["The distance where solar radiation vaporizes ice", "The maximum distance a moon can orbit before escaping", "The point where tidal forces tear apart a moon to form rings", "The boundary where Saturn's magnetic field ends"],
+            correct: "The point where tidal forces tear apart a moon to form rings",
+            explanation: "The Roche Limit is the minimum distance to which a large satellite can approach its primary body without being torn apart by tidal forces. Saturn's main rings lie entirely inside its Roche Limit, preventing the ice from coalescing into a single moon."
+        },
+        {
+            q: "What is highly unusual about Saturn's magnetic field compared to Earth's and Jupiter's?",
+            options: ["It frequently reverses every 5 years", "It is almost perfectly aligned with its rotational axis", "It is generated entirely by the rings", "It contains no trapped radiation belts"],
+            correct: "It is almost perfectly aligned with its rotational axis",
+            explanation: "Unlike Earth and Jupiter, whose magnetic axes are tilted relative to their rotation axes, Saturn's magnetic axis is tilted by less than 0.01 degrees. This perfect alignment continues to puzzle planetary physicists."
+        },
+        {
+            q: "In 2005, a lander successfully touched down on the surface of Titan, sending back the first photos of its surface. What was its name?",
+            options: ["Viking", "Huygens", "Curiosity", "Rosetta"],
+            correct: "Huygens",
+            explanation: "Built by the European Space Agency, the Huygens probe detached from the Cassini spacecraft and descended by parachute through Titan's thick haze, landing safely on a surface of water-ice 'rocks' washed by liquid methane."
+        },
+        {
+            q: "What role do 'shepherd moons', like Prometheus and Pandora, play in Saturn's ring system?",
+            options: ["They generate the magnetic field that traps the rings", "Their gravity restricts the spreading of ring particles, keeping ring edges sharp", "They constantly crash into each other to create new ice", "They act as shields, absorbing all incoming meteors"],
+            correct: "Their gravity restricts the spreading of ring particles, keeping ring edges sharp",
+            explanation: "Shepherd moons orbit very close to, or within, the rings. Their gravitational influence herds ring particles, confining them into narrow bands and creating sharply defined edges (such as the F ring)."
+        },
+        {
+            q: "Saturn's moon Iapetus has a bizarre, two-toned appearance (one side dark, one side bright). What is the leading theory for this?",
+            options: ["It sweeps up dark dust from the outer moon Phoebe as it orbits", "Half of the moon is constantly burned by solar flares", "A massive volcanic eruption coated one hemisphere in ash", "One side is made of pure exposed iron"],
+            correct: "It sweeps up dark dust from the outer moon Phoebe as it orbits",
+            explanation: "Iapetus is tidally locked. As it orbits, its leading hemisphere plows into a diffuse ring of dark dust shed by the outer, retrograde moon Phoebe. This dark material absorbs heat, causing ice to sublimate and migrate to the trailing (bright) hemisphere."
+        },
+        {
+            q: "While Saturn's ring system extends up to 282,000 kilometers from the planet, approximately how thick are the main rings on average?",
+            options: ["10 meters", "1 kilometer", "100 kilometers", "1,000 kilometers"],
+            correct: "10 meters",
+            explanation: "Incredibly, the main rings are razor-thin. If Saturn were the size of a basketball, its rings would be significantly thinner than a sheet of tissue paper, averaging only about 10 meters thick vertically."
+        },
+        {
+            q: "Like Jupiter, Saturn radiates roughly twice as much energy into space as it receives from the Sun. However, Saturn uses an additional heat-generating mechanism involving:",
+            options: ["Uranium fission in its core", "Helium precipitation (Helium Rain) sinking through hydrogen", "Friction from the rings rubbing against the upper atmosphere", "Constant asteroid impacts"],
+            correct: "Helium precipitation (Helium Rain) sinking through hydrogen",
+            explanation: "Saturn's interior is cold enough that helium condenses out of the hydrogen envelope and rains down toward the core. The friction of these falling helium droplets generates significant internal heat."
+        },
+        {
+            q: "Saturn has a highly noticeable 'oblate' shape. What causes the planet to bulge at the equator and flatten at the poles?",
+            options: ["The gravitational pull of its massive ring system", "Its extremely rapid rotation rate", "A solid inner core shaped like a disk", "Tidal stretching caused by the Sun"],
+            correct: "Its extremely rapid rotation rate",
+            explanation: "Saturn completes a rotation in just 10.7 hours. Because it is mostly gas and liquid, this extreme centrifugal force causes the equator to bulge significantly, making its equatorial diameter almost 10% larger than its polar diameter."
+        },
+        {
+            q: "Saturn's moon Mimas features a colossal impact crater named Herschel. What pop-culture icon is Mimas famous for resembling?",
+            options: ["The Millennium Falcon", "A Pokeball", "The Death Star", "Pac-Man"],
+            correct: "The Death Star",
+            explanation: "The Herschel Crater spans 130 km across Mimas, which itself is only 396 km in diameter. The crater gives it an uncanny resemblance to the Death Star from Star Wars, though the movie was released three years before Voyager 1 photographed the moon!"
+        },
+        {
+            q: "What gas makes up over 95% of the dense atmosphere on Titan?",
+            options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Methane"],
+            correct: "Nitrogen",
+            explanation: "Titan's atmosphere is primarily Nitrogen (roughly 95%), much like Earth's (which is about 78% Nitrogen). It is the only other world in the solar system with a dense, nitrogen-dominated atmosphere."
+        },
+        {
+            q: "What is the name of the most expansive, diffuse ring in Saturn's system, which is constantly resupplied by ice geysers from Enceladus?",
+            options: ["The A Ring", "The B Ring", "The E Ring", "The F Ring"],
+            correct: "The E Ring",
+            explanation: "The E Ring is the second outermost ring and is extremely wide but faint. It consists of microscopic ice and dust particles that are continually ejected by the cryovolcanoes at the south pole of Enceladus."
+        },
+        {
+            q: "In 1610, who became the first person to observe Saturn's rings through a telescope, though he famously described them as 'ears' or 'appendages'?",
+            options: ["Christiaan Huygens", "Johannes Kepler", "Galileo Galilei", "Giovanni Cassini"],
+            correct: "Galileo Galilei",
+            explanation: "Galileo's telescope was not powerful enough to resolve the rings clearly. He wrote that Saturn 'has ears' or was 'a triple planet'. It was Christiaan Huygens in 1655 who first correctly identified them as a flat ring."
+        },
+        {
+            q: "Approximately how long does it take for Saturn to complete one full orbit around the Sun (a Saturnian year)?",
+            options: ["11.8 Earth years", "29.4 Earth years", "84 Earth years", "165 Earth years"],
+            correct: "29.4 Earth years",
+            explanation: "Orbiting at an average distance of 9.5 Astronomical Units, Saturn travels much slower and has a much longer path than Earth, taking almost 30 Earth years to complete a single revolution."
+        },
+        {
+            q: "Which spacecraft concluded its historic 13-year mission at Saturn by deliberately diving into the planet's atmosphere in 2017? (The 'Grand Finale')",
+            options: ["Voyager 2", "Pioneer 11", "New Horizons", "Cassini"],
+            correct: "Cassini",
+            explanation: "Running low on fuel, NASA directed the Cassini spacecraft to dive between Saturn and its rings 22 times before plunging into the atmosphere to burn up, preventing any accidental contamination of potentially habitable moons like Enceladus."
+        },
+        {
+            q: "Saturn experiences a massive, planet-wide storm pattern that erupts roughly once every Saturnian year (30 Earth years). What is this phenomenon called?",
+            options: ["The Great Dark Spot", "The Great White Spot", "The Jovian Cyclone", "The Equatorial Ribbon"],
+            correct: "The Great White Spot",
+            explanation: "The Great White Spot (or Northern Electrostatic Disturbance) is a massive storm of ammonia ice clouds that occasionally erupts in Saturn's northern hemisphere during its summer solstice, spanning thousands of kilometers."
+        },
+        {
+            q: "Because Saturn is tilted on its axis (26.7 degrees), how does our view of its rings from Earth change over its 29-year orbit?",
+            options: ["The rings change from red to blue", "The rings appear to completely disappear when viewed edge-on", "The rings slide to orbit the poles instead of the equator", "The rings constantly shrink and expand"],
+            correct: "The rings appear to completely disappear when viewed edge-on",
+            explanation: "Because the rings are incredibly thin (often just 10 meters thick), when Saturn's equinox aligns with Earth every 14-15 years, we view the rings perfectly edge-on, making them temporarily vanish from view in telescopes."
+        },
+        {
+            q: "Which of Saturn's moons exhibits a massive equatorial ridge that makes the moon look exactly like a walnut?",
+            options: ["Tethys", "Iapetus", "Dione", "Hyperion"],
+            correct: "Iapetus",
+            explanation: "Iapetus features an immense equatorial ridge up to 20 km high and 1,300 km long. The origin is heavily debated, possibly from the collapse of an ancient ring system that once orbited the moon."
+        },
+        {
+            q: "Saturn's winds are among the fastest in the solar system, second only to Neptune. At the equator, how fast do these winds blow?",
+            options: ["300 km/h", "800 km/h", "1,800 km/h", "3,500 km/h"],
+            correct: "1,800 km/h",
+            explanation: "Saturn's equatorial jet stream reaches supersonic speeds of roughly 1,800 km/h (1,100 mph), blowing eastward. These are significantly faster than the winds on Jupiter."
+        },
+        {
+            q: "What causes the yellowish-gold color of Saturn's upper atmosphere?",
+            options: ["Pure sulfur dust", "Ammonia crystals interacting with ultraviolet sunlight", "Burning methane gas", "Reflection from the rings"],
+            correct: "Ammonia crystals interacting with ultraviolet sunlight",
+            explanation: "The upper cloud deck is composed of ammonia ice. When ultraviolet light from the Sun hits these ammonia molecules, it creates complex photochemical smog (tholins) that gives the planet its distinct pale yellow hue."
+        },
+        {
+            q: "As of 2023, Saturn overtook Jupiter to reclaim the title for the planet with the most recognized moons. Approximately how many moons does Saturn have?",
+            options: ["79", "95", "146", "212"],
+            correct: "146",
+            explanation: "Recent discoveries of numerous small, irregular satellites have pushed Saturn's total count of recognized moons to 146 (and growing!), firmly placing it ahead of Jupiter's 95."
+        }
+    ];
+
+    let shuffledQuiz = [];
+    let currentQIndex = 0;
+    let quizScore = 0;
+    let answeredCurrent = false;
+
+    function initQuiz() {
+        shuffledQuiz = [...rawQuizData].sort(() => Math.random() - 0.5);
+        currentQIndex = 0;
+        quizScore = 0;
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        answeredCurrent = false;
+        const qData = shuffledQuiz[currentQIndex];
+        
+        document.getElementById('questionText').innerText = qData.q;
+        document.getElementById('quizProgress').innerText = `Question ${currentQIndex + 1} / 25`;
+        document.getElementById('explanationBox').classList.add('hidden');
+        document.getElementById('nextBtn').classList.add('hidden');
+        
+        const optsContainer = document.getElementById('optionsContainer');
+        optsContainer.innerHTML = '';
+        
+        let shuffledOptions = [...qData.options].sort(() => Math.random() - 0.5);
+        
+        shuffledOptions.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-saturn-base transition-all transform hover:-translate-y-1";
+            btn.innerText = opt;
+            btn.onclick = () => selectAnswer(btn, opt, qData.correct, qData.explanation);
+            optsContainer.appendChild(btn);
+        });
+    }
+
+    function selectAnswer(btnEl, selected, correct, explanation) {
+        if (answeredCurrent) return;
+        answeredCurrent = true;
+        
+        const buttons = document.getElementById('optionsContainer').children;
+        for (let b of buttons) {
+            b.disabled = true;
+            b.classList.remove('hover:bg-space-700', 'hover:border-saturn-base', 'hover:-translate-y-1');
+            
+            if (b.innerText === correct) {
+                b.classList.add('bg-star-green', 'bg-opacity-20', 'border-star-green', 'text-star-green', 'font-bold');
+            } else {
+                b.classList.add('opacity-50');
+                if (b === btnEl && selected !== correct) {
+                    b.classList.add('bg-star-red', 'bg-opacity-20', 'border-star-red', 'text-star-red');
+                    b.classList.remove('opacity-50');
+                }
+            }
+        }
+        
+        if (selected === correct) {
+            quizScore++;
+            addXP(10);
+        }
+        document.getElementById('quizScore').innerText = `Score: ${quizScore}`;
+        
+        const isCorrectText = selected === correct ? '<span class="text-star-green font-bold text-lg">Correct!</span>' : '<span class="text-star-red font-bold text-lg">Incorrect.</span>';
+        document.getElementById('explanationText').innerHTML = `${isCorrectText} ${explanation}`;
+        document.getElementById('explanationBox').classList.remove('hidden');
+        
+        const nextBtn = document.getElementById('nextBtn');
+        nextBtn.innerText = currentQIndex === 24 ? "Finish Olympiad 🏆" : "Next Question ⏭️";
+        nextBtn.classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        currentQIndex++;
+        if (currentQIndex < 25) {
+            renderQuestion();
+        } else {
+            showQuizResults();
+        }
+    }
+
+    function showQuizResults() {
+        document.getElementById('quizHeader').classList.add('hidden');
+        document.getElementById('quizBody').classList.add('hidden');
+        
+        const resultsContainer = document.getElementById('quizResults');
+        resultsContainer.classList.remove('hidden');
+        resultsContainer.classList.add('block');
+        
+        let message = "";
+        let emoji = "";
+        if(quizScore === 25) { message = "Perfect Score! You are a true Jovian/Saturnian Master! The Olympiad judges are stunned."; emoji="🥇"; }
+        else if(quizScore >= 20) { message = "Excellent work! You definitely qualify for the State Level competition."; emoji="🥈"; }
+        else if(quizScore >= 15) { message = "Good job, but keep studying those gas giant data files!"; emoji="🥉"; }
+        else { message = "Looks like you need a bit more practice. Review the data and dive through the rings again!"; emoji="📚"; }
+        
+        resultsContainer.innerHTML = `
+            <div class="text-6xl mb-4">${emoji}</div>
+            <h3 class="text-3xl font-display text-star-gold mb-2">Olympiad Complete!</h3>
+            <p class="text-xl text-white mb-2">Final Score: <span class="font-bold text-saturn-light">${quizScore}/25</span></p>
+            <p class="text-space-100 mb-8 italic max-w-lg mx-auto">${message}</p>
+            <button onclick="resetFullQuiz()" class="bg-space-700 border border-space-500 text-white px-8 py-3 rounded-full hover:bg-space-500 transition mx-auto font-bold shadow-lg">Retake Quiz 🔄</button>
+        `;
+        
+        if (!achievements.passedQuiz && quizScore >= 15) { 
+            achievements.passedQuiz = true;
+            addXP(100);
+            showMsgBox("Olympiad Badge Unlocked", "You passed the rigorous Saturn State-Level Quiz! +100 XP", "🏅");
+            updateProgress();
+        }
+    }
+    
+    function resetFullQuiz() {
+        document.getElementById('quizHeader').classList.remove('hidden');
+        document.getElementById('quizBody').classList.remove('hidden');
+        document.getElementById('quizResults').classList.add('hidden');
+        document.getElementById('quizResults').classList.remove('block');
+        initQuiz();
+    }
+
+
+    /* MINI GAME: Cassini Ice Dodger */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    
+    window.addEventListener('load', function() {
+        resizeCanvas();
+    });
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+
+    const player = { x: 0, y: 0, width: 38, height: 48, speed: 8, color: '#f8fafc' };
+    let obstacles = [];
+    let ringDust = [];
+    let keys = { ArrowLeft: false, ArrowRight: false };
+
+    window.addEventListener('keydown', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') keys[e.code] = false; 
+    });
+    
+    canvas.addEventListener('touchstart', (e) => {
+        if(!gameActive) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const relativeX = touch.clientX - rect.left;
+        if(relativeX < canvas.width/2) { keys.ArrowLeft = true; keys.ArrowRight = false; } 
+        else { keys.ArrowRight = true; keys.ArrowLeft = false; }
+    }, {passive: false});
+    
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys.ArrowLeft = false; keys.ArrowRight = false;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        const relativeX = e.clientX - rect.left;
+        if(relativeX < canvas.width/2) { keys.ArrowLeft = true; keys.ArrowRight = false; } 
+        else { keys.ArrowRight = true; keys.ArrowLeft = false; }
+    });
+    
+    canvas.addEventListener('mouseup', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+    canvas.addEventListener('mouseleave', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - player.height - 20;
+        obstacles = [];
+        
+        ringDust = Array.from({length: 60}).map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 0.5,
+            speed: Math.random() * 5 + 3,
+            color: Math.random() > 0.5 ? '#fde68a' : '#ffffff' 
+        }));
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Diving...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnObstacle() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let type = Math.random() > 0.2 ? 'ice' : 'rock'; 
+        
+        let w = Math.random() * 30 + 15; 
+        let xPos = Math.random() * (canvas.width - w);
+        
+        obstacles.push({
+            x: xPos, y: -w, 
+            width: w, height: w, 
+            speedY: (Math.random() * 4 + 4) * speedMult, 
+            rotation: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 0.2,
+            type: type
+        });
+    }
+
+    function drawPlayer() {
+        ctx.fillStyle = player.color;
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        ctx.fillStyle = (frames % 10 < 5) ? '#fbbf24' : '#ef4444';
+        ctx.beginPath();
+        ctx.moveTo(-6, player.height/2);
+        ctx.lineTo(0, player.height/2 + 15 + Math.random()*10);
+        ctx.lineTo(6, player.height/2);
+        ctx.fill();
+
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(-8, -player.height/2, 16, player.height);
+        
+        ctx.fillStyle = '#cbd5e1';
+        ctx.beginPath();
+        ctx.arc(0, -player.height/2 + 4, 18, Math.PI, 0);
+        ctx.fill();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(-player.width/2, -5, player.width/2 - 8, 4); 
+        ctx.fillRect(8, 5, player.width/2 - 8, 4); 
+
+        ctx.restore();
+    }
+
+    function drawObstacles() {
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            
+            ctx.save();
+            ctx.translate(o.x + o.width/2, o.y + o.height/2);
+            ctx.rotate(o.rotation);
+            
+            if (o.type === 'ice') {
+                ctx.fillStyle = 'rgba(241, 245, 249, 0.8)'; 
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#e0f2fe';
+                
+                ctx.beginPath();
+                ctx.moveTo(-o.width/2, -o.height/3);
+                ctx.lineTo(0, -o.height/2);
+                ctx.lineTo(o.width/2, -o.height/4);
+                ctx.lineTo(o.width/3, o.height/2);
+                ctx.lineTo(-o.width/4, o.height/2.2);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(-o.width/6, -o.height/6, o.width/5, 0, Math.PI*2);
+                ctx.fill();
+                
+            } else {
+                ctx.fillStyle = '#57534e'; 
+                ctx.shadowBlur = 0;
+                ctx.beginPath();
+                ctx.arc(0, 0, o.width/2, 0, Math.PI*2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#44403c';
+                ctx.beginPath();
+                ctx.arc(-o.width/5, -o.height/5, o.width/6, 0, Math.PI*2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+    }
+
+    function drawRingDust() {
+        ringDust.forEach(d => {
+            ctx.fillStyle = d.color;
+            ctx.beginPath();
+            ctx.arc(d.x, d.y, d.size, 0, Math.PI*2);
+            ctx.fill();
+            
+            d.y += d.speed;
+            if(d.y > canvas.height) {
+                d.y = 0;
+                d.x = Math.random() * canvas.width;
+            }
+        });
+    }
+
+    function checkCollision(o) {
+        let hitX = player.x + 4, hitW = player.width - 8;
+        let hitY = player.y + 4, hitH = player.height - 8;
+
+        if (hitX < o.x + o.width && hitX + hitW > o.x && hitY < o.y + o.height && hitY + hitH > o.y) return true;
+        return false;
+    }
+
+    function updatePhysics() {
+        if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
+        if (keys.ArrowRight && player.x + player.width < canvas.width) player.x += player.speed;
+
+        let spawnRate = Math.max(12, 40 - Math.floor(scoreFrames/150));
+        if (frames % spawnRate === 0) spawnObstacle();
+
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].y += obstacles[i].speedY;
+            obstacles[i].rotation += obstacles[i].rotSpeed;
+            
+            if (checkCollision(obstacles[i])) {
+                let reason = obstacles[i].type === 'ice' ? "Crushed by an Ice Chunk!" : "Smashed by Ring Debris!";
+                gameOver(reason);
+                return;
+            }
+
+            if (obstacles[i].y > canvas.height) obstacles.splice(i, 1);
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        ctx.fillStyle = 'rgba(15, 20, 30, 0.6)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        drawRingDust();
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawObstacles();
+        drawPlayer();
+
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let gapDist = Math.floor(secondsAlive * 15); 
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Dive Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillText(`Distance: ${gapDist} km`, 10, 45);
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        if (secondsAlive >= 20 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Ring Weaver Badge Unlocked!", "You safely piloted Cassini through the ring gap! +100 XP", "🛰️");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Dive";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-4">You survived for ${secondsAlive} seconds.</p>
+            ${!achievements.playedGame ? `<p class="text-saturn-light text-sm mb-4">Try to reach 20 seconds for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && secondsAlive < 20) addXP(5);
+    }
+
+    startBtn.addEventListener('click', () => { initGame(); });
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Oberon — Interactive Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#05060f', 800: '#0f1430', 700: '#1a234d', 500: '#2c3b73', 100: '#f8fafc' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        oberon: { base: '#64748b', dark: '#334155', light: '#94a3b8', crater: '#0f172a', ice: '#cbd5e1' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 100s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(100, 116, 139, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(100, 116, 139, 0.5)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #05060f;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #64748b 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #94a3b8 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #334155 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(15, 20, 48, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(100, 116, 139, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(5, 6, 15, 0.8), rgba(15, 20, 48, 0.9));
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(148, 163, 184, 0.6);
+            box-shadow: 0 0 20px rgba(148, 163, 184, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Oberon Graphic - Ancient, gray, with dark-centered craters */
+        .orb-oberon {
+            background: radial-gradient(circle at 35% 35%, #cbd5e1, #94a3b8, #64748b, #334155, #0f172a);
+            box-shadow: inset -20px -20px 40px rgba(0,0,0,0.8), 0 0 30px rgba(100, 116, 139, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        /* The Dark-Floored Craters (e.g., Hamlet) */
+        .orb-oberon::before {
+            content: '';
+            position: absolute;
+            top: 25%; left: 20%;
+            width: 25%; height: 25%;
+            background: radial-gradient(circle at 50% 50%, #020617 0%, #0f172a 40%, rgba(51, 65, 85, 0.6) 80%, transparent 100%);
+            border-radius: 50%;
+            box-shadow: inset 2px 2px 5px rgba(255,255,255,0.2), -1px -1px 3px rgba(0,0,0,0.8);
+        }
+        
+        .orb-oberon::after {
+            content: '';
+            position: absolute;
+            bottom: 30%; right: 15%;
+            width: 18%; height: 18%;
+            background: radial-gradient(circle at 50% 50%, #020617 0%, #0f172a 50%, rgba(51, 65, 85, 0.5) 90%, transparent 100%);
+            border-radius: 50%;
+            box-shadow: inset 1px 1px 4px rgba(255,255,255,0.2), -1px -1px 2px rgba(0,0,0,0.8);
+        }
+
+        /* General surface mottling */
+        .oberon-texture {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 70% 30%, rgba(15, 23, 42, 0.4) 0%, transparent 10%),
+                radial-gradient(circle at 40% 70%, rgba(51, 65, 85, 0.5) 0%, transparent 12%);
+            border-radius: 50%;
+            mix-blend-mode: multiply;
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        /* Game Canvas */
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(100, 116, 139, 0.15);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #05060f; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        
+        /* Message Box Modal */
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-oberon-base shadow-[0_0_40px_rgba(100,116,139,0.4)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-oberon-light text-space-900 font-bold py-3 rounded-xl hover:bg-white transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-oberon-light">🪨</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Mission Control</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">MC</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="uranus.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-cyan">
+                <span class="text-xl">🪩</span>
+                <span class="font-display font-bold text-lg">Back to Uranus</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-oberon-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-28 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-oberon-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Oberon Mission Progress</span>
+                    <span id="progressText" class="text-oberon-light font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-oberon-dark to-oberon-light h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Dark Surveyor</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-oberon-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-oberon-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-oberon-light animate-ping"></span> Moon of Uranus
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Oberon</h1>
+                <p class="text-2xl text-oberon-light font-body italic mb-6">"The Ancient Outer Moon"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    The outermost of Uranus's major moons. It is an ancient, heavily cratered world of ice and rock, known for the mysterious dark material that floods the floors of its largest craters.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-oberon-light text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(148,163,184,0.5)]">
+                    Explore the Craters 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-oberon animate-spin-slow">
+                        <div class="oberon-texture"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-star-cyan text-space-900 text-[8px] font-bold px-2 py-1 rounded-bl-lg animate-pulse">RECORD!</div>
+                <div class="text-3xl mb-2">🔭</div>
+                <div class="text-oberon-light font-mono text-xs uppercase mb-1">Position</div>
+                <div class="font-bold text-xl text-star-cyan">Outermost</div>
+                <div class="text-[10px] text-space-100 mt-1">Furthest major moon</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-oberon-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">1,522 km</div>
+                <div class="text-[10px] text-space-100 mt-1">2nd largest of Uranus</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🥶</div>
+                <div class="text-oberon-light font-mono text-xs uppercase mb-1">Temperature</div>
+                <div class="font-bold text-xl">-200°C</div>
+                <div class="text-[10px] text-space-100 mt-1">Extremely cold</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">⚖️</div>
+                <div class="text-oberon-light font-mono text-xs uppercase mb-1">Gravity</div>
+                <div class="font-bold text-xl">0.035g</div>
+                <div class="text-[10px] text-space-100 mt-1">~3.5% of Earth's pull</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Oberon data.</p>
+                </div>
+                <div class="hidden md:block text-oberon-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Position & Discovery -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'o1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📍</div>
+                            <h3 class="font-display text-xl text-oberon-light">Position & Discovery</h3>
+                            <p class="text-space-100 text-xs mt-2">The farthest out</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-oberon-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-oberon-dark pb-1 w-full">William Herschel</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>Discovered in <strong>1787</strong> by William Herschel (on the same day he discovered Titania!).</li>
+                                <li>It is the outermost of Uranus's five major moons, orbiting at a distance of about 583,500 km.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: The Cratered Ancient -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'o2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">☄️</div>
+                            <h3 class="font-display text-xl text-oberon-light">Ancient Surface</h3>
+                            <p class="text-space-100 text-xs mt-2">Why so many craters?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-oberon-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-star-cyan mb-2 border-b border-oberon-dark pb-1 w-full">Geologically Dead</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Because it orbits so far out, Oberon experiences very little tidal heating from Uranus.</li>
+                                <li>As a result, it is geologically dead. Its surface is the oldest and most heavily cratered of all the Uranian moons.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Naming Convention -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'o3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📖</div>
+                            <h3 class="font-display text-xl text-oberon-light">Mythology & Naming</h3>
+                            <p class="text-space-100 text-xs mt-2">King of the Fairies</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-oberon-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-oberon-light mb-2 border-b border-oberon-dark pb-1 w-full">A Midsummer Night's Dream</h3>
+                            <ul class="text-left w-full space-y-1 text-sm">
+                                <li>Like all of Uranus's moons, Oberon is named after a character from English literature.</li>
+                                <li>Oberon is the mythical <strong>King of the Fairies</strong> in William Shakespeare's play <em>A Midsummer Night's Dream</em>.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Composition -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'o4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧊</div>
+                            <h3 class="font-display text-xl text-oberon-light">Composition</h3>
+                            <p class="text-space-100 text-xs mt-2">Ice and Rock</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-oberon-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-oberon-dark pb-1 w-full">Differentiated Core</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Oberon consists of roughly equal parts <strong>water ice</strong> and dense <strong>rock</strong>.</li>
+                                <li>Scientists believe it is fully differentiated, meaning the heavy rock sank to form a solid core, surrounded by a thick, icy mantle.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: The Mystery of the Dark Floors -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'o5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🕳️</div>
+                            <h3 class="font-display text-2xl text-oberon-light">The Dark Crater Mystery</h3>
+                            <p class="text-space-100 mt-2">What is hiding inside?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-oberon-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-cyan mb-3 border-b border-oberon-dark pb-2 w-full">Flooded Depressions</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-oberon-light font-mono font-bold block mb-1">The Feature:</span>
+                                    Many of the largest craters on Oberon (like Hamlet, Macduff, and Othello) have mysterious, pitch-black material covering their floors.
+                                </div>
+                                <div>
+                                    <span class="text-oberon-light font-mono font-bold block mb-1">The Theory:</span>
+                                    Scientists believe that after a meteor cracked the crust, dirty, slushy water from inside the moon upwelled into the crater and froze, creating dark "ice lava" lakes!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Mount Mommur & Chasmata -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'o6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⛰️</div>
+                            <h3 class="font-display text-2xl text-oberon-light">Mount Mommur</h3>
+                            <p class="text-space-100 mt-2">The massive peak on the edge</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-oberon-dark flex flex-col items-center justify-center overflow-y-auto bg-space-800 custom-scrollbar">
+                            <h3 class="font-display text-xl text-star-gold mb-2 border-b border-oberon-dark pb-1 w-full">A Towering Discovery</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>In the Voyager 2 photos, a massive mountain can be seen sticking out from the bottom edge (the limb) of Oberon.</li>
+                                <li>It is estimated to be <strong>6 kilometers (20,000 feet) high!</strong></li>
+                                <li>It is unofficially named <strong>Mount Mommur</strong>, after the mythical forest home of the fairy king Oberon.</li>
+                                <li>Oberon is also crossed by giant rift valleys (canyons) called <strong>Chasmata</strong>, created when the moon's interior froze and expanded, cracking the crust.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Voyager 2 Mission -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'o7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-2xl text-oberon-light">Voyager 2 Flyby</h3>
+                            <p class="text-space-100 mt-2">The only close look</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-oberon-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-oberon-dark pb-2 w-full">A Half-Seen World</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>NASA's <strong>Voyager 2</strong> is the only spacecraft to have ever visited Oberon, passing by in January 1986.</li>
+                                <li>Because Uranus and its moons are tilted 98 degrees, the northern hemisphere of Oberon was in a 42-year dark winter. Voyager 2 could only map <strong>40% of the moon</strong> (the southern half)!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Deep Space Orbit -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'o8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛡️</div>
+                            <h3 class="font-display text-2xl text-oberon-light">Outside the Shield</h3>
+                            <p class="text-space-100 mt-2">Leaving the magnetosphere</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-oberon-dark flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-star-red mb-2 border-b border-oberon-dark pb-2 w-full">Exposed to the Solar Wind</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Because Oberon orbits so incredibly far from Uranus, it actually travels <strong>outside of Uranus's protective magnetosphere</strong> during parts of its orbit!</li>
+                                <li>This leaves its surface completely exposed to the harsh radiation of the solar wind, which slowly darkens the ice over millions of years.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-oberon-dark border-2 shadow-[0_0_30px_rgba(100,116,139,0.4)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-oberon-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Dark Crater Surveyor</h2>
+                        <p class="text-space-100 mb-6">Pilot Voyager 2 low over the ancient surface of Oberon! Use your thrusters to fly up and down, dodging the towering peaks of <span class="text-white font-bold">Mount Mommur</span>, and dive low into the craters to collect 5 <span class="text-star-cyan font-bold">Dark Material Scans</span> to earn the <span class="text-oberon-light font-bold">Ancient Surveyor Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-oberon-light mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">↑</kbd> and <kbd class="bg-space-700 px-2 rounded">↓</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold top or bottom half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Start Flyby
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-oberon-dark/30">
+                            <div class="text-5xl mb-2">🛰️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Targeting Craters</h3>
+                            <p class="text-oberon-light text-sm">Click Start to fly over</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#020617] via-[#0f172a] to-[#1e293b] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-oberon-dark"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-oberon-dark/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Oberon module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="dynamicQuizArea" class="space-y-4">
+                    <!-- Dynamic quiz content will be injected here -->
+                </div>
+
+                <!-- Quiz Results -->
+                <div class="quiz-q hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold">0/20</span></p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        // Update badge UI colors
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.moonCompleteAlerted) {
+            window.moonCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Oberon Module Complete!", "You have unlocked the 'Ancient Outer' badge. Excellent exploration!", "🪨");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Oberon files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    const moonColor = 'oberon-light';
+    const quizData = [
+        { q: "Oberon is the outermost of the major Uranian moons. How does this position affect its surface geology?", options: [{text: "It is covered entirely in liquid methane", isCorrect: false}, {text: "It experiences very little tidal heating, making its surface ancient and heavily cratered", isCorrect: true}, {text: "It causes its surface to melt completely during summer", isCorrect: false}, {text: "It was shattered by Uranus's gravity", isCorrect: false}], explanation: "Because it orbits so far from Uranus, it doesn't experience the intense tidal squeezing that heated the inner moons, leaving its surface old and unchanged." },
+        { q: "What mysterious feature is found on the floors of Oberon's largest craters, like Hamlet and Macduff?", options: [{text: "Towering active ice volcanoes", isCorrect: false}, {text: "Deep, glowing red lakes of lava", isCorrect: false}, {text: "A pitch-black material, likely from frozen, dirty water upwelling", isCorrect: true}, {text: "Perfectly smooth, highly reflective white ice", isCorrect: false}], explanation: "Scientists believe meteor impacts cracked the crust, allowing a dirty, slushy cryomagma from the interior to upwell and freeze, forming dark 'ice lava' lakes." },
+        { q: "Who discovered Oberon in 1787?", options: [{text: "Galileo Galilei", isCorrect: false}, {text: "William Lassell", isCorrect: false}, {text: "William Herschel", isCorrect: true}, {text: "Gerard Kuiper", isCorrect: false}], explanation: "William Herschel, the astronomer who discovered Uranus, also discovered its two largest moons, Oberon and Titania, in 1787." },
+        { q: "What massive topographic feature was spotted on the edge (limb) of Oberon by Voyager 2?", options: [{text: "A 6-kilometer high mountain", isCorrect: true}, {text: "A canyon twice as deep as the Grand Canyon", isCorrect: false}, {text: "A perfectly square crater", isCorrect: false}, {text: "A massive, bright ring of frost", isCorrect: false}], explanation: "A towering peak, informally named Mount Mommur, was photographed sticking out from the bottom edge of Oberon. It is estimated to be 6 km (about 20,000 feet) high." },
+        { q: "What is the unofficial name of the massive peak discovered on Oberon?", options: [{text: "Mount Olympus", isCorrect: false}, {text: "Mount Mommur", isCorrect: true}, {text: "Verona Peak", isCorrect: false}, {text: "Herschel Summit", isCorrect: false}], explanation: "It is informally named Mount Mommur, derived from the mythical forest home of the fairy king Oberon." },
+        { q: "Because of its distant orbit, Oberon periodically travels outside of what invisible planetary boundary?", options: [{text: "The Asteroid Belt", isCorrect: false}, {text: "Uranus's protective magnetosphere", isCorrect: true}, {text: "The Oort Cloud", isCorrect: false}, {text: "The Roche Limit", isCorrect: false}], explanation: "Oberon's wide orbit takes it outside of Uranus's magnetic field during certain points, a unique trait among the major Uranian moons." },
+        { q: "What happens to Oberon when it travels outside Uranus's magnetosphere?", options: [{text: "It rapidly speeds up", isCorrect: false}, {text: "Its surface is exposed to the harsh solar wind, which darkens the ice", isCorrect: true}, {text: "It loses its atmosphere instantly", isCorrect: false}, {text: "Its gravity temporarily decreases", isCorrect: false}], explanation: "Without the magnetosphere to deflect charged particles, the solar wind strikes the surface directly, a process called 'space weathering' which chemically darkens the ice." },
+        { q: "Oberon's interior is believed to be fully differentiated. What is the structure of its core?", options: [{text: "A hollow vacuum", isCorrect: false}, {text: "A churning ocean of liquid water", isCorrect: false}, {text: "A dense, solid rocky core", isCorrect: true}, {text: "A core made entirely of pure oxygen", isCorrect: false}], explanation: "Differentiation means the heavier materials sank during the moon's formation, creating a dense rocky core surrounded by an icy mantle." },
+        { q: "In English literature, who is Oberon?", options: [{text: "A heroic knight", isCorrect: false}, {text: "A mischievous goblin", isCorrect: false}, {text: "The King of the Fairies in 'A Midsummer Night's Dream'", isCorrect: true}, {text: "A ghost in 'Hamlet'", isCorrect: false}], explanation: "Like most Uranian moons, it is named after a literary figure. Oberon is the King of the Fairies in William Shakespeare's play." },
+        { q: "How does Oberon rank in size among the moons of Uranus?", options: [{text: "It is the largest", isCorrect: false}, {text: "It is the 2nd largest", isCorrect: true}, {text: "It is the 3rd largest", isCorrect: false}, {text: "It is the smallest", isCorrect: false}], explanation: "At roughly 1,522 km in diameter, it is slightly smaller than Titania, making it the second-largest Uranian moon." },
+        { q: "What caused the formation of Chasmata (rift valleys) on Oberon's surface?", options: [{text: "Massive rivers of liquid methane", isCorrect: false}, {text: "The moon's liquid water interior freezing and expanding, cracking the crust", isCorrect: true}, {text: "Uranus's gravity ripping the moon apart", isCorrect: false}, {text: "The impact of a comet carving a trench", isCorrect: false}], explanation: "As Oberon cooled early in its history, its interior liquid water froze into ice, expanding in volume and bursting the outer crust to form Chasmata." },
+        { q: "Voyager 2 mapped approximately 40% of Oberon. Which hemisphere was mapped?", options: [{text: "The Northern Hemisphere", isCorrect: false}, {text: "The Southern Hemisphere", isCorrect: true}, {text: "The Eastern Hemisphere", isCorrect: false}, {text: "The Western Hemisphere", isCorrect: false}], explanation: "Because of Uranus's 98-degree axial tilt, the northern hemisphere of Oberon was in a 42-year winter darkness during the 1986 flyby, so only the southern half was mapped." },
+        { q: "What is the overall composition of Oberon?", options: [{text: "99% pure water ice", isCorrect: false}, {text: "Roughly equal parts water ice and dense rock", isCorrect: true}, {text: "Mostly frozen methane and ammonia", isCorrect: false}, {text: "Solid iron and nickel", isCorrect: false}], explanation: "Oberon's density suggests it is made of roughly 50% water ice and 50% dense silicate rock." },
+        { q: "What is the primary difference in surface history between Oberon and Ariel?", options: [{text: "Oberon is heavily cratered and ancient; Ariel has been resurfaced by cryovolcanism", isCorrect: true}, {text: "Oberon is smooth and young; Ariel is heavily cratered", isCorrect: false}, {text: "Oberon has active volcanoes; Ariel is a dead block of ice", isCorrect: false}, {text: "There is no difference, they are identical twins", isCorrect: false}], explanation: "Ariel's surface was heavily smoothed by internal heating and cryovolcanism, whereas Oberon lacked this heat, leaving its ancient craters intact." },
+        { q: "The dark material on Oberon's crater floors is best described as what?", options: [{text: "Shadows cast by towering crater walls", isCorrect: false}, {text: "A dense accumulation of dark dust from space", isCorrect: false}, {text: "'Ice lava' or cryolava that flooded the impact basin", isCorrect: true}, {text: "A deep hole leading straight to the core", isCorrect: false}], explanation: "Scientists believe the dark material is cryolava (a mix of dirty water and ammonia) that erupted from the interior after an impact and froze into flat, dark plains." },
+        { q: "How did William Herschel discover both Oberon and Titania?", options: [{text: "By analyzing data from an early satellite", isCorrect: false}, {text: "By using a large, custom-built reflecting telescope", isCorrect: true}, {text: "Through mathematical predictions of gravity", isCorrect: false}, {text: "By taking long-exposure photographs", isCorrect: false}], explanation: "Herschel was a pioneering telescope maker, and he used a massive 49.5-inch reflecting telescope of his own design to spot the moons." },
+        { q: "Oberon's surface has a slight tint compared to the other Uranian moons. What color is it?", options: [{text: "Slightly blue", isCorrect: false}, {text: "Slightly green", isCorrect: false}, {text: "Slightly red", isCorrect: true}, {text: "Pure white", isCorrect: false}], explanation: "Oberon's surface is the reddest of the major Uranian moons, likely due to space weathering and the accumulation of organic compounds over billions of years." },
+        { q: "What is the name of the largest known crater on Oberon, which features a dark floor?", options: [{text: "Hamlet", isCorrect: true}, {text: "Macbeth", isCorrect: false}, {text: "Othello", isCorrect: false}, {text: "Prospero", isCorrect: false}], explanation: "Hamlet is one of the largest craters on Oberon, measuring about 206 kilometers across, and is notable for its dark, flooded floor." },
+        { q: "Because Oberon lacks internal heat, what is the primary process shaping its surface today?", options: [{text: "Active tectonic plate movement", isCorrect: false}, {text: "Impact cratering from micrometeorites and comets", isCorrect: true}, {text: "Wind erosion from a thick atmosphere", isCorrect: false}, {text: "Continuous lava flows", isCorrect: false}], explanation: "Without internal heat to drive geology, the only active process modifying Oberon's surface is the slow, continuous bombardment of space debris." },
+        { q: "How long does a single season (summer or winter) last at Oberon's poles?", options: [{text: "1 Earth year", isCorrect: false}, {text: "21 Earth years", isCorrect: false}, {text: "42 Earth years", isCorrect: true}, {text: "84 Earth years", isCorrect: false}], explanation: "Because Uranus and its moons are tilted 98 degrees and orbit the Sun every 84 years, the poles experience 42 years of continuous sunlight followed by 42 years of darkness." }
+    ];
+
+    let currentQ = 0;
+    let score = 0;
+    let shuffledQuestions = [];
+
+    function shuffleArray(arr) {
+        let array = [...arr];
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function initQuiz() {
+        shuffledQuestions = shuffleArray(quizData).map(q => ({
+            ...q,
+            options: shuffleArray(q.options)
+        }));
+        currentQ = 0;
+        score = 0;
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('dynamicQuizArea').classList.remove('hidden');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const qData = shuffledQuestions[currentQ];
+        const container = document.getElementById('dynamicQuizArea');
+        
+        let html = `
+            <div class="quiz-q block">
+                <h3 class="text-xl font-bold mb-4 text-${moonColor}">Question ${currentQ + 1} of 20: <br/><span class="text-white mt-2 block">${qData.q}</span></h3>
+                <div class="space-y-3" id="optionsContainer">
+                    ${qData.options.map((opt, idx) => `
+                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-${moonColor} transition-all opt-btn" onclick="answer(${idx}, ${opt.isCorrect}, this)">${opt.text}</button>
+                    `).join('')}
+                </div>
+                <div id="explanationArea" class="hidden mt-6 p-4 rounded-xl bg-space-800 border border-space-500">
+                    <p class="text-sm text-space-100"><strong class="text-white">Explanation:</strong> ${qData.explanation}</p>
+                </div>
+                <button id="nextQBtn" onclick="nextQuestion()" class="hidden mt-6 w-full bg-space-700 text-white font-bold py-3 rounded-xl hover:bg-space-500 transition-colors">Next Question ▶</button>
+            </div>
+        `;
+        container.innerHTML = html;
+    }
+
+    function answer(optIdx, isCorrect, btnEl) {
+        const qData = shuffledQuestions[currentQ];
+        const buttons = document.querySelectorAll('.opt-btn');
+        
+        buttons.forEach((btn, idx) => {
+            btn.disabled = true;
+            btn.classList.remove('hover:bg-space-700', `hover:border-${moonColor}`);
+            if (qData.options[idx].isCorrect) {
+                btn.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            } else {
+                btn.classList.add('opacity-50');
+            }
+        });
+
+        if (isCorrect) {
+            score++;
+            addXP(5);
+        } else {
+            btnEl.classList.remove('opacity-50', 'bg-space-800');
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+        }
+
+        document.getElementById('explanationArea').classList.remove('hidden');
+        document.getElementById('nextQBtn').classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        currentQ++;
+        if (currentQ < 20) {
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('dynamicQuizArea').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('q-result').classList.add('block');
+        document.getElementById('scoreText').innerText = `${score}/20`;
+        
+        document.getElementById('scoreText').classList.remove('text-star-green', 'text-star-red', `text-${moonColor}`);
+
+        if(score >= 15) {
+            document.getElementById('scoreText').classList.add('text-star-green');
+            if(!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Olympiad Scholar!", "Excellent performance! You passed the rigorous SciOly Quiz! +100 XP", "🧠");
+            }
+            document.getElementById('retryQuizBtn').classList.add('hidden');
+        } else {
+            document.getElementById('scoreText').classList.add('text-star-red');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        initQuiz();
+    }
+
+    window.addEventListener('DOMContentLoaded', initQuiz);
+    
+    /* MINI GAME: Dark Crater Surveyor (Vertical Scrolling Shooter-style) */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    // Player (Voyager 2)
+    const player = {
+        x: 200, 
+        y: 400, 
+        width: 30,
+        height: 30,
+        speed: 5,
+        color: '#f8fafc' 
+    };
+
+    let obstacles = []; // Peaks
+    let collectibles = []; // Scans
+    let bgStars = []; // Scrolling craters
+
+    // Inputs
+    let keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false };
+    let isTouching = false;
+    let touchTarget = {x: 0, y: 0};
+
+    // Listeners
+    window.addEventListener('keydown', (e) => { 
+        if(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) keys[e.code] = false; 
+    });
+    
+    // Touch/Mouse Support
+    function handlePointerMove(e) {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        touchTarget.x = (clientX - rect.left) * (canvas.width / rect.width);
+        touchTarget.y = (clientY - rect.top) * (canvas.height / rect.height);
+        isTouching = true;
+        if(e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+    }
+    function handlePointerUp() { isTouching = false; }
+
+    canvas.addEventListener('touchstart', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    canvas.addEventListener('touchend', handlePointerUp);
+    canvas.addEventListener('mousedown', handlePointerMove);
+    canvas.addEventListener('mousemove', (e) => { if(isTouching) handlePointerMove(e); });
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerUp);
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - 80;
+        obstacles = [];
+        collectibles = [];
+        bgStars = [];
+        dataCollected = 0;
+        isTouching = false;
+
+        // Init background craters
+        for(let i=0; i<5; i++){
+            bgStars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 40 + 20,
+                speed: (Math.random() * 1 + 0.5)
+            });
+        }
+
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Scanning...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnEntity() {
+        let speedMult = 1 + (scoreFrames / 2000); 
+        let globalSpeedY = (Math.random() * 2 + 3) * speedMult; // Scroll down
+        
+        // Scan Data (30% chance)
+        if (Math.random() > 0.7 && collectibles.length < 2) {
+            collectibles.push({
+                x: Math.random() * (canvas.width - 40) + 20,
+                y: -30, 
+                width: 20,
+                height: 20,
+                speedY: globalSpeedY,
+                pulse: 0
+            });
+            return;
+        }
+
+        // Peak (Obstacle)
+        let w = Math.random() * 60 + 40; 
+        obstacles.push({ 
+            x: Math.random() * (canvas.width - w), 
+            y: -50, 
+            width: w, 
+            height: Math.random() * 40 + 30, 
+            speedY: globalSpeedY
+        });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        
+        // Tilt slightly based on movement
+        let tilt = 0;
+        if(keys.ArrowLeft || (isTouching && touchTarget.x < player.x)) tilt = -0.2;
+        if(keys.ArrowRight || (isTouching && touchTarget.x > player.x)) tilt = 0.2;
+        ctx.rotate(tilt);
+
+        // Body (Voyager 2 style dish)
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.arc(0, 0, player.width/2, 0, Math.PI, true); // Dish pointing up
+        ctx.fill();
+
+        // Antenna
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -player.height/2);
+        ctx.stroke();
+
+        // Base/Bus
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(-player.width/4, 0, player.width/2, player.height/2);
+
+        // Thruster
+        ctx.fillStyle = '#38bdf8'; // Cyan flame
+        ctx.fillRect(-2, player.height/2, 4, 10 + Math.random()*5);
+
+        ctx.restore();
+    }
+
+    function drawEntities() {
+        // Collectibles
+        for (let i = 0; i < collectibles.length; i++) {
+            let c = collectibles[i];
+            c.pulse += 0.1;
+            let glow = 8 + Math.sin(c.pulse) * 4;
+            
+            ctx.fillStyle = '#6ef0ff'; // Cyan
+            ctx.shadowBlur = glow;
+            ctx.shadowColor = '#6ef0ff';
+            
+            // Diamond shape
+            ctx.beginPath();
+            ctx.moveTo(c.x + c.width/2, c.y);
+            ctx.lineTo(c.x + c.width, c.y + c.height/2);
+            ctx.lineTo(c.x + c.width/2, c.y + c.height);
+            ctx.lineTo(c.x, c.y + c.height/2);
+            ctx.fill();
+            
+            ctx.shadowBlur = 0;
+        }
+
+        // Obstacles (Peaks)
+        for (let i = 0; i < obstacles.length; i++) {
+            let o = obstacles[i];
+            
+            // Draw mountain peak
+            let gradient = ctx.createLinearGradient(o.x, o.y, o.x, o.y + o.height);
+            gradient.addColorStop(0, '#cbd5e1'); // Snowy top
+            gradient.addColorStop(0.3, '#64748b'); // Grey rock
+            gradient.addColorStop(1, '#0f172a'); // Dark base
+            
+            ctx.fillStyle = gradient; 
+            
+            ctx.beginPath();
+            ctx.moveTo(o.x + o.width/2, o.y); // Peak
+            ctx.lineTo(o.x + o.width, o.y + o.height); // Bottom right
+            ctx.lineTo(o.x, o.y + o.height); // Bottom left
+            ctx.closePath();
+            ctx.fill();
+            
+            // Shadow side
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.4)';
+            ctx.beginPath();
+            ctx.moveTo(o.x + o.width/2, o.y);
+            ctx.lineTo(o.x + o.width, o.y + o.height);
+            ctx.lineTo(o.x + o.width/2, o.y + o.height);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+
+    function drawBackground() {
+        ctx.fillStyle = '#05060f';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Scrolling Craters
+        bgStars.forEach(s => {
+            // Dark crater floor
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.radius, 0, Math.PI*2);
+            ctx.fill();
+            
+            // Crater rim
+            ctx.strokeStyle = 'rgba(100, 116, 139, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.radius, 0, Math.PI*2);
+            ctx.stroke();
+
+            s.y += s.speed + (scoreFrames/2000);
+            if(s.y - s.radius > canvas.height) {
+                s.y = -s.radius;
+                s.x = Math.random() * canvas.width;
+            }
+        });
+    }
+
+    function checkCollisionRect(r1, r2) {
+        return !(r2.x > r1.x + r1.width || 
+                 r2.x + r2.width < r1.x || 
+                 r2.y > r1.y + r1.height ||
+                 r2.y + r2.height < r1.y);
+    }
+    
+    // Simple triangle collision (bounding box approximation is fine for this game, but let's make the peak hitbox smaller)
+    function checkCollisionPeak(pRect, peak) {
+        // Approximate peak with a smaller rectangle centered at the bottom
+        let peakRect = {
+            x: peak.x + peak.width * 0.2,
+            y: peak.y + peak.height * 0.4,
+            width: peak.width * 0.6,
+            height: peak.height * 0.6
+        };
+        return checkCollisionRect(pRect, peakRect);
+    }
+
+    function updatePhysics() {
+        // Player Movement
+        if (keys.ArrowLeft) player.x -= player.speed;
+        if (keys.ArrowRight) player.x += player.speed;
+        if (keys.ArrowUp) player.y -= player.speed;
+        if (keys.ArrowDown) player.y += player.speed;
+
+        if (isTouching) {
+            let dx = touchTarget.x - (player.x + player.width/2);
+            let dy = touchTarget.y - (player.y + player.height/2);
+            
+            if (Math.abs(dx) > player.speed) player.x += (dx / Math.abs(dx)) * player.speed;
+            if (Math.abs(dy) > player.speed) player.y += (dy / Math.abs(dy)) * player.speed;
+        }
+
+        // Clamp to screen
+        if(player.x < 0) player.x = 0;
+        if(player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+        if(player.y < 0) player.y = 0;
+        if(player.y > canvas.height - player.height) player.y = canvas.height - player.height;
+
+        // Hitbox
+        let pRect = { x: player.x + 5, y: player.y + 5, width: player.width - 10, height: player.height - 10 };
+
+        // Spawning
+        let spawnRate = Math.max(30, 80 - Math.floor(scoreFrames/100)); 
+        if (frames % spawnRate === 0) spawnEntity();
+
+        // Update Collectibles
+        for (let i = collectibles.length - 1; i >= 0; i--) {
+            collectibles[i].y += collectibles[i].speedY; // Move DOWN
+            
+            if (checkCollisionRect(pRect, collectibles[i])) {
+                dataCollected++;
+                addXP(10);
+                ctx.fillStyle = 'rgba(110, 240, 255, 0.4)'; // Cyan flash
+                ctx.fillRect(0,0, canvas.width, canvas.height);
+                collectibles.splice(i, 1);
+                continue;
+            }
+
+            if (collectibles[i].y > canvas.height) {
+                collectibles.splice(i, 1);
+            }
+        }
+
+        // Update Obstacles
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].y += obstacles[i].speedY; // Move DOWN
+            
+            if (checkCollisionPeak(pRect, obstacles[i])) {
+                gameOver("Crashed into Mount Mommur!");
+                return;
+            }
+
+            if (obstacles[i].y > canvas.height) {
+                obstacles.splice(i, 1);
+            }
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        drawBackground();
+        updatePhysics();
+        if(!gameActive) return; 
+        
+        drawEntities();
+        drawPlayer();
+
+        // HUD
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let dist = Math.floor(secondsAlive * 15); // km mapped
+        
+        ctx.fillStyle = "rgba(15, 20, 48, 0.8)";
+        ctx.fillRect(5, 5, 150, 60);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Mapped: ${dist} km`, 10, 25);
+        ctx.fillStyle = "#6ef0ff"; // Cyan
+        ctx.fillText(`🕳️ Scans: ${dataCollected}/5`, 10, 45);
+        
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+
+        // Achievement check
+        if (secondsAlive >= 20 && dataCollected >= 5 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Ancient Surveyor Badge Unlocked!", "You survived the rugged terrain! +100 XP", "⛰️");
+            updateProgress();
+        }
+
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Restart Flyby";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 5);
+        
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You flew for ${secondsAlive}s.</p>
+            <p class="text-star-cyan mb-4 text-sm font-bold">🕳️ Scanned ${dataCollected} Craters</p>
+            ${!achievements.playedGame ? `<p class="text-oberon-light text-sm mb-4 text-center px-2">Survive 20s AND collect 5 scans for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        
+        if(secondsAlive > 5 && !winStatus) {
+            addXP(5);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        initGame();
+    });
+</script>
+</body>
+</html>
