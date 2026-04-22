@@ -54,13 +54,30 @@
         }
         .btn-press:active { transform: scale(0.95); }
 
-        .planet-wrapper { position: relative; cursor: pointer; z-index: 10;}
+        .planet-wrapper, .moon-wrapper { position: relative; cursor: pointer; z-index: 10; }
         .planet-orb {
             border-radius: 50%; position: relative; 
             transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+            transform-origin: center center;
         }
 
-        .planet-wrapper:hover .planet-orb { transform: scale(1.10); filter: brightness(1.15); }
+        .planet-wrapper > span, .moon-wrapper > span {
+            transition: transform 0.3s ease, color 0.3s ease, filter 0.3s ease;
+            transform-origin: center center;
+            display: inline-block;
+        }
+
+        .planet-wrapper:hover .planet-orb,
+        .moon-wrapper:hover .planet-orb {
+            transform: scale(1.18);
+            filter: brightness(1.18);
+        }
+
+        .planet-wrapper:hover > span,
+        .moon-wrapper:hover > span {
+            transform: scale(1.16);
+            filter: brightness(1.12);
+        }
 
         /* =========================================================
            SCIENTIFIC PHOTO-REALISTIC PLANET CSS (STATIC 3D)
@@ -293,6 +310,140 @@
         }
 
         body.navigating { pointer-events: none; }
+
+
+        .planet-zoom-shell {
+            position: fixed;
+            inset: 0;
+            z-index: 999998;
+            pointer-events: none;
+            overflow: hidden;
+            opacity: 1;
+        }
+
+        .zoom-starfield {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.9) 0 1px, transparent 1.5px),
+                radial-gradient(circle at 80% 25%, rgba(255,255,255,0.75) 0 1px, transparent 1.4px),
+                radial-gradient(circle at 65% 70%, rgba(255,255,255,0.6) 0 1px, transparent 1.3px),
+                radial-gradient(circle at 40% 80%, rgba(255,255,255,0.45) 0 1px, transparent 1.2px),
+                radial-gradient(circle at 15% 65%, rgba(255,255,255,0.55) 0 1px, transparent 1.2px),
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08), rgba(0,0,0,0.7) 70%);
+            opacity: 0.9;
+            transition: opacity 1s ease;
+        }
+
+        .planet-zoom-stage {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .planet-zoom-world {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2000px;
+            height: 2000px;
+            margin-top: -1000px;
+            margin-left: -1000px;
+            border-radius: 50%;
+            transform-origin: center center;
+            will-change: transform, filter, opacity;
+            overflow: visible;
+        }
+
+        .planet-zoom-disc {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            overflow: hidden;
+            isolation: isolate;
+            background: #222;
+        }
+
+        .planet-zoom-layer {
+            position: absolute;
+            inset: -12%;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.7s ease, transform 1.2s ease, filter 1.2s ease;
+            will-change: transform, opacity;
+        }
+
+        .planet-zoom-layer.active { opacity: 1; }
+
+        .planet-zoom-base {
+            inset: 0;
+            opacity: 1;
+            transition: none;
+        }
+
+        .planet-zoom-atmosphere {
+            inset: -2.5%;
+            border-radius: 50%;
+            mix-blend-mode: screen;
+            opacity: 0;
+            filter: blur(6px);
+            transition: opacity 0.7s ease, transform 1.2s ease;
+        }
+
+        .planet-zoom-shadow {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, transparent 0 35%, rgba(0,0,0,0.12) 55%, rgba(0,0,0,0.78) 100%);
+            mix-blend-mode: multiply;
+            pointer-events: none;
+        }
+
+        .planet-zoom-rim {
+            position: absolute;
+            inset: -1%;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 0 30px rgba(255,255,255,0.08), inset 0 0 28px rgba(255,255,255,0.06);
+            pointer-events: none;
+        }
+
+        .planet-zoom-flash {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.18), rgba(255,255,255,0.04) 25%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        @media (max-width: 900px), (max-height: 900px) {
+            .utility-row {
+                position: sticky;
+                bottom: 0;
+                z-index: 40;
+                margin-top: 0.75rem;
+                padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+                background: linear-gradient(to top, rgba(0,0,0,0.94), rgba(0,0,0,0.70), transparent);
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.75rem;
+            }
+            .utility-row button {
+                padding: 0.9rem;
+                border-radius: 1rem;
+            }
+            .utility-row button span { font-size: 2rem; }
+            .utility-row h2 { font-size: 1rem; line-height: 1.15; }
+            .utility-row p { font-size: 0.73rem; line-height: 1.3; }
+        }
+
+        @media (max-width: 640px) {
+            .utility-row {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body class="font-body text-white antialiased overflow-x-hidden" ontouchstart="">
@@ -711,175 +862,472 @@
 
 <script>
     /**
-     * Highly Optimized Single-Pass Procedural Texture Generator
+     * Per-world cinematic zoom metadata and layered closeup generator
      */
-    function generateAdvancedTerrainSVG(type) {
-        let svgBody = '';
-        
-        if (type === 'rocky') {
-            svgBody = `
-                <filter id="tex">
-                    <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="6" result="noise"/>
-                    <feColorMatrix type="matrix" values="0.5 0 0 0 0  0 0.5 0 0 0  0 0 0.5 0 0  0 0 0 3 -1" result="colored"/>
-                </filter>
-                <rect width="100%" height="100%" filter="url(#tex)" opacity="0.6" mix-blend-mode="multiply"/>
-            `;
-        } else if (type === 'water') {
-            svgBody = `
-                <filter id="tex">
-                    <feTurbulence type="fractalNoise" baseFrequency="0.008" numOctaves="5" result="noise"/>
-                    <feColorMatrix type="matrix" values="1 1 1 0 0  1 1 1 0 0  1 1 1 0 0  0 0 0 2 -0.8" result="clouds"/>
-                </filter>
-                <rect width="100%" height="100%" filter="url(#tex)" opacity="0.8" mix-blend-mode="screen"/>
-            `;
-        } else if (type === 'gas') {
-            svgBody = `
-                <filter id="tex">
-                    <feTurbulence type="fractalNoise" baseFrequency="0.002 0.02" numOctaves="5" result="noise"/>
-                    <feColorMatrix type="matrix" values="1 0 0 0 0  0 0.8 0 0 0  0 0.6 0 0 0  0 0 0 1.5 0" result="colored"/>
-                </filter>
-                <rect width="100%" height="100%" filter="url(#tex)" opacity="0.7" mix-blend-mode="overlay"/>
-            `;
-        } else if (type === 'ice') {
-            svgBody = `
-                <filter id="tex">
-                    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" result="noise"/>
-                    <feColorMatrix type="matrix" values="1 1 1 0 0  1 1 1 0 0  1 1 1 0 0  0 0 0 4 -1.5" result="cracks"/>
-                </filter>
-                <rect width="100%" height="100%" filter="url(#tex)" opacity="0.5" mix-blend-mode="screen"/>
-            `;
-        } else if (type === 'sun') {
-            svgBody = `
-                <filter id="tex">
-                    <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="5" result="noise"/>
-                    <feColorMatrix type="matrix" values="1 0 0 0 0  0 0.5 0 0 0  0 0 0 0 0  0 0 0 2 0" result="colored"/>
-                </filter>
-                <rect width="100%" height="100%" filter="url(#tex)" opacity="0.6" mix-blend-mode="overlay"/>
-            `;
+    const zoomProfiles = {
+        sun: { feature: 'Active Region', target: { x: 0.72, y: 0.34 }, atmosphere: true, duration: 2150 },
+        mercury: { feature: 'Caloris Basin', target: { x: 0.61, y: 0.43 }, duration: 1950 },
+        venus: { feature: 'Cloud Deck', target: { x: 0.56, y: 0.37 }, atmosphere: true, duration: 2050 },
+        earth: { feature: 'Cloud Bands', target: { x: 0.58, y: 0.42 }, atmosphere: true, duration: 2050 },
+        luna: { feature: 'Ray Crater Zone', target: { x: 0.46, y: 0.52 }, duration: 2300 },
+        mars: { feature: 'Valles Marineris', target: { x: 0.63, y: 0.49 }, atmosphere: true, duration: 2050 },
+        deimos: { feature: 'Cratered Face', target: { x: 0.54, y: 0.46 }, duration: 1850 },
+        phobos: { feature: 'Stickney Crater', target: { x: 0.48, y: 0.44 }, duration: 1850 },
+        'asteroid-belt': { feature: 'Main Belt Cluster', target: { x: 0.57, y: 0.46 }, duration: 1850 },
+        ceres: { feature: 'Occator Bright Spots', target: { x: 0.55, y: 0.44 }, duration: 2300 },
+        vesta: { feature: 'Rheasilvia Basin', target: { x: 0.61, y: 0.46 }, duration: 2300 },
+        pallas: { feature: 'Cratered Highlands', target: { x: 0.53, y: 0.41 }, duration: 2300 },
+        hygiea: { feature: 'Dark Terrain', target: { x: 0.56, y: 0.48 }, duration: 2300 },
+        jupiter: { feature: 'Great Red Spot', target: { x: 0.63, y: 0.66 }, atmosphere: true, duration: 2200 },
+        io: { feature: 'Sulfur Plains', target: { x: 0.52, y: 0.42 }, duration: 2300 },
+        europa: { feature: 'Chaos Terrain', target: { x: 0.46, y: 0.39 }, duration: 1950 },
+        ganymede: { feature: 'Grooved Terrain', target: { x: 0.56, y: 0.47 }, duration: 1950 },
+        callisto: { feature: 'Valhalla Basin', target: { x: 0.49, y: 0.47 }, duration: 1950 },
+        saturn: { feature: 'Storm Band', target: { x: 0.60, y: 0.43 }, atmosphere: true, duration: 2200 },
+        mimas: { feature: 'Herschel Crater', target: { x: 0.40, y: 0.35 }, duration: 1850 },
+        enceladus: { feature: 'Tiger Stripes', target: { x: 0.55, y: 0.65 }, duration: 2300 },
+        rhea: { feature: 'Bright Ice Terrain', target: { x: 0.51, y: 0.41 }, duration: 1850 },
+        titan: { feature: 'Methane Sea Margin', target: { x: 0.57, y: 0.56 }, atmosphere: true, duration: 2380 },
+        iapetus: { feature: 'Dark-Light Divide', target: { x: 0.50, y: 0.49 }, duration: 2300 },
+        uranus: { feature: 'Methane Haze', target: { x: 0.54, y: 0.40 }, atmosphere: true, duration: 2480 },
+        miranda: { feature: 'Patchwork Cliffs', target: { x: 0.47, y: 0.44 }, duration: 2300 },
+        ariel: { feature: 'Tectonic Chasmata', target: { x: 0.56, y: 0.45 }, duration: 2300 },
+        umbriel: { feature: 'Dark Crater Plain', target: { x: 0.56, y: 0.47 }, duration: 2300 },
+        titania: { feature: 'Fault Canyon', target: { x: 0.59, y: 0.42 }, duration: 2300 },
+        oberon: { feature: 'Bright-Rim Craters', target: { x: 0.49, y: 0.43 }, duration: 2300 },
+        neptune: { feature: 'Storm System', target: { x: 0.58, y: 0.44 }, atmosphere: true, duration: 2480 },
+        triton: { feature: 'Nitrogen Frost', target: { x: 0.55, y: 0.38 }, duration: 2300 },
+        proteus: { feature: 'Rugged Craters', target: { x: 0.47, y: 0.43 }, duration: 1850 },
+        nereid: { feature: 'Icy Bright Patches', target: { x: 0.55, y: 0.44 }, duration: 1850 },
+        larissa: { feature: 'Dark Rocky Terrain', target: { x: 0.50, y: 0.47 }, duration: 1850 },
+        'kuiper-belt': { feature: 'Icy Frontier', target: { x: 0.56, y: 0.46 }, duration: 1850 },
+        arrokoth: { feature: 'Bi-lobed Ridge', target: { x: 0.53, y: 0.43 }, duration: 2300 },
+        quaoar: { feature: 'Frozen Highlands', target: { x: 0.52, y: 0.41 }, duration: 2300 },
+        orcus: { feature: 'Icy Basin', target: { x: 0.58, y: 0.47 }, duration: 2300 },
+        salacia: { feature: 'Dark Ice Plain', target: { x: 0.54, y: 0.48 }, duration: 2300 },
+        'dwarf-planets': { feature: 'Trans-Neptunian Zone', target: { x: 0.56, y: 0.48 }, duration: 1850 },
+        pluto: { feature: 'Sputnik Planitia', target: { x: 0.43, y: 0.60 }, duration: 1950 },
+        eris: { feature: 'Bright Frost Field', target: { x: 0.56, y: 0.44 }, duration: 2300 },
+        haumea: { feature: 'Elongated Ice Face', target: { x: 0.62, y: 0.46 }, duration: 1950 },
+        makemake: { feature: 'Methane Frost', target: { x: 0.52, y: 0.40 }, duration: 2300 }
+    };
+
+    const zoomVariantSets = {
+        sun: [
+            { feature: 'Sunspot Group', target: { x: 0.68, y: 0.38 }, overlays: ['storm'], micro: ['storm'] },
+            { feature: 'Granulation Field', target: { x: 0.54, y: 0.48 }, overlays: ['storm'], micro: ['storm'] },
+            { feature: 'Prominence Edge', target: { x: 0.79, y: 0.27 }, overlays: ['storm'], micro: ['storm'] },
+            { feature: 'Active Plage', target: { x: 0.61, y: 0.58 }, overlays: ['storm'], micro: ['storm'] }
+        ],
+        mercury: [
+            { feature: 'Caloris Basin', target: { x: 0.61, y: 0.43 }, overlays: ['crater'], micro: ['crater'] },
+            { feature: 'Scarp Province', target: { x: 0.52, y: 0.57 }, overlays: ['crater', 'canyon'], micro: ['crater'] },
+            { feature: 'Crater Chains', target: { x: 0.43, y: 0.38 }, overlays: ['crater'], micro: ['crater'] },
+            { feature: 'Heavily Pitted Terrain', target: { x: 0.69, y: 0.58 }, overlays: ['crater'], micro: ['crater'] }
+        ],
+        venus: [
+            { feature: 'Cloud Deck Swirl', target: { x: 0.56, y: 0.36 }, overlays: ['cloud'], micro: ['cloud'] },
+            { feature: 'Bright Sulfur Bands', target: { x: 0.47, y: 0.48 }, overlays: ['cloud'], micro: ['cloud'] },
+            { feature: 'Polar Haze Fold', target: { x: 0.61, y: 0.28 }, overlays: ['cloud', 'storm'], micro: ['cloud'] },
+            { feature: 'Upper Atmosphere Streaks', target: { x: 0.64, y: 0.57 }, overlays: ['cloud'], micro: ['cloud'] }
+        ],
+        earth: [
+            { feature: 'Cyclone Spiral', target: { x: 0.60, y: 0.44 }, overlays: ['cloud', 'storm'], micro: ['cloud'] },
+            { feature: 'Aurora Arc', target: { x: 0.48, y: 0.24 }, overlays: ['cloud'], micro: ['cloud'] },
+            { feature: 'Ocean Cloud Deck', target: { x: 0.56, y: 0.54 }, overlays: ['cloud'], micro: ['cloud'] },
+            { feature: 'Sunlit Weather Front', target: { x: 0.41, y: 0.46 }, overlays: ['cloud'], micro: ['cloud'] }
+        ],
+        luna: [
+            { feature: 'Ray Crater Zone', target: { x: 0.46, y: 0.52 }, overlays: ['crater'], micro: ['crater'] },
+            { feature: 'Mare Highlands Edge', target: { x: 0.57, y: 0.43 }, overlays: ['crater'], micro: ['crater'] },
+            { feature: 'Crater Cluster', target: { x: 0.36, y: 0.38 }, overlays: ['crater'], micro: ['crater'] },
+            { feature: 'Bright Highlands', target: { x: 0.64, y: 0.33 }, overlays: ['crater'], micro: ['crater'] }
+        ],
+        mars: [
+            { feature: 'Valles Marineris', target: { x: 0.63, y: 0.49 }, overlays: ['canyon'], micro: ['canyon', 'crater'] },
+            { feature: 'Olympus Mons Caldera', target: { x: 0.44, y: 0.34 }, overlays: ['crater'], micro: ['crater'] },
+            { feature: 'Polar Frost Rim', target: { x: 0.52, y: 0.20 }, overlays: ['cloud'], micro: ['cloud'] },
+            { feature: 'Dust Streaked Plains', target: { x: 0.57, y: 0.63 }, overlays: ['canyon'], micro: ['canyon'] }
+        ],
+        jupiter: [
+            { feature: 'Great Red Spot', target: { x: 0.63, y: 0.66 }, overlays: ['storm'], micro: ['storm'] },
+            { feature: 'Turbulent Band Shear', target: { x: 0.55, y: 0.48 }, overlays: ['storm', 'cloud'], micro: ['storm'] },
+            { feature: 'White Oval Cluster', target: { x: 0.47, y: 0.58 }, overlays: ['storm'], micro: ['storm'] },
+            { feature: 'Polar Vortex Tangle', target: { x: 0.50, y: 0.22 }, overlays: ['storm'], micro: ['storm'] }
+        ],
+        saturn: [
+            { feature: 'Storm Band', target: { x: 0.60, y: 0.43 }, overlays: ['storm', 'cloud'], micro: ['storm'] },
+            { feature: 'Cream Band Turbulence', target: { x: 0.50, y: 0.53 }, overlays: ['cloud'], micro: ['cloud'] },
+            { feature: 'Polar Hexagon Hint', target: { x: 0.52, y: 0.24 }, overlays: ['storm'], micro: ['storm'] },
+            { feature: 'Equatorial Haze Layer', target: { x: 0.58, y: 0.61 }, overlays: ['cloud'], micro: ['cloud'] }
+        ],
+        uranus: [
+            { feature: 'Methane Haze', target: { x: 0.54, y: 0.40 }, overlays: ['cloud'], micro: ['cloud'] },
+            { feature: 'Polar Cap Glow', target: { x: 0.51, y: 0.20 }, overlays: ['cloud'], micro: ['cloud'] },
+            { feature: 'Faint Band Layer', target: { x: 0.47, y: 0.49 }, overlays: ['cloud'], micro: ['cloud'] },
+            { feature: 'Soft Storm Patch', target: { x: 0.63, y: 0.46 }, overlays: ['storm'], micro: ['storm'] }
+        ],
+        neptune: [
+            { feature: 'Dark Storm Patch', target: { x: 0.58, y: 0.44 }, overlays: ['storm'], micro: ['storm'] },
+            { feature: 'Methane Cloud Streaks', target: { x: 0.52, y: 0.34 }, overlays: ['cloud', 'storm'], micro: ['cloud'] },
+            { feature: 'Polar Haze Swirl', target: { x: 0.49, y: 0.22 }, overlays: ['cloud'], micro: ['storm'] },
+            { feature: 'Wind-Sheared Bands', target: { x: 0.62, y: 0.57 }, overlays: ['storm'], micro: ['storm'] }
+        ],
+        europa: [
+            { feature: 'Chaos Terrain', target: { x: 0.46, y: 0.39 }, overlays: ['fracture'], micro: ['fracture'] },
+            { feature: 'Crosscut Fractures', target: { x: 0.56, y: 0.45 }, overlays: ['fracture'], micro: ['fracture'] },
+            { feature: 'Ridge Province', target: { x: 0.39, y: 0.56 }, overlays: ['fracture'], micro: ['fracture'] },
+            { feature: 'Icy Broken Plates', target: { x: 0.63, y: 0.50 }, overlays: ['fracture'], micro: ['fracture'] }
+        ],
+        titan: [
+            { feature: 'Methane Sea Margin', target: { x: 0.57, y: 0.56 }, overlays: ['cloud'], micro: ['cloud'] },
+            { feature: 'Orange Haze Break', target: { x: 0.48, y: 0.41 }, overlays: ['cloud'], micro: ['cloud'] },
+            { feature: 'Dark Hydrocarbon Plain', target: { x: 0.61, y: 0.63 }, overlays: ['cloud'], micro: ['cloud'] },
+            { feature: 'North Polar Lake Zone', target: { x: 0.54, y: 0.28 }, overlays: ['cloud'], micro: ['cloud'] }
+        ],
+        enceladus: [
+            { feature: 'Tiger Stripes', target: { x: 0.55, y: 0.65 }, overlays: ['fracture'], micro: ['fracture'] },
+            { feature: 'Bright Fissure Fan', target: { x: 0.49, y: 0.59 }, overlays: ['fracture'], micro: ['fracture'] },
+            { feature: 'South Polar Fractures', target: { x: 0.59, y: 0.71 }, overlays: ['fracture'], micro: ['fracture'] },
+            { feature: 'Icy Groove Field', target: { x: 0.43, y: 0.44 }, overlays: ['fracture'], micro: ['fracture'] }
+        ],
+        triton: [
+            { feature: 'Nitrogen Frost', target: { x: 0.55, y: 0.38 }, overlays: ['fracture'], micro: ['fracture'] },
+            { feature: 'Dark Wind Streaks', target: { x: 0.48, y: 0.53 }, overlays: ['storm'], micro: ['storm'] },
+            { feature: 'Pink Ice Plain', target: { x: 0.62, y: 0.45 }, overlays: ['fracture'], micro: ['fracture'] },
+            { feature: 'Cantaloupe Terrain', target: { x: 0.41, y: 0.41 }, overlays: ['fracture'], micro: ['fracture'] }
+        ],
+        pluto: [
+            { feature: 'Sputnik Planitia', target: { x: 0.43, y: 0.60 }, overlays: ['fracture'], micro: ['fracture'] },
+            { feature: 'Bladed Methane Ice', target: { x: 0.59, y: 0.39 }, overlays: ['fracture'], micro: ['fracture'] },
+            { feature: 'Dark Equatorial Terrain', target: { x: 0.55, y: 0.49 }, overlays: ['crater'], micro: ['crater'] },
+            { feature: 'Frosted Highlands', target: { x: 0.38, y: 0.42 }, overlays: ['fracture'], micro: ['fracture'] }
+        ]
+    };
+
+    function getZoomKey(btn, url) {
+        return btn.dataset.wrapper || (url.split('/').pop() || '').replace('.html', '');
+    }
+
+    function getOrbBackground(orb) {
+        const compStyle = window.getComputedStyle(orb);
+        return compStyle.backgroundImage && compStyle.backgroundImage !== 'none' ? compStyle.backgroundImage : compStyle.background;
+    }
+
+    function chooseZoomVariant(key, profile) {
+        const variants = zoomVariantSets[key];
+        if (!variants || !variants.length) {
+            return {
+                feature: profile.feature,
+                target: profile.target,
+                overlays: [],
+                micro: []
+            };
         }
 
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="2000">${svgBody}</svg>`;
-        return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+        const pick = variants[Math.floor(Math.random() * variants.length)];
+        return {
+            feature: pick.feature || profile.feature,
+            target: pick.target || profile.target,
+            overlays: pick.overlays || [],
+            micro: pick.micro || pick.overlays || []
+        };
+    }
+
+    function featureGradient(key, variant) {
+        const featureName = (variant?.feature || '').toLowerCase();
+        if (featureName.includes('red spot')) {
+            return 'radial-gradient(ellipse at 63% 66%, rgba(177,75,48,0.64), transparent 10%), radial-gradient(ellipse at 68% 64%, rgba(246,186,132,0.22), transparent 8%), repeating-linear-gradient(180deg, rgba(255,255,255,0.06) 0 22px, rgba(90,45,15,0.05) 22px 44px)';
+        }
+        if (featureName.includes('valles') || featureName.includes('canyon')) {
+            return 'linear-gradient(168deg, transparent 44%, rgba(98,29,21,0.50) 46%, rgba(201,132,88,0.20) 49%, rgba(93,27,20,0.46) 52%, transparent 56%), radial-gradient(circle at 32% 20%, rgba(255,255,255,0.16), transparent 8%)';
+        }
+        if (featureName.includes('fracture') || featureName.includes('tiger') || featureName.includes('chaos')) {
+            return 'repeating-linear-gradient(135deg, rgba(128,79,20,0.24) 0 5px, transparent 5px 18px), radial-gradient(circle at 46% 39%, rgba(255,255,255,0.16), transparent 8%), repeating-linear-gradient(20deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 14px)';
+        }
+        if (featureName.includes('cyclone') || featureName.includes('storm') || featureName.includes('vortex')) {
+            return 'radial-gradient(circle at 58% 44%, rgba(255,255,255,0.20), transparent 12%), conic-gradient(from 10deg at 58% 44%, rgba(255,255,255,0.18), transparent 20%, rgba(255,255,255,0.10) 36%, transparent 58%, rgba(255,255,255,0.16) 85%, transparent)';
+        }
+
+        const gradients = {
+            sun: 'radial-gradient(circle at 72% 34%, rgba(255,245,186,0.55), transparent 10%), radial-gradient(circle at 60% 60%, rgba(255,110,36,0.3), transparent 18%), radial-gradient(circle at 30% 28%, rgba(110,0,0,0.35), transparent 12%)',
+            mercury: 'radial-gradient(circle at 61% 43%, rgba(255,255,255,0.12), transparent 7%), radial-gradient(circle at 37% 60%, rgba(0,0,0,0.38), transparent 10%), radial-gradient(circle at 68% 58%, rgba(0,0,0,0.3), transparent 8%)',
+            venus: 'radial-gradient(circle at 55% 38%, rgba(255,255,255,0.18), transparent 12%), repeating-linear-gradient(14deg, rgba(255,236,180,0.10) 0 20px, rgba(216,152,24,0.10) 20px 42px)',
+            earth: 'radial-gradient(circle at 58% 42%, rgba(255,255,255,0.22), transparent 10%), radial-gradient(ellipse at 42% 58%, rgba(34,197,94,0.28), transparent 12%), radial-gradient(ellipse at 70% 34%, rgba(255,255,255,0.16), transparent 8%)',
+            luna: 'radial-gradient(circle at 46% 52%, rgba(255,255,255,0.18), transparent 6%), radial-gradient(circle at 50% 50%, rgba(0,0,0,0.26), transparent 10%)',
+            mars: 'radial-gradient(ellipse at 63% 49%, rgba(120,27,27,0.50), transparent 10%), linear-gradient(168deg, transparent 47%, rgba(255,210,180,0.10) 50%, transparent 53%), radial-gradient(circle at 30% 18%, rgba(255,255,255,0.18), transparent 8%)',
+            jupiter: 'radial-gradient(ellipse at 63% 66%, rgba(177,75,48,0.64), transparent 10%), repeating-linear-gradient(180deg, rgba(255,255,255,0.06) 0 22px, rgba(90,45,15,0.05) 22px 44px)',
+            saturn: 'radial-gradient(ellipse at 60% 43%, rgba(255,244,210,0.18), transparent 10%), repeating-linear-gradient(180deg, rgba(255,255,255,0.05) 0 20px, rgba(110,88,44,0.06) 20px 42px)',
+            uranus: 'radial-gradient(circle at 54% 40%, rgba(255,255,255,0.15), transparent 9%), repeating-linear-gradient(180deg, rgba(255,255,255,0.03) 0 28px, rgba(80,190,240,0.03) 28px 56px)',
+            neptune: 'radial-gradient(circle at 58% 44%, rgba(10,30,120,0.45), transparent 9%), repeating-linear-gradient(180deg, rgba(255,255,255,0.05) 0 24px, rgba(18,58,138,0.06) 24px 46px)',
+            europa: 'repeating-linear-gradient(135deg, rgba(128,79,20,0.28) 0 4px, transparent 4px 18px), radial-gradient(circle at 46% 39%, rgba(255,255,255,0.16), transparent 8%)',
+            titan: 'radial-gradient(circle at 57% 56%, rgba(59,33,9,0.45), transparent 10%), linear-gradient(180deg, rgba(244,163,57,0.15), rgba(79,45,12,0.05))',
+            pluto: 'radial-gradient(ellipse at 43% 60%, rgba(255,247,226,0.45), transparent 12%), radial-gradient(circle at 60% 44%, rgba(99,39,14,0.18), transparent 8%)'
+        };
+        return gradients[key] || 'radial-gradient(circle at 56% 46%, rgba(255,255,255,0.14), transparent 9%), radial-gradient(circle at 36% 62%, rgba(0,0,0,0.22), transparent 11%)';
+    }
+
+    function microTexture(key, variant) {
+        const genericRock = 'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.06) 0 2px, transparent 2.4px), radial-gradient(circle at 70% 40%, rgba(0,0,0,0.12) 0 3px, transparent 3.4px), radial-gradient(circle at 54% 72%, rgba(255,255,255,0.05) 0 1.5px, transparent 1.9px)';
+        const microType = variant?.micro?.[0];
+        if (microType === 'crater') {
+            return 'radial-gradient(circle at 22% 28%, rgba(255,255,255,0.10) 0 4px, transparent 4.5px), radial-gradient(circle at 22% 28%, rgba(0,0,0,0.16) 5px 10px, transparent 10.5px), radial-gradient(circle at 62% 41%, rgba(0,0,0,0.14) 0 7px, transparent 7.8px), radial-gradient(circle at 74% 66%, rgba(255,255,255,0.07) 0 3px, transparent 3.6px), radial-gradient(circle at 74% 66%, rgba(0,0,0,0.12) 4px 8px, transparent 8.6px)';
+        }
+        if (microType === 'canyon') {
+            return 'repeating-linear-gradient(165deg, rgba(84,24,18,0.18) 0 8px, transparent 8px 34px), repeating-linear-gradient(176deg, rgba(255,214,168,0.08) 0 2px, transparent 2px 22px)';
+        }
+        if (microType === 'cloud') {
+            return 'radial-gradient(circle at 28% 34%, rgba(255,255,255,0.12) 0 18px, transparent 19px), radial-gradient(circle at 56% 48%, rgba(255,255,255,0.09) 0 22px, transparent 23px), radial-gradient(circle at 72% 60%, rgba(255,255,255,0.10) 0 16px, transparent 17px)';
+        }
+        if (microType === 'fracture') {
+            return 'repeating-linear-gradient(28deg, rgba(118,78,28,0.26) 0 2px, transparent 2px 18px), repeating-linear-gradient(148deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 15px)';
+        }
+        if (microType === 'storm') {
+            return 'repeating-linear-gradient(180deg, rgba(255,255,255,0.04) 0 12px, rgba(0,0,0,0.06) 12px 28px), radial-gradient(circle at 60% 44%, rgba(255,255,255,0.10) 0 18px, transparent 19px)';
+        }
+
+        const map = {
+            sun: 'repeating-radial-gradient(circle at 50% 50%, rgba(255,180,45,0.16) 0 12px, rgba(120,20,10,0.08) 12px 24px)',
+            earth: 'radial-gradient(circle at 35% 28%, rgba(255,255,255,0.14) 0 18px, transparent 19px), radial-gradient(circle at 58% 52%, rgba(255,255,255,0.1) 0 16px, transparent 17px)',
+            jupiter: 'repeating-linear-gradient(180deg, rgba(255,255,255,0.05) 0 12px, rgba(0,0,0,0.06) 12px 28px)',
+            saturn: 'repeating-linear-gradient(180deg, rgba(255,255,255,0.04) 0 14px, rgba(0,0,0,0.05) 14px 30px)',
+            europa: 'repeating-linear-gradient(30deg, rgba(124,78,25,0.24) 0 3px, transparent 3px 16px), repeating-linear-gradient(150deg, rgba(110,74,28,0.15) 0 2px, transparent 2px 22px)',
+            mars: 'radial-gradient(circle at 52% 24%, rgba(255,255,255,0.04) 0 10px, transparent 10px), radial-gradient(circle at 62% 68%, rgba(115,25,20,0.18) 0 20px, transparent 22px)',
+            pluto: 'radial-gradient(circle at 46% 60%, rgba(255,255,255,0.1) 0 16px, transparent 17px), radial-gradient(circle at 65% 36%, rgba(120,60,20,0.12) 0 14px, transparent 15px)'
+        };
+        return map[key] || genericRock;
+    }
+
+    function atmosphereGradient(key) {
+        const map = {
+            sun: 'radial-gradient(circle at center, transparent 66%, rgba(255,171,54,0.16) 74%, rgba(255,171,54,0.04) 86%, transparent 100%)',
+            venus: 'radial-gradient(circle at center, transparent 68%, rgba(255,220,145,0.16) 76%, transparent 92%)',
+            earth: 'radial-gradient(circle at center, transparent 68%, rgba(110,240,255,0.20) 76%, rgba(110,240,255,0.06) 88%, transparent 96%)',
+            mars: 'radial-gradient(circle at center, transparent 70%, rgba(255,185,125,0.10) 80%, transparent 95%)',
+            jupiter: 'radial-gradient(circle at center, transparent 70%, rgba(255,242,214,0.08) 80%, transparent 95%)',
+            saturn: 'radial-gradient(circle at center, transparent 70%, rgba(245,220,180,0.10) 80%, transparent 95%)',
+            titan: 'radial-gradient(circle at center, transparent 68%, rgba(255,168,74,0.14) 79%, transparent 95%)',
+            uranus: 'radial-gradient(circle at center, transparent 70%, rgba(150,220,255,0.10) 80%, transparent 95%)',
+            neptune: 'radial-gradient(circle at center, transparent 70%, rgba(110,155,255,0.12) 80%, transparent 95%)'
+        };
+        return map[key] || 'radial-gradient(circle at center, transparent 74%, rgba(255,255,255,0.04) 84%, transparent 95%)';
+    }
+
+    function createOverlayLayer(category, key) {
+        const layer = document.createElement('div');
+        layer.className = 'planet-zoom-layer';
+
+        const generators = {
+            crater: () => ({
+                backgroundImage: 'radial-gradient(circle at 28% 30%, rgba(255,255,255,0.18) 0 1.2%, transparent 1.4%), radial-gradient(circle at 28% 30%, rgba(0,0,0,0.32) 1.9% 4.8%, transparent 5.1%), radial-gradient(circle at 62% 44%, rgba(255,255,255,0.12) 0 0.9%, transparent 1.1%), radial-gradient(circle at 62% 44%, rgba(0,0,0,0.26) 1.4% 3.8%, transparent 4.1%), radial-gradient(circle at 74% 68%, rgba(255,255,255,0.12) 0 0.8%, transparent 1%), radial-gradient(circle at 74% 68%, rgba(0,0,0,0.22) 1.2% 3.2%, transparent 3.5%), radial-gradient(circle at 46% 62%, rgba(0,0,0,0.16) 0 2.8%, transparent 3.1%)',
+                mixBlendMode: 'multiply',
+                filter: 'contrast(1.22) blur(0.35px)',
+                opacity: '0'
+            }),
+            canyon: () => ({
+                backgroundImage: 'repeating-linear-gradient(168deg, transparent 0 10%, rgba(94,24,20,0.34) 10.4% 11.3%, rgba(255,214,168,0.12) 11.5% 11.9%, transparent 12.2% 24%), repeating-linear-gradient(175deg, transparent 0 16%, rgba(82,28,22,0.22) 16.3% 17%, transparent 17.3% 32%)',
+                mixBlendMode: 'multiply',
+                filter: 'blur(0.35px) contrast(1.08)',
+                opacity: '0'
+            }),
+            cloud: () => ({
+                backgroundImage: 'radial-gradient(circle at 30% 35%, rgba(255,255,255,0.20) 0 4%, transparent 4.3%), radial-gradient(circle at 58% 48%, rgba(255,255,255,0.16) 0 6%, transparent 6.3%), radial-gradient(circle at 74% 58%, rgba(255,255,255,0.18) 0 4.5%, transparent 4.9%), radial-gradient(circle at 44% 63%, rgba(255,255,255,0.12) 0 5%, transparent 5.3%)',
+                mixBlendMode: 'screen',
+                filter: 'blur(6px) brightness(1.08)',
+                opacity: '0'
+            }),
+            fracture: () => ({
+                backgroundImage: 'repeating-linear-gradient(32deg, rgba(130,84,28,0.30) 0 0.45%, transparent 0.45% 4.2%), repeating-linear-gradient(146deg, rgba(255,255,255,0.12) 0 0.18%, transparent 0.18% 3.6%), radial-gradient(circle at 55% 48%, rgba(255,255,255,0.08) 0 8%, transparent 8.5%)',
+                mixBlendMode: 'overlay',
+                filter: 'contrast(1.28) blur(0.18px)',
+                opacity: '0'
+            }),
+            storm: () => ({
+                backgroundImage: 'conic-gradient(from 25deg at 60% 46%, rgba(255,255,255,0.22), transparent 16%, rgba(255,255,255,0.08) 28%, transparent 46%, rgba(255,255,255,0.14) 66%, transparent 82%, rgba(255,255,255,0.20)), radial-gradient(circle at 60% 46%, rgba(255,255,255,0.16) 0 5%, transparent 5.4%)',
+                mixBlendMode: key === 'sun' ? 'screen' : 'overlay',
+                filter: 'blur(1.8px) saturate(1.18) contrast(1.08)',
+                opacity: '0'
+            })
+        };
+
+        const config = (generators[category] || generators.crater)();
+        layer.dataset.overlayCategory = category;
+        Object.assign(layer.style, config);
+        return layer;
+    }
+
+    function buildCloseupLayers(key, orbBackground, variant) {
+        const base = document.createElement('div');
+        base.className = 'planet-zoom-layer planet-zoom-base active';
+        base.style.background = orbBackground;
+
+        const feature = document.createElement('div');
+        feature.className = 'planet-zoom-layer';
+        feature.style.backgroundImage = featureGradient(key, variant);
+        feature.style.mixBlendMode = 'screen';
+        feature.style.filter = 'blur(1.2px) saturate(1.18) contrast(1.08)';
+        feature.style.opacity = '0';
+
+        const overlays = (variant?.overlays || []).map(category => createOverlayLayer(category, key));
+
+        const micro = document.createElement('div');
+        micro.className = 'planet-zoom-layer';
+        micro.style.backgroundImage = microTexture(key, variant);
+        micro.style.mixBlendMode = key === 'jupiter' || key === 'saturn' || key === 'neptune' || key === 'sun' ? 'screen' : 'overlay';
+        micro.style.opacity = '0';
+        micro.style.filter = 'contrast(1.28) saturate(1.12)';
+
+        const haze = document.createElement('div');
+        haze.className = 'planet-zoom-layer planet-zoom-atmosphere';
+        haze.style.backgroundImage = atmosphereGradient(key);
+
+        return { base, feature, overlays, micro, haze };
     }
 
     /**
-     * Cinematic Restrained Scale Engine with Ring Support
+     * Cinematic multi-layer zoom engine with per-world closeups and landmark targets
      */
     function zoomAndNavigate(event, url) {
         event.preventDefault();
         event.stopPropagation();
-        
+
         const btn = event.currentTarget;
         const orb = btn.querySelector('.planet-orb') || btn.querySelector('[data-type]');
-        
+
         if (!orb) {
-            document.body.style.transition = 'opacity 0.5s ease-out';
+            document.body.style.transition = 'opacity 0.45s ease-out';
             document.body.style.opacity = '0';
-            setTimeout(() => { window.location.href = url; }, 500);
+            setTimeout(() => { window.location.href = url; }, 450);
             return;
         }
 
-        document.body.classList.add('navigating');
-        document.body.style.overflow = 'hidden'; 
-        const viewHub = document.getElementById('view-hub');
-        const scrollArea = document.querySelector('.overflow-x-auto');
-        if (viewHub) viewHub.style.overflow = 'visible';
-        if (scrollArea) {
-            scrollArea.style.overflow = 'visible';
-            scrollArea.classList.remove('overflow-x-auto', 'snap-x');
-        }
-
+        const key = getZoomKey(btn, url);
+        const profile = zoomProfiles[key] || { feature: 'Surface Detail', target: { x: 0.56, y: 0.45 }, duration: 2300 };
+        const variant = chooseZoomVariant(key, profile);
         const rect = orb.getBoundingClientRect();
-        const orbType = orb.getAttribute('data-type') || 'rocky';
-        
+        const screenCenterX = window.innerWidth / 2;
+        const screenCenterY = window.innerHeight / 2;
+        const orbCenterX = rect.left + rect.width / 2;
+        const orbCenterY = rect.top + rect.height / 2;
+        const startX = orbCenterX - screenCenterX;
+        const startY = orbCenterY - screenCenterY;
+
+        document.body.classList.add('navigating');
+        document.body.style.overflow = 'hidden';
         orb.style.visibility = 'hidden';
         btn.classList.remove('badged', 'visited');
 
-        // Create massive 2000x2000 native-resolution container
-        const highResContainer = document.createElement('div');
-        const INTRINSIC_SIZE = 2000;
-        const initialScale = rect.width / INTRINSIC_SIZE;
-        
-        const screenCenterX = window.innerWidth / 2;
-        const screenCenterY = window.innerHeight / 2;
-        const orbCenterX = rect.left + (rect.width / 2);
-        const orbCenterY = rect.top + (rect.height / 2);
-        
-        const startX = orbCenterX - screenCenterX;
-        const startY = orbCenterY - screenCenterY;
-        
-        highResContainer.style.position = 'fixed';
-        highResContainer.style.top = '50%';
-        highResContainer.style.left = '50%';
-        highResContainer.style.width = `${INTRINSIC_SIZE}px`;
-        highResContainer.style.height = `${INTRINSIC_SIZE}px`;
-        highResContainer.style.marginTop = `-${INTRINSIC_SIZE / 2}px`;
-        highResContainer.style.marginLeft = `-${INTRINSIC_SIZE / 2}px`;
-        highResContainer.style.borderRadius = '50%';
-        highResContainer.style.zIndex = '999999';
-        highResContainer.style.pointerEvents = 'none';
-        
-        const compStyle = window.getComputedStyle(orb);
-        highResContainer.style.background = compStyle.background;
-        
-        // Ensure volumetric shadowing is maintained flawlessly at high scale
-        highResContainer.style.boxShadow = 'inset -80px -80px 150px rgba(0,0,0,0.9)';
-        highResContainer.style.transform = `translate(${startX}px, ${startY}px) scale(${initialScale})`;
-        
-        document.body.appendChild(highResContainer);
+        const shell = document.createElement('div');
+        shell.className = 'planet-zoom-shell';
 
-        // Render back rings FIRST so they go behind the planet and topography
+        const starfield = document.createElement('div');
+        starfield.className = 'zoom-starfield';
+        shell.appendChild(starfield);
+
+        const stage = document.createElement('div');
+        stage.className = 'planet-zoom-stage';
+        shell.appendChild(stage);
+
+        const world = document.createElement('div');
+        world.className = 'planet-zoom-world';
+        const intrinsicSize = 2000;
+        const initialScale = rect.width / intrinsicSize;
+        world.style.transform = `translate(${startX}px, ${startY}px) scale(${initialScale})`;
+
+        const disc = document.createElement('div');
+        disc.className = 'planet-zoom-disc';
+        world.appendChild(disc);
+
+        const orbBackground = getOrbBackground(orb);
+        const layers = buildCloseupLayers(key, orbBackground, variant);
+        disc.appendChild(layers.base);
+        disc.appendChild(layers.feature);
+        layers.overlays.forEach(layer => disc.appendChild(layer));
+        disc.appendChild(layers.micro);
+        if (profile.atmosphere) {
+            disc.appendChild(layers.haze);
+        }
+
+        const shadow = document.createElement('div');
+        shadow.className = 'planet-zoom-shadow';
+        disc.appendChild(shadow);
+
+        const rim = document.createElement('div');
+        rim.className = 'planet-zoom-rim';
+        disc.appendChild(rim);
+
+
         const backRing = orb.querySelector('.ring-back');
         if (backRing) {
-            highResContainer.style.overflow = 'visible';
-            highResContainer.appendChild(backRing.cloneNode(true));
+            world.style.overflow = 'visible';
+            world.appendChild(backRing.cloneNode(true));
         }
 
-        // Render one highly optimized, distinct topographical map
-        const highResOverlay = document.createElement('div');
-        highResOverlay.style.position = 'absolute';
-        highResOverlay.style.inset = '0';
-        highResOverlay.style.borderRadius = '50%';
-        highResOverlay.style.opacity = '0';
-        highResOverlay.style.transition = 'opacity 1s ease-in-out';
-        highResOverlay.style.backgroundImage = generateAdvancedTerrainSVG(orbType);
-        highResOverlay.style.backgroundSize = 'cover';
-        
-        highResContainer.appendChild(highResOverlay);
-
-        // Render front rings LAST so they dynamically clip perfectly over the front of the topography
         const frontRing = orb.querySelector('.ring-front');
         if (frontRing) {
-            highResContainer.appendChild(frontRing.cloneNode(true));
+            world.appendChild(frontRing.cloneNode(true));
         }
 
-        // Cap Zoom at exactly 85% of the shortest viewport dimension so we can see the whole planet perfectly
-        const viewportMin = Math.min(window.innerWidth, window.innerHeight);
-        const targetSize = viewportMin * 0.85; 
-        const targetScale = targetSize / INTRINSIC_SIZE;
-        
-        setTimeout(() => {
-            // Trigger beautiful zoom physics
-            highResContainer.style.transition = 'transform 1.4s cubic-bezier(0.65, 0, 0.15, 1)';
-            highResContainer.style.transform = `translate(0px, 0px) scale(${targetScale})`;
-            
-            // Fade out the UI around it
-            document.querySelectorAll('button, h1, p, span, .glass-panel, .absolute').forEach(el => {
-                el.style.transition = 'opacity 0.8s ease-out';
-                el.style.opacity = '0';
-            });
-            
-            // Smoothly fade in our topographical texture mapping overlay during the push
-            setTimeout(() => {
-                highResOverlay.style.opacity = '1';
-            }, 100);
-            
-        }, 20);
+        const flash = document.createElement('div');
+        flash.className = 'planet-zoom-flash';
+        shell.appendChild(flash);
 
-        // Wait to let the user admire the HD rendered sphere, then cleanly navigate away
+        stage.appendChild(world);
+        document.body.appendChild(shell);
+
+        const viewportMin = Math.min(window.innerWidth, window.innerHeight);
+        const targetSize = viewportMin * 0.88;
+        const targetScale = targetSize / intrinsicSize;
+        const settleX = (0.5 - variant.target.x) * 180;
+        const settleY = (0.5 - variant.target.y) * 140;
+        const closeScale = targetScale * (2.14 + Math.random() * 0.22);
+
+        document.querySelectorAll('button, h1, p, span, .glass-panel, .absolute').forEach(el => {
+            el.style.transition = 'opacity 0.75s ease-out';
+            el.style.opacity = '0';
+        });
+
+        requestAnimationFrame(() => {
+            world.style.transition = 'transform 1.15s cubic-bezier(0.65, 0, 0.15, 1), filter 1.1s ease';
+            world.style.transform = `translate(0px, 0px) scale(${targetScale})`;
+            world.style.filter = 'saturate(1.05)';
+            flash.style.opacity = '0.25';
+            setTimeout(() => { flash.style.opacity = '0'; }, 260);
+
+            setTimeout(() => {
+                layers.feature.classList.add('active');
+                layers.feature.style.opacity = '0.78';
+                layers.overlays.forEach((layer, index) => { layer.classList.add('active'); layer.style.opacity = String(Math.min(0.88, 0.52 + index * 0.14)); });
+                if (profile.atmosphere) { layers.haze.classList.add('active'); layers.haze.style.opacity = '0.7'; }
+                starfield.style.opacity = '0.55';
+            }, 260);
+
+            setTimeout(() => {
+                layers.micro.classList.add('active');
+                layers.micro.style.opacity = '0.88';
+                layers.feature.style.transform = `translate(${settleX * 0.22}px, ${settleY * 0.22}px) scale(1.12)`;
+                layers.overlays.forEach((layer, index) => {
+                    const depth = 0.18 + (index * 0.10);
+                    layer.style.transform = `translate(${settleX * depth}px, ${settleY * depth}px) scale(${1.12 + index * 0.08})`;
+                    layer.style.filter += ' brightness(1.04)';
+                });
+                layers.micro.style.transform = `translate(${settleX * 0.34}px, ${settleY * 0.34}px) scale(1.18)`;
+                if (profile.atmosphere) layers.haze.style.transform = `translate(${settleX * 0.08}px, ${settleY * 0.08}px) scale(1.03)`;
+                world.style.transition = 'transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), filter 0.8s ease';
+                world.style.transform = `translate(${settleX}px, ${settleY}px) scale(${closeScale})`;
+                world.style.filter = 'saturate(1.15) contrast(1.08)';
+                starfield.style.opacity = '0.2';
+            }, 980);
+        });
+
+        setTimeout(() => {
+            shell.style.transition = 'opacity 0.25s ease';
+            shell.style.opacity = '0';
+        }, profile.duration - 160);
+
         setTimeout(() => {
             window.location.href = url;
-        }, 1900);
+        }, profile.duration);
     }
 
     function getSystemState() {
