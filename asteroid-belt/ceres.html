@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ceres — Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#030712', 800: '#0f172a', 700: '#1e293b', 500: '#334155', 100: '#f8fafc' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        ceres: { base: '#94a3b8', dark: '#475569', light: '#e2e8f0', ice: '#cbd5e1', rock: '#64748b' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 120s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(148, 163, 184, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(148, 163, 184, 0.5)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #030712;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #94a3b8 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #e2e8f0 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #475569 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(3, 7, 18, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(148, 163, 184, 0.6);
+            box-shadow: 0 0 20px rgba(148, 163, 184, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .orb-ceres {
+            background: radial-gradient(circle at 35% 35%, #e2e8f0, #94a3b8, #64748b, #475569, #1e293b);
+            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(148, 163, 184, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        .orb-ceres::before {
+            content: '';
+            position: absolute;
+            top: 25%; left: 55%;
+            width: 18%; height: 14%;
+            background: radial-gradient(ellipse, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 40%, transparent 70%);
+            border-radius: 50%;
+            transform: rotate(-15deg);
+        }
+
+        .orb-ceres::after {
+            content: '';
+            position: absolute;
+            top: 40%; left: 35%;
+            width: 10%; height: 8%;
+            background: radial-gradient(ellipse, rgba(255,255,255,0.7) 0%, transparent 60%);
+            border-radius: 50%;
+        }
+
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(148, 163, 184, 0.2);
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #030712; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-ceres-base shadow-[0_0_40px_rgba(148,163,184,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-ceres-base text-space-900 font-bold py-3 rounded-xl hover:bg-ceres-light transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-ceres-light">☄️</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Solar System Explorer</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">SSE</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="asteroid-belt.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-cyan">
+                <span class="text-xl">🪨</span>
+                <span class="font-display font-bold text-lg">Back to Asteroid Belt</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-ceres-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-ceres-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Ceres Mission Progress</span>
+                    <span id="progressText" class="text-ceres-base font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-ceres-dark to-ceres-base h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Play Mini-Game</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-ceres-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-ceres-base font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-ceres-light animate-ping"></span> Dwarf Planet
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Ceres</h1>
+                <p class="text-2xl text-ceres-light font-body italic mb-6">"Queen of the Asteroid Belt"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    The largest object in the asteroid belt and the only dwarf planet closer to the Sun than Neptune. It hides bright salty spots and may harbor a subsurface ocean of liquid water.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-ceres-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-ceres-light transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(148,163,184,0.5)]">
+                    Explore Ceres 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-ceres animate-pulse-glow animate-spin-slow"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-ceres-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">940 km</div>
+                <div class="text-xs text-space-100 mt-1">Largest in the belt</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📍</div>
+                <div class="text-ceres-light font-mono text-xs uppercase mb-1">Distance</div>
+                <div class="font-bold text-xl">2.77 AU</div>
+                <div class="text-xs text-space-100 mt-1">From the Sun</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">⏳</div>
+                <div class="text-ceres-light font-mono text-xs uppercase mb-1">Orbital Period</div>
+                <div class="font-bold text-xl">4.6 yrs</div>
+                <div class="text-xs text-space-100 mt-1">One Ceres year</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">💧</div>
+                <div class="text-ceres-light font-mono text-xs uppercase mb-1">Water</div>
+                <div class="font-bold text-xl">Subsurface</div>
+                <div class="text-xs text-space-100 mt-1">Briny ocean</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Ceres data.</p>
+                </div>
+                <div class="hidden md:block text-ceres-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Discovery -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'c1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔭</div>
+                            <h3 class="font-display text-xl text-ceres-base">Discovery</h3>
+                            <p class="text-space-100 text-xs mt-2">Who found it first?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ceres-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-ceres-dark pb-1 w-full">January 1, 1801</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>Discovered by Italian astronomer <strong>Giuseppe Piazzi</strong> at the Palermo Observatory.</li>
+                                <li>It was originally considered a planet, then reclassified as an asteroid, and finally a dwarf planet in 2006.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Bright Spots -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'c2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">✨</div>
+                            <h3 class="font-display text-xl text-ceres-base">Bright Spots</h3>
+                            <p class="text-space-100 text-xs mt-2">Mysterious white patches</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ceres-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-ceres-dark pb-1 w-full">Occator Crater</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>The famous bright spots in <strong>Occator Crater</strong> are made of sodium carbonate salt.</li>
+                                <li>They were left behind when briny water from a subsurface ocean reached the surface and evaporated.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Subsurface Ocean -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'c3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌊</div>
+                            <h3 class="font-display text-xl text-ceres-base">Subsurface Ocean</h3>
+                            <p class="text-space-100 text-xs mt-2">Water beneath the crust</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ceres-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-ceres-dark pb-1 w-full">A Hidden Sea</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Ceres may harbor a global <strong>subsurface ocean</strong> of briny liquid water beneath its icy crust.</li>
+                                <li>This makes it an exciting target for astrobiology, as liquid water is essential for life as we know it.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Dawn Mission -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'c4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🛰️</div>
+                            <h3 class="font-display text-xl text-ceres-base">Dawn Mission</h3>
+                            <p class="text-space-100 text-xs mt-2">The spacecraft that visited</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ceres-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-ceres-dark pb-1 w-full">Orbiting a Dwarf</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>NASA's <strong>Dawn</strong> spacecraft orbited Ceres from 2015 to 2018, mapping its entire surface.</li>
+                                <li>It discovered the bright spots, evidence of recent geological activity, and organic compounds.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Dwarf Planet Status -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'c5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">👑</div>
+                            <h3 class="font-display text-2xl text-ceres-base">Dwarf Planet</h3>
+                            <p class="text-space-100 mt-2">Why is it special?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ceres-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-3 border-b border-ceres-dark pb-2 w-full">Spherical but Small</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-ceres-light font-mono font-bold block mb-1">Gravity Shaped:</span>
+                                    Ceres is massive enough that its own gravity pulled it into a nearly perfect sphere.
+                                </div>
+                                <div>
+                                    <span class="text-ceres-light font-mono font-bold block mb-1">Not a Planet:</span>
+                                    It has not cleared its orbital neighborhood of other asteroids, so it is classified as a dwarf planet.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Composition -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'c6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧊</div>
+                            <h3 class="font-display text-2xl text-ceres-base">Composition</h3>
+                            <p class="text-space-100 mt-2">Rock, ice, and clay</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ceres-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-ceres-dark pb-2 w-full">A Mix of Materials</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Ceres has a rocky core surrounded by a mantle of water ice and hydrated minerals.</li>
+                                <li>Its surface is covered in a layer of clay-like phyllosilicates and carbonates.</li>
+                                <li>It contains roughly <strong>25% water by mass</strong>—more freshwater than Earth has!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Geology -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'c7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌋</div>
+                            <h3 class="font-display text-2xl text-ceres-base">Active Geology</h3>
+                            <p class="text-space-100 mt-2">Ceres is not dead</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ceres-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-ceres-dark pb-2 w-full">Cryovolcanism</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Ceres features a cryovolcano called <strong>Ahuna Mons</strong>, a 4 km tall mountain made of ice and mud.</li>
+                                <li>It is the closest known cryovolcano to the Sun and shows that Ceres was geologically active relatively recently.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Size Comparison -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'c8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚖️</div>
+                            <h3 class="font-display text-2xl text-ceres-base">Size & Mass</h3>
+                            <p class="text-space-100 mt-2">How big is it really?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-ceres-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-ceres-dark pb-2 w-full">One Third of the Belt</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>At 940 km across, Ceres makes up about <strong>one third</strong> of the entire mass of the asteroid belt.</li>
+                                <li>It is the 33rd largest body in the solar system by volume, larger than many moons.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-ceres-base border-2 shadow-[0_0_30px_rgba(148,163,184,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-ceres-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Bright Spot Scanner</h2>
+                        <p class="text-space-100 mb-6">Pilot the Dawn probe over Ceres! Collect <span class="text-ceres-base font-bold">bright salt data</span> while dodging <span class="text-gray-400 font-bold">dark rocky debris</span>. Survive 20 seconds and scan 3 data points to earn the <span class="text-ceres-light font-bold">Dwarf Planet Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-ceres-base mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Engage Scanner
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-ceres-base/30">
+                            <div class="text-5xl mb-2">✨</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Targeting Ceres</h3>
+                            <p class="text-ceres-light text-sm">Click Start to scan</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#020617] via-[#1e293b] to-[#334155] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-ceres-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-ceres-base/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Ceres module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="quizStatus" class="flex items-center justify-between gap-4 mb-4 text-sm font-mono">
+                    <span class="text-space-100">Question <span id="quizCurrent">1</span> of <span id="quizTotal">10</span></span>
+                    <span class="text-ceres-light">Score: <span id="quizScore">0</span></span>
+                </div>
+
+                <div id="quizQuestionCard" class="quiz-q block glass-card rounded-2xl p-6">
+                    <h3 id="quizQuestion" class="text-xl font-bold mb-4 text-ceres-light"></h3>
+                    <div id="quizOptions" class="space-y-3"></div>
+                    <div id="quizExplanation" class="hidden mt-5 rounded-2xl border border-space-500 bg-space-900/80 p-4">
+                        <div id="quizAnswerLabel" class="font-bold mb-2"></div>
+                        <p id="quizExplanationText" class="text-space-100 leading-relaxed"></p>
+                    </div>
+                    <div class="mt-5 flex justify-end">
+                        <button id="nextQuestionBtn" onclick="goToNextQuestion()" disabled class="opacity-50 cursor-not-allowed bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full transition">Next</button>
+                    </div>
+                </div>
+
+                <div class="quiz-q hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-3">Score: <span id="scoreText" class="font-bold text-ceres-light">0/10</span></p>
+                    <p class="text-space-100 mb-6">Review the explanations as you play, then retry for a perfect score.</p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.ceresCompleteAlerted) {
+            window.ceresCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Ceres Module Complete!", "You have unlocked the 'Dwarf Planet' badge. Excellent exploration!", "👑");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Ceres files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    const quizQuestions = [
+        { question: "Who discovered Ceres in 1801?", options: [{ text: "Galileo Galilei", isCorrect: false }, { text: "Giuseppe Piazzi", isCorrect: true }, { text: "Isaac Newton", isCorrect: false }, { text: "Edwin Hubble", isCorrect: false }], explanation: "Italian astronomer Giuseppe Piazzi discovered Ceres on January 1, 1801 at the Palermo Observatory in Sicily." },
+        { question: "What are the bright white spots in Ceres's Occator Crater made of?", options: [{ text: "Ice crystals", isCorrect: false }, { text: "Sodium carbonate salt deposits", isCorrect: true }, { text: "Diamond dust", isCorrect: false }, { text: "Frozen methane", isCorrect: false }], explanation: "The bright spots are sodium carbonate salt deposits, left behind when briny water from beneath the surface reached the crater and evaporated." },
+        { question: "Which spacecraft orbited Ceres from 2015 to 2018?", options: [{ text: "Voyager 2", isCorrect: false }, { text: "Cassini", isCorrect: false }, { text: "Dawn", isCorrect: true }, { text: "New Horizons", isCorrect: false }], explanation: "NASA's Dawn spacecraft orbited Ceres and mapped its surface, discovering the bright spots and organic compounds." },
+        { question: "Why is Ceres classified as a dwarf planet rather than a planet?", options: [{ text: "It has not cleared its orbital neighborhood of other asteroids", isCorrect: true }, { text: "It is too large to be a planet", isCorrect: false }, { text: "It orbits a star other than the Sun", isCorrect: false }, { text: "It has no moons", isCorrect: false }], explanation: "Ceres meets two criteria for planethood (orbits the Sun and is spherical) but has not cleared its orbital neighborhood, making it a dwarf planet." },
+        { question: "What percentage of the asteroid belt's total mass does Ceres make up?", options: [{ text: "About 1%", isCorrect: false }, { text: "About one third", isCorrect: true }, { text: "About 90%", isCorrect: false }, { text: "About 0.1%", isCorrect: false }], explanation: "Ceres makes up roughly one third of the entire mass of the asteroid belt, despite being just one of millions of objects." },
+        { question: "What is Ahuna Mons on Ceres?", options: [{ text: "A cryovolcano made of ice and mud", isCorrect: true }, { text: "An impact crater", isCorrect: false }, { text: "A metallic mountain", isCorrect: false }, { text: "A frozen ocean", isCorrect: false }], explanation: "Ahuna Mons is a cryovolcano about 4 km tall, made of ice and mud. It is the closest known cryovolcano to the Sun." },
+        { question: "Approximately how much of Ceres's mass is water?", options: [{ text: "Less than 1%", isCorrect: false }, { text: "About 25%", isCorrect: true }, { text: "About 80%", isCorrect: false }, { text: "Exactly 50%", isCorrect: false }], explanation: "Ceres contains about 25% water by mass, mostly in the form of ice and possibly a subsurface ocean—more freshwater than Earth has on its surface." },
+        { question: "What is Ceres's approximate diameter?", options: [{ text: "About 940 km", isCorrect: true }, { text: "About 100 km", isCorrect: false }, { text: "About 5,000 km", isCorrect: false }, { text: "About 50 km", isCorrect: false }], explanation: "Ceres is about 940 km in diameter, making it the largest object in the asteroid belt and the 33rd largest body in the solar system by volume." },
+        { question: "What did Dawn discover about Ceres that excited astrobiologists?", options: [{ text: "Organic compounds and evidence of a subsurface ocean", isCorrect: true }, { text: "Living bacteria on the surface", isCorrect: false }, { text: "A thick atmosphere with oxygen", isCorrect: false }, { text: "Active lava flows", isCorrect: false }], explanation: "Dawn detected organic compounds and found evidence that Ceres may have a subsurface ocean, making it an interesting target in the search for life." },
+        { question: "How long is Ceres's orbital period around the Sun?", options: [{ text: "About 4.6 Earth years", isCorrect: true }, { text: "About 1 Earth year", isCorrect: false }, { text: "About 100 Earth years", isCorrect: false }, { text: "About 10 Earth years", isCorrect: false }], explanation: "Ceres orbits the Sun at about 2.77 AU and takes roughly 4.6 Earth years to complete one full orbit." }
+    ];
+
+    let currentQ = 0;
+    let score = 0;
+    let questionOrder = [];
+    let currentQuestionSet = [];
+    let answeredCurrent = false;
+
+    function shuffleArray(items) {
+        const arr = [...items];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function prepareQuizData() {
+        questionOrder = shuffleArray(quizQuestions.map((_, idx) => idx));
+        currentQuestionSet = questionOrder.map((idx) => {
+            const q = JSON.parse(JSON.stringify(quizQuestions[idx]));
+            q.options = shuffleArray(q.options);
+            return q;
+        });
+    }
+
+    function renderQuestion() {
+        const total = currentQuestionSet.length;
+        const question = currentQuestionSet[currentQ];
+        answeredCurrent = false;
+
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('quizQuestionCard').classList.remove('hidden');
+        document.getElementById('quizQuestionCard').classList.add('block');
+        document.getElementById('quizCurrent').innerText = `${currentQ + 1}`;
+        document.getElementById('quizTotal').innerText = `${total}`;
+        document.getElementById('quizScore').innerText = `${score}`;
+        document.getElementById('quizQuestion').innerText = `${currentQ + 1}. ${question.question}`;
+
+        const optionsWrap = document.getElementById('quizOptions');
+        optionsWrap.innerHTML = '';
+        question.options.forEach((option) => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-ceres-base transition-all";
+            btn.innerText = option.text;
+            btn.onclick = () => answer(option.isCorrect, btn);
+            optionsWrap.appendChild(btn);
+        });
+
+        document.getElementById('quizExplanation').classList.add('hidden');
+        document.getElementById('quizAnswerLabel').innerText = '';
+        document.getElementById('quizExplanationText').innerText = '';
+
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.disabled = true;
+        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.remove('hover:bg-space-500');
+        nextBtn.innerText = currentQ === total - 1 ? 'See Results' : 'Next';
+    }
+
+    function answer(isCorrect, btnEl) {
+        if (answeredCurrent) return;
+        answeredCurrent = true;
+
+        const allButtons = document.querySelectorAll('#quizOptions button');
+        allButtons.forEach((btn) => {
+            btn.disabled = true;
+            btn.classList.remove('hover:bg-space-700', 'hover:border-ceres-base');
+            btn.classList.add('opacity-50');
+        });
+
+        btnEl.classList.remove('opacity-50', 'bg-space-800');
+
+        if (isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            score++;
+            addXP(20);
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+            const correctBtn = Array.from(allButtons).find((btn) => currentQuestionSet[currentQ].options.find((opt) => opt.text === btn.innerText && opt.isCorrect));
+            if (correctBtn) {
+                correctBtn.classList.remove('opacity-50', 'bg-space-800');
+                correctBtn.classList.add('bg-star-green/20', 'border-star-green', 'font-bold');
+            }
+        }
+
+        document.getElementById('quizScore').innerText = `${score}`;
+        const explanationBox = document.getElementById('quizExplanation');
+        document.getElementById('quizAnswerLabel').innerText = isCorrect ? 'Correct!' : 'Explanation';
+        document.getElementById('quizAnswerLabel').className = isCorrect ? 'font-bold mb-2 text-star-green' : 'font-bold mb-2 text-star-red';
+        document.getElementById('quizExplanationText').innerText = currentQuestionSet[currentQ].explanation;
+        explanationBox.classList.remove('hidden');
+
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.add('hover:bg-space-500');
+    }
+
+    function goToNextQuestion() {
+        if (!answeredCurrent) return;
+        if (currentQ < currentQuestionSet.length - 1) {
+            currentQ++;
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('quizQuestionCard').classList.add('hidden');
+        document.getElementById('quizQuestionCard').classList.remove('block');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('q-result').classList.add('block');
+        document.getElementById('scoreText').innerText = `${score}/${currentQuestionSet.length}`;
+        document.getElementById('scoreText').classList.remove('text-star-green', 'text-star-red');
+
+        if (score === currentQuestionSet.length) {
+            document.getElementById('scoreText').classList.add('text-star-green');
+            if (!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Perfect Knowledge", "Perfect score on the Ceres Quiz! +100 XP", "🧠");
+            }
+        } else {
+            document.getElementById('scoreText').classList.add('text-star-red');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        score = 0;
+        currentQ = 0;
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        prepareQuizData();
+        renderQuestion();
+    }
+
+    prepareQuizData();
+    renderQuestion();
+
+    /* MINI GAME: Bright Spot Scanner */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    const player = {
+        x: 0, y: 0, width: 45, height: 40, speed: 8, color: '#f8fafc' 
+    };
+
+    let spaceObjects = [];
+    let keys = { ArrowLeft: false, ArrowRight: false };
+
+    window.addEventListener('keydown', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') keys[e.code] = false; 
+    });
+    
+    canvas.addEventListener('touchstart', (e) => {
+        if(!gameActive) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const relativeX = touch.clientX - rect.left;
+        if(relativeX < canvas.width/2) {
+            keys.ArrowLeft = true; keys.ArrowRight = false;
+        } else {
+            keys.ArrowRight = true; keys.ArrowLeft = false;
+        }
+    }, {passive: false});
+    
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys.ArrowLeft = false; keys.ArrowRight = false;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        const relativeX = e.clientX - rect.left;
+        if(relativeX < canvas.width/2) {
+            keys.ArrowLeft = true; keys.ArrowRight = false;
+        } else {
+            keys.ArrowRight = true; keys.ArrowLeft = false;
+        }
+    });
+    
+    canvas.addEventListener('mouseup', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+    canvas.addEventListener('mouseleave', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - player.height - 30;
+        spaceObjects = [];
+        dataCollected = 0;
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Scanning...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnObject() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let isData = Math.random() > 0.75; 
+        let w = isData ? 30 : (Math.random() * 25 + 20); 
+        let xPos = Math.random() * (canvas.width - w);
+        
+        spaceObjects.push({
+            x: xPos, y: -w, width: w, height: w, 
+            speedY: (Math.random() * 4 + 4) * speedMult,
+            rotation: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 0.1,
+            isData: isData
+        });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        ctx.fillStyle = (frames % 10 < 5) ? '#3b82f6' : '#cbd5e1'; 
+        ctx.beginPath();
+        ctx.moveTo(-4, player.height/2);
+        ctx.lineTo(0, player.height/2 + 15 + Math.random()*5);
+        ctx.lineTo(4, player.height/2);
+        ctx.fill();
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.arc(0, -5, player.width/2, Math.PI, 0);
+        ctx.fill();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(-6, -5, 12, 20);
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.arc(0, -10, 3, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawObjects() {
+        for (let i = 0; i < spaceObjects.length; i++) {
+            let o = spaceObjects[i];
+            ctx.save();
+            ctx.translate(o.x + o.width/2, o.y + o.height/2);
+            ctx.rotate(o.rotation);
+            if (o.isData) {
+                ctx.fillStyle = '#e2e8f0';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#fff';
+                ctx.beginPath();
+                ctx.arc(0, 0, o.width/2, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.beginPath();
+                ctx.moveTo(-o.width/2, 0);
+                ctx.lineTo(0, -o.height);
+                ctx.lineTo(o.width/2, 0);
+                ctx.fill();
+            } else {
+                ctx.fillStyle = '#1e293b'; 
+                ctx.shadowBlur = 0;
+                ctx.beginPath();
+                ctx.moveTo(-o.width/2.2, -o.height/3);
+                ctx.lineTo(0, -o.height/2);
+                ctx.lineTo(o.width/2.5, -o.height/4);
+                ctx.lineTo(o.width/3, o.height/2);
+                ctx.lineTo(-o.width/2.5, o.height/2.2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.arc(-o.width/5, -o.height/5, o.width/6, 0, Math.PI*2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+    }
+
+    function checkCollision(a) {
+        let hitX = player.x + 5;
+        let hitW = player.width - 10;
+        let hitY = player.y + 5;
+        let hitH = player.height - 10;
+        if (hitX < a.x + a.width && hitX + hitW > a.x && hitY < a.y + a.height && hitY + hitH > a.y) {
+            return true;
+        }
+        return false;
+    }
+
+    function updatePhysics() {
+        if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
+        if (keys.ArrowRight && player.x + player.width < canvas.width) player.x += player.speed;
+        let spawnRate = Math.max(15, 35 - Math.floor(scoreFrames/150));
+        if (frames % spawnRate === 0) spawnObject();
+        for (let i = spaceObjects.length - 1; i >= 0; i--) {
+            spaceObjects[i].y += spaceObjects[i].speedY;
+            spaceObjects[i].rotation += spaceObjects[i].rotSpeed;
+            if (checkCollision(spaceObjects[i])) {
+                if (spaceObjects[i].isData) {
+                    dataCollected++;
+                    addXP(10); 
+                    ctx.fillStyle = 'rgba(226, 232, 240, 0.4)';
+                    ctx.fillRect(0,0, canvas.width, canvas.height);
+                    spaceObjects.splice(i, 1);
+                    continue;
+                } else {
+                    gameOver("Scanner damaged by debris!");
+                    return;
+                }
+            }
+            if (spaceObjects[i].y > canvas.height) spaceObjects.splice(i, 1);
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.8)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        updatePhysics();
+        if(!gameActive) return; 
+        drawObjects();
+        drawPlayer();
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillStyle = "#e2e8f0"; 
+        ctx.fillText(`✨ Scanned: ${dataCollected}/3`, 10, 45);
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+        if (secondsAlive >= 20 && dataCollected >= 3 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Dwarf Planet Badge Unlocked!", "You survived 20 seconds and scanned 3 data points! +100 XP", "✨");
+            updateProgress();
+        }
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Relaunch Scanner";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 3);
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You survived for ${secondsAlive}s.</p>
+            <p class="text-ceres-light mb-4 text-sm font-bold">✨ Scanned ${dataCollected} Data Points</p>
+            ${!achievements.playedGame ? `<p class="text-space-100 text-sm mb-4">Survive 20s AND scan 3 data points for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        if(secondsAlive > 5 && !winStatus) addXP(5);
+    }
+
+    startBtn.addEventListener('click', () => { initGame(); });
+
+</script>
+</body>
+</html>
