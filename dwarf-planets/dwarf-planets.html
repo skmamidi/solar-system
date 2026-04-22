@@ -458,33 +458,12 @@
             </div>
 
             <div id="quizContainer" class="max-w-2xl mx-auto">
-                <!-- Question 1 -->
-                <div class="quiz-q block" id="q1">
-                    <h3 class="text-xl font-bold mb-4 text-dwarf-light">1. Why was Pluto controversially demoted from planet status in 2006?</h3>
-                    <div class="space-y-3">
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-dwarf-base transition-all" onclick="answer(1, false, this)">It exploded into smaller pieces.</button>
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-dwarf-base transition-all" onclick="answer(1, true, this)">Eris was discovered, proving Pluto hadn't cleared its orbit of other large objects.</button>
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-dwarf-base transition-all" onclick="answer(1, false, this)">It floated entirely out of the solar system.</button>
-                    </div>
-                </div>
-
-                <!-- Question 2 -->
-                <div class="quiz-q hidden" id="q2">
-                    <h3 class="text-xl font-bold mb-4 text-dwarf-light">2. Which dwarf planet spins so incredibly fast that it stretched out into the shape of a football?</h3>
-                    <div class="space-y-3">
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-dwarf-base transition-all" onclick="answer(2, false, this)">Ceres</button>
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-dwarf-base transition-all" onclick="answer(2, false, this)">Makemake</button>
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-dwarf-base transition-all" onclick="answer(2, true, this)">Haumea</button>
-                    </div>
-                </div>
-
-                <!-- Question 3 -->
-                <div class="quiz-q hidden" id="q3">
-                    <h3 class="text-xl font-bold mb-4 text-dwarf-light">3. While Pluto and Eris are far out in the Kuiper Belt, where is Ceres located?</h3>
-                    <div class="space-y-3">
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-dwarf-base transition-all" onclick="answer(3, false, this)">Orbiting Jupiter like a moon.</button>
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-dwarf-base transition-all" onclick="answer(3, true, this)">In the inner solar system, inside the main Asteroid Belt.</button>
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-dwarf-base transition-all" onclick="answer(3, false, this)">Orbiting the Sun backwards.</button>
+                <div id="quizQuestionContainer" class="quiz-q block">
+                    <h3 id="quizQuestionText" class="text-xl font-bold mb-4 text-dwarf-light"></h3>
+                    <div id="quizOptions" class="space-y-3"></div>
+                    <div id="quizExplanation" class="hidden mt-4 p-4 rounded-xl border border-dwarf-base bg-space-800/50 text-sm"></div>
+                    <div class="mt-6 flex justify-end">
+                        <button id="nextQuestionBtn" class="hidden bg-dwarf-base text-white px-6 py-2 rounded-full font-bold hover:bg-dwarf-light hover:text-space-900 transition-all">Next →</button>
                     </div>
                 </div>
 
@@ -492,7 +471,7 @@
                 <div class="quiz-q hidden text-center py-8" id="q-result">
                     <div class="text-6xl mb-4">🏅</div>
                     <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
-                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold text-dwarf-light">0/3</span></p>
+                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold text-dwarf-light">0/20</span></p>
                     <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
                 </div>
             </div>
@@ -505,72 +484,71 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
             <!-- Pluto -->
-            <div class="glass-panel p-4 flex flex-col items-center justify-between border-dwarf-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
-                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-300 to-purple-800 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
-                    <div class="absolute bottom-2 right-2 w-5 h-5 bg-white opacity-60 transform rotate-45 rounded-[4px] blur-[1px]"></div>
+            <a href="./pluto.html" class="block group">
+                <div class="glass-panel p-4 flex flex-col items-center justify-between border-dwarf-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors h-full transform group-hover:scale-105 duration-300">
+                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-300 to-purple-800 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                        <div class="absolute bottom-2 right-2 w-5 h-5 bg-white opacity-60 transform rotate-45 rounded-[4px] blur-[1px]"></div>
+                    </div>
+                    <div class="text-center mb-3">
+                        <p class="font-display font-bold text-lg leading-tight text-white">Pluto</p>
+                        <p class="font-mono text-xs text-dwarf-light">The Heart World</p>
+                    </div>
+                    <span class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 group-hover:border-dwarf-light text-dwarf-light transition-colors font-bold shadow-md text-center block">Visit ▸</span>
                 </div>
-                <div class="text-center mb-3">
-                    <p class="font-display font-bold text-lg leading-tight text-white">Pluto</p>
-                    <p class="font-mono text-xs text-dwarf-light">The Heart World</p>
-                </div>
-                <button onclick="showMsgBox('Pluto Data', 'The king of the Kuiper Belt, featuring vast nitrogen glaciers and water-ice mountains. Module locked.', '🤍')" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-dwarf-light text-dwarf-light transition-colors font-bold shadow-md">
-                    Visit ▸
-                </button>
-            </div>
+            </a>
 
             <!-- Ceres -->
-            <div class="glass-panel p-4 flex flex-col items-center justify-between border-dwarf-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
-                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
-                    <div class="absolute top-4 right-3 w-2 h-2 rounded-full bg-white opacity-80 shadow-[0_0_5px_#fff]"></div>
+            <a href="../asteroid-belt/ceres.html" class="block group">
+                <div class="glass-panel p-4 flex flex-col items-center justify-between border-dwarf-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors h-full transform group-hover:scale-105 duration-300">
+                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                        <div class="absolute top-4 right-3 w-2 h-2 rounded-full bg-white opacity-80 shadow-[0_0_5px_#fff]"></div>
+                    </div>
+                    <div class="text-center mb-3">
+                        <p class="font-display font-bold text-lg leading-tight text-white">Ceres</p>
+                        <p class="font-mono text-xs text-dwarf-light">The Inner Dwarf</p>
+                    </div>
+                    <span class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 group-hover:border-dwarf-light text-dwarf-light transition-colors font-bold shadow-md text-center block">Visit ▸</span>
                 </div>
-                <div class="text-center mb-3">
-                    <p class="font-display font-bold text-lg leading-tight text-white">Ceres</p>
-                    <p class="font-mono text-xs text-dwarf-light">The Inner Dwarf</p>
-                </div>
-                <button onclick="showMsgBox('Ceres Data', 'The only dwarf planet inside Neptune\'s orbit. Contains strange glowing salt deposits. Module locked.', '🧂')" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-dwarf-light text-dwarf-light transition-colors font-bold shadow-md">
-                    Visit ▸
-                </button>
-            </div>
+            </a>
 
             <!-- Eris -->
-            <div class="glass-panel p-4 flex flex-col items-center justify-between border-dwarf-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
-                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-100 to-gray-400 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+            <a href="./eris.html" class="block group">
+                <div class="glass-panel p-4 flex flex-col items-center justify-between border-dwarf-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors h-full transform group-hover:scale-105 duration-300">
+                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-100 to-gray-400 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                    </div>
+                    <div class="text-center mb-3">
+                        <p class="font-display font-bold text-lg leading-tight text-white">Eris</p>
+                        <p class="font-mono text-xs text-dwarf-light">The Heavyweight</p>
+                    </div>
+                    <span class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 group-hover:border-dwarf-light text-dwarf-light transition-colors font-bold shadow-md text-center block">Visit ▸</span>
                 </div>
-                <div class="text-center mb-3">
-                    <p class="font-display font-bold text-lg leading-tight text-white">Eris</p>
-                    <p class="font-mono text-xs text-dwarf-light">The Heavyweight</p>
-                </div>
-                <button onclick="showMsgBox('Eris Data', 'The most massive dwarf planet. Its discovery caused the redefinition of what a planet is! Module locked.', '⚖️')" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-dwarf-light text-dwarf-light transition-colors font-bold shadow-md">
-                    Visit ▸
-                </button>
-            </div>
+            </a>
 
             <!-- Haumea -->
-            <div class="glass-panel p-4 flex flex-col items-center justify-between border-dwarf-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
-                <!-- Football shaped -->
-                <div class="w-16 h-10 rounded-[50%] bg-gradient-to-br from-gray-200 to-gray-500 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-5 mt-2 transform -rotate-12">
+            <a href="./haumea.html" class="block group">
+                <div class="glass-panel p-4 flex flex-col items-center justify-between border-dwarf-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors h-full transform group-hover:scale-105 duration-300">
+                    <div class="w-16 h-10 rounded-[50%] bg-gradient-to-br from-gray-200 to-gray-500 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-5 mt-2 transform -rotate-12">
+                    </div>
+                    <div class="text-center mb-3">
+                        <p class="font-display font-bold text-lg leading-tight text-white">Haumea</p>
+                        <p class="font-mono text-xs text-dwarf-light">The Football</p>
+                    </div>
+                    <span class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 group-hover:border-dwarf-light text-dwarf-light transition-colors font-bold shadow-md text-center block">Visit ▸</span>
                 </div>
-                <div class="text-center mb-3">
-                    <p class="font-display font-bold text-lg leading-tight text-white">Haumea</p>
-                    <p class="font-mono text-xs text-dwarf-light">The Football</p>
-                </div>
-                <button onclick="showMsgBox('Haumea Data', 'Spins so fast it distorted into an ellipsoid shape. It even has rings! Module locked.', '🏈')" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-dwarf-light text-dwarf-light transition-colors font-bold shadow-md">
-                    Visit ▸
-                </button>
-            </div>
+            </a>
 
             <!-- Makemake -->
-            <div class="glass-panel p-4 flex flex-col items-center justify-between border-dwarf-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
-                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-red-300 to-red-800 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+            <a href="./makemake.html" class="block group">
+                <div class="glass-panel p-4 flex flex-col items-center justify-between border-dwarf-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors h-full transform group-hover:scale-105 duration-300">
+                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-red-300 to-red-800 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+                    </div>
+                    <div class="text-center mb-3">
+                        <p class="font-display font-bold text-lg leading-tight text-white">Makemake</p>
+                        <p class="font-mono text-xs text-dwarf-light">The Red Orb</p>
+                    </div>
+                    <span class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 group-hover:border-dwarf-light text-dwarf-light transition-colors font-bold shadow-md text-center block">Visit ▸</span>
                 </div>
-                <div class="text-center mb-3">
-                    <p class="font-display font-bold text-lg leading-tight text-white">Makemake</p>
-                    <p class="font-mono text-xs text-dwarf-light">The Red Orb</p>
-                </div>
-                <button onclick="showMsgBox('Makemake Data', 'A reddish-brown world covered in pellets of frozen methane. Very hard to spot! Module locked.', '🔴')" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-dwarf-light text-dwarf-light transition-colors font-bold shadow-md">
-                    Visit ▸
-                </button>
-            </div>
+            </a>
         </div>
 
     </section>
@@ -649,43 +627,303 @@
     }
 
     /* QUIZ LOGIC */
-    let currentQ = 1;
+    const quizData = [
+        {
+            q: "Why was Pluto controversially demoted from planet status in 2006?",
+            options: [
+                { t: "It exploded into smaller pieces.", c: false },
+                { t: "Eris was discovered, proving Pluto hadn't cleared its orbital neighborhood.", c: true },
+                { t: "It floated entirely out of the solar system.", c: false },
+                { t: "It was captured by Neptune's gravity.", c: false }
+            ],
+            explanation: "In 2006, the IAU created the 'dwarf planet' category because Pluto, like Eris, had not cleared its orbit of other objects."
+        },
+        {
+            q: "Which dwarf planet is the most massive?",
+            options: [
+                { t: "Pluto", c: false },
+                { t: "Ceres", c: false },
+                { t: "Eris", c: true },
+                { t: "Haumea", c: false }
+            ],
+            explanation: "Eris is about 27% more massive than Pluto, even though Pluto is slightly larger by volume."
+        },
+        {
+            q: "Where is Ceres located?",
+            options: [
+                { t: "In the Asteroid Belt between Mars and Jupiter", c: true },
+                { t: "Orbiting Jupiter like a moon", c: false },
+                { t: "Beyond Neptune in the Kuiper Belt", c: false },
+                { t: "Orbiting the Sun backwards", c: false }
+            ],
+            explanation: "Ceres is the only dwarf planet in the inner solar system, orbiting in the main Asteroid Belt at about 2.7 AU."
+        },
+        {
+            q: "Which dwarf planet spins so fast it looks like a football?",
+            options: [
+                { t: "Ceres", c: false },
+                { t: "Makemake", c: false },
+                { t: "Haumea", c: true },
+                { t: "Eris", c: false }
+            ],
+            explanation: "Haumea rotates once every 3.9 hours, so fast that centrifugal force stretched it into an ellipsoid shape."
+        },
+        {
+            q: "How many officially recognized dwarf planets are there?",
+            options: [
+                { t: "3", c: false },
+                { t: "5", c: true },
+                { t: "8", c: false },
+                { t: "12", c: false }
+            ],
+            explanation: "The IAU officially recognizes Pluto, Eris, Haumea, Makemake, and Ceres."
+        },
+        {
+            q: "Which dwarf planet has the most known moons?",
+            options: [
+                { t: "Eris", c: false },
+                { t: "Haumea", c: false },
+                { t: "Pluto", c: true },
+                { t: "Makemake", c: false }
+            ],
+            explanation: "Pluto has 5 known moons: Charon, Styx, Nix, Kerberos, and Hydra."
+        },
+        {
+            q: "What is the name of Pluto's largest moon?",
+            options: [
+                { t: "Hydra", c: false },
+                { t: "Charon", c: true },
+                { t: "Nix", c: false },
+                { t: "Kerberos", c: false }
+            ],
+            explanation: "Charon is so large relative to Pluto that they orbit a point in space between them, making them a binary system."
+        },
+        {
+            q: "Which famous heart-shaped feature is on Pluto?",
+            options: [
+                { t: "Sputnik Planitia", c: false },
+                { t: "Tombaugh Regio", c: true },
+                { t: "Valles Marineris", c: false },
+                { t: "Olympus Mons", c: false }
+            ],
+            explanation: "New Horizons revealed a vast heart-shaped nitrogen-ice plain named Tombaugh Regio after Pluto's discoverer."
+        },
+        {
+            q: "What is the approximate surface temperature of Pluto?",
+            options: [
+                { t: "-100°C", c: false },
+                { t: "-180°C", c: false },
+                { t: "-230°C (-380°F)", c: true },
+                { t: "-300°C", c: false }
+            ],
+            explanation: "Pluto is so far from the Sun that its surface is cold enough to freeze nitrogen, methane, and carbon monoxide."
+        },
+        {
+            q: "How long is one year on Pluto?",
+            options: [
+                { t: "90 Earth years", c: false },
+                { t: "150 Earth years", c: false },
+                { t: "248 Earth years", c: true },
+                { t: "500 Earth years", c: false }
+            ],
+            explanation: "Pluto's highly elliptical orbit takes 248 Earth years to complete one trip around the Sun."
+        },
+        {
+            q: "Which dwarf planet has a known ring system?",
+            options: [
+                { t: "Pluto", c: false },
+                { t: "Haumea", c: true },
+                { t: "Eris", c: false },
+                { t: "Ceres", c: false }
+            ],
+            explanation: "In 2017, astronomers discovered a ring around Haumea when it passed in front of a star."
+        },
+        {
+            q: "What is Eris's moon called?",
+            options: [
+                { t: "Charon", c: false },
+                { t: "Dysnomia", c: true },
+                { t: "Hi'iaka", c: false },
+                { t: "Namaka", c: false }
+            ],
+            explanation: "Eris has one known moon named Dysnomia, which helped astronomers calculate Eris's mass."
+        },
+        {
+            q: "Which spacecraft made a historic flyby of Pluto in 2015?",
+            options: [
+                { t: "Voyager 1", c: false },
+                { t: "Dawn", c: false },
+                { t: "New Horizons", c: true },
+                { t: "Cassini", c: false }
+            ],
+            explanation: "NASA's New Horizons probe flew past Pluto on July 14, 2015, revealing its complex geology."
+        },
+        {
+            q: "Which spacecraft orbited Ceres in 2015?",
+            options: [
+                { t: "New Horizons", c: false },
+                { t: "Dawn", c: true },
+                { t: "Juno", c: false },
+                { t: "OSIRIS-REx", c: false }
+            ],
+            explanation: "NASA's Dawn mission entered orbit around Ceres in March 2015 and found bright salt deposits in Occator Crater."
+        },
+        {
+            q: "What are most dwarf planets primarily composed of?",
+            options: [
+                { t: "Hydrogen and helium gas", c: false },
+                { t: "Liquid water and sand", c: false },
+                { t: "Rock and ice", c: true },
+                { t: "Pure iron", c: false }
+            ],
+            explanation: "Dwarf planets have rocky cores surrounded by water ice and exotic frozen gases like nitrogen and methane."
+        },
+        {
+            q: "Why does Makemake appear reddish-brown?",
+            options: [
+                { t: "Iron oxide rust like Mars", c: false },
+                { t: "Frozen methane on its surface", c: true },
+                { t: "Volcanic lava flows", c: false },
+                { t: "Reflection from the Sun", c: false }
+            ],
+            explanation: "Makemake's surface is covered in frozen methane and other organic compounds that give it a reddish color."
+        },
+        {
+            q: "How many moons does Haumea have?",
+            options: [
+                { t: "0", c: false },
+                { t: "1", c: false },
+                { t: "2", c: true },
+                { t: "5", c: false }
+            ],
+            explanation: "Haumea has two moons: Hi'iaka and Namaka, named after daughters of the Hawaiian goddess Haumea."
+        },
+        {
+            q: "What is the Kuiper Belt?",
+            options: [
+                { t: "A ring of asteroids between Mars and Jupiter", c: false },
+                { t: "A region of icy bodies beyond Neptune", c: true },
+                { t: "The cloud of gas surrounding the Sun", c: false },
+                { t: "A belt of dark matter", c: false }
+            ],
+            explanation: "The Kuiper Belt is a vast disc of icy objects, including Pluto, Eris, Haumea, and Makemake, extending from about 30 to 50 AU."
+        },
+        {
+            q: "Which dwarf planet has no known moons?",
+            options: [
+                { t: "Pluto", c: false },
+                { t: "Ceres", c: true },
+                { t: "Haumea", c: false },
+                { t: "Eris", c: false }
+            ],
+            explanation: "Despite being the largest object in the Asteroid Belt, Ceres has no known natural satellites."
+        },
+        {
+            q: "What makes Pluto and Charon's relationship unique?",
+            options: [
+                { t: "They are the same size", c: false },
+                { t: "They orbit a point in empty space between them", c: true },
+                { t: "Charon orbits Pluto backwards", c: false },
+                { t: "They share the same atmosphere", c: false }
+            ],
+            explanation: "Because Charon is so massive compared to Pluto, they both orbit a barycenter located outside Pluto's surface, making them a binary system."
+        }
+    ];
+    let shuffledQuiz = [];
+    let currentQIndex = 0;
     let score = 0;
+    let answeredCurrent = false;
 
-    function answer(qNum, isCorrect, btnEl) {
-        let siblings = btnEl.parentElement.children;
-        for(let s of siblings) {
+    function shuffleArray(arr) {
+        for(let i=arr.length-1; i>0; i--) {
+            const j = Math.floor(Math.random()*(i+1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function initQuiz() {
+        shuffledQuiz = shuffleArray([...quizData]).map(q => ({
+            ...q,
+            options: shuffleArray([...q.options])
+        }));
+        currentQIndex = 0;
+        score = 0;
+        answeredCurrent = false;
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        document.getElementById('quizQuestionContainer').classList.remove('hidden');
+        document.getElementById('quizQuestionContainer').classList.add('block');
+        showQuestion();
+    }
+
+    function showQuestion() {
+        answeredCurrent = false;
+        const q = shuffledQuiz[currentQIndex];
+        document.getElementById('quizQuestionText').innerText = `${currentQIndex+1}. ${q.q}`;
+        const optsDiv = document.getElementById('quizOptions');
+        optsDiv.innerHTML = '';
+        document.getElementById('quizExplanation').classList.add('hidden');
+        document.getElementById('nextQuestionBtn').classList.add('hidden');
+
+        q.options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-dwarf-base transition-all";
+            btn.innerText = opt.t;
+            btn.onclick = () => handleAnswer(idx, btn);
+            optsDiv.appendChild(btn);
+        });
+    }
+
+    function handleAnswer(optIndex, btnEl) {
+        if(answeredCurrent) return;
+        answeredCurrent = true;
+        const q = shuffledQuiz[currentQIndex];
+        const correctIdx = q.options.findIndex(o => o.c);
+        const isCorrect = q.options[optIndex].c;
+
+        const allBtns = document.getElementById('quizOptions').children;
+        for(let s of allBtns) {
             s.disabled = true;
             s.classList.remove('hover:bg-space-700', 'hover:border-dwarf-base');
             s.classList.add('opacity-50');
         }
         btnEl.classList.remove('opacity-50', 'bg-space-800');
-        
+
         if(isCorrect) {
             btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
             score++;
             addXP(20);
         } else {
             btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+            allBtns[correctIdx].classList.remove('opacity-50');
+            allBtns[correctIdx].classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
         }
 
-        setTimeout(() => {
-            document.getElementById(`q${qNum}`).classList.add('hidden');
-            if(qNum < 3) {
-                document.getElementById(`q${qNum+1}`).classList.remove('hidden');
-                document.getElementById(`q${qNum+1}`).classList.add('block');
-            } else {
-                showResults();
-            }
-        }, 1000);
+        const expl = document.getElementById('quizExplanation');
+        expl.innerHTML = `<strong class="text-dwarf-light">${isCorrect ? 'Correct!' : 'Not quite.'}</strong> ${q.explanation}`;
+        expl.classList.remove('hidden');
+        document.getElementById('nextQuestionBtn').classList.remove('hidden');
     }
 
+    document.getElementById('nextQuestionBtn').addEventListener('click', () => {
+        currentQIndex++;
+        if(currentQIndex < shuffledQuiz.length) {
+            showQuestion();
+        } else {
+            showResults();
+        }
+    });
+
     function showResults() {
+        document.getElementById('quizQuestionContainer').classList.add('hidden');
+        document.getElementById('quizQuestionContainer').classList.remove('block');
         document.getElementById('q-result').classList.remove('hidden');
         document.getElementById('q-result').classList.add('block');
-        document.getElementById('scoreText').innerText = `${score}/3`;
-        
-        if(score === 3) {
+        document.getElementById('scoreText').innerText = `${score}/${shuffledQuiz.length}`;
+
+        if(score === shuffledQuiz.length) {
             document.getElementById('scoreText').classList.add('text-star-green');
             if(!achievements.passedQuiz) {
                 achievements.passedQuiz = true;
@@ -699,26 +937,10 @@
     }
 
     function resetQuiz() {
-        score = 0;
-        currentQ = 1;
-        document.getElementById('q-result').classList.add('hidden');
-        document.getElementById('q-result').classList.remove('block');
-        document.getElementById('retryQuizBtn').classList.add('hidden');
-        
-        for(let i=1; i<=3; i++) {
-            let qDiv = document.getElementById(`q${i}`);
-            qDiv.classList.add('hidden');
-            qDiv.classList.remove('block');
-            
-            let btns = qDiv.querySelectorAll('button');
-            btns.forEach(b => {
-                b.disabled = false;
-                b.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-dwarf-base transition-all";
-            });
-        }
-        document.getElementById('q1').classList.remove('hidden');
-        document.getElementById('q1').classList.add('block');
+        initQuiz();
     }
+
+    initQuiz();
 
     /* MINI GAME: New Horizons Flyby */
     const canvas = document.getElementById('gameCanvas');
