@@ -451,41 +451,28 @@
             </div>
 
             <div id="quizContainer" class="max-w-2xl mx-auto">
-                <!-- Question 1 -->
-                <div class="quiz-q block" id="q1">
-                    <h3 class="text-xl font-bold mb-4 text-kuiper-light">1. What is the Kuiper Belt primarily made of?</h3>
-                    <div class="space-y-3">
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(1, false, this)">Rock and heavy metals.</button>
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(1, true, this)">Frozen volatiles like water, ammonia, and methane ices.</button>
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(1, false, this)">Hot plasma from the solar wind.</button>
+                <div id="quizStatus" class="flex items-center justify-between gap-4 mb-4 text-sm font-mono">
+                    <span class="text-space-100">Question <span id="quizCurrent">1</span> of <span id="quizTotal">20</span></span>
+                    <span class="text-kuiper-light">Score: <span id="quizScore">0</span></span>
+                </div>
+
+                <div id="quizQuestionCard" class="quiz-q block glass-card rounded-2xl p-6">
+                    <h3 id="quizQuestion" class="text-xl font-bold mb-4 text-kuiper-light"></h3>
+                    <div id="quizOptions" class="space-y-3"></div>
+                    <div id="quizExplanation" class="hidden mt-5 rounded-2xl border border-space-500 bg-space-900/80 p-4">
+                        <div id="quizAnswerLabel" class="font-bold mb-2"></div>
+                        <p id="quizExplanationText" class="text-space-100 leading-relaxed"></p>
+                    </div>
+                    <div class="mt-5 flex justify-end">
+                        <button id="nextQuestionBtn" onclick="goToNextQuestion()" disabled class="opacity-50 cursor-not-allowed bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full transition">Next</button>
                     </div>
                 </div>
 
-                <!-- Question 2 -->
-                <div class="quiz-q hidden" id="q2">
-                    <h3 class="text-xl font-bold mb-4 text-kuiper-light">2. Which famous NASA mission flew through the Kuiper Belt to visit Pluto and Arrokoth?</h3>
-                    <div class="space-y-3">
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(2, false, this)">Cassini</button>
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(2, true, this)">New Horizons</button>
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(2, false, this)">Voyager 1</button>
-                    </div>
-                </div>
-
-                <!-- Question 3 -->
-                <div class="quiz-q hidden" id="q3">
-                    <h3 class="text-xl font-bold mb-4 text-kuiper-light">3. The Kuiper Belt is believed to be the main source of what objects?</h3>
-                    <div class="space-y-3">
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(3, false, this)">Rogue Planets</button>
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(3, false, this)">Main Belt Asteroids</button>
-                        <button class="w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all" onclick="answer(3, true, this)">Short-period comets</button>
-                    </div>
-                </div>
-
-                <!-- Quiz Results -->
                 <div class="quiz-q hidden text-center py-8" id="q-result">
                     <div class="text-6xl mb-4">🏅</div>
                     <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
-                    <p class="text-xl text-white mb-6">Score: <span id="scoreText" class="font-bold text-kuiper-light">0/3</span></p>
+                    <p class="text-xl text-white mb-3">Score: <span id="scoreText" class="font-bold text-kuiper-light">0/20</span></p>
+                    <p class="text-space-100 mb-6">Review the explanations as you play, then retry for a perfect score.</p>
                     <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
                 </div>
             </div>
@@ -498,9 +485,9 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
             <!-- Arrokoth -->
-            <div class="glass-panel p-4 flex flex-col items-center justify-between border-kuiper-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
+            <a href="arrokoth.html" class="glass-panel p-4 flex flex-col items-center justify-between border-kuiper-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors group cursor-pointer">
                 <!-- Snowman shaped -->
-                <div class="relative w-16 h-16 flex flex-col items-center justify-center mb-3 transform rotate-12">
+                <div class="relative w-16 h-16 flex flex-col items-center justify-center mb-3 transform rotate-12 group-hover:scale-110 transition-transform">
                     <div class="w-8 h-8 rounded-full bg-gradient-to-br from-red-400 to-red-800 absolute top-0 z-10 shadow-inner"></div>
                     <div class="w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-red-900 absolute bottom-0 shadow-inner"></div>
                 </div>
@@ -508,50 +495,50 @@
                     <p class="font-display font-bold text-lg leading-tight text-white">Arrokoth</p>
                     <p class="font-mono text-xs text-kuiper-light">The Red Snowman</p>
                 </div>
-                <button onclick="showMsgBox('Arrokoth Data', 'A contact-binary object. It looks like a giant red snowman! It is the farthest and most primordial object ever visited by a spacecraft. Module locked.', '⛄')" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-kuiper-light text-kuiper-light transition-colors font-bold shadow-md">
+                <span class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 group-hover:border-kuiper-light text-kuiper-light transition-colors font-bold shadow-md text-center">
                     Visit ▸
-                </button>
-            </div>
+                </span>
+            </a>
 
             <!-- Quaoar -->
-            <div class="glass-panel p-4 flex flex-col items-center justify-between border-kuiper-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
-                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-stone-400 to-stone-700 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+            <a href="quaoar.html" class="glass-panel p-4 flex flex-col items-center justify-between border-kuiper-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors group cursor-pointer">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-stone-400 to-stone-700 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3 group-hover:scale-110 transition-transform">
                     <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] rounded-full border border-stone-300 opacity-50"></div>
                 </div>
                 <div class="text-center mb-3">
                     <p class="font-display font-bold text-lg leading-tight text-white">Quaoar</p>
                     <p class="font-mono text-xs text-kuiper-light">The Ringed World</p>
                 </div>
-                <button onclick="showMsgBox('Quaoar Data', 'A massive candidate dwarf planet. Scientists recently discovered it has a ring system that shouldn\'t theoretically exist where it is! Module locked.', '🪐')" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-kuiper-light text-kuiper-light transition-colors font-bold shadow-md">
+                <span class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 group-hover:border-kuiper-light text-kuiper-light transition-colors font-bold shadow-md text-center">
                     Visit ▸
-                </button>
-            </div>
+                </span>
+            </a>
 
             <!-- Orcus -->
-            <div class="glass-panel p-4 flex flex-col items-center justify-between border-kuiper-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
-                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-gray-500 to-gray-800 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+            <a href="orcus.html" class="glass-panel p-4 flex flex-col items-center justify-between border-kuiper-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors group cursor-pointer">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-gray-500 to-gray-800 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3 group-hover:scale-110 transition-transform">
                 </div>
                 <div class="text-center mb-3">
                     <p class="font-display font-bold text-lg leading-tight text-white">Orcus</p>
                     <p class="font-mono text-xs text-kuiper-light">The Anti-Pluto</p>
                 </div>
-                <button onclick="showMsgBox('Orcus Data', 'Known as the anti-Pluto. It is locked in the same orbital resonance with Neptune as Pluto is, but is always on the opposite side of the sun! Module locked.', '🌑')" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-kuiper-light text-kuiper-light transition-colors font-bold shadow-md">
+                <span class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 group-hover:border-kuiper-light text-kuiper-light transition-colors font-bold shadow-md text-center">
                     Visit ▸
-                </button>
-            </div>
+                </span>
+            </a>
 
             <!-- Salacia -->
-            <div class="glass-panel p-4 flex flex-col items-center justify-between border-kuiper-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors">
-                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-300 to-gray-500 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3">
+            <a href="salacia.html" class="glass-panel p-4 flex flex-col items-center justify-between border-kuiper-base bg-opacity-40 rounded-xl hover:bg-space-800 transition-colors group cursor-pointer">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-300 to-gray-500 shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.5)] relative overflow-hidden mb-3 group-hover:scale-110 transition-transform">
                 </div>
                 <div class="text-center mb-3">
                     <p class="font-display font-bold text-lg leading-tight text-white">Salacia</p>
                     <p class="font-mono text-xs text-kuiper-light">Large TNO</p>
                 </div>
-                <button onclick="showMsgBox('Salacia Data', 'A large Trans-Neptunian Object (TNO) with a single known moon, Actaea. Very little is known about its surface. Module locked.', '❄️')" class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 hover:border-kuiper-light text-kuiper-light transition-colors font-bold shadow-md">
+                <span class="w-full bg-space-700 p-2 px-3 rounded-lg text-xs border border-space-500 group-hover:border-kuiper-light text-kuiper-light transition-colors font-bold shadow-md text-center">
                     Visit ▸
-                </button>
-            </div>
+                </span>
+            </a>
         </div>
 
     </section>
@@ -630,48 +617,153 @@
     }
 
     /* QUIZ LOGIC */
-    let currentQ = 1;
-    let score = 0;
+    const quizQuestions = [
+        { question: "What is the Kuiper Belt primarily composed of?", options: [{ text: "Rock and heavy metals", isCorrect: false }, { text: "Frozen volatiles like water, ammonia, and methane ices", isCorrect: true }, { text: "Hot plasma from the solar wind", isCorrect: false }, { text: "Liquid water oceans", isCorrect: false }], explanation: "Unlike the rocky Asteroid Belt, the Kuiper Belt is made mostly of frozen volatiles—ices of water, ammonia, and methane mixed with rock." },
+        { question: "Where is the Kuiper Belt located?", options: [{ text: "Between Mars and Jupiter", isCorrect: false }, { text: "Beyond the orbit of Neptune", isCorrect: true }, { text: "Between Saturn and Uranus", isCorrect: false }, { text: "Inside Mercury's orbit", isCorrect: false }], explanation: "The Kuiper Belt begins just past Neptune's orbit, extending from about 30 to 50 AU from the Sun." },
+        { question: "How does the width of the Kuiper Belt compare to the Asteroid Belt?", options: [{ text: "About the same width", isCorrect: false }, { text: "About 20 times wider", isCorrect: true }, { text: "Half as wide", isCorrect: false }, { text: "100 times narrower", isCorrect: false }], explanation: "The Kuiper Belt is roughly 20 times wider than the Asteroid Belt and contains significantly more mass." },
+        { question: "What is the approximate average temperature in the Kuiper Belt?", options: [{ text: "About -220°C (-370°F)", isCorrect: true }, { text: "About -50°C (-58°F)", isCorrect: false }, { text: "About 0°C (32°F)", isCorrect: false }, { text: "About -100°C (-148°F)", isCorrect: false }], explanation: "The Kuiper Belt is incredibly cold, averaging around -220°C, which keeps objects frozen as ancient relics." },
+        { question: "Which NASA mission is famous for exploring Pluto and Arrokoth in the Kuiper Belt?", options: [{ text: "Cassini", isCorrect: false }, { text: "Voyager 1", isCorrect: false }, { text: "New Horizons", isCorrect: true }, { text: "Juno", isCorrect: false }], explanation: "NASA's New Horizons spacecraft flew past Pluto in 2015 and Arrokoth in 2019, providing the first close-up views of these distant worlds." },
+        { question: "What type of comets are believed to originate primarily from the Kuiper Belt?", options: [{ text: "Long-period comets", isCorrect: false }, { text: "Short-period comets", isCorrect: true }, { text: "Sun-grazing comets", isCorrect: false }, { text: "Interstellar comets", isCorrect: false }], explanation: "Short-period comets, which take less than 200 years to orbit the Sun, are thought to come from the Kuiper Belt." },
+        { question: "What is a 'contact binary' object like Arrokoth?", options: [{ text: "A moon orbiting a planet", isCorrect: false }, { text: "Two objects that gently collided and stuck together", isCorrect: true }, { text: "A star with a companion", isCorrect: false }, { text: "A comet with two tails", isCorrect: false }], explanation: "Arrokoth is a contact binary—two smaller bodies that gently merged in a low-speed collision, preserving their original shapes." },
+        { question: "Which Kuiper Belt Object is known as the 'Anti-Pluto'?", options: [{ text: "Quaoar", isCorrect: false }, { text: "Salacia", isCorrect: false }, { text: "Orcus", isCorrect: true }, { text: "Arrokoth", isCorrect: false }], explanation: "Orcus is called the Anti-Pluto because it shares Pluto's 2:3 orbital resonance with Neptune but stays on the opposite side of the Sun." },
+        { question: "What is the total estimated mass of the Kuiper Belt compared to Earth?", options: [{ text: "About 10% of Earth's mass", isCorrect: true }, { text: "Equal to Earth's mass", isCorrect: false }, { text: "About 50% of Earth's mass", isCorrect: false }, { text: "Twice Earth's mass", isCorrect: false }], explanation: "Despite its enormous size, the Kuiper Belt's total mass is estimated at only about 10% of Earth's mass." },
+        { question: "What is the shape of the Kuiper Belt often described as?", options: [{ text: "A flat disk", isCorrect: false }, { text: "A puffed-up donut or torus", isCorrect: true }, { text: "A perfect sphere", isCorrect: false }, { text: "A straight line", isCorrect: false }], explanation: "Rather than a flat ring, the Kuiper Belt is thicker than expected and shaped more like a puffed-up donut (torus)." },
+        { question: "What happens to Kuiper Belt Objects when they are disturbed and fall toward the Sun?", options: [{ text: "They become short-period comets with bright tails", isCorrect: true }, { text: "They melt completely", isCorrect: false }, { text: "They turn into asteroids", isCorrect: false }, { text: "They become new moons of Neptune", isCorrect: false }], explanation: "When KBOs are knocked inward by gravitational interactions, they heat up and develop comas and tails, becoming short-period comets." },
+        { question: "What is the approximate orbital period range for most classical Kuiper Belt Objects?", options: [{ text: "1 to 10 years", isCorrect: false }, { text: "50 to 100 years", isCorrect: false }, { text: "200 to 300 Earth years", isCorrect: true }, { text: "1,000 to 10,000 years", isCorrect: false }], explanation: "Because they are so far from the Sun, KBOs orbit very slowly, with years lasting 200 to 300+ Earth years." },
+        { question: "Which of these is NOT typically found in large amounts on the surfaces of Kuiper Belt Objects?", options: [{ text: "Frozen methane", isCorrect: false }, { text: "Frozen water ice", isCorrect: false }, { text: "Liquid water oceans", isCorrect: true }, { text: "Frozen nitrogen", isCorrect: false }], explanation: "At temperatures around -220°C, water and other substances are frozen solid. Liquid water oceans, if they exist, would be deep underground." },
+        { question: "What are the reddish-brown compounds found on many KBO surfaces called?", options: [{ text: "Tholins", isCorrect: true }, { text: "Tholides", isCorrect: false }, { text: "Kerogens", isCorrect: false }, { text: "Basalts", isCorrect: false }], explanation: "Tholins are complex organic molecules created when solar radiation hits methane and nitrogen ice, giving many KBOs their reddish color." },
+        { question: "What is the 'scattered disc' in relation to the Kuiper Belt?", options: [{ text: "A more distant, highly inclined population of icy bodies", isCorrect: true }, { text: "A ring around Neptune", isCorrect: false }, { text: "The inner edge of the Asteroid Belt", isCorrect: false }, { text: "A cloud of dust around Pluto", isCorrect: false }], explanation: "The scattered disc is an extended region beyond the classical Kuiper Belt containing icy bodies on more elliptical and tilted orbits." },
+        { question: "Why is the Kuiper Belt considered a 'fossil' of the early solar system?", options: [{ text: "Its objects have remained relatively unchanged for billions of years", isCorrect: true }, { text: "It contains actual dinosaur bones", isCorrect: false }, { text: "It is made of compressed ancient atmospheres", isCorrect: false }, { text: "It formed only 1,000 years ago", isCorrect: false }], explanation: "Because KBOs are so cold and far from the Sun, they have preserved the original materials and conditions from the solar system's formation 4.5 billion years ago." },
+        { question: "Which KBO has a ring system located much farther from the object than classical ring theory predicts?", options: [{ text: "Orcus", isCorrect: false }, { text: "Salacia", isCorrect: false }, { text: "Quaoar", isCorrect: true }, { text: "Arrokoth", isCorrect: false }], explanation: "Quaoar has a ring system located outside its Roche limit, which challenges existing theories about where rings can form and survive." },
+        { question: "What does 'AU' mean when scientists say the Kuiper Belt spans 30 to 50 AU?", options: [{ text: "Astronomical Unit, the average Earth-Sun distance", isCorrect: true }, { text: "Atomic Unit, a measure of particle size", isCorrect: false }, { text: "Altitude Unit, a measure of height", isCorrect: false }, { text: "Area Unit, a measure of surface coverage", isCorrect: false }], explanation: "One Astronomical Unit (AU) is the average distance from Earth to the Sun (~93 million miles), used to measure distances in the solar system." },
+        { question: "What is the hypothesized 'Planet Nine' thought to explain?", options: [{ text: "The strange, clustered orbits of some distant KBOs", isCorrect: true }, { text: "Why Mercury has no moons", isCorrect: false }, { text: "The color of Saturn's rings", isCorrect: false }, { text: "The temperature of the Sun's core", isCorrect: false }], explanation: "Some astronomers propose Planet Nine to explain why certain extreme KBOs have similar, oddly clustered orbits that suggest gravitational influence from a massive unseen planet." },
+        { question: "Which KBO was the farthest object ever visited by a spacecraft as of 2019?", options: [{ text: "Pluto", isCorrect: false }, { text: "Arrokoth", isCorrect: true }, { text: "Eris", isCorrect: false }, { text: "Quaoar", isCorrect: false }], explanation: "New Horizons flew past Arrokoth (then nicknamed Ultima Thule) on January 1, 2019, making it the most distant object ever explored by a spacecraft." }
+    ];
 
-    function answer(qNum, isCorrect, btnEl) {
-        let siblings = btnEl.parentElement.children;
-        for(let s of siblings) {
-            s.disabled = true;
-            s.classList.remove('hover:bg-space-700', 'hover:border-kuiper-base');
-            s.classList.add('opacity-50');
+    let currentQ = 0;
+    let score = 0;
+    let questionOrder = [];
+    let currentQuestionSet = [];
+    let answeredCurrent = false;
+
+    function shuffleArray(items) {
+        const arr = [...items];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
         }
+        return arr;
+    }
+
+    function prepareQuizData() {
+        questionOrder = shuffleArray(quizQuestions.map((_, idx) => idx));
+        currentQuestionSet = questionOrder.map((idx) => {
+            const q = JSON.parse(JSON.stringify(quizQuestions[idx]));
+            const options = q.options.map((item) => ({ text: item.text, isCorrect: item.isCorrect }));
+            q.options = shuffleArray(options);
+            return q;
+        });
+    }
+
+    function renderQuestion() {
+        const total = currentQuestionSet.length;
+        const question = currentQuestionSet[currentQ];
+        answeredCurrent = false;
+
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('quizQuestionCard').classList.remove('hidden');
+        document.getElementById('quizQuestionCard').classList.add('block');
+        document.getElementById('quizCurrent').innerText = `${currentQ + 1}`;
+        document.getElementById('quizTotal').innerText = `${total}`;
+        document.getElementById('quizScore').innerText = `${score}`;
+        document.getElementById('quizQuestion').innerText = `${currentQ + 1}. ${question.question}`;
+
+        const optionsWrap = document.getElementById('quizOptions');
+        optionsWrap.innerHTML = '';
+        question.options.forEach((option) => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all";
+            btn.innerText = option.text;
+            btn.onclick = () => answer(option.isCorrect, btn);
+            optionsWrap.appendChild(btn);
+        });
+
+        const explanationBox = document.getElementById('quizExplanation');
+        explanationBox.classList.add('hidden');
+        document.getElementById('quizAnswerLabel').innerText = '';
+        document.getElementById('quizExplanationText').innerText = '';
+
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.disabled = true;
+        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.remove('hover:bg-space-500');
+        nextBtn.innerText = currentQ === total - 1 ? 'See Results' : 'Next';
+    }
+
+    function answer(isCorrect, btnEl) {
+        if (answeredCurrent) return;
+        answeredCurrent = true;
+
+        const allButtons = document.querySelectorAll('#quizOptions button');
+        allButtons.forEach((btn) => {
+            btn.disabled = true;
+            btn.classList.remove('hover:bg-space-700', 'hover:border-kuiper-base');
+            btn.classList.add('opacity-50');
+        });
+
         btnEl.classList.remove('opacity-50', 'bg-space-800');
-        
-        if(isCorrect) {
+
+        if (isCorrect) {
             btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
             score++;
             addXP(20);
         } else {
             btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+            const correctBtn = Array.from(allButtons).find((btn) => currentQuestionSet[currentQ].options.find((opt) => opt.text === btn.innerText && opt.isCorrect));
+            if (correctBtn) {
+                correctBtn.classList.remove('opacity-50', 'bg-space-800');
+                correctBtn.classList.add('bg-star-green/20', 'border-star-green', 'font-bold');
+            }
         }
 
-        setTimeout(() => {
-            document.getElementById(`q${qNum}`).classList.add('hidden');
-            if(qNum < 3) {
-                document.getElementById(`q${qNum+1}`).classList.remove('hidden');
-                document.getElementById(`q${qNum+1}`).classList.add('block');
-            } else {
-                showResults();
-            }
-        }, 1000);
+        document.getElementById('quizScore').innerText = `${score}`;
+        const explanationBox = document.getElementById('quizExplanation');
+        document.getElementById('quizAnswerLabel').innerText = isCorrect ? 'Correct!' : 'Explanation';
+        document.getElementById('quizAnswerLabel').className = isCorrect ? 'font-bold mb-2 text-star-green' : 'font-bold mb-2 text-star-red';
+        document.getElementById('quizExplanationText').innerText = currentQuestionSet[currentQ].explanation;
+        explanationBox.classList.remove('hidden');
+
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.add('hover:bg-space-500');
+    }
+
+    function goToNextQuestion() {
+        if (!answeredCurrent) return;
+        if (currentQ < currentQuestionSet.length - 1) {
+            currentQ++;
+            renderQuestion();
+        } else {
+            showResults();
+        }
     }
 
     function showResults() {
+        document.getElementById('quizQuestionCard').classList.add('hidden');
+        document.getElementById('quizQuestionCard').classList.remove('block');
         document.getElementById('q-result').classList.remove('hidden');
         document.getElementById('q-result').classList.add('block');
-        document.getElementById('scoreText').innerText = `${score}/3`;
-        
-        if(score === 3) {
+        document.getElementById('scoreText').innerText = `${score}/${currentQuestionSet.length}`;
+        document.getElementById('scoreText').classList.remove('text-star-green', 'text-star-red');
+
+        if (score === currentQuestionSet.length) {
             document.getElementById('scoreText').classList.add('text-star-green');
-            if(!achievements.passedQuiz) {
+            if (!achievements.passedQuiz) {
                 achievements.passedQuiz = true;
                 addXP(100);
-                showMsgBox("Perfect Knowledge", "Perfect score on the Quiz! +100 XP", "🧠");
+                showMsgBox("Perfect Knowledge", "Perfect score on the Kuiper Belt Quiz! +100 XP", "🧠");
             }
         } else {
             document.getElementById('scoreText').classList.add('text-star-red');
@@ -681,25 +773,14 @@
 
     function resetQuiz() {
         score = 0;
-        currentQ = 1;
-        document.getElementById('q-result').classList.add('hidden');
-        document.getElementById('q-result').classList.remove('block');
+        currentQ = 0;
         document.getElementById('retryQuizBtn').classList.add('hidden');
-        
-        for(let i=1; i<=3; i++) {
-            let qDiv = document.getElementById(`q${i}`);
-            qDiv.classList.add('hidden');
-            qDiv.classList.remove('block');
-            
-            let btns = qDiv.querySelectorAll('button');
-            btns.forEach(b => {
-                b.disabled = false;
-                b.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-kuiper-base transition-all";
-            });
-        }
-        document.getElementById('q1').classList.remove('hidden');
-        document.getElementById('q1').classList.add('block');
+        prepareQuizData();
+        renderQuestion();
     }
+
+    prepareQuizData();
+    renderQuestion();
 
     /* MINI GAME: Comet Interceptor */
     const canvas = document.getElementById('gameCanvas');
