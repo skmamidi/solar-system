@@ -869,24 +869,50 @@
                         <div id="weaverOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-star-gold/30 transition-opacity">
                             <div class="text-5xl mb-2">✨</div>
                             <h3 class="font-display text-2xl text-white mb-1">Constellation Challenge</h3>
-                            <p class="text-star-gold text-sm">Build Leo from real pattern cues</p>
+                            <p id="weaverOverlayText" class="text-star-gold text-sm">Choose a zodiac sign and match its reference sketch</p>
                         </div>
-                        <canvas id="constellationCanvas" width="500" height="500" class="bg-gradient-to-b from-[#11132b] via-[#0a0515] to-[#040814] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-star-gold/50 cursor-pointer"></canvas>
+                        <canvas id="constellationCanvas" width="540" height="540" class="bg-gradient-to-b from-[#11132b] via-[#0a0515] to-[#040814] rounded-xl w-full max-w-[440px] h-[440px] md:h-[540px] object-cover border border-star-gold/50 cursor-pointer"></canvas>
                     </div>
 
                     <div class="flex-1 w-full text-center lg:text-left">
                         <span class="inline-block px-3 py-1 bg-star-gold/20 text-star-gold border border-star-gold text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME 2</span>
                         <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Zodiac Weaver</h2>
-                        <p class="text-space-100 mb-4">Because the <strong class="text-star-red">Ecliptic</strong> is the Sun's apparent yearly path, constellations that sit on it are astronomically special. This version of <strong>Zodiac Weaver</strong> adds decoy stars, named anchor stars, and error feedback.</p>
+                        <p class="text-space-100 mb-4">Choose any zodiac constellation, study the small reference sketch, then rebuild it from the interactive star field. The reference is a simplified classroom outline, so the goal is to recognize the pattern and its anchor stars with less frustration.</p>
                         
-                        <div class="bg-space-800/50 p-4 rounded-xl mb-6 inline-block text-left w-full border border-star-gold/30">
-                            <h4 class="font-bold text-star-gold mb-2 border-b border-star-gold/30 pb-1">Mission: Reconstruct Leo from its real anchor stars</h4>
-                            <ul class="text-sm space-y-2 text-white">
-                                <li>1. Use bright named stars such as <strong>Regulus</strong> and <strong>Denebola</strong> as anchors.</li>
-                                <li>2. Connect only stars that belong to Leo's accepted line pattern.</li>
-                                <li>3. Decoy stars and invalid links cost accuracy, so pattern recognition matters.</li>
-                                <li>4. Keep Leo aligned with the golden ecliptic guide to understand why it is a zodiac constellation.</li>
-                            </ul>
+                        <div class="grid grid-cols-1 md:grid-cols-[1.2fr_0.8fr] gap-4 mb-6 items-stretch">
+                            <div class="bg-space-800/50 p-4 rounded-xl text-left w-full border border-star-gold/30">
+                                <div class="flex flex-wrap items-center justify-between gap-3 mb-3 border-b border-star-gold/30 pb-2">
+                                    <h4 id="weaverMissionTitle" class="font-bold text-star-gold">Mission: Reconstruct Leo</h4>
+                                    <select id="weaverSignSelect" class="bg-space-900 text-white border border-star-gold/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-star-gold/60">
+                                        <option>Aries</option>
+                                        <option selected>Leo</option>
+                                        <option>Taurus</option>
+                                        <option>Gemini</option>
+                                        <option>Cancer</option>
+                                        <option>Virgo</option>
+                                        <option>Libra</option>
+                                        <option>Scorpius</option>
+                                        <option>Sagittarius</option>
+                                        <option>Capricornus</option>
+                                        <option>Aquarius</option>
+                                        <option>Pisces</option>
+                                    </select>
+                                </div>
+                                <ul id="weaverMissionList" class="text-sm space-y-2 text-white">
+                                    <li>1. Use bright named stars such as <strong>Regulus</strong> and <strong>Denebola</strong> as anchors.</li>
+                                    <li>2. Compare your build to the reference sketch before adding each line.</li>
+                                    <li>3. Decoy stars and invalid links reduce accuracy, but the reference thumbnail keeps the task fair.</li>
+                                    <li>4. Keep the pattern close to the golden ecliptic guide to see why the sign belongs to the zodiac band.</li>
+                                </ul>
+                            </div>
+                            <div class="bg-space-800/50 p-4 rounded-xl border border-star-gold/30 flex flex-col items-center justify-between">
+                                <div class="w-full flex items-center justify-between mb-2">
+                                    <h4 class="font-bold text-star-gold text-sm">Reference Sketch</h4>
+                                    <span class="text-[11px] text-space-100 font-mono">Target pattern</span>
+                                </div>
+                                <canvas id="weaverReferenceCanvas" width="180" height="180" class="rounded-lg border border-star-gold/30 bg-space-900/70 w-[180px] h-[180px]"></canvas>
+                                <p id="weaverReferenceCaption" class="text-xs text-space-100 mt-3 text-center leading-relaxed">Leo teaching outline with the sickle on the left and tail toward Denebola.</p>
+                            </div>
                         </div>
                         
                         <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
@@ -1618,6 +1644,9 @@
     }
     
 
+
+    window.addEventListener('load', initDictionaryAnimations);
+
     /* =========================================================
        MINI-GAME 1: TELESCOPE TARGETER
        ========================================================= */
@@ -2037,85 +2066,332 @@
     }
 
 
+
     /* =========================================================
        MINI-GAME 2: ZODIAC WEAVER (Constellation Connect)
        ========================================================= */
     const weaverCanvas = document.getElementById('constellationCanvas');
     const wCtx = weaverCanvas.getContext('2d');
     const wOverlay = document.getElementById('weaverOverlay');
+    const wOverlayText = document.getElementById('weaverOverlayText');
     const wStartBtn = document.getElementById('startWeaverBtn');
+    const wSignSelect = document.getElementById('weaverSignSelect');
+    const wMissionTitle = document.getElementById('weaverMissionTitle');
+    const wMissionList = document.getElementById('weaverMissionList');
+    const wRefCanvas = document.getElementById('weaverReferenceCanvas');
+    const wRefCtx = wRefCanvas.getContext('2d');
+    const wRefCaption = document.getElementById('weaverReferenceCaption');
 
     function resizeWeaver() {
         const rect = weaverCanvas.parentElement.getBoundingClientRect();
-        weaverCanvas.width = rect.width > 520 ? 520 : rect.width;
-        weaverCanvas.height = weaverCanvas.width; 
+        weaverCanvas.width = rect.width > 560 ? 560 : rect.width;
+        weaverCanvas.height = weaverCanvas.width;
+        drawWeaverReference();
+        if (weaverActive) loadSelectedConstellation(true);
     }
     window.addEventListener('resize', resizeWeaver);
     window.addEventListener('load', resizeWeaver);
 
+    const zodiacConfigs = {
+        Aries: {
+            title: 'Aries',
+            caption: 'A short bent chain led by Hamal and Sheratan.',
+            info: ['Use <strong>Hamal</strong> and <strong>Sheratan</strong> as the two brightest anchors.', 'Aries is a compact pattern, so each segment matters.', 'The reference sketch shows the simplest classroom outline for Aries.', 'This keeps the challenge fair even with decoy stars present.'],
+            stars: [
+                {id: 0, nx: 0.24, ny: 0.57, name: 'Hamal', importance: 'Bright head star'},
+                {id: 1, nx: 0.42, ny: 0.52, name: 'Sheratan', importance: 'Second bright anchor'},
+                {id: 2, nx: 0.56, ny: 0.61, name: 'Mesarthim', importance: 'Completes the bend'},
+                {id: 3, nx: 0.70, ny: 0.47, name: 'Botein', importance: 'Outer extension'}
+            ],
+            edges: [[0,1],[1,2],[2,3]],
+            decoys: [{id:100,nx:0.16,ny:0.26},{id:101,nx:0.82,ny:0.26},{id:102,nx:0.76,ny:0.82}],
+            overlay: 'Build Aries from its compact curved line.'
+        },
+        Taurus: {
+            title: 'Taurus',
+            caption: 'Aldebaran marks the V-shaped face with horns reaching outward.',
+            info: ['Start from <strong>Aldebaran</strong>, then build the V-shape of the face.', 'Use <strong>Elnath</strong> as one horn tip.', 'The reference sketch is simplified to the core Taurus classroom shape.', 'Ignore decoys that sit outside the horn-and-face pattern.'],
+            stars: [
+                {id:0,nx:0.34,ny:0.55,name:'Aldebaran',importance:'Eye of the bull'},
+                {id:1,nx:0.48,ny:0.43,name:'Hyadum I',importance:'Upper face point'},
+                {id:2,nx:0.50,ny:0.67,name:'Ain',importance:'Lower face point'},
+                {id:3,nx:0.68,ny:0.35,name:'Elnath',importance:'Horn tip'},
+                {id:4,nx:0.74,ny:0.73,name:'Tianguan',importance:'Outer horn extension'}
+            ],
+            edges: [[1,0],[0,2],[1,3],[2,4]],
+            decoys: [{id:100,nx:0.14,ny:0.22},{id:101,nx:0.22,ny:0.78},{id:102,nx:0.86,ny:0.22}],
+            overlay: 'Build Taurus from the V-shape and horns.'
+        },
+        Gemini: {
+            title: 'Gemini',
+            caption: 'Castor and Pollux lead two nearly parallel bodies.',
+            info: ['Begin with bright twins <strong>Castor</strong> and <strong>Pollux</strong>.', 'Gemini is easier if you build the two body lines separately.', 'The mini sketch shows the common classroom outline of the twins.', 'Stay close to the reference before adding the lower segments.'],
+            stars: [
+                {id:0,nx:0.34,ny:0.28,name:'Castor',importance:'Twin head'},
+                {id:1,nx:0.54,ny:0.30,name:'Pollux',importance:'Twin head'},
+                {id:2,nx:0.30,ny:0.48,name:'Mebsuta',importance:'Left body'},
+                {id:3,nx:0.50,ny:0.50,name:'Wasat',importance:'Right body'},
+                {id:4,nx:0.26,ny:0.70,name:'Tejat',importance:'Left foot'},
+                {id:5,nx:0.62,ny:0.72,name:'Alhena',importance:'Right foot'}
+            ],
+            edges: [[0,1],[0,2],[2,4],[1,3],[3,5]],
+            decoys: [{id:100,nx:0.14,ny:0.18},{id:101,nx:0.82,ny:0.22},{id:102,nx:0.78,ny:0.84}],
+            overlay: 'Build Gemini from the two bright twin stars.'
+        },
+        Cancer: {
+            title: 'Cancer',
+            caption: 'Cancer is faint, so the small box-like center matters most.',
+            info: ['Cancer is subtle, so compare often with the reference sketch.', 'Use the central box shape before adding the side stars.', 'The outline here is simplified to make the faint pattern learnable.', 'Accuracy matters more than speed for Cancer.'],
+            stars: [
+                {id:0,nx:0.38,ny:0.42,name:'Asellus Borealis',importance:'Upper box point'},
+                {id:1,nx:0.52,ny:0.44,name:'Acubens',importance:'Upper right point'},
+                {id:2,nx:0.56,ny:0.58,name:'Altarf',importance:'Lower right point'},
+                {id:3,nx:0.40,ny:0.60,name:'Asellus Australis',importance:'Lower box point'},
+                {id:4,nx:0.28,ny:0.52,name:'Tegmine',importance:'Left extension'}
+            ],
+            edges: [[0,1],[1,2],[2,3],[3,0],[3,4]],
+            decoys: [{id:100,nx:0.14,ny:0.28},{id:101,nx:0.76,ny:0.24},{id:102,nx:0.82,ny:0.78}],
+            overlay: 'Build the faint box shape of Cancer.'
+        },
+        Leo: {
+            title: 'Leo',
+            caption: 'Leo teaching outline with the sickle on the left and tail toward Denebola.',
+            info: ['Use bright named stars such as <strong>Regulus</strong> and <strong>Denebola</strong> as anchors.', 'Compare your build to the reference sketch before adding each line.', 'Decoy stars and invalid links reduce accuracy, but the reference thumbnail keeps the task fair.', 'Keep the pattern close to the golden ecliptic guide to see why the sign belongs to the zodiac band.'],
+            stars: [
+                {id: 0, nx: 0.20, ny: 0.60, name: 'Regulus', importance: 'Brightest star, near the ecliptic'},
+                {id: 1, nx: 0.40, ny: 0.72, name: 'Algieba', importance: 'Sickle pattern'},
+                {id: 2, nx: 0.46, ny: 0.50, name: 'Adhafera', importance: 'Upper sickle'},
+                {id: 3, nx: 0.64, ny: 0.30, name: 'Zosma', importance: 'Back of the lion'},
+                {id: 4, nx: 0.84, ny: 0.40, name: 'Denebola', importance: 'Tail star'},
+                {id: 5, nx: 0.52, ny: 0.82, name: 'Rasalas', importance: 'Lower sickle'},
+                {id: 6, nx: 0.24, ny: 0.42, name: 'Subra', importance: 'Connects toward Regulus'}
+            ],
+            edges: [[0,1],[1,2],[2,3],[3,4],[1,5],[5,6],[6,0]],
+            decoys: [{id:100,nx:0.10,ny:0.20},{id:101,nx:0.76,ny:0.70},{id:102,nx:0.92,ny:0.18},{id:103,nx:0.66,ny:0.92}],
+            overlay: 'Build Leo from real anchor stars.'
+        },
+        Virgo: {
+            title: 'Virgo',
+            caption: 'Virgo stretches broadly from Vindemiatrix toward bright Spica.',
+            info: ['Use <strong>Spica</strong> as the bright end anchor of Virgo.', 'This is a long, open pattern, so use the thumbnail often.', 'The classroom outline emphasizes the broad sweep toward Spica.', 'Decoys are placed wide to keep the challenge readable.'],
+            stars: [
+                {id:0,nx:0.24,ny:0.34,name:'Vindemiatrix',importance:'Upper anchor'},
+                {id:1,nx:0.42,ny:0.42,name:'Porrima',importance:'Midpoint pair'},
+                {id:2,nx:0.58,ny:0.56,name:'Zavijava',importance:'Central turn'},
+                {id:3,nx:0.72,ny:0.74,name:'Spica',importance:'Bright lower anchor'},
+                {id:4,nx:0.64,ny:0.34,name:'Auva',importance:'Upper extension'}
+            ],
+            edges: [[0,1],[1,2],[2,3],[1,4]],
+            decoys: [{id:100,nx:0.12,ny:0.72},{id:101,nx:0.84,ny:0.18},{id:102,nx:0.88,ny:0.86}],
+            overlay: 'Trace Virgo as a broad line ending at Spica.'
+        },
+        Libra: {
+            title: 'Libra',
+            caption: 'Libra is a compact quadrilateral centered on the Zuben stars.',
+            info: ['Begin with <strong>Zubenelgenubi</strong> and <strong>Zubeneschamali</strong>.', 'Libra is smaller than Leo or Virgo, so avoid extra lines.', 'The mini sketch highlights its balanced classroom shape.', 'Decoys sit outside the central quadrilateral.'],
+            stars: [
+                {id:0,nx:0.34,ny:0.42,name:'Zubenelgenubi',importance:'Lower left scale'},
+                {id:1,nx:0.54,ny:0.34,name:'Zubeneschamali',importance:'Upper left scale'},
+                {id:2,nx:0.72,ny:0.44,name:'Brachium',importance:'Upper right scale'},
+                {id:3,nx:0.58,ny:0.62,name:'Upsilon Lib',importance:'Lower right scale'}
+            ],
+            edges: [[0,1],[1,2],[2,3],[3,0]],
+            decoys: [{id:100,nx:0.16,ny:0.20},{id:101,nx:0.80,ny:0.20},{id:102,nx:0.84,ny:0.80}],
+            overlay: 'Build Libra as a compact scales shape.'
+        },
+        Scorpius: {
+            title: 'Scorpius',
+            caption: 'Antares anchors the bright body before the tail curves downward.',
+            info: ['Start at red giant <strong>Antares</strong>.', 'Scorpius becomes easier if you build body first, then tail.', 'The teaching sketch exaggerates the tail curve for clarity.', 'Keep an eye on the reference before making each bend.'],
+            stars: [
+                {id:0,nx:0.22,ny:0.44,name:'Dschubba',importance:'Upper body'},
+                {id:1,nx:0.40,ny:0.52,name:'Antares',importance:'Bright heart star'},
+                {id:2,nx:0.56,ny:0.60,name:'Sargas',importance:'Tail start'},
+                {id:3,nx:0.66,ny:0.74,name:'Jabbah',importance:'Tail bend'},
+                {id:4,nx:0.80,ny:0.84,name:'Shaula',importance:'Stinger'}
+            ],
+            edges: [[0,1],[1,2],[2,3],[3,4]],
+            decoys: [{id:100,nx:0.12,ny:0.22},{id:101,nx:0.82,ny:0.22},{id:102,nx:0.52,ny:0.24}],
+            overlay: 'Build Scorpius from Antares into the curved tail.'
+        },
+        Sagittarius: {
+            title: 'Sagittarius',
+            caption: 'The teapot shape is the easiest way to recognize Sagittarius.',
+            info: ['Use the familiar teapot outline rather than random line guessing.', 'Start from <strong>Kaus Australis</strong> and <strong>Nunki</strong>.', 'The reference sketch keeps only the most recognizable teapot edges.', 'Decoys are placed away from the handle and spout.'],
+            stars: [
+                {id:0,nx:0.30,ny:0.62,name:'Kaus Australis',importance:'Base star'},
+                {id:1,nx:0.44,ny:0.40,name:'Nunki',importance:'Top anchor'},
+                {id:2,nx:0.62,ny:0.42,name:'Kaus Borealis',importance:'Top right'},
+                {id:3,nx:0.72,ny:0.56,name:'Ascella',importance:'Spout side'},
+                {id:4,nx:0.58,ny:0.74,name:'Kaus Media',importance:'Base right'},
+                {id:5,nx:0.22,ny:0.48,name:'Alnasl',importance:'Handle side'}
+            ],
+            edges: [[0,1],[1,2],[2,3],[3,4],[4,0],[0,5]],
+            decoys: [{id:100,nx:0.12,ny:0.24},{id:101,nx:0.84,ny:0.24},{id:102,nx:0.86,ny:0.82}],
+            overlay: 'Build the familiar Sagittarius teapot.'
+        },
+        Capricornus: {
+            title: 'Capricornus',
+            caption: 'Capricornus is often taught as a shallow triangular or V-like sea-goat outline.',
+            info: ['Use <strong>Deneb Algedi</strong> and <strong>Dabih</strong> as the clearest anchors.', 'The outline here is simplified to the common classroom sea-goat shape.', 'Because the pattern is faint, the reference sketch matters more than speed.', 'Ignore decoys well outside the shallow V.'],
+            stars: [
+                {id:0,nx:0.26,ny:0.48,name:'Deneb Algedi',importance:'Left anchor'},
+                {id:1,nx:0.42,ny:0.34,name:'Dabih',importance:'Top left'},
+                {id:2,nx:0.60,ny:0.40,name:'Nashira',importance:'Top right'},
+                {id:3,nx:0.76,ny:0.56,name:'Algedi',importance:'Right anchor'},
+                {id:4,nx:0.54,ny:0.66,name:'Theta Cap',importance:'Lower bend'}
+            ],
+            edges: [[0,1],[1,2],[2,3],[3,4],[4,0]],
+            decoys: [{id:100,nx:0.12,ny:0.20},{id:101,nx:0.82,ny:0.24},{id:102,nx:0.16,ny:0.82}],
+            overlay: 'Build Capricornus as a shallow sea-goat outline.'
+        },
+        Aquarius: {
+            title: 'Aquarius',
+            caption: 'Aquarius is broad and faint, so the gentle broken chain is the key cue.',
+            info: ['Aquarius is spread out, so follow the reference in small steps.', 'Use <strong>Sadalmelik</strong> and <strong>Sadalsuud</strong> as upper anchors.', 'The teaching sketch simplifies the water-bearer to its main chain.', 'Expect a lower difficulty if you check the thumbnail often.'],
+            stars: [
+                {id:0,nx:0.24,ny:0.34,name:'Sadalmelik',importance:'Upper anchor'},
+                {id:1,nx:0.42,ny:0.40,name:'Sadalsuud',importance:'Upper right anchor'},
+                {id:2,nx:0.56,ny:0.54,name:'Skat',importance:'Middle chain'},
+                {id:3,nx:0.70,ny:0.68,name:'Albali',importance:'Lower extension'},
+                {id:4,nx:0.34,ny:0.66,name:'Ancha',importance:'Side branch'}
+            ],
+            edges: [[0,1],[1,2],[2,3],[2,4]],
+            decoys: [{id:100,nx:0.12,ny:0.18},{id:101,nx:0.84,ny:0.22},{id:102,nx:0.84,ny:0.84}],
+            overlay: 'Build Aquarius from its broad broken chain.'
+        },
+        Pisces: {
+            title: 'Pisces',
+            caption: 'Pisces is easiest as two fish connected by a long line to Alrescha.',
+            info: ['Start at <strong>Alrescha</strong>, the knot between the two fish.', 'The reference sketch simplifies Pisces into two small groups joined by a cord.', 'Build one fish, then the connecting line, then the second fish.', 'Decoys sit away from the fish groups to reduce frustration.'],
+            stars: [
+                {id:0,nx:0.44,ny:0.52,name:'Alrescha',importance:'Knot star'},
+                {id:1,nx:0.26,ny:0.36,name:'Torcular',importance:'Western fish'},
+                {id:2,nx:0.18,ny:0.50,name:'Fum al Samakah',importance:'Western tail'},
+                {id:3,nx:0.64,ny:0.40,name:'Eta Psc',importance:'Eastern fish'},
+                {id:4,nx:0.78,ny:0.52,name:'Gamma Psc',importance:'Eastern tail'}
+            ],
+            edges: [[1,2],[1,0],[0,3],[3,4]],
+            decoys: [{id:100,nx:0.12,ny:0.18},{id:101,nx:0.86,ny:0.24},{id:102,nx:0.54,ny:0.82}],
+            overlay: 'Build Pisces as two fish joined by a cord.'
+        }
+    };
+
+    let currentConstellationKey = 'Leo';
+    let currentConfig = zodiacConfigs[currentConstellationKey];
     let weaverActive = false;
     let wSelectedStar = -1;
     let wUserEdges = [];
     let wWrongAttempts = 0;
     let wMessage = '';
     let wMessageTimer = 0;
-    
-    const leoBase = [
-        {id: 0, nx: 0.2, ny: 0.6, name: 'Regulus', importance: 'Brightest star, near the ecliptic'},
-        {id: 1, nx: 0.4, ny: 0.7, name: 'Algieba', importance: 'Sickle pattern'},
-        {id: 2, nx: 0.45, ny: 0.5, name: 'Adhafera', importance: 'Upper sickle'},
-        {id: 3, nx: 0.6, ny: 0.3, name: 'Zosma', importance: 'Back of the lion'},
-        {id: 4, nx: 0.8, ny: 0.4, name: 'Denebola', importance: 'Tail star'},
-        {id: 5, nx: 0.5, ny: 0.8, name: 'Rasalas', importance: 'Lower sickle'},
-        {id: 6, nx: 0.25, ny: 0.4, name: 'Subra', importance: 'Connects toward Regulus'}
-    ];
-
-    const decoyBase = [
-        {id: 100, nx: 0.12, ny: 0.22, name: 'Decoy A'},
-        {id: 101, nx: 0.72, ny: 0.7, name: 'Decoy B'},
-        {id: 102, nx: 0.9, ny: 0.2, name: 'Decoy C'},
-        {id: 103, nx: 0.62, ny: 0.88, name: 'Decoy D'}
-    ];
-
-    const leoEdges = [
-        [0, 1], [1, 2], [2, 3], [3, 4],
-        [1, 5], [5, 6], [6, 0]
-    ];
-
     let wStars = [];
     let wDecoys = [];
 
-    function initWeaver() {
-        resizeWeaver();
-        wOverlay.classList.add('hidden');
-        wStartBtn.innerText = 'Pattern challenge active...';
-        wStartBtn.disabled = true;
-        wStartBtn.classList.add('opacity-50');
+    function renderWeaverMission() {
+        currentConfig = zodiacConfigs[currentConstellationKey];
+        wMissionTitle.innerText = `Mission: Reconstruct ${currentConfig.title}`;
+        wMissionList.innerHTML = currentConfig.info.map((item, idx) => `<li>${idx + 1}. ${item}</li>`).join('');
+        wRefCaption.innerText = currentConfig.caption;
+        wOverlayText.innerText = `Choose ${currentConfig.title} and match its reference sketch`;
+        drawWeaverReference();
+    }
 
-        wUserEdges = [];
-        wSelectedStar = -1;
-        wWrongAttempts = 0;
-        wMessage = 'Use Regulus and Denebola as anchor stars.';
-        wMessageTimer = 180;
-        weaverActive = true;
+    function drawWeaverReference() {
+        if (!wRefCtx || !currentConfig) return;
+        const cfg = currentConfig;
+        wRefCtx.clearRect(0, 0, wRefCanvas.width, wRefCanvas.height);
+        const g = wRefCtx.createLinearGradient(0, 0, 0, wRefCanvas.height);
+        g.addColorStop(0, 'rgba(17,19,43,0.98)');
+        g.addColorStop(1, 'rgba(4,8,20,0.98)');
+        wRefCtx.fillStyle = g;
+        wRefCtx.fillRect(0, 0, wRefCanvas.width, wRefCanvas.height);
+        wRefCtx.strokeStyle = 'rgba(255, 209, 102, 0.18)';
+        wRefCtx.lineWidth = 6;
+        wRefCtx.beginPath();
+        wRefCtx.moveTo(0, wRefCanvas.height * 0.78);
+        wRefCtx.lineTo(wRefCanvas.width, wRefCanvas.height * 0.22);
+        wRefCtx.stroke();
 
-        wStars = leoBase.map(s => ({
+        const stars = cfg.stars.map(s => ({x: s.nx * wRefCanvas.width, y: s.ny * wRefCanvas.height}));
+        wRefCtx.strokeStyle = '#ffd166';
+        wRefCtx.lineWidth = 2.2;
+        cfg.edges.forEach(edge => {
+            const s1 = stars.find((_, i) => cfg.stars[i].id === edge[0]);
+            const s2 = stars.find((_, i) => cfg.stars[i].id === edge[1]);
+            if (s1 && s2) {
+                wRefCtx.beginPath();
+                wRefCtx.moveTo(s1.x, s1.y);
+                wRefCtx.lineTo(s2.x, s2.y);
+                wRefCtx.stroke();
+            }
+        });
+        cfg.stars.forEach((s, idx) => {
+            const isAnchor = idx === 0 || idx === cfg.stars.length - 1 || /Regulus|Denebola|Castor|Pollux|Aldebaran|Spica|Antares|Alrescha|Sadalmelik|Hamal|Kaus Australis|Deneb Algedi|Zubenelgenubi/.test(s.name);
+            wRefCtx.fillStyle = isAnchor ? '#ffd166' : '#ffffff';
+            wRefCtx.shadowBlur = isAnchor ? 10 : 4;
+            wRefCtx.shadowColor = isAnchor ? '#ffd166' : '#ffffff';
+            wRefCtx.beginPath();
+            wRefCtx.arc(stars[idx].x, stars[idx].y, isAnchor ? 4.2 : 3, 0, Math.PI * 2);
+            wRefCtx.fill();
+        });
+        wRefCtx.shadowBlur = 0;
+    }
+
+    function loadSelectedConstellation(preserveProgress = false) {
+        currentConstellationKey = wSignSelect.value;
+        currentConfig = zodiacConfigs[currentConstellationKey];
+        renderWeaverMission();
+
+        if (!preserveProgress) {
+            wUserEdges = [];
+            wSelectedStar = -1;
+            wWrongAttempts = 0;
+            wMessage = `${currentConfig.title} loaded. Study the reference sketch first.`;
+            wMessageTimer = 120;
+        }
+
+        wStars = currentConfig.stars.map(s => ({
             id: s.id,
             name: s.name,
             importance: s.importance,
             x: s.nx * weaverCanvas.width,
             y: s.ny * weaverCanvas.height
         }));
-
-        wDecoys = decoyBase.map(s => ({
+        wDecoys = currentConfig.decoys.map(s => ({
             id: s.id,
-            name: s.name,
+            name: s.name || 'Decoy',
             x: s.nx * weaverCanvas.width,
             y: s.ny * weaverCanvas.height
         }));
+        if (weaverActive) drawWeaver();
+    }
 
+    function initWeaver() {
+        resizeWeaver();
+        loadSelectedConstellation();
+        wOverlay.classList.add('hidden');
+        wStartBtn.innerText = `Challenge active: ${currentConfig.title}`;
+        wStartBtn.disabled = true;
+        wStartBtn.classList.add('opacity-50');
+        wMessage = `Use the reference sketch to rebuild ${currentConfig.title}.`;
+        wMessageTimer = 180;
+        weaverActive = true;
         drawWeaver();
     }
+
+    wSignSelect.addEventListener('change', () => {
+        const wasActive = weaverActive;
+        weaverActive = false;
+        wSelectedStar = -1;
+        loadSelectedConstellation();
+        wStartBtn.innerText = '✨ Begin Pattern Challenge';
+        wStartBtn.disabled = false;
+        wStartBtn.classList.remove('opacity-50');
+        wOverlay.classList.remove('hidden');
+        wOverlayText.innerText = `Selected ${currentConfig.title}. Use the reference sketch, then start.`;
+        if (wasActive) drawWeaver();
+    });
 
     function getMousePosWeaver(e) {
         const rect = weaverCanvas.getBoundingClientRect();
@@ -2137,7 +2413,7 @@
         const combined = [...wStars, ...wDecoys];
         let clicked = null;
         combined.forEach((s) => {
-            if (Math.hypot(s.x - pos.x, s.y - pos.y) < 18) clicked = s;
+            if (Math.hypot(s.x - pos.x, s.y - pos.y) < 20) clicked = s;
         });
         return clicked;
     }
@@ -2145,19 +2421,18 @@
     function handleWeaverClick(e) {
         if (!weaverActive) return;
         if (e.type === 'touchstart') e.preventDefault();
-        
+
         const pos = getMousePosWeaver(e);
         const clickedStar = findClickedWeaverStar(pos);
 
         if (clickedStar) {
             const clicked = clickedStar.id;
             const isDecoy = clicked >= 100;
-
             if (isDecoy) {
                 wSelectedStar = -1;
                 wWrongAttempts++;
-                wMessage = `${clickedStar.name} is not part of Leo. Use the named anchor stars on the ecliptic side.`;
-                wMessageTimer = 150;
+                wMessage = `${clickedStar.name} is a decoy. Compare with the reference sketch and try again.`;
+                wMessageTimer = 160;
                 drawWeaver();
                 return;
             }
@@ -2167,32 +2442,28 @@
                 wMessage = `${clickedStar.name}: ${clickedStar.importance}`;
                 wMessageTimer = 120;
             } else if (wSelectedStar !== clicked) {
-                const isRequiredEdge = leoEdges.some(edge => 
-                    (edge[0] === wSelectedStar && edge[1] === clicked) || 
+                const isRequiredEdge = currentConfig.edges.some(edge =>
+                    (edge[0] === wSelectedStar && edge[1] === clicked) ||
                     (edge[1] === wSelectedStar && edge[0] === clicked)
                 );
-                
                 if (isRequiredEdge) {
-                    const edgeExists = wUserEdges.some(edge => 
-                        (edge[0] === wSelectedStar && edge[1] === clicked) || 
+                    const edgeExists = wUserEdges.some(edge =>
+                        (edge[0] === wSelectedStar && edge[1] === clicked) ||
                         (edge[1] === wSelectedStar && edge[0] === clicked)
                     );
                     if (!edgeExists) {
                         wUserEdges.push([wSelectedStar, clicked]);
                         addXP(3);
-                        wMessage = 'Valid Leo segment added.';
-                        wMessageTimer = 90;
+                        wMessage = `Valid ${currentConfig.title} segment added.`;
+                        wMessageTimer = 100;
                     }
                 } else {
                     wWrongAttempts++;
-                    wMessage = 'That line is not part of Leo’s standard outline.';
+                    wMessage = `That line is not part of the ${currentConfig.title} teaching outline.`;
                     wMessageTimer = 120;
                 }
-                wSelectedStar = clicked; 
-
-                if (wUserEdges.length === leoEdges.length) {
-                    finishWeaver();
-                }
+                wSelectedStar = clicked;
+                if (wUserEdges.length === currentConfig.edges.length) finishWeaver();
             }
         } else {
             wSelectedStar = -1;
@@ -2202,6 +2473,24 @@
 
     weaverCanvas.addEventListener('mousedown', handleWeaverClick);
     weaverCanvas.addEventListener('touchstart', handleWeaverClick, {passive: false});
+
+    function drawWeaverHud() {
+        wCtx.save();
+        wCtx.fillStyle = 'rgba(7, 12, 28, 0.88)';
+        wCtx.strokeStyle = 'rgba(255, 209, 102, 0.28)';
+        wCtx.lineWidth = 1;
+        wCtx.beginPath();
+        wCtx.roundRect(14, 12, 242, 52, 12);
+        wCtx.fill();
+        wCtx.stroke();
+        wCtx.fillStyle = '#ffffff';
+        wCtx.font = "bold 12px 'JetBrains Mono', monospace";
+        wCtx.textAlign = 'left';
+        wCtx.textBaseline = 'top';
+        wCtx.fillText(`Connections: ${wUserEdges.length}/${currentConfig.edges.length}`, 26, 22);
+        wCtx.fillText(`Wrong links / decoys: ${wWrongAttempts}`, 26, 40);
+        wCtx.restore();
+    }
 
     function drawWeaver() {
         wCtx.clearRect(0, 0, weaverCanvas.width, weaverCanvas.height);
@@ -2213,26 +2502,25 @@
         wCtx.fillRect(0, 0, weaverCanvas.width, weaverCanvas.height);
 
         wCtx.strokeStyle = 'rgba(255, 209, 102, 0.14)';
-        wCtx.lineWidth = 10;
+        wCtx.lineWidth = 12;
         wCtx.beginPath();
         wCtx.moveTo(0, weaverCanvas.height * 0.8);
         wCtx.lineTo(weaverCanvas.width, weaverCanvas.height * 0.2);
         wCtx.stroke();
-        
-        wCtx.fillStyle = 'rgba(255, 209, 102, 0.36)';
-        wCtx.font = "14px 'JetBrains Mono', monospace";
+
+        wCtx.fillStyle = 'rgba(255, 209, 102, 0.30)';
+        wCtx.font = "12px 'JetBrains Mono', monospace";
         wCtx.textAlign = 'center';
-        wCtx.fillText('ECLIPTIC GUIDE', weaverCanvas.width/2, weaverCanvas.height/2 + 30);
+        wCtx.fillText('ECLIPTIC GUIDE', weaverCanvas.width / 2, weaverCanvas.height / 2 + 28);
 
         wCtx.strokeStyle = '#ffd166';
-        wCtx.lineWidth = 3;
+        wCtx.lineWidth = 3.5;
         wCtx.shadowBlur = 10;
         wCtx.shadowColor = '#ffd166';
-        
         wUserEdges.forEach(edge => {
-            let s1 = wStars.find(s => s.id === edge[0]);
-            let s2 = wStars.find(s => s.id === edge[1]);
-            if(s1 && s2) {
+            const s1 = wStars.find(s => s.id === edge[0]);
+            const s2 = wStars.find(s => s.id === edge[1]);
+            if (s1 && s2) {
                 wCtx.beginPath();
                 wCtx.moveTo(s1.x, s1.y);
                 wCtx.lineTo(s2.x, s2.y);
@@ -2244,41 +2532,38 @@
         wDecoys.forEach(s => {
             wCtx.fillStyle = 'rgba(148, 163, 184, 0.75)';
             wCtx.beginPath();
-            wCtx.arc(s.x, s.y, 4, 0, Math.PI*2);
+            wCtx.arc(s.x, s.y, 4.4, 0, Math.PI * 2);
             wCtx.fill();
         });
 
-        wStars.forEach(s => {
-            let isSelected = (s.id === wSelectedStar);
-            const isAnchor = s.name === 'Regulus' || s.name === 'Denebola';
+        wStars.forEach((s, idx) => {
+            const isSelected = (s.id === wSelectedStar);
+            const isAnchor = idx === 0 || idx === wStars.length - 1 || /Regulus|Denebola|Castor|Pollux|Aldebaran|Spica|Antares|Alrescha|Sadalmelik|Hamal|Kaus Australis|Deneb Algedi|Zubenelgenubi/.test(s.name);
             wCtx.fillStyle = isSelected ? '#ff5ac6' : (isAnchor ? '#ffd166' : '#ffffff');
             wCtx.shadowBlur = isSelected ? 20 : (isAnchor ? 12 : 5);
             wCtx.shadowColor = isSelected ? '#ff5ac6' : (isAnchor ? '#ffd166' : '#ffffff');
-            
             wCtx.beginPath();
-            wCtx.arc(s.x, s.y, isAnchor ? 6.5 : (isSelected ? 8 : 5), 0, Math.PI*2);
+            wCtx.arc(s.x, s.y, isAnchor ? 7 : (isSelected ? 8 : 5.5), 0, Math.PI * 2);
             wCtx.fill();
-
             wCtx.shadowBlur = 0;
-            wCtx.fillStyle = isAnchor ? 'rgba(255,209,102,0.9)' : 'rgba(226,232,240,0.78)';
+
+            wCtx.fillStyle = isAnchor ? 'rgba(255,209,102,0.95)' : 'rgba(226,232,240,0.82)';
             wCtx.font = isAnchor ? "bold 12px 'JetBrains Mono', monospace" : "11px 'JetBrains Mono', monospace";
             wCtx.textAlign = 'left';
-            wCtx.fillText(s.name, s.x + 8, s.y - 8);
+            wCtx.fillText(s.name, s.x + 10, s.y - 10);
         });
 
-        wCtx.fillStyle = 'white';
-        wCtx.font = "14px 'JetBrains Mono', monospace";
-        wCtx.textAlign = 'left';
-        wCtx.fillText(`Connections: ${wUserEdges.length}/${leoEdges.length}`, 10, 24);
-        wCtx.fillText(`Wrong links / decoys: ${wWrongAttempts}`, 10, 44);
+        drawWeaverHud();
 
         if (wMessageTimer > 0) {
-            wCtx.fillStyle = 'rgba(15, 17, 35, 0.84)';
-            wCtx.fillRect(0, weaverCanvas.height - 56, weaverCanvas.width, 42);
+            wCtx.fillStyle = 'rgba(15, 17, 35, 0.88)';
+            wCtx.fillRect(0, weaverCanvas.height - 60, weaverCanvas.width, 46);
             wCtx.fillStyle = '#ffffff';
-            wCtx.font = "bold 13px 'JetBrains Mono', monospace";
+            wCtx.font = "bold 12px 'JetBrains Mono', monospace";
             wCtx.textAlign = 'center';
-            wCtx.fillText(wMessage, weaverCanvas.width / 2, weaverCanvas.height - 30);
+            wCtx.textBaseline = 'middle';
+            const trimmed = wMessage.length > 72 ? wMessage.slice(0, 69) + '...' : wMessage;
+            wCtx.fillText(trimmed, weaverCanvas.width / 2, weaverCanvas.height - 36);
             wMessageTimer--;
         }
     }
@@ -2287,39 +2572,31 @@
         weaverActive = false;
         wSelectedStar = -1;
         drawWeaver();
-        
         wStartBtn.innerText = '▶ Restart Pattern Challenge';
         wStartBtn.disabled = false;
         wStartBtn.classList.remove('opacity-50');
 
-        const accuracy = Math.max(0, Math.round((leoEdges.length / (leoEdges.length + wWrongAttempts)) * 100));
+        const accuracy = Math.max(0, Math.round((currentConfig.edges.length / (currentConfig.edges.length + wWrongAttempts)) * 100));
 
         setTimeout(() => {
             wOverlay.innerHTML = `
-                <div class="text-6xl mb-2">🦁</div>
-                <h3 class="font-display text-2xl text-star-gold mb-1 text-center px-4">Leo reconstructed</h3>
+                <div class="text-6xl mb-2">✨</div>
+                <h3 class="font-display text-2xl text-star-gold mb-1 text-center px-4">${currentConfig.title} reconstructed</h3>
                 <p class="text-white text-sm mb-2 max-w-xs text-center">Accuracy: ${accuracy}%</p>
-                <p class="text-space-100 text-sm mb-2 max-w-xs text-center">Regulus sits close to the ecliptic, which is why Leo belongs to the zodiac band.</p>
+                <p class="text-space-100 text-sm mb-2 max-w-xs text-center">Nice work. You matched the reference sketch and separated real pattern stars from decoys.</p>
             `;
             wOverlay.classList.remove('hidden');
 
             if(!achievements.playedConstellation) {
                 achievements.playedConstellation = true;
                 addXP(100);
-                showMsgBox('Pattern Recognition Badge!', 'You rebuilt Leo using anchor stars, decoys, and zodiac context. +100 XP', '✨');
+                showMsgBox('Pattern Recognition Badge!', `You rebuilt ${currentConfig.title} using anchor stars, decoys, and a reference sketch. +100 XP`, '✨');
                 updateProgress();
             }
         }, 500);
     }
 
-
-    function shuffleArray(arr) {
-        for (let i = arr.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [arr[i], arr[j]] = [arr[j], arr[i]];
-        }
-        return arr;
-    }
+    renderWeaverMission();
     /* =========================================================
        20-QUESTION OLYMPIAD QUIZ 
        ========================================================= */
