@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Orcus — Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#030712', 800: '#0f172a', 700: '#1e293b', 500: '#334155', 100: '#f8fafc' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        orcus: { base: '#a78bfa', dark: '#5b21b6', light: '#ddd6fe', ice: '#c4b5fd', rock: '#4c1d95' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 140s linear infinite reverse',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(167, 139, 250, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(167, 139, 250, 0.5)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #030712;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #a78bfa 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #ddd6fe 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #5b21b6 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(3, 7, 18, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(167, 139, 250, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(167, 139, 250, 0.6);
+            box-shadow: 0 0 20px rgba(167, 139, 250, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .orcus-orbit {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 3px dashed rgba(167, 139, 250, 0.3);
+            animation: spin 20s linear infinite;
+        }
+
+        .orb-orcus {
+            background: radial-gradient(circle at 35% 35%, #ddd6fe, #a78bfa, #7c3aed, #5b21b6, #2e1065);
+            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(167, 139, 250, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        .orb-orcus::before {
+            content: '';
+            position: absolute;
+            top: 20%; left: 15%;
+            width: 25%; height: 20%;
+            background: radial-gradient(ellipse, rgba(0,0,0,0.4) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: rotate(-20deg);
+        }
+
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(167, 139, 250, 0.2);
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #030712; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a78bfa; }
+        
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-orcus-base shadow-[0_0_40px_rgba(167,139,250,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-orcus-base text-space-900 font-bold py-3 rounded-xl hover:bg-orcus-light transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-orcus-light">☄️</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Solar System Explorer</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">SSE</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="kuiper-belt.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-cyan">
+                <span class="text-xl">❄️</span>
+                <span class="font-display font-bold text-lg">Back to Kuiper Belt</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-orcus-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-orcus-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Orcus Mission Progress</span>
+                    <span id="progressText" class="text-orcus-base font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-orcus-dark to-orcus-base h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Play Mini-Game</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-orcus-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-orcus-base font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-orcus-light animate-ping"></span> Kuiper Belt Object
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Orcus</h1>
+                <p class="text-2xl text-orcus-light font-body italic mb-6">"The Anti-Pluto"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    Locked in the same orbital dance with Neptune as Pluto, but always on the opposite side of the Sun. Orcus is a twisted mirror image of the most famous dwarf planet.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-orcus-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-orcus-light transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(167,139,250,0.5)]">
+                    Explore Orcus 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-orcus animate-pulse-glow animate-spin-slow"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-orcus-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">~910 km</div>
+                <div class="text-xs text-space-100 mt-1">Spherical shape</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📍</div>
+                <div class="text-orcus-light font-mono text-xs uppercase mb-1">Distance</div>
+                <div class="font-bold text-xl">~48 AU</div>
+                <div class="text-xs text-space-100 mt-1">From the Sun</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">⏳</div>
+                <div class="text-orcus-light font-mono text-xs uppercase mb-1">Orbital Period</div>
+                <div class="font-bold text-xl">~245 yrs</div>
+                <div class="text-xs text-space-100 mt-1">One Orcus year</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🌑</div>
+                <div class="text-orcus-light font-mono text-xs uppercase mb-1">Moon</div>
+                <div class="font-bold text-xl">Vanth</div>
+                <div class="text-xs text-space-100 mt-1">Large companion</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Orcus data.</p>
+                </div>
+                <div class="hidden md:block text-orcus-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Anti-Pluto -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'o1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🪞</div>
+                            <h3 class="font-display text-xl text-orcus-base">The Anti-Pluto</h3>
+                            <p class="text-space-100 text-xs mt-2">A dark twin</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-orcus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-orcus-dark pb-1 w-full">Mirror Image</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>Orcus shares Pluto's 2:3 orbital resonance with Neptune, but is always on the <strong>opposite side</strong> of the Sun.</li>
+                                <li>This makes it a kind of "anti-Pluto"—similar but opposite in position.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Resonance -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'o2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔄</div>
+                            <h3 class="font-display text-xl text-orcus-base">2:3 Resonance</h3>
+                            <p class="text-space-100 text-xs mt-2">Neptune's dance partner</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-orcus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-orcus-dark pb-1 w-full">Locked in Time</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>For every 2 orbits Neptune makes, Orcus completes exactly 3 orbits.</li>
+                                <li>This gravitational lock prevents Orcus from ever colliding with Neptune, even though their orbits cross.</li>
+                                <li>Pluto is locked in the exact same resonance!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Moon Vanth -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'o3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌑</div>
+                            <h3 class="font-display text-xl text-orcus-base">Moon Vanth</h3>
+                            <p class="text-space-100 text-xs mt-2">A large companion</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-orcus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-orcus-dark pb-1 w-full">The Etruscan Psychopomp</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Vanth is named after an Etruscan spirit who guided souls to the underworld.</li>
+                                <li>It is unusually large relative to Orcus—about 1/3 the size of its parent body.</li>
+                                <li>Vanth may have formed from the same collision that shaped Orcus.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Name Origin -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'o4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🏷️</div>
+                            <h3 class="font-display text-xl text-orcus-base">Name Origin</h3>
+                            <p class="text-space-100 text-xs mt-2">Roman god of the underworld</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-orcus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-orcus-dark pb-1 w-full">Lord of Oaths</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong>Orcus</strong> was a Roman god of the underworld, specifically punisher of broken oaths.</li>
+                                <li>The name was chosen to complement Pluto (another underworld god) and reflect their linked but opposite orbits.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Composition -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'o5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧊</div>
+                            <h3 class="font-display text-2xl text-orcus-base">Composition</h3>
+                            <p class="text-space-100 mt-2">Ice and rock in layers</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-orcus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-3 border-b border-orcus-dark pb-2 w-full">Differentiated Body</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-orcus-light font-mono font-bold block mb-1">Rocky Core:</span>
+                                    Orcus likely has a dense rocky core surrounded by a thick mantle of water ice.
+                                </div>
+                                <div>
+                                    <span class="text-orcus-light font-mono font-bold block mb-1">Icy Surface:</span>
+                                    The surface contains water ice, methane, and ethane, with tholins giving it a neutral gray color.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Discovery -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'o6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔭</div>
+                            <h3 class="font-display text-2xl text-orcus-base">Discovery</h3>
+                            <p class="text-space-100 mt-2">Found by the Palomar team</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-orcus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-orcus-dark pb-2 w-full">February 17, 2004</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Discovered by the same team that found Quaoar: Michael Brown, Chad Trujillo, and David Rabinowitz.</li>
+                                <li>They used the Samuel Oschin Telescope at Palomar Observatory.</li>
+                                <li>Its large moon Vanth was discovered just two years later in 2005.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Comparison to Pluto -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'o7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚖️</div>
+                            <h3 class="font-display text-2xl text-orcus-base">Orcus vs Pluto</h3>
+                            <p class="text-space-100 mt-2">Similar but different</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-orcus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-orcus-dark pb-2 w-full">Twins of the Deep</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Both are in Neptune's 2:3 resonance, both have large moons, and both are made of ice and rock.</li>
+                                <li>However, Orcus is smaller (~910 km vs Pluto's 2,377 km), much darker, and lacks Pluto's complex atmosphere and geology.</li>
+                                <li>Where Pluto is dynamic and active, Orcus appears geologically dead.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Orbit Characteristics -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'o8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌌</div>
+                            <h3 class="font-display text-2xl text-orcus-base">Orbital Path</h3>
+                            <p class="text-space-100 mt-2">Tilted and eccentric</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-orcus-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-orcus-dark pb-2 w-full">A Wandering Path</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Orcus's orbit is moderately eccentric, bringing it from about 30 AU to 48 AU from the Sun.</li>
+                                <li>Its orbit is also tilted about 21 degrees relative to the plane of the planets.</li>
+                                <li>Because of the resonance, it always stays at least 17 AU away from Neptune, never coming close enough to collide.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-orcus-base border-2 shadow-[0_0_30px_rgba(167,139,250,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-orcus-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Resonance Navigator</h2>
+                        <p class="text-space-100 mb-6">Pilot through Orcus's orbital resonance field! Collect <span class="text-orcus-base font-bold">resonance crystals</span> while dodging <span class="text-gray-400 font-bold">Neptune's gravity wells</span>. Survive 20 seconds and collect 3 crystals to earn the <span class="text-orcus-light font-bold">Anti-Pluto Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-orcus-base mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Launch Probe
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-orcus-base/30">
+                            <div class="text-5xl mb-2">🌑</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Resonance Field</h3>
+                            <p class="text-orcus-light text-sm">Click Start to navigate</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#020617] via-[#2e1065] to-[#4c1d95] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-orcus-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-orcus-base/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Orcus module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="quizStatus" class="flex items-center justify-between gap-4 mb-4 text-sm font-mono">
+                    <span class="text-space-100">Question <span id="quizCurrent">1</span> of <span id="quizTotal">10</span></span>
+                    <span class="text-orcus-light">Score: <span id="quizScore">0</span></span>
+                </div>
+
+                <div id="quizQuestionCard" class="quiz-q block glass-card rounded-2xl p-6">
+                    <h3 id="quizQuestion" class="text-xl font-bold mb-4 text-orcus-light"></h3>
+                    <div id="quizOptions" class="space-y-3"></div>
+                    <div id="quizExplanation" class="hidden mt-5 rounded-2xl border border-space-500 bg-space-900/80 p-4">
+                        <div id="quizAnswerLabel" class="font-bold mb-2"></div>
+                        <p id="quizExplanationText" class="text-space-100 leading-relaxed"></p>
+                    </div>
+                    <div class="mt-5 flex justify-end">
+                        <button id="nextQuestionBtn" onclick="goToNextQuestion()" disabled class="opacity-50 cursor-not-allowed bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full transition">Next</button>
+                    </div>
+                </div>
+
+                <div class="quiz-q hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-3">Score: <span id="scoreText" class="font-bold text-orcus-light">0/10</span></p>
+                    <p class="text-space-100 mb-6">Review the explanations as you play, then retry for a perfect score.</p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.orcusCompleteAlerted) {
+            window.orcusCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Orcus Module Complete!", "You have unlocked the 'Anti-Pluto' badge. Excellent exploration!", "🌑");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Orcus files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    const quizQuestions = [
+        { question: "Why is Orcus called the 'Anti-Pluto'?", options: [{ text: "It is made of antimatter", isCorrect: false }, { text: "It shares Pluto's orbital resonance but stays on the opposite side of the Sun", isCorrect: true }, { text: "It orbits backwards", isCorrect: false }, { text: "It is the same size as Pluto", isCorrect: false }], explanation: "Orcus shares Pluto's 2:3 orbital resonance with Neptune, but it is always positioned on the opposite side of the Sun from Pluto, making it a mirror image." },
+        { question: "What is Orcus's orbital resonance with Neptune?", options: [{ text: "1:1", isCorrect: false }, { text: "2:3", isCorrect: true }, { text: "3:2", isCorrect: false }, { text: "5:4", isCorrect: false }], explanation: "For every 2 orbits Neptune completes, Orcus completes exactly 3 orbits. This is the same 2:3 resonance that Pluto has." },
+        { question: "What is the name of Orcus's moon?", options: [{ text: "Charon", isCorrect: false }, { text: "Weywot", isCorrect: false }, { text: "Vanth", isCorrect: true }, { text: "Actaea", isCorrect: false }], explanation: "Orcus's moon is named Vanth, after an Etruscan spirit who guided souls to the underworld." },
+        { question: "Orcus was named after a Roman god associated with what?", options: [{ text: "The sky and thunder", isCorrect: false }, { text: "The underworld and broken oaths", isCorrect: true }, { text: "The sea and storms", isCorrect: false }, { text: "Love and beauty", isCorrect: false }], explanation: "Orcus was a Roman god of the underworld who specifically punished people who broke their oaths." },
+        { question: "Approximately how large is Orcus?", options: [{ text: "About 910 km in diameter", isCorrect: true }, { text: "About 2,400 km in diameter", isCorrect: false }, { text: "About 100 km in diameter", isCorrect: false }, { text: "About 5,000 km in diameter", isCorrect: false }], explanation: "Orcus is about 910 km in diameter—much smaller than Pluto but still large enough to be roughly spherical." },
+        { question: "How does the 2:3 resonance protect Orcus from colliding with Neptune?", options: [{ text: "It keeps them in a stable gravitational lock so they never get close", isCorrect: true }, { text: "It creates a force field", isCorrect: false }, { text: "It makes Orcus invisible to Neptune", isCorrect: false }, { text: "It causes Orcus to orbit backwards", isCorrect: false }], explanation: "The resonance creates a stable gravitational relationship that keeps Orcus and Neptune separated by predictable distances, preventing close approaches." },
+        { question: "What is unusual about Vanth's size relative to Orcus?", options: [{ text: "It is about one-third the size of Orcus, which is unusually large", isCorrect: true }, { text: "It is larger than Orcus", isCorrect: false }, { text: "It is microscopic", isCorrect: false }, { text: "It is exactly the same size", isCorrect: false }], explanation: "Vanth is unusually large for a moon—about 1/3 the diameter of Orcus—suggesting they may have formed from a major collision." },
+        { question: "What is Orcus's approximate orbital period?", options: [{ text: "About 245 Earth years", isCorrect: true }, { text: "About 100 Earth years", isCorrect: false }, { text: "About 500 Earth years", isCorrect: false }, { text: "About 50 Earth years", isCorrect: false }], explanation: "Orcus takes about 245 Earth years to complete one orbit around the Sun." },
+        { question: "How does Orcus differ from Pluto in terms of geology?", options: [{ text: "Orcus appears geologically dead while Pluto is active", isCorrect: true }, { text: "Orcus has more volcanoes", isCorrect: false }, { text: "Orcus has a thicker atmosphere", isCorrect: false }, { text: "They are geologically identical", isCorrect: false }], explanation: "Unlike Pluto, which shows signs of geological activity and has a thin atmosphere, Orcus appears to be a cold, geologically dead world." },
+        { question: "What is the approximate tilt of Orcus's orbit relative to the planets?", options: [{ text: "About 21 degrees", isCorrect: true }, { text: "About 90 degrees", isCorrect: false }, { text: "About 0 degrees (perfectly flat)", isCorrect: false }, { text: "About 45 degrees", isCorrect: false }], explanation: "Orcus's orbit is tilted about 21 degrees relative to the ecliptic plane, making it a moderately inclined Kuiper Belt Object." }
+    ];
+
+    let currentQ = 0;
+    let score = 0;
+    let questionOrder = [];
+    let currentQuestionSet = [];
+    let answeredCurrent = false;
+
+    function shuffleArray(items) {
+        const arr = [...items];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function prepareQuizData() {
+        questionOrder = shuffleArray(quizQuestions.map((_, idx) => idx));
+        currentQuestionSet = questionOrder.map((idx) => {
+            const q = JSON.parse(JSON.stringify(quizQuestions[idx]));
+            q.options = shuffleArray(q.options);
+            return q;
+        });
+    }
+
+    function renderQuestion() {
+        const total = currentQuestionSet.length;
+        const question = currentQuestionSet[currentQ];
+        answeredCurrent = false;
+
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('quizQuestionCard').classList.remove('hidden');
+        document.getElementById('quizQuestionCard').classList.add('block');
+        document.getElementById('quizCurrent').innerText = `${currentQ + 1}`;
+        document.getElementById('quizTotal').innerText = `${total}`;
+        document.getElementById('quizScore').innerText = `${score}`;
+        document.getElementById('quizQuestion').innerText = `${currentQ + 1}. ${question.question}`;
+
+        const optionsWrap = document.getElementById('quizOptions');
+        optionsWrap.innerHTML = '';
+        question.options.forEach((option) => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-orcus-base transition-all";
+            btn.innerText = option.text;
+            btn.onclick = () => answer(option.isCorrect, btn);
+            optionsWrap.appendChild(btn);
+        });
+
+        document.getElementById('quizExplanation').classList.add('hidden');
+        document.getElementById('quizAnswerLabel').innerText = '';
+        document.getElementById('quizExplanationText').innerText = '';
+
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.disabled = true;
+        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.remove('hover:bg-space-500');
+        nextBtn.innerText = currentQ === total - 1 ? 'See Results' : 'Next';
+    }
+
+    function answer(isCorrect, btnEl) {
+        if (answeredCurrent) return;
+        answeredCurrent = true;
+
+        const allButtons = document.querySelectorAll('#quizOptions button');
+        allButtons.forEach((btn) => {
+            btn.disabled = true;
+            btn.classList.remove('hover:bg-space-700', 'hover:border-orcus-base');
+            btn.classList.add('opacity-50');
+        });
+
+        btnEl.classList.remove('opacity-50', 'bg-space-800');
+
+        if (isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            score++;
+            addXP(20);
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+            const correctBtn = Array.from(allButtons).find((btn) => currentQuestionSet[currentQ].options.find((opt) => opt.text === btn.innerText && opt.isCorrect));
+            if (correctBtn) {
+                correctBtn.classList.remove('opacity-50', 'bg-space-800');
+                correctBtn.classList.add('bg-star-green/20', 'border-star-green', 'font-bold');
+            }
+        }
+
+        document.getElementById('quizScore').innerText = `${score}`;
+        const explanationBox = document.getElementById('quizExplanation');
+        document.getElementById('quizAnswerLabel').innerText = isCorrect ? 'Correct!' : 'Explanation';
+        document.getElementById('quizAnswerLabel').className = isCorrect ? 'font-bold mb-2 text-star-green' : 'font-bold mb-2 text-star-red';
+        document.getElementById('quizExplanationText').innerText = currentQuestionSet[currentQ].explanation;
+        explanationBox.classList.remove('hidden');
+
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.add('hover:bg-space-500');
+    }
+
+    function goToNextQuestion() {
+        if (!answeredCurrent) return;
+        if (currentQ < currentQuestionSet.length - 1) {
+            currentQ++;
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('quizQuestionCard').classList.add('hidden');
+        document.getElementById('quizQuestionCard').classList.remove('block');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('q-result').classList.add('block');
+        document.getElementById('scoreText').innerText = `${score}/${currentQuestionSet.length}`;
+        document.getElementById('scoreText').classList.remove('text-star-green', 'text-star-red');
+
+        if (score === currentQuestionSet.length) {
+            document.getElementById('scoreText').classList.add('text-star-green');
+            if (!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Perfect Knowledge", "Perfect score on the Orcus Quiz! +100 XP", "🧠");
+            }
+        } else {
+            document.getElementById('scoreText').classList.add('text-star-red');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        score = 0;
+        currentQ = 0;
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        prepareQuizData();
+        renderQuestion();
+    }
+
+    prepareQuizData();
+    renderQuestion();
+
+    /* MINI GAME: Resonance Navigator */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    const player = {
+        x: 0, y: 0, width: 45, height: 40, speed: 8, color: '#f8fafc' 
+    };
+
+    let spaceObjects = [];
+    let keys = { ArrowLeft: false, ArrowRight: false };
+
+    window.addEventListener('keydown', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') keys[e.code] = false; 
+    });
+    
+    canvas.addEventListener('touchstart', (e) => {
+        if(!gameActive) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const relativeX = touch.clientX - rect.left;
+        if(relativeX < canvas.width/2) {
+            keys.ArrowLeft = true; keys.ArrowRight = false;
+        } else {
+            keys.ArrowRight = true; keys.ArrowLeft = false;
+        }
+    }, {passive: false});
+    
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys.ArrowLeft = false; keys.ArrowRight = false;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        const relativeX = e.clientX - rect.left;
+        if(relativeX < canvas.width/2) {
+            keys.ArrowLeft = true; keys.ArrowRight = false;
+        } else {
+            keys.ArrowRight = true; keys.ArrowLeft = false;
+        }
+    });
+    
+    canvas.addEventListener('mouseup', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+    canvas.addEventListener('mouseleave', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - player.height - 30;
+        spaceObjects = [];
+        dataCollected = 0;
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Navigating...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnObject() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let isData = Math.random() > 0.75; 
+        let w = isData ? 30 : (Math.random() * 25 + 20); 
+        let xPos = Math.random() * (canvas.width - w);
+        
+        spaceObjects.push({
+            x: xPos, y: -w, width: w, height: w, 
+            speedY: (Math.random() * 4 + 4) * speedMult,
+            rotation: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 0.1,
+            isData: isData
+        });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        ctx.fillStyle = (frames % 10 < 5) ? '#3b82f6' : '#cbd5e1'; 
+        ctx.beginPath();
+        ctx.moveTo(-4, player.height/2);
+        ctx.lineTo(0, player.height/2 + 15 + Math.random()*5);
+        ctx.lineTo(4, player.height/2);
+        ctx.fill();
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.arc(0, -5, player.width/2, Math.PI, 0);
+        ctx.fill();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(-6, -5, 12, 20);
+        ctx.fillStyle = '#a78bfa';
+        ctx.beginPath();
+        ctx.arc(0, -10, 3, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawObjects() {
+        for (let i = 0; i < spaceObjects.length; i++) {
+            let o = spaceObjects[i];
+            ctx.save();
+            ctx.translate(o.x + o.width/2, o.y + o.height/2);
+            ctx.rotate(o.rotation);
+            if (o.isData) {
+                ctx.fillStyle = '#a78bfa';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#ddd6fe';
+                ctx.beginPath();
+                ctx.arc(0, 0, o.width/2, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(221, 214, 254, 0.4)';
+                ctx.beginPath();
+                ctx.moveTo(-o.width/2, 0);
+                ctx.lineTo(0, -o.height);
+                ctx.lineTo(o.width/2, 0);
+                ctx.fill();
+            } else {
+                ctx.fillStyle = '#1e293b'; 
+                ctx.shadowBlur = 0;
+                ctx.beginPath();
+                ctx.moveTo(-o.width/2.2, -o.height/3);
+                ctx.lineTo(0, -o.height/2);
+                ctx.lineTo(o.width/2.5, -o.height/4);
+                ctx.lineTo(o.width/3, o.height/2);
+                ctx.lineTo(-o.width/2.5, o.height/2.2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.arc(-o.width/5, -o.height/5, o.width/6, 0, Math.PI*2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+    }
+
+    function checkCollision(a) {
+        let hitX = player.x + 5;
+        let hitW = player.width - 10;
+        let hitY = player.y + 5;
+        let hitH = player.height - 10;
+        if (hitX < a.x + a.width && hitX + hitW > a.x && hitY < a.y + a.height && hitY + hitH > a.y) {
+            return true;
+        }
+        return false;
+    }
+
+    function updatePhysics() {
+        if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
+        if (keys.ArrowRight && player.x + player.width < canvas.width) player.x += player.speed;
+        let spawnRate = Math.max(15, 35 - Math.floor(scoreFrames/150));
+        if (frames % spawnRate === 0) spawnObject();
+        for (let i = spaceObjects.length - 1; i >= 0; i--) {
+            spaceObjects[i].y += spaceObjects[i].speedY;
+            spaceObjects[i].rotation += spaceObjects[i].rotSpeed;
+            if (checkCollision(spaceObjects[i])) {
+                if (spaceObjects[i].isData) {
+                    dataCollected++;
+                    addXP(10); 
+                    ctx.fillStyle = 'rgba(167, 139, 250, 0.4)';
+                    ctx.fillRect(0,0, canvas.width, canvas.height);
+                    spaceObjects.splice(i, 1);
+                    continue;
+                } else {
+                    gameOver("Probe lost to gravity well!");
+                    return;
+                }
+            }
+            if (spaceObjects[i].y > canvas.height) spaceObjects.splice(i, 1);
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.8)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        updatePhysics();
+        if(!gameActive) return; 
+        drawObjects();
+        drawPlayer();
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillStyle = "#ddd6fe"; 
+        ctx.fillText(`🟣 Crystals: ${dataCollected}/3`, 10, 45);
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+        if (secondsAlive >= 20 && dataCollected >= 3 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Anti-Pluto Badge Unlocked!", "You survived 20 seconds and collected 3 resonance crystals! +100 XP", "🌑");
+            updateProgress();
+        }
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Relaunch Probe";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 3);
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You survived for ${secondsAlive}s.</p>
+            <p class="text-orcus-light mb-4 text-sm font-bold">🟣 Collected ${dataCollected} Crystals</p>
+            ${!achievements.playedGame ? `<p class="text-space-100 text-sm mb-4">Survive 20s AND collect 3 crystals for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        if(secondsAlive > 5 && !winStatus) addXP(5);
+    }
+
+    startBtn.addEventListener('click', () => { initGame(); });
+
+</script>
+</body>
+</html>
