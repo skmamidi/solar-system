@@ -342,7 +342,7 @@
             <div class="flex justify-between items-end mb-6">
                 <div>
                     <h2 class="font-display text-4xl text-white mb-2">The Olympian's Dictionary</h2>
-                    <p class="text-space-100 font-mono text-sm">Tap cards to flip. Study the <span class="text-star-gold">Olympiad Facts</span> for the exam!</p>
+                    <p class="text-space-100 font-mono text-sm">Tap cards to flip. Study the <span class="text-star-gold">Olympiad Facts</span> and added coordinate-system terms for the exam!</p>
                 </div>
             </div>
 
@@ -492,23 +492,24 @@
                     </div>
                 </div>
 
+
                 <!-- Nadir -->
                 <div class="flip-card perspective-1000 h-[22rem] cursor-pointer group" onclick="flipCard(this, 't7')">
                     <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
                         <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
                             <div class="text-5xl mb-4">⬇️</div>
-                            <h3 class="font-display text-3xl text-astro-light">Nadir</h3>
+                            <h3 class="font-display text-3xl text-star-red">Nadir</h3>
                             <p class="text-space-100 text-sm mt-2">The point directly below you</p>
                         </div>
                         <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
                             <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Nadir</h3>
                             <p class="text-sm text-left font-body mb-3">
-                                The point on the celestial sphere exactly opposite the zenith, located straight down beneath the observer.
+                                The point on the celestial sphere exactly opposite the zenith, directly beneath an observer.
                             </p>
                             <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
                                 <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
                                 <p class="text-xs text-space-100">
-                                    In the altitude-azimuth system, the nadir has altitude <strong>-90°</strong>. Zenith and nadir are endpoints of the observer's local vertical line.
+                                    In the altitude-azimuth system, the Nadir has an altitude of exactly <strong>-90°</strong>. Zenith and Nadir are always separated by <strong>180°</strong>.
                                 </p>
                             </div>
                         </div>
@@ -521,17 +522,17 @@
                         <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
                             <div class="text-5xl mb-4">📐</div>
                             <h3 class="font-display text-3xl text-star-cyan">Altitude</h3>
-                            <p class="text-space-100 text-sm mt-2">Angle above the horizon</p>
+                            <p class="text-space-100 text-sm mt-2">How high an object is</p>
                         </div>
                         <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
                             <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Altitude</h3>
                             <p class="text-sm text-left font-body mb-3">
-                                The angular height of an object measured upward from the horizon to the object.
+                                The angle of an object above or below the horizon, measured upward from 0° at the horizon.
                             </p>
                             <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
                                 <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
                                 <p class="text-xs text-space-100">
-                                    Horizon = <strong>0°</strong>, zenith = <strong>+90°</strong>. Negative altitude means the object is below the horizon and not visible.
+                                    Horizon = <strong>0°</strong>, Zenith = <strong>+90°</strong>. Objects with negative altitude are below the horizon and not visible in an ideal sky.
                                 </p>
                             </div>
                         </div>
@@ -544,17 +545,17 @@
                         <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
                             <div class="text-5xl mb-4">🧭</div>
                             <h3 class="font-display text-3xl text-star-gold">Azimuth</h3>
-                            <p class="text-space-100 text-sm mt-2">Direction along the horizon</p>
+                            <p class="text-space-100 text-sm mt-2">Compass direction on the horizon</p>
                         </div>
                         <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
                             <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Azimuth</h3>
                             <p class="text-sm text-left font-body mb-3">
-                                The compass direction of an object measured around the horizon.
+                                The direction of an object measured around the horizon, usually starting at north and increasing eastward.
                             </p>
                             <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
                                 <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
                                 <p class="text-xs text-space-100">
-                                    In the common astronomy convention, azimuth starts at <strong>0° at north</strong> and increases through east, south, and west to <strong>360°</strong>.
+                                    In the common convention, North = <strong>0°</strong>, East = <strong>90°</strong>, South = <strong>180°</strong>, and West = <strong>270°</strong>.
                                 </p>
                             </div>
                         </div>
@@ -577,7 +578,7 @@
                             <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
                                 <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
                                 <p class="text-xs text-space-100">
-                                    Declination works like latitude on Earth: <strong>0°</strong> on the celestial equator, <strong>+90°</strong> at the North Celestial Pole, and <strong>-90°</strong> at the South Celestial Pole.
+                                    Declination works like Earth's latitude: the celestial equator is <strong>0°</strong>, the north celestial pole is <strong>+90°</strong>, and the south celestial pole is <strong>-90°</strong>.
                                 </p>
                             </div>
                         </div>
@@ -589,41 +590,41 @@
                     <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
                         <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
                             <div class="text-5xl mb-4">⏱️</div>
-                            <h3 class="font-display text-3xl text-star-magenta leading-tight">Right Ascension</h3>
+                            <h3 class="font-display text-3xl text-astro-light leading-tight">Right Ascension</h3>
                             <p class="text-space-100 text-sm mt-2">Sky longitude</p>
                         </div>
                         <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
                             <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Right Ascension</h3>
                             <p class="text-sm text-left font-body mb-3">
-                                The east-west coordinate used with declination to locate objects on the celestial sphere.
+                                The celestial coordinate that measures position eastward along the celestial equator from the vernal equinox.
                             </p>
                             <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
                                 <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
                                 <p class="text-xs text-space-100">
-                                    Right ascension is measured along the celestial equator in <strong>hours, minutes, and seconds</strong>, with <strong>24h</strong> going all the way around the sky.
+                                    Right Ascension is usually measured in <strong>hours</strong>, not degrees. A full circle is <strong>24h</strong>, so 1 hour of RA equals <strong>15°</strong>.
                                 </p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Circumpolar Star -->
+                <!-- Equinoxes and Solstices -->
                 <div class="flip-card perspective-1000 h-[22rem] cursor-pointer group" onclick="flipCard(this, 't12')">
                     <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
                         <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
-                            <div class="text-5xl mb-4">⭐</div>
-                            <h3 class="font-display text-3xl text-star-red leading-tight">Circumpolar Star</h3>
-                            <p class="text-space-100 text-sm mt-2">A star that never sets</p>
+                            <div class="text-5xl mb-4">🌞</div>
+                            <h3 class="font-display text-3xl text-star-magenta leading-tight">Equinoxes &amp; Solstices</h3>
+                            <p class="text-space-100 text-sm mt-2">Yearly milestones on the ecliptic</p>
                         </div>
                         <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
-                            <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Circumpolar Star</h3>
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Equinoxes &amp; Solstices</h3>
                             <p class="text-sm text-left font-body mb-3">
-                                A star close enough to the visible celestial pole that it stays above the horizon all day and all night.
+                                Equinoxes happen when the Sun crosses the celestial equator. Solstices happen when the Sun reaches its greatest north or south declination.
                             </p>
                             <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
                                 <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
                                 <p class="text-xs text-space-100">
-                                    The higher your latitude, the larger the circumpolar zone becomes. At the equator, there are essentially no circumpolar stars.
+                                    On the equinoxes, day and night are nearly equal. At the solstices, the Sun is near <strong>+23.5°</strong> or <strong>-23.5°</strong> declination.
                                 </p>
                             </div>
                         </div>
@@ -640,26 +641,27 @@
                     <div class="flex-1 w-full text-center lg:text-left">
                         <span class="inline-block px-3 py-1 bg-astro-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME 1</span>
                         <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Telescope Targeter</h2>
-                        <p class="text-space-100 mb-4">It's time to gather scientific data! Use your telescope crosshair to find "Data Stars" hiding in three key regions:</p>
+                        <p class="text-space-100 mb-4">Run an observing session like a real sky navigator. Each mission asks for a specific sky region, and the live crosshair reports approximate <strong>altitude</strong> and <strong>azimuth</strong>.</p>
                         <ul class="text-left bg-space-800/50 p-4 rounded-xl space-y-2 mb-6 border border-space-500 inline-block">
-                            <li><span class="text-star-cyan font-bold">⬆️ Zenith</span> (Top of the map, Altitude +90°)</li>
-                            <li><span class="text-star-gold font-bold">☀️ Ecliptic</span> (The golden curve, path of the Sun)</li>
-                            <li><span class="text-star-green font-bold">🌅 Horizon</span> (Bottom boundary, Altitude 0°)</li>
+                            <li><span class="text-star-cyan font-bold">⬆️ Zenith</span> — top of the sky map, near <strong>+90° altitude</strong></li>
+                            <li><span class="text-star-gold font-bold">☀️ Ecliptic</span> — the golden arc, the Sun's yearly path</li>
+                            <li><span class="text-star-green font-bold">🌅 Horizon</span> — the bottom boundary at <strong>0° altitude</strong></li>
                         </ul>
                         
                         <div class="bg-astro-dark/30 p-4 rounded-xl mb-6 inline-block text-left w-full border border-astro-base/50">
-                            <h4 class="font-bold text-astro-light mb-2 border-b border-astro-base/50 pb-1">How to Play:</h4>
+                            <h4 class="font-bold text-astro-light mb-2 border-b border-astro-base/50 pb-1">Observing Run:</h4>
                             <ul class="text-sm space-y-2 text-white">
-                                <li>1. Move your mouse/finger to aim the crosshair.</li>
-                                <li>2. Hover over a pulsing Data Star until the crosshair <strong class="text-star-red">turns red (locked on)</strong>.</li>
-                                <li>3. <strong class="text-star-gold">CLICK / TAP</strong> to scan the star and download the data!</li>
-                                <li>4. Scan 10 stars before time runs out to earn the badge.</li>
+                                <li>1. Read the active <strong class="text-star-gold">mission target</strong> at the top of the map.</li>
+                                <li>2. Move your mouse/finger to inspect the live <strong>altitude / azimuth</strong> readout.</li>
+                                <li>3. Lock onto a pulsing source and scan only if it matches the requested region.</li>
+                                <li>4. Build a combo for faster XP, but wrong scans trigger a short penalty and concept reminder.</li>
+                                <li>5. Complete <strong>12 correct observations</strong> before time expires.</li>
                             </ul>
                         </div>
                         
                         <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
                             <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105 shadow-[0_0_15px_rgba(78,240,168,0.4)]">
-                                ▶ Power On Telescope
+                                ▶ Begin Observing Run
                             </button>
                         </div>
                     </div>
@@ -667,8 +669,8 @@
                     <div class="relative w-full lg:w-auto flex justify-center">
                         <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-astro-base/30 transition-opacity">
                             <div class="text-5xl mb-2">🔭</div>
-                            <h3 class="font-display text-2xl text-white mb-1">Calibration Required</h3>
-                            <p class="text-astro-light text-sm">Click Power On to start</p>
+                            <h3 class="font-display text-2xl text-white mb-1">Observing Run Ready</h3>
+                            <p class="text-astro-light text-sm">Click Power On to begin the observing run</p>
                         </div>
                         <canvas id="gameCanvas" width="500" height="500" class="bg-gradient-to-b from-[#0a0515] via-[#11132b] to-[#040814] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-astro-line cursor-crosshair"></canvas>
                     </div>
@@ -683,8 +685,8 @@
                     <div class="relative w-full lg:w-auto flex justify-center">
                         <div id="weaverOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-star-gold/30 transition-opacity">
                             <div class="text-5xl mb-2">✨</div>
-                            <h3 class="font-display text-2xl text-white mb-1">Constellation Hidden</h3>
-                            <p class="text-star-gold text-sm">Click Start Weaver below</p>
+                            <h3 class="font-display text-2xl text-white mb-1">Constellation Challenge</h3>
+                            <p class="text-star-gold text-sm">Build Leo from real pattern cues</p>
                         </div>
                         <canvas id="constellationCanvas" width="500" height="500" class="bg-gradient-to-b from-[#11132b] via-[#0a0515] to-[#040814] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-star-gold/50 cursor-pointer"></canvas>
                     </div>
@@ -692,20 +694,21 @@
                     <div class="flex-1 w-full text-center lg:text-left">
                         <span class="inline-block px-3 py-1 bg-star-gold/20 text-star-gold border border-star-gold text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME 2</span>
                         <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Zodiac Weaver</h2>
-                        <p class="text-space-100 mb-4">Because the <strong class="text-star-red">Ecliptic</strong> is the apparent path of the Sun, the constellations that lie along this path are special—they make up the <strong>Zodiac</strong>!</p>
+                        <p class="text-space-100 mb-4">Because the <strong class="text-star-red">Ecliptic</strong> is the Sun's apparent yearly path, constellations that sit on it are astronomically special. This version of <strong>Zodiac Weaver</strong> adds decoy stars, named anchor stars, and error feedback.</p>
                         
                         <div class="bg-space-800/50 p-4 rounded-xl mb-6 inline-block text-left w-full border border-star-gold/30">
-                            <h4 class="font-bold text-star-gold mb-2 border-b border-star-gold/30 pb-1">Mission: Reveal Leo 🦁</h4>
+                            <h4 class="font-bold text-star-gold mb-2 border-b border-star-gold/30 pb-1">Mission: Reconstruct Leo from its real anchor stars</h4>
                             <ul class="text-sm space-y-2 text-white">
-                                <li>1. Click on any glowing star to select it.</li>
-                                <li>2. Click on an adjacent star to weave a connection line between them.</li>
-                                <li>3. Connect all the correct stars to reveal the constellation on the Ecliptic!</li>
+                                <li>1. Use bright named stars such as <strong>Regulus</strong> and <strong>Denebola</strong> as anchors.</li>
+                                <li>2. Connect only stars that belong to Leo's accepted line pattern.</li>
+                                <li>3. Decoy stars and invalid links cost accuracy, so pattern recognition matters.</li>
+                                <li>4. Keep Leo aligned with the golden ecliptic guide to understand why it is a zodiac constellation.</li>
                             </ul>
                         </div>
                         
                         <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
                             <button id="startWeaverBtn" onclick="initWeaver()" class="bg-star-gold text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105 shadow-[0_0_15px_rgba(255,209,102,0.4)]">
-                                ✨ Start Weaver
+                                ✨ Begin Pattern Challenge
                             </button>
                         </div>
                     </div>
@@ -1296,7 +1299,7 @@
             addXP(10);
             if(cardsFlipped.size === 12 && !achievements.readAll) {
                 achievements.readAll = true;
-                showMsgBox("Dictionary Mastered", "You read all the Advanced Astronomical Terms! +50 Bonus XP", "📚");
+                showMsgBox("Dictionary Mastered", "You read all 12 astronomy concept cards! +50 Bonus XP", "📚");
                 addXP(50);
             }
         }
@@ -1312,7 +1315,7 @@
 
     function resizeCanvas1() {
         const rect = canvas.parentElement.getBoundingClientRect();
-        canvas.width = rect.width > 500 ? 500 : rect.width;
+        canvas.width = rect.width > 520 ? 520 : rect.width;
         canvas.height = canvas.width; 
     }
     window.addEventListener('resize', resizeCanvas1);
@@ -1320,9 +1323,12 @@
 
     let gameActive = false;
     let frames = 0;
-    let timeLimit = 30 * 60; 
+    let timeLimit = 40 * 60; 
     let gameLoopReq;
-    let starsCollected = 0;
+    let correctScans = 0;
+    let wrongScans = 0;
+    let comboCount = 0;
+    let crosshairMetrics = { altitude: 0, azimuth: 0 };
 
     const crosshair = { x: 250, y: 250, radius: 20 };
     let crosshairLocked = false;
@@ -1332,6 +1338,13 @@
     let floatingTexts = [];
     let scanMessage = "";
     let scanMessageTimer = 0;
+    let activeMission = null;
+
+    const telescopeMissions = [
+        { type: 'Zenith', color: '#6ef0ff', title: 'Zenith lock', clue: 'Target the point nearest +90° altitude.' },
+        { type: 'Horizon', color: '#4ef0a8', title: 'Horizon sweep', clue: 'Observe a source lying on the 0° altitude boundary.' },
+        { type: 'Ecliptic', color: '#ffd166', title: 'Ecliptic patrol', clue: "Track the Sun\'s yearly path across the sky map." }
+    ];
 
     function getMousePos1(e) {
         const rect = canvas.getBoundingClientRect();
@@ -1349,12 +1362,35 @@
         };
     }
 
+    function updateCrosshairMetrics() {
+        const altitude = 90 - ((crosshair.y / canvas.height) * 180);
+        const azimuth = ((crosshair.x / canvas.width) * 360 + 360) % 360;
+        crosshairMetrics.altitude = Math.max(-90, Math.min(90, altitude));
+        crosshairMetrics.azimuth = azimuth;
+    }
+
     function updateCrosshair(e) {
         if(!gameActive) return;
         if (e.type === 'touchmove') e.preventDefault(); 
         let pos = getMousePos1(e);
         crosshair.x = pos.x;
         crosshair.y = pos.y;
+        updateCrosshairMetrics();
+    }
+
+    function setNextMission(forceType = null) {
+        if (forceType) {
+            activeMission = telescopeMissions.find(m => m.type === forceType) || telescopeMissions[0];
+            return;
+        }
+        const pool = telescopeMissions.filter(m => !activeMission || m.type !== activeMission.type);
+        activeMission = pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function getRegionExplanation(type) {
+        if (type === 'Zenith') return 'Zenith objects sit near altitude +90°, directly overhead.';
+        if (type === 'Horizon') return 'The horizon is the 0° altitude boundary between visible sky and ground.';
+        return "The ecliptic is the Sun\'s apparent yearly path, tilted relative to the celestial equator.";
     }
     
     function handleScanClick(e) {
@@ -1364,28 +1400,44 @@
         let pos = getMousePos1(e);
         crosshair.x = pos.x;
         crosshair.y = pos.y;
+        updateCrosshairMetrics();
         
         if (crosshairLocked && lockedStarIndex !== -1) {
             let scannedStar = dataStars[lockedStarIndex];
-            starsCollected++;
-            addXP(5);
-            
-            floatingTexts.push({ x: scannedStar.x, y: scannedStar.y, text: "DATA ACQUIRED!", color: scannedStar.color, life: 60 });
-            
-            if (scannedStar.type === 'Zenith') {
-                scanMessage = "Scanned Zenith: Altitude exactly +90°";
-            } else if (scannedStar.type === 'Horizon') {
-                scanMessage = "Scanned Horizon: Boundary altitude 0°";
-            } else {
-                scanMessage = "Scanned Ecliptic: The apparent path of the Sun";
-            }
-            scanMessageTimer = 90; 
+            const matchedMission = activeMission && scannedStar.type === activeMission.type;
 
+            if (matchedMission) {
+                correctScans++;
+                comboCount++;
+                addXP(5 + Math.min(comboCount, 5));
+                floatingTexts.push({
+                    x: scannedStar.x,
+                    y: scannedStar.y,
+                    text: comboCount > 1 ? `LOCKED +${comboCount} COMBO` : 'DATA CONFIRMED',
+                    color: scannedStar.color,
+                    life: 70
+                });
+                scanMessage = `${activeMission.title}: ${getRegionExplanation(scannedStar.type)}`;
+                setNextMission();
+            } else {
+                wrongScans++;
+                comboCount = 0;
+                floatingTexts.push({
+                    x: scannedStar.x,
+                    y: scannedStar.y,
+                    text: 'WRONG TARGET',
+                    color: '#ff6b6b',
+                    life: 60
+                });
+                scanMessage = `Mismatch: mission asked for ${activeMission.type}. ${getRegionExplanation(activeMission.type)}`;
+            }
+            scanMessageTimer = 120; 
             dataStars.splice(lockedStarIndex, 1);
             crosshairLocked = false;
             lockedStarIndex = -1;
         } else {
-            floatingTexts.push({ x: crosshair.x, y: crosshair.y, text: "No Target Locked", color: "#ff6b6b", life: 30 });
+            comboCount = 0;
+            floatingTexts.push({ x: crosshair.x, y: crosshair.y, text: 'No target lock', color: '#ff6b6b', life: 30 });
         }
     }
 
@@ -1393,7 +1445,6 @@
     canvas.addEventListener('touchmove', updateCrosshair, {passive: false});
     canvas.addEventListener('mousedown', handleScanClick);
     canvas.addEventListener('touchstart', handleScanClick, {passive: false});
-
 
     startBtn.addEventListener('click', initGame);
 
@@ -1410,15 +1461,19 @@
         resizeCanvas1();
         crosshair.x = canvas.width / 2;
         crosshair.y = canvas.height / 2;
+        updateCrosshairMetrics();
         dataStars = [];
         floatingTexts = [];
-        starsCollected = 0;
+        correctScans = 0;
+        wrongScans = 0;
+        comboCount = 0;
         scanMessage = "";
         scanMessageTimer = 0;
         crosshairLocked = false;
         lockedStarIndex = -1;
+        setNextMission('Zenith');
         
-        bgStars = Array.from({length: 40}).map(() => ({
+        bgStars = Array.from({length: 50}).map(() => ({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
             size: Math.random() * 1.5 + 0.5
@@ -1427,7 +1482,7 @@
         frames = 0;
         gameActive = true;
         overlay.classList.add('hidden');
-        startBtn.innerText = "Scanning...";
+        startBtn.innerText = 'Observing...';
         startBtn.disabled = true;
         startBtn.classList.add('opacity-50');
         
@@ -1440,43 +1495,49 @@
         let x, y, color, type;
         
         if (region === 0) { 
-            x = canvas.width / 2 + (Math.random() * 60 - 30);
-            y = 40 + Math.random() * 40;
+            x = canvas.width / 2 + (Math.random() * 80 - 40);
+            y = 38 + Math.random() * 52;
             color = '#6ef0ff'; 
             type = 'Zenith';
         } else if (region === 1) { 
             x = Math.random() * canvas.width;
-            y = canvas.height - 30 - Math.random() * 20;
+            y = canvas.height - 28 - Math.random() * 18;
             color = '#4ef0a8'; 
             type = 'Horizon';
         } else { 
             x = Math.random() * canvas.width;
             let normalizedX = x / canvas.width;
-            y = canvas.height * 0.8 - (Math.sin(normalizedX * Math.PI) * canvas.height * 0.6);
-            y += (Math.random() * 40 - 20);
+            y = canvas.height * 0.78 - (Math.sin(normalizedX * Math.PI) * canvas.height * 0.54);
+            y += (Math.random() * 30 - 15);
             color = '#ffd166'; 
             type = 'Ecliptic';
         }
 
         dataStars.push({
-            x: x, y: y, maxRadius: 18, currentRadius: 0, growthRate: 0.5, life: 180, color: color, type: type
+            x: x, y: y, maxRadius: 16, currentRadius: 0, growthRate: 0.45, life: 220, color: color, type: type
         });
     }
 
     function drawSkyMap() {
         ctx.fillStyle = '#060412';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, 'rgba(10, 20, 40, 0.25)');
+        gradient.addColorStop(1, 'rgba(2, 4, 12, 0.55)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         ctx.fillStyle = '#ffffff';
         bgStars.forEach(s => {
-            ctx.globalAlpha = Math.random() > 0.9 ? 0.5 : 1.0; 
+            ctx.globalAlpha = Math.random() > 0.93 ? 0.45 : 0.9; 
             ctx.beginPath();
             ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
             ctx.fill();
         });
         ctx.globalAlpha = 1.0;
 
-        ctx.strokeStyle = 'rgba(255, 90, 198, 0.3)'; 
+        ctx.strokeStyle = 'rgba(255, 90, 198, 0.28)'; 
         ctx.lineWidth = 1;
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
@@ -1484,36 +1545,51 @@
         ctx.lineTo(canvas.width/2, canvas.height);
         ctx.stroke();
 
-        ctx.fillStyle = 'rgba(110, 240, 255, 0.5)';
+        ctx.fillStyle = 'rgba(110, 240, 255, 0.7)';
         ctx.font = "14px 'JetBrains Mono', monospace";
-        ctx.textAlign = "center";
-        ctx.fillText("ZENITH ⬆", canvas.width/2, 20);
+        ctx.textAlign = 'center';
+        ctx.fillText('ZENITH ⬆', canvas.width/2, 20);
 
-        ctx.strokeStyle = 'rgba(78, 240, 168, 0.4)'; 
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(78, 240, 168, 0.5)'; 
+        ctx.lineWidth = 2.5;
         ctx.setLineDash([]); 
         ctx.beginPath();
         ctx.moveTo(0, canvas.height - 20);
         ctx.lineTo(canvas.width, canvas.height - 20);
         ctx.stroke();
-        ctx.fillStyle = 'rgba(78, 240, 168, 0.5)';
-        ctx.fillText("HORIZON", canvas.width/2, canvas.height - 5);
+        ctx.fillStyle = 'rgba(78, 240, 168, 0.65)';
+        ctx.fillText('HORIZON', canvas.width/2, canvas.height - 5);
 
-        ctx.strokeStyle = 'rgba(255, 209, 102, 0.3)'; 
-        ctx.lineWidth = 2;
-        ctx.setLineDash([10, 10]);
+        ctx.strokeStyle = 'rgba(255, 209, 102, 0.45)'; 
+        ctx.lineWidth = 3;
+        ctx.setLineDash([10, 8]);
         ctx.beginPath();
-        ctx.moveTo(0, canvas.height * 0.8);
-        for(let x=0; x<=canvas.width; x+=10) {
+        ctx.moveTo(0, canvas.height * 0.78);
+        for(let x=0; x<=canvas.width; x+=8) {
             let normalizedX = x / canvas.width;
-            let y = canvas.height * 0.8 - (Math.sin(normalizedX * Math.PI) * canvas.height * 0.6);
+            let y = canvas.height * 0.78 - (Math.sin(normalizedX * Math.PI) * canvas.height * 0.54);
             ctx.lineTo(x, y);
         }
         ctx.stroke();
         ctx.setLineDash([]); 
         
-        ctx.fillStyle = 'rgba(255, 209, 102, 0.5)';
-        ctx.fillText("ECLIPTIC", canvas.width * 0.75, canvas.height * 0.3);
+        ctx.fillStyle = 'rgba(255, 209, 102, 0.7)';
+        ctx.fillText('ECLIPTIC', canvas.width * 0.78, canvas.height * 0.32);
+
+        if (activeMission) {
+            ctx.fillStyle = 'rgba(6, 4, 18, 0.92)';
+            ctx.fillRect(14, 14, Math.min(320, canvas.width - 28), 68);
+            ctx.strokeStyle = activeMission.color;
+            ctx.strokeRect(14, 14, Math.min(320, canvas.width - 28), 68);
+            ctx.fillStyle = activeMission.color;
+            ctx.textAlign = 'left';
+            ctx.font = "bold 14px 'JetBrains Mono', monospace";
+            ctx.fillText(`MISSION: ${activeMission.title.toUpperCase()}`, 24, 36);
+            ctx.fillStyle = '#dbeafe';
+            ctx.font = "12px 'Nunito', sans-serif";
+            ctx.fillText(activeMission.clue, 24, 56);
+            ctx.fillText(`Need 12 correct scans. Wrong scans: ${wrongScans}`, 24, 73);
+        }
     }
 
     function drawCrosshair1() {
@@ -1545,7 +1621,7 @@
 
     function gameLoop() {
         if (!gameActive) return;
-        if (frames % 45 === 0) spawnDataStar();
+        if (frames % 38 === 0) spawnDataStar();
 
         drawSkyMap();
         
@@ -1554,13 +1630,13 @@
 
         for (let i = dataStars.length - 1; i >= 0; i--) {
             let s = dataStars[i];
-            if (s.currentRadius < s.maxRadius && s.life > 20) s.currentRadius += s.growthRate;
-            else if (s.life <= 20) s.currentRadius = Math.max(0, s.currentRadius - s.growthRate * 2);
+            if (s.currentRadius < s.maxRadius && s.life > 30) s.currentRadius += s.growthRate;
+            else if (s.life <= 30) s.currentRadius = Math.max(0, s.currentRadius - s.growthRate * 2);
             
             if(s.currentRadius > 0) {
-                let pulse = Math.sin(frames * 0.1) * 3;
+                let pulse = Math.sin(frames * 0.1) * 2.5;
                 ctx.fillStyle = s.color;
-                ctx.shadowBlur = 15 + pulse;
+                ctx.shadowBlur = 14 + pulse;
                 ctx.shadowColor = s.color;
                 ctx.beginPath();
                 for (let j = 0; j < 5; j++) {
@@ -1586,10 +1662,10 @@
         for (let i = floatingTexts.length - 1; i >= 0; i--) {
             let ft = floatingTexts[i];
             ctx.fillStyle = ft.color;
-            ctx.globalAlpha = ft.life / 60;
+            ctx.globalAlpha = Math.min(1, ft.life / 65);
             ctx.font = "bold 14px 'Nunito', sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText(ft.text, ft.x, ft.y - (60 - ft.life) * 0.5);
+            ctx.textAlign = 'center';
+            ctx.fillText(ft.text, ft.x, ft.y - (70 - ft.life) * 0.45);
             ctx.globalAlpha = 1.0;
             ft.life--;
             if (ft.life <= 0) floatingTexts.splice(i, 1);
@@ -1598,25 +1674,27 @@
         drawCrosshair1();
 
         if (scanMessageTimer > 0) {
-            ctx.fillStyle = "rgba(15, 17, 35, 0.8)";
-            ctx.fillRect(0, canvas.height - 60, canvas.width, 40);
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 14px 'JetBrains Mono', monospace";
-            ctx.textAlign = "center";
-            ctx.fillText(scanMessage, canvas.width / 2, canvas.height - 35);
+            ctx.fillStyle = 'rgba(15, 17, 35, 0.86)';
+            ctx.fillRect(0, canvas.height - 68, canvas.width, 48);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = "bold 13px 'JetBrains Mono', monospace";
+            ctx.textAlign = 'center';
+            ctx.fillText(scanMessage, canvas.width / 2, canvas.height - 38);
             scanMessageTimer--;
         }
 
         let secondsLeft = Math.ceil((timeLimit - frames) / 60);
-        ctx.fillStyle = "white";
-        ctx.font = "16px 'JetBrains Mono', monospace";
-        ctx.textAlign = "left";
-        ctx.fillText(`Time: ${secondsLeft}s`, 10, 25);
-        ctx.fillStyle = "#ff5ac6"; 
-        ctx.fillText(`⭐ Scanned: ${starsCollected}/10`, 10, 45);
+        ctx.fillStyle = 'white';
+        ctx.font = "14px 'JetBrains Mono', monospace";
+        ctx.textAlign = 'left';
+        ctx.fillText(`Time: ${secondsLeft}s`, 10, canvas.height - 88);
+        ctx.fillText(`Alt: ${crosshairMetrics.altitude.toFixed(0)}°`, 10, canvas.height - 70);
+        ctx.fillText(`Az: ${crosshairMetrics.azimuth.toFixed(0)}°`, 10, canvas.height - 52);
+        ctx.fillStyle = '#ff5ac6'; 
+        ctx.fillText(`Correct: ${correctScans}/12   Combo: ${comboCount}`, 10, canvas.height - 34);
 
-        if (frames >= timeLimit || starsCollected >= 10) {
-            gameOver(starsCollected >= 10, starsCollected >= 10 ? "All Data Collected!" : "Time Expired!");
+        if (frames >= timeLimit || correctScans >= 12) {
+            gameOver(correctScans >= 12, correctScans >= 12 ? 'Observing run complete' : 'Observing window closed');
             return;
         }
         frames++;
@@ -1625,22 +1703,22 @@
 
     function gameOver(win, reason) {
         gameActive = false;
-        startBtn.innerText = "▶ Restart Scanner";
+        startBtn.innerText = '▶ Restart Observing Run';
         startBtn.disabled = false;
         startBtn.classList.remove('opacity-50');
         
         overlay.innerHTML = `
             <div class="text-6xl mb-2">${win ? '🌟' : '⏱️'}</div>
             <h3 class="font-display text-2xl ${win ? 'text-star-green' : 'text-star-red'} mb-1 text-center px-4">${reason}</h3>
-            <p class="text-white mb-2">You scanned ${starsCollected} stars.</p>
-            ${!achievements.playedGame && !win ? `<p class="text-astro-light text-sm mb-4">Scan 10 stars before time runs out for the badge!</p>` : ''}
+            <p class="text-white mb-2">Correct scans: ${correctScans} &nbsp;|&nbsp; Wrong scans: ${wrongScans}</p>
+            <p class="text-astro-light text-sm mb-4 px-4">You practiced horizon, zenith, altitude, azimuth, and the ecliptic under time pressure.</p>
         `;
         overlay.classList.remove('hidden');
         
         if(win && !achievements.playedGame) {
             achievements.playedGame = true;
             addXP(100);
-            showMsgBox("Stargazer Badge Unlocked!", "Excellent telescope control! +100 XP", "🔭");
+            showMsgBox('Observing Badge Unlocked!', 'You completed the telescope observing run with targeted sky-region scans. +100 XP', '🔭');
             updateProgress();
         }
     }
@@ -1656,7 +1734,7 @@
 
     function resizeWeaver() {
         const rect = weaverCanvas.parentElement.getBoundingClientRect();
-        weaverCanvas.width = rect.width > 500 ? 500 : rect.width;
+        weaverCanvas.width = rect.width > 520 ? 520 : rect.width;
         weaverCanvas.height = weaverCanvas.width; 
     }
     window.addEventListener('resize', resizeWeaver);
@@ -1665,39 +1743,60 @@
     let weaverActive = false;
     let wSelectedStar = -1;
     let wUserEdges = [];
+    let wWrongAttempts = 0;
+    let wMessage = '';
+    let wMessageTimer = 0;
     
-    // Leo-ish layout (normalized to 0-1 so it scales)
     const leoBase = [
-        {id: 0, nx: 0.2, ny: 0.6}, // Regulus
-        {id: 1, nx: 0.4, ny: 0.7}, // Algieba
-        {id: 2, nx: 0.45, ny: 0.5},// Adhafera
-        {id: 3, nx: 0.6, ny: 0.3}, // Zosma
-        {id: 4, nx: 0.8, ny: 0.4}, // Denebola
-        {id: 5, nx: 0.5, ny: 0.8}, // Rasalas
-        {id: 6, nx: 0.25, ny: 0.4} // Subra
+        {id: 0, nx: 0.2, ny: 0.6, name: 'Regulus', importance: 'Brightest star, near the ecliptic'},
+        {id: 1, nx: 0.4, ny: 0.7, name: 'Algieba', importance: 'Sickle pattern'},
+        {id: 2, nx: 0.45, ny: 0.5, name: 'Adhafera', importance: 'Upper sickle'},
+        {id: 3, nx: 0.6, ny: 0.3, name: 'Zosma', importance: 'Back of the lion'},
+        {id: 4, nx: 0.8, ny: 0.4, name: 'Denebola', importance: 'Tail star'},
+        {id: 5, nx: 0.5, ny: 0.8, name: 'Rasalas', importance: 'Lower sickle'},
+        {id: 6, nx: 0.25, ny: 0.4, name: 'Subra', importance: 'Connects toward Regulus'}
     ];
-    // Required connections
+
+    const decoyBase = [
+        {id: 100, nx: 0.12, ny: 0.22, name: 'Decoy A'},
+        {id: 101, nx: 0.72, ny: 0.7, name: 'Decoy B'},
+        {id: 102, nx: 0.9, ny: 0.2, name: 'Decoy C'},
+        {id: 103, nx: 0.62, ny: 0.88, name: 'Decoy D'}
+    ];
+
     const leoEdges = [
-        [0, 1], [1, 2], [2, 3], [3, 4], // Back/Tail
-        [1, 5], [5, 6], [6, 0] // Sickle/Head
+        [0, 1], [1, 2], [2, 3], [3, 4],
+        [1, 5], [5, 6], [6, 0]
     ];
 
     let wStars = [];
+    let wDecoys = [];
 
     function initWeaver() {
         resizeWeaver();
         wOverlay.classList.add('hidden');
-        wStartBtn.innerText = "Weaving in progress...";
+        wStartBtn.innerText = 'Pattern challenge active...';
         wStartBtn.disabled = true;
         wStartBtn.classList.add('opacity-50');
 
         wUserEdges = [];
         wSelectedStar = -1;
+        wWrongAttempts = 0;
+        wMessage = 'Use Regulus and Denebola as anchor stars.';
+        wMessageTimer = 180;
         weaverActive = true;
 
-        // Map normalized coordinates to canvas
         wStars = leoBase.map(s => ({
             id: s.id,
+            name: s.name,
+            importance: s.importance,
+            x: s.nx * weaverCanvas.width,
+            y: s.ny * weaverCanvas.height
+        }));
+
+        wDecoys = decoyBase.map(s => ({
+            id: s.id,
+            name: s.name,
             x: s.nx * weaverCanvas.width,
             y: s.ny * weaverCanvas.height
         }));
@@ -1721,26 +1820,40 @@
         };
     }
 
+    function findClickedWeaverStar(pos) {
+        const combined = [...wStars, ...wDecoys];
+        let clicked = null;
+        combined.forEach((s) => {
+            if (Math.hypot(s.x - pos.x, s.y - pos.y) < 18) clicked = s;
+        });
+        return clicked;
+    }
+
     function handleWeaverClick(e) {
         if (!weaverActive) return;
         if (e.type === 'touchstart') e.preventDefault();
         
         const pos = getMousePosWeaver(e);
-        let clicked = -1;
+        const clickedStar = findClickedWeaverStar(pos);
 
-        // Check if clicked a star
-        wStars.forEach((s) => {
-            if (Math.hypot(s.x - pos.x, s.y - pos.y) < 20) {
-                clicked = s.id;
+        if (clickedStar) {
+            const clicked = clickedStar.id;
+            const isDecoy = clicked >= 100;
+
+            if (isDecoy) {
+                wSelectedStar = -1;
+                wWrongAttempts++;
+                wMessage = `${clickedStar.name} is not part of Leo. Use the named anchor stars on the ecliptic side.`;
+                wMessageTimer = 150;
+                drawWeaver();
+                return;
             }
-        });
 
-        if (clicked !== -1) {
             if (wSelectedStar === -1) {
-                // Select first star
                 wSelectedStar = clicked;
+                wMessage = `${clickedStar.name}: ${clickedStar.importance}`;
+                wMessageTimer = 120;
             } else if (wSelectedStar !== clicked) {
-                // Attempt connection
                 const isRequiredEdge = leoEdges.some(edge => 
                     (edge[0] === wSelectedStar && edge[1] === clicked) || 
                     (edge[1] === wSelectedStar && edge[0] === clicked)
@@ -1753,19 +1866,22 @@
                     );
                     if (!edgeExists) {
                         wUserEdges.push([wSelectedStar, clicked]);
-                        addXP(2); // tiny reward for line
+                        addXP(3);
+                        wMessage = 'Valid Leo segment added.';
+                        wMessageTimer = 90;
                     }
+                } else {
+                    wWrongAttempts++;
+                    wMessage = 'That line is not part of Leo’s standard outline.';
+                    wMessageTimer = 120;
                 }
-                // Move selection to new star
                 wSelectedStar = clicked; 
 
-                // Check Win
                 if (wUserEdges.length === leoEdges.length) {
                     finishWeaver();
                 }
             }
         } else {
-            // Clicked empty space
             wSelectedStar = -1;
         }
         drawWeaver();
@@ -1777,20 +1893,24 @@
     function drawWeaver() {
         wCtx.clearRect(0, 0, weaverCanvas.width, weaverCanvas.height);
 
-        // Draw faint ecliptic guideline
-        wCtx.strokeStyle = 'rgba(255, 209, 102, 0.1)';
+        const gradient = wCtx.createLinearGradient(0, 0, 0, weaverCanvas.height);
+        gradient.addColorStop(0, 'rgba(17, 19, 43, 0.95)');
+        gradient.addColorStop(1, 'rgba(4, 8, 20, 0.95)');
+        wCtx.fillStyle = gradient;
+        wCtx.fillRect(0, 0, weaverCanvas.width, weaverCanvas.height);
+
+        wCtx.strokeStyle = 'rgba(255, 209, 102, 0.14)';
         wCtx.lineWidth = 10;
         wCtx.beginPath();
         wCtx.moveTo(0, weaverCanvas.height * 0.8);
         wCtx.lineTo(weaverCanvas.width, weaverCanvas.height * 0.2);
         wCtx.stroke();
         
-        wCtx.fillStyle = 'rgba(255, 209, 102, 0.3)';
+        wCtx.fillStyle = 'rgba(255, 209, 102, 0.36)';
         wCtx.font = "14px 'JetBrains Mono', monospace";
-        wCtx.textAlign = "center";
-        wCtx.fillText("THE ECLIPTIC", weaverCanvas.width/2, weaverCanvas.height/2 + 30);
+        wCtx.textAlign = 'center';
+        wCtx.fillText('ECLIPTIC GUIDE', weaverCanvas.width/2, weaverCanvas.height/2 + 30);
 
-        // Draw completed user edges
         wCtx.strokeStyle = '#ffd166';
         wCtx.lineWidth = 3;
         wCtx.shadowBlur = 10;
@@ -1808,47 +1928,72 @@
         });
         wCtx.shadowBlur = 0;
 
-        // Draw stars
-        wStars.forEach(s => {
-            let isSelected = (s.id === wSelectedStar);
-            wCtx.fillStyle = isSelected ? '#ff5ac6' : '#ffffff';
-            wCtx.shadowBlur = isSelected ? 20 : 5;
-            wCtx.shadowColor = isSelected ? '#ff5ac6' : '#ffffff';
-            
+        wDecoys.forEach(s => {
+            wCtx.fillStyle = 'rgba(148, 163, 184, 0.75)';
             wCtx.beginPath();
-            wCtx.arc(s.x, s.y, isSelected ? 8 : 5, 0, Math.PI*2);
+            wCtx.arc(s.x, s.y, 4, 0, Math.PI*2);
             wCtx.fill();
         });
-        wCtx.shadowBlur = 0;
 
-        // Progress text
-        wCtx.fillStyle = "white";
-        wCtx.font = "16px 'JetBrains Mono', monospace";
-        wCtx.textAlign = "left";
-        wCtx.fillText(`Connections: ${wUserEdges.length}/${leoEdges.length}`, 10, 25);
+        wStars.forEach(s => {
+            let isSelected = (s.id === wSelectedStar);
+            const isAnchor = s.name === 'Regulus' || s.name === 'Denebola';
+            wCtx.fillStyle = isSelected ? '#ff5ac6' : (isAnchor ? '#ffd166' : '#ffffff');
+            wCtx.shadowBlur = isSelected ? 20 : (isAnchor ? 12 : 5);
+            wCtx.shadowColor = isSelected ? '#ff5ac6' : (isAnchor ? '#ffd166' : '#ffffff');
+            
+            wCtx.beginPath();
+            wCtx.arc(s.x, s.y, isAnchor ? 6.5 : (isSelected ? 8 : 5), 0, Math.PI*2);
+            wCtx.fill();
+
+            wCtx.shadowBlur = 0;
+            wCtx.fillStyle = isAnchor ? 'rgba(255,209,102,0.9)' : 'rgba(226,232,240,0.78)';
+            wCtx.font = isAnchor ? "bold 12px 'JetBrains Mono', monospace" : "11px 'JetBrains Mono', monospace";
+            wCtx.textAlign = 'left';
+            wCtx.fillText(s.name, s.x + 8, s.y - 8);
+        });
+
+        wCtx.fillStyle = 'white';
+        wCtx.font = "14px 'JetBrains Mono', monospace";
+        wCtx.textAlign = 'left';
+        wCtx.fillText(`Connections: ${wUserEdges.length}/${leoEdges.length}`, 10, 24);
+        wCtx.fillText(`Wrong links / decoys: ${wWrongAttempts}`, 10, 44);
+
+        if (wMessageTimer > 0) {
+            wCtx.fillStyle = 'rgba(15, 17, 35, 0.84)';
+            wCtx.fillRect(0, weaverCanvas.height - 56, weaverCanvas.width, 42);
+            wCtx.fillStyle = '#ffffff';
+            wCtx.font = "bold 13px 'JetBrains Mono', monospace";
+            wCtx.textAlign = 'center';
+            wCtx.fillText(wMessage, weaverCanvas.width / 2, weaverCanvas.height - 30);
+            wMessageTimer--;
+        }
     }
 
     function finishWeaver() {
         weaverActive = false;
         wSelectedStar = -1;
-        drawWeaver(); // Draw final state without selection
+        drawWeaver();
         
-        wStartBtn.innerText = "▶ Restart Weaver";
+        wStartBtn.innerText = '▶ Restart Pattern Challenge';
         wStartBtn.disabled = false;
         wStartBtn.classList.remove('opacity-50');
+
+        const accuracy = Math.max(0, Math.round((leoEdges.length / (leoEdges.length + wWrongAttempts)) * 100));
 
         setTimeout(() => {
             wOverlay.innerHTML = `
                 <div class="text-6xl mb-2">🦁</div>
-                <h3 class="font-display text-2xl text-star-gold mb-1 text-center px-4">Leo Constellation Revealed!</h3>
-                <p class="text-white text-sm mb-2 max-w-xs text-center">Leo lies perfectly on the Ecliptic, making it a Zodiac constellation.</p>
+                <h3 class="font-display text-2xl text-star-gold mb-1 text-center px-4">Leo reconstructed</h3>
+                <p class="text-white text-sm mb-2 max-w-xs text-center">Accuracy: ${accuracy}%</p>
+                <p class="text-space-100 text-sm mb-2 max-w-xs text-center">Regulus sits close to the ecliptic, which is why Leo belongs to the zodiac band.</p>
             `;
             wOverlay.classList.remove('hidden');
 
             if(!achievements.playedConstellation) {
                 achievements.playedConstellation = true;
                 addXP(100);
-                showMsgBox("Zodiac Weaver Badge!", "You connected the stars of Leo! +100 XP", "✨");
+                showMsgBox('Pattern Recognition Badge!', 'You rebuilt Leo using anchor stars, decoys, and zodiac context. +100 XP', '✨');
                 updateProgress();
             }
         }, 500);
@@ -1862,8 +2007,6 @@
         }
         return arr;
     }
-
-
     /* =========================================================
        20-QUESTION OLYMPIAD QUIZ 
        ========================================================= */
