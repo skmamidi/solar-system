@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pallas — Solar System Explorer</title>
+    <script>window.__IS_SUB_PAGE__ = true;</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#030712', 800: '#0f172a', 700: '#1e293b', 500: '#334155', 100: '#f8fafc' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        pallas: { base: '#64748b', dark: '#334155', light: '#94a3b8', ice: '#cbd5e1', rock: '#475569' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 180s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(100, 116, 139, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(100, 116, 139, 0.5)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #030712;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #64748b 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #94a3b8 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #334155 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #fff 100%, transparent);
+            background-size: 250px 250px;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(100, 116, 139, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(3, 7, 18, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(100, 116, 139, 0.6);
+            box-shadow: 0 0 20px rgba(100, 116, 139, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .orb-pallas {
+            background: radial-gradient(circle at 35% 35%, #94a3b8, #64748b, #475569, #334155, #1e293b);
+            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(100, 116, 139, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        .orb-pallas::before {
+            content: '';
+            position: absolute;
+            top: 30%; left: 20%;
+            width: 35%; height: 25%;
+            background: radial-gradient(ellipse, rgba(0,0,0,0.4) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: rotate(-30deg);
+        }
+
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(100, 116, 139, 0.2);
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #030712; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-pallas-base shadow-[0_0_40px_rgba(100,116,139,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-pallas-base text-space-900 font-bold py-3 rounded-xl hover:bg-pallas-light transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-pallas-light">☄️</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Solar System Explorer</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">SSE</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="asteroid-belt.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-cyan">
+                <span class="text-xl">🪨</span>
+                <span class="font-display font-bold text-lg">Back to Asteroid Belt</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-pallas-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-pallas-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Pallas Mission Progress</span>
+                    <span id="progressText" class="text-pallas-base font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-pallas-dark to-pallas-base h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Play Mini-Game</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-pallas-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-pallas-base font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-pallas-light animate-ping"></span> Asteroid
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Pallas</h1>
+                <p class="text-2xl text-pallas-light font-body italic mb-6">"The Irregular"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    The third most massive object in the asteroid belt, famous for its bizarrely tilted orbit and heavily cratered, irregular shape. It is a world that has been beaten and battered over billions of years.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-pallas-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-pallas-light transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(100,116,139,0.5)]">
+                    Explore Pallas 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-pallas animate-pulse-glow animate-spin-slow"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-pallas-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">~512 km</div>
+                <div class="text-xs text-space-100 mt-1">Third largest</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📍</div>
+                <div class="text-pallas-light font-mono text-xs uppercase mb-1">Distance</div>
+                <div class="font-bold text-xl">2.77 AU</div>
+                <div class="text-xs text-space-100 mt-1">From the Sun</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📐</div>
+                <div class="text-pallas-light font-mono text-xs uppercase mb-1">Orbit Tilt</div>
+                <div class="font-bold text-xl">34.8°</div>
+                <div class="text-xs text-space-100 mt-1">Highly inclined</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🪨</div>
+                <div class="text-pallas-light font-mono text-xs uppercase mb-1">Type</div>
+                <div class="font-bold text-xl">B-type</div>
+                <div class="text-xs text-space-100 mt-1">Carbon-rich</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Pallas data.</p>
+                </div>
+                <div class="hidden md:block text-pallas-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Discovery -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'p1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔭</div>
+                            <h3 class="font-display text-xl text-pallas-base">Discovery</h3>
+                            <p class="text-space-100 text-xs mt-2">Who found it?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-pallas-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-pallas-dark pb-1 w-full">March 28, 1802</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>Discovered by German astronomer <strong>Heinrich Olbers</strong>, the same person who discovered Vesta.</li>
+                                <li>It was the second asteroid ever discovered, just over a year after Ceres.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Tilted Orbit -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'p2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📐</div>
+                            <h3 class="font-display text-xl text-pallas-base">Tilted Orbit</h3>
+                            <p class="text-space-100 text-xs mt-2">Why is it so weird?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-pallas-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-pallas-dark pb-1 w-full">A Steep Path</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Pallas's orbit is tilted <strong>34.8 degrees</strong> relative to the plane of the planets—the most of any large asteroid.</li>
+                                <li>This means it travels high above and below the main belt during its orbit.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Heavily Cratered -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'p3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌑</div>
+                            <h3 class="font-display text-xl text-pallas-base">Heavily Cratered</h3>
+                            <p class="text-space-100 text-xs mt-2">A battered surface</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-pallas-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-pallas-dark pb-1 w-full">Ancient Scars</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Telescope images show Pallas is covered in enormous impact craters.</li>
+                                <li>Its tilted orbit means it crosses through more debris than other asteroids, causing more frequent collisions.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Irregular Shape -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'p4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🥔</div>
+                            <h3 class="font-display text-xl text-pallas-base">Irregular Shape</h3>
+                            <p class="text-space-100 text-xs mt-2">Not round at all</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-pallas-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-pallas-dark pb-1 w-full">Lumpy and Bumpy</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Unlike Ceres, Pallas is not massive enough for gravity to pull it into a sphere.</li>
+                                <li>It has a lumpy, irregular shape—sometimes compared to a potato or a squashed ball.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Composition -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'p5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧪</div>
+                            <h3 class="font-display text-2xl text-pallas-base">Composition</h3>
+                            <p class="text-space-100 mt-2">B-type carbonaceous</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-pallas-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-3 border-b border-pallas-dark pb-2 w-full">Primitive Material</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-pallas-light font-mono font-bold block mb-1">Carbon-Rich:</span>
+                                    Pallas is a B-type asteroid, meaning it contains high amounts of carbon and has changed very little since the solar system's formation.
+                                </div>
+                                <div>
+                                    <span class="text-pallas-light font-mono font-bold block mb-1">Hydrated Minerals:</span>
+                                    It also contains minerals that have water locked inside their crystal structure, hinting at a watery past.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Pallas Family -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'p6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">👨‍👩‍👧‍👦</div>
+                            <h3 class="font-display text-2xl text-pallas-base">Pallas Family</h3>
+                            <p class="text-space-100 mt-2">A clan of smaller asteroids</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-pallas-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-pallas-dark pb-2 w-full">Impact Fragments</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>A large group of smaller asteroids called the <strong>Pallas family</strong> share similar orbits.</li>
+                                <li>They are believed to be fragments blasted off Pallas by a massive impact billions of years ago.</li>
+                                <li>This family helps scientists trace Pallas's collision history.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Name Origin -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'p7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🏛️</div>
+                            <h3 class="font-display text-2xl text-pallas-base">Name Origin</h3>
+                            <p class="text-space-100 mt-2">Greek goddess of wisdom</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-pallas-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-pallas-dark pb-2 w-full">Pallas Athena</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Pallas is named after <strong>Pallas Athena</strong>, the Greek goddess of wisdom, warfare, and crafts.</li>
+                                <li>The name was suggested by the astronomer's colleague, who wanted to honor the goddess after whom the newly discovered object was identified.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Exploration -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'p8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🚀</div>
+                            <h3 class="font-display text-2xl text-pallas-base">Exploration</h3>
+                            <p class="text-space-100 mt-2">No spacecraft visit yet</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-pallas-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-pallas-dark pb-2 w-full">Future Missions</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>No spacecraft has visited Pallas yet, though it has been studied by telescopes including Hubble.</li>
+                                <li>Its strange orbit makes it more difficult to reach than Ceres or Vesta, but future missions are being proposed.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-pallas-base border-2 shadow-[0_0_30px_rgba(100,116,139,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-pallas-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Crater Surveyor</h2>
+                        <p class="text-space-100 mb-6">Navigate over Pallas's rugged terrain! Collect <span class="text-pallas-base font-bold">mineral scans</span> while dodging <span class="text-gray-400 font-bold">asteroid debris</span>. Survive 20 seconds and scan 3 minerals to earn the <span class="text-pallas-light font-bold">Irregular Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-pallas-base mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Launch Surveyor
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-pallas-base/30">
+                            <div class="text-5xl mb-2">☄️</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Rugged Terrain Ahead</h3>
+                            <p class="text-pallas-light text-sm">Click Start to survey</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#020617] via-[#1e293b] to-[#334155] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-pallas-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-pallas-base/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Pallas module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="quizStatus" class="flex items-center justify-between gap-4 mb-4 text-sm font-mono">
+                    <span class="text-space-100">Question <span id="quizCurrent">1</span> of <span id="quizTotal">10</span></span>
+                    <span class="text-pallas-light">Score: <span id="quizScore">0</span></span>
+                </div>
+
+                <div id="quizQuestionCard" class="quiz-q block glass-card rounded-2xl p-6">
+                    <h3 id="quizQuestion" class="text-xl font-bold mb-4 text-pallas-light"></h3>
+                    <div id="quizOptions" class="space-y-3"></div>
+                    <div id="quizExplanation" class="hidden mt-5 rounded-2xl border border-space-500 bg-space-900/80 p-4">
+                        <div id="quizAnswerLabel" class="font-bold mb-2"></div>
+                        <p id="quizExplanationText" class="text-space-100 leading-relaxed"></p>
+                    </div>
+                    <div class="mt-5 flex justify-end">
+                        <button id="nextQuestionBtn" onclick="goToNextQuestion()" disabled class="opacity-50 cursor-not-allowed bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full transition">Next</button>
+                    </div>
+                </div>
+
+                <div class="quiz-q hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-3">Score: <span id="scoreText" class="font-bold text-pallas-light">0/10</span></p>
+                    <p class="text-space-100 mb-6">Review the explanations as you play, then retry for a perfect score.</p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+</main>
+
+<script>
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.pallasCompleteAlerted) {
+            window.pallasCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Pallas Module Complete!", "You have unlocked the 'Irregular' badge. Excellent exploration!", "☄️");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Pallas files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    const quizQuestions = [
+        { question: "Who discovered Pallas in 1802?", options: [{ text: "Galileo Galilei", isCorrect: false }, { text: "Heinrich Olbers", isCorrect: true }, { text: "Isaac Newton", isCorrect: false }, { text: "Johannes Kepler", isCorrect: false }], explanation: "German astronomer Heinrich Olbers discovered Pallas on March 28, 1802. He also discovered Vesta five years later." },
+        { question: "What makes Pallas's orbit unusual?", options: [{ text: "It is highly tilted at 34.8 degrees", isCorrect: true }, { text: "It orbits backwards", isCorrect: false }, { text: "It is perfectly circular", isCorrect: false }, { text: "It crosses Earth's orbit", isCorrect: false }], explanation: "Pallas's orbit is tilted 34.8 degrees relative to the plane of the planets, the most of any large asteroid, causing it to travel high above and below the main belt." },
+        { question: "Why is Pallas so heavily cratered?", options: [{ text: "Its tilted orbit means it crosses more debris", isCorrect: true }, { text: "It is the oldest object in the solar system", isCorrect: false }, { text: "It has no gravity to protect it", isCorrect: false }, { text: "It is made of soft material", isCorrect: false }], explanation: "Pallas's steeply inclined orbit carries it through regions with more debris than other asteroids, leading to more frequent impacts and a heavily cratered surface." },
+        { question: "What type of asteroid is Pallas classified as?", options: [{ text: "B-type (carbon-rich)", isCorrect: true }, { text: "M-type (metallic)", isCorrect: false }, { text: "S-type (silicate)", isCorrect: false }, { text: "V-type (basaltic)", isCorrect: false }], explanation: "Pallas is a B-type asteroid, meaning it is rich in carbon and contains primitive material that has changed little since the solar system formed." },
+        { question: "After whom is Pallas named?", options: [{ text: "Pallas Athena, Greek goddess of wisdom", isCorrect: true }, { text: "A Roman emperor", isCorrect: false }, { text: "A famous astronaut", isCorrect: false }, { text: "A type of rock", isCorrect: false }], explanation: "Pallas is named after Pallas Athena, the Greek goddess of wisdom, warfare, and crafts." },
+        { question: "What is the approximate diameter of Pallas?", options: [{ text: "About 512 km", isCorrect: true }, { text: "About 100 km", isCorrect: false }, { text: "About 2,000 km", isCorrect: false }, { text: "About 50 km", isCorrect: false }], explanation: "Pallas is about 512 km in diameter, making it the third most massive object in the asteroid belt after Ceres and Vesta." },
+        { question: "What is the Pallas family?", options: [{ text: "A group of smaller asteroids believed to be fragments from Pallas", isCorrect: true }, { text: "Pallas's moons", isCorrect: false }, { text: "A series of craters on Pallas", isCorrect: false }, { text: "A constellation", isCorrect: false }], explanation: "The Pallas family is a group of smaller asteroids that share similar orbits and are thought to be fragments blasted off Pallas by a massive impact." },
+        { question: "Why is Pallas not spherical like Ceres?", options: [{ text: "It is not massive enough for gravity to pull it into a sphere", isCorrect: true }, { text: "It spins too slowly", isCorrect: false }, { text: "It is made of gas", isCorrect: false }, { text: "It has been sculpted by aliens", isCorrect: false }], explanation: "Unlike Ceres, Pallas lacks sufficient mass for its gravity to overcome the rigidity of its rocks and pull it into a spherical shape." },
+        { question: "Has any spacecraft visited Pallas?", options: [{ text: "No, though it has been studied by telescopes", isCorrect: true }, { text: "Yes, Dawn orbited it", isCorrect: false }, { text: "Yes, Voyager 2 flew past it", isCorrect: false }, { text: "Yes, Hubble landed on it", isCorrect: false }], explanation: "No spacecraft has visited Pallas yet. Its difficult orbit makes it harder to reach than Ceres or Vesta, but future missions are being proposed." },
+        { question: "What evidence suggests Pallas may have had water in the past?", options: [{ text: "It contains hydrated minerals with water locked in their structure", isCorrect: true }, { text: "It has rivers on its surface", isCorrect: false }, { text: "It has clouds of water vapor", isCorrect: false }, { text: "It is covered in ice", isCorrect: false }], explanation: "Pallas contains hydrated minerals—rocks with water molecules trapped inside their crystal structure—suggesting it may have had water in the past." }
+    ];
+
+    let currentQ = 0;
+    let score = 0;
+    let questionOrder = [];
+    let currentQuestionSet = [];
+    let answeredCurrent = false;
+
+    function shuffleArray(items) {
+        const arr = [...items];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function prepareQuizData() {
+        questionOrder = shuffleArray(quizQuestions.map((_, idx) => idx));
+        currentQuestionSet = questionOrder.map((idx) => {
+            const q = JSON.parse(JSON.stringify(quizQuestions[idx]));
+            q.options = shuffleArray(q.options);
+            return q;
+        });
+    }
+
+    function renderQuestion() {
+        const total = currentQuestionSet.length;
+        const question = currentQuestionSet[currentQ];
+        answeredCurrent = false;
+
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('quizQuestionCard').classList.remove('hidden');
+        document.getElementById('quizQuestionCard').classList.add('block');
+        document.getElementById('quizCurrent').innerText = `${currentQ + 1}`;
+        document.getElementById('quizTotal').innerText = `${total}`;
+        document.getElementById('quizScore').innerText = `${score}`;
+        document.getElementById('quizQuestion').innerText = `${currentQ + 1}. ${question.question}`;
+
+        const optionsWrap = document.getElementById('quizOptions');
+        optionsWrap.innerHTML = '';
+        question.options.forEach((option) => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-pallas-base transition-all";
+            btn.innerText = option.text;
+            btn.onclick = () => answer(option.isCorrect, btn);
+            optionsWrap.appendChild(btn);
+        });
+
+        document.getElementById('quizExplanation').classList.add('hidden');
+        document.getElementById('quizAnswerLabel').innerText = '';
+        document.getElementById('quizExplanationText').innerText = '';
+
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.disabled = true;
+        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.remove('hover:bg-space-500');
+        nextBtn.innerText = currentQ === total - 1 ? 'See Results' : 'Next';
+    }
+
+    function answer(isCorrect, btnEl) {
+        if (answeredCurrent) return;
+        answeredCurrent = true;
+
+        const allButtons = document.querySelectorAll('#quizOptions button');
+        allButtons.forEach((btn) => {
+            btn.disabled = true;
+            btn.classList.remove('hover:bg-space-700', 'hover:border-pallas-base');
+            btn.classList.add('opacity-50');
+        });
+
+        btnEl.classList.remove('opacity-50', 'bg-space-800');
+
+        if (isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            score++;
+            addXP(20);
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+            const correctBtn = Array.from(allButtons).find((btn) => currentQuestionSet[currentQ].options.find((opt) => opt.text === btn.innerText && opt.isCorrect));
+            if (correctBtn) {
+                correctBtn.classList.remove('opacity-50', 'bg-space-800');
+                correctBtn.classList.add('bg-star-green/20', 'border-star-green', 'font-bold');
+            }
+        }
+
+        document.getElementById('quizScore').innerText = `${score}`;
+        const explanationBox = document.getElementById('quizExplanation');
+        document.getElementById('quizAnswerLabel').innerText = isCorrect ? 'Correct!' : 'Explanation';
+        document.getElementById('quizAnswerLabel').className = isCorrect ? 'font-bold mb-2 text-star-green' : 'font-bold mb-2 text-star-red';
+        document.getElementById('quizExplanationText').innerText = currentQuestionSet[currentQ].explanation;
+        explanationBox.classList.remove('hidden');
+
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.add('hover:bg-space-500');
+    }
+
+    function goToNextQuestion() {
+        if (!answeredCurrent) return;
+        if (currentQ < currentQuestionSet.length - 1) {
+            currentQ++;
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('quizQuestionCard').classList.add('hidden');
+        document.getElementById('quizQuestionCard').classList.remove('block');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('q-result').classList.add('block');
+        document.getElementById('scoreText').innerText = `${score}/${currentQuestionSet.length}`;
+        document.getElementById('scoreText').classList.remove('text-star-green', 'text-star-red');
+
+        if (score === currentQuestionSet.length) {
+            document.getElementById('scoreText').classList.add('text-star-green');
+            if (!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Perfect Knowledge", "Perfect score on the Pallas Quiz! +100 XP", "🧠");
+            }
+        } else {
+            document.getElementById('scoreText').classList.add('text-star-red');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        score = 0;
+        currentQ = 0;
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        prepareQuizData();
+        renderQuestion();
+    }
+
+    prepareQuizData();
+    renderQuestion();
+
+    /* MINI GAME: Crater Surveyor */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    const player = {
+        x: 0, y: 0, width: 45, height: 40, speed: 8, color: '#f8fafc' 
+    };
+
+    let spaceObjects = [];
+    let keys = { ArrowLeft: false, ArrowRight: false };
+
+    window.addEventListener('keydown', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') keys[e.code] = false; 
+    });
+    
+    canvas.addEventListener('touchstart', (e) => {
+        if(!gameActive) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const relativeX = touch.clientX - rect.left;
+        if(relativeX < canvas.width/2) {
+            keys.ArrowLeft = true; keys.ArrowRight = false;
+        } else {
+            keys.ArrowRight = true; keys.ArrowLeft = false;
+        }
+    }, {passive: false});
+    
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys.ArrowLeft = false; keys.ArrowRight = false;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        const relativeX = e.clientX - rect.left;
+        if(relativeX < canvas.width/2) {
+            keys.ArrowLeft = true; keys.ArrowRight = false;
+        } else {
+            keys.ArrowRight = true; keys.ArrowLeft = false;
+        }
+    });
+    
+    canvas.addEventListener('mouseup', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+    canvas.addEventListener('mouseleave', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - player.height - 30;
+        spaceObjects = [];
+        dataCollected = 0;
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Surveying...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnObject() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let isData = Math.random() > 0.75; 
+        let w = isData ? 30 : (Math.random() * 25 + 20); 
+        let xPos = Math.random() * (canvas.width - w);
+        
+        spaceObjects.push({
+            x: xPos, y: -w, width: w, height: w, 
+            speedY: (Math.random() * 4 + 4) * speedMult,
+            rotation: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 0.1,
+            isData: isData
+        });
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        ctx.fillStyle = (frames % 10 < 5) ? '#3b82f6' : '#cbd5e1'; 
+        ctx.beginPath();
+        ctx.moveTo(-4, player.height/2);
+        ctx.lineTo(0, player.height/2 + 15 + Math.random()*5);
+        ctx.lineTo(4, player.height/2);
+        ctx.fill();
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.arc(0, -5, player.width/2, Math.PI, 0);
+        ctx.fill();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(-6, -5, 12, 20);
+        ctx.fillStyle = '#94a3b8';
+        ctx.beginPath();
+        ctx.arc(0, -10, 3, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawObjects() {
+        for (let i = 0; i < spaceObjects.length; i++) {
+            let o = spaceObjects[i];
+            ctx.save();
+            ctx.translate(o.x + o.width/2, o.y + o.height/2);
+            ctx.rotate(o.rotation);
+            if (o.isData) {
+                ctx.fillStyle = '#94a3b8';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#cbd5e1';
+                ctx.beginPath();
+                ctx.arc(0, 0, o.width/2, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(203, 213, 225, 0.4)';
+                ctx.beginPath();
+                ctx.moveTo(-o.width/2, 0);
+                ctx.lineTo(0, -o.height);
+                ctx.lineTo(o.width/2, 0);
+                ctx.fill();
+            } else {
+                ctx.fillStyle = '#1e293b'; 
+                ctx.shadowBlur = 0;
+                ctx.beginPath();
+                ctx.moveTo(-o.width/2.2, -o.height/3);
+                ctx.lineTo(0, -o.height/2);
+                ctx.lineTo(o.width/2.5, -o.height/4);
+                ctx.lineTo(o.width/3, o.height/2);
+                ctx.lineTo(-o.width/2.5, o.height/2.2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.arc(-o.width/5, -o.height/5, o.width/6, 0, Math.PI*2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+    }
+
+    function checkCollision(a) {
+        let hitX = player.x + 5;
+        let hitW = player.width - 10;
+        let hitY = player.y + 5;
+        let hitH = player.height - 10;
+        if (hitX < a.x + a.width && hitX + hitW > a.x && hitY < a.y + a.height && hitY + hitH > a.y) {
+            return true;
+        }
+        return false;
+    }
+
+    function updatePhysics() {
+        if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
+        if (keys.ArrowRight && player.x + player.width < canvas.width) player.x += player.speed;
+        let spawnRate = Math.max(15, 35 - Math.floor(scoreFrames/150));
+        if (frames % spawnRate === 0) spawnObject();
+        for (let i = spaceObjects.length - 1; i >= 0; i--) {
+            spaceObjects[i].y += spaceObjects[i].speedY;
+            spaceObjects[i].rotation += spaceObjects[i].rotSpeed;
+            if (checkCollision(spaceObjects[i])) {
+                if (spaceObjects[i].isData) {
+                    dataCollected++;
+                    addXP(10); 
+                    ctx.fillStyle = 'rgba(148, 163, 184, 0.4)';
+                    ctx.fillRect(0,0, canvas.width, canvas.height);
+                    spaceObjects.splice(i, 1);
+                    continue;
+                } else {
+                    gameOver("Surveyor hit by debris!");
+                    return;
+                }
+            }
+            if (spaceObjects[i].y > canvas.height) spaceObjects.splice(i, 1);
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.8)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        updatePhysics();
+        if(!gameActive) return; 
+        drawObjects();
+        drawPlayer();
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillStyle = "#cbd5e1"; 
+        ctx.fillText(`⚪ Scans: ${dataCollected}/3`, 10, 45);
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+        if (secondsAlive >= 20 && dataCollected >= 3 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Irregular Badge Unlocked!", "You survived 20 seconds and collected 3 mineral scans! +100 XP", "☄️");
+            updateProgress();
+        }
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Relaunch Surveyor";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 3);
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You survived for ${secondsAlive}s.</p>
+            <p class="text-pallas-light mb-4 text-sm font-bold">⚪ Collected ${dataCollected} Scans</p>
+            ${!achievements.playedGame ? `<p class="text-space-100 text-sm mb-4">Survive 20s AND collect 3 scans for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        if(secondsAlive > 5 && !winStatus) addXP(5);
+    }
+
+    startBtn.addEventListener('click', () => { initGame(); });
+
+</script>
+</body>
+</html>
