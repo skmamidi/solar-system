@@ -226,6 +226,72 @@
 
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
+
+        .collection-objects {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.75rem 1rem;
+            align-self: start;
+            margin-top: 1.5rem;
+            width: 160px;
+            padding-inline: 0.25rem;
+        }
+
+        .utility-row {
+            position: relative;
+        }
+
+        @media (max-width: 1024px), (max-height: 900px) {
+            #app {
+                padding-bottom: 8.5rem;
+            }
+
+            .utility-row {
+                position: fixed;
+                left: 0.75rem;
+                right: 0.75rem;
+                bottom: max(0.75rem, env(safe-area-inset-bottom));
+                margin-top: 0;
+                z-index: 60;
+                max-width: none;
+                background: linear-gradient(to top, rgba(0,0,0,0.92), rgba(0,0,0,0.55), rgba(0,0,0,0));
+                padding-top: 1rem;
+                padding-bottom: 0.25rem;
+            }
+
+            .utility-row > button {
+                padding: 0.9rem;
+                border-radius: 1rem;
+            }
+
+            .utility-row h2 {
+                font-size: 1rem;
+                line-height: 1.2rem;
+                margin-bottom: 0.2rem;
+            }
+
+            .utility-row p {
+                font-size: 0.75rem;
+                line-height: 1rem;
+            }
+
+            .utility-row .text-5xl {
+                font-size: 2rem;
+                line-height: 1;
+            }
+        }
+
+        @media (max-width: 640px) {
+            #app {
+                padding-bottom: 10.5rem;
+            }
+
+            .utility-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
         body.navigating { pointer-events: none; }
     </style>
 </head>
@@ -359,7 +425,24 @@
                         </div>
                         <span class="font-mono text-xs text-gray-100 uppercase tracking-widest text-center">Asteroid<br>Belt</span>
                     </button>
-                    <div></div>
+                    <div class="collection-objects">
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="ceres" onclick="zoomAndNavigate(event, 'asteroid-belt/ceres.html')">
+                            <div data-type="rocky" class="w-[6px] h-[6px] planet-orb orb-dwarf"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Ceres</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="vesta" onclick="zoomAndNavigate(event, 'asteroid-belt/vesta.html')">
+                            <div data-type="rocky" class="w-[5px] h-[5px] planet-orb orb-asteroid"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Vesta</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="pallas" onclick="zoomAndNavigate(event, 'asteroid-belt/pallas.html')">
+                            <div data-type="rocky" class="w-[5px] h-[5px] planet-orb orb-asteroid opacity-90"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Pallas</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="hygiea" onclick="zoomAndNavigate(event, 'asteroid-belt/hygiea.html')">
+                            <div data-type="rocky" class="w-[4px] h-[4px] planet-orb orb-asteroid opacity-80"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Hygiea</span>
+                        </button>
+                    </div>
 
                     <!-- AU Distance Marker -->
                     <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-12 flex flex-col items-center pointer-events-none z-0">
@@ -532,7 +615,24 @@
                         </div>
                         <span class="font-mono text-xs text-gray-100 uppercase tracking-widest text-center">Kuiper<br>Belt</span>
                     </button>
-                    <div></div>
+                    <div class="collection-objects">
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="arrokoth" onclick="zoomAndNavigate(event, 'kuiper-belt/arrokoth.html')">
+                            <div data-type="ice" class="w-[4px] h-[4px] planet-orb orb-kuiper"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Arrokoth</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="quaoar" onclick="zoomAndNavigate(event, 'kuiper-belt/quaoar.html')">
+                            <div data-type="ice" class="w-[6px] h-[6px] planet-orb orb-kuiper"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Quaoar</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="orcus" onclick="zoomAndNavigate(event, 'kuiper-belt/orcus.html')">
+                            <div data-type="ice" class="w-[5px] h-[5px] planet-orb orb-kuiper opacity-90"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Orcus</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="salacia" onclick="zoomAndNavigate(event, 'kuiper-belt/salacia.html')">
+                            <div data-type="ice" class="w-[5px] h-[5px] planet-orb orb-kuiper opacity-75"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Salacia</span>
+                        </button>
+                    </div>
 
                     <!-- AU Distance Marker -->
                     <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-12 flex flex-col items-center pointer-events-none z-0">
@@ -548,7 +648,24 @@
                         <div data-orb="dwarf-planets" data-type="rocky" class="w-[6px] h-[6px] planet-orb orb-dwarf"></div>
                         <span class="font-mono text-xs text-gray-100 uppercase tracking-widest text-center">Dwarf<br>Planets</span>
                     </button>
-                    <div></div>
+                    <div class="collection-objects">
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="pluto" onclick="zoomAndNavigate(event, 'dwarf-planets/pluto.html')">
+                            <div data-type="rocky" class="w-[7px] h-[7px] planet-orb orb-dwarf"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Pluto</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="eris" onclick="zoomAndNavigate(event, 'dwarf-planets/eris.html')">
+                            <div data-type="rocky" class="w-[6px] h-[6px] planet-orb orb-dwarf"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Eris</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="haumea" onclick="zoomAndNavigate(event, 'dwarf-planets/haumea.html')">
+                            <div data-type="rocky" class="w-[7px] h-[5px] planet-orb orb-dwarf rounded-[45%]"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Haumea</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="makemake" onclick="zoomAndNavigate(event, 'dwarf-planets/makemake.html')">
+                            <div data-type="rocky" class="w-[6px] h-[6px] planet-orb orb-dwarf opacity-90"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Makemake</span>
+                        </button>
+                    </div>
 
                     <!-- AU Distance Marker -->
                     <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-12 flex flex-col items-center pointer-events-none z-0">
@@ -566,7 +683,7 @@
     </section>
 
     <!-- Bottom utility row -->
-    <div class="max-w-6xl mx-auto w-full px-4 mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 z-20">
+    <div class="utility-row max-w-6xl mx-auto w-full px-4 mt-6 grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-6 z-20">
         <button onclick="zoomAndNavigate(event, 'astronomical-terms.html')"
                 class="btn-press glass-panel border-star-magenta p-6 text-left hover:border-white transition-colors rounded-2xl group w-full">
             <div class="flex items-center gap-4">
