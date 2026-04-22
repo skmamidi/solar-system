@@ -492,6 +492,144 @@
                     </div>
                 </div>
 
+                <!-- Nadir -->
+                <div class="flip-card perspective-1000 h-[22rem] cursor-pointer group" onclick="flipCard(this, 't7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⬇️</div>
+                            <h3 class="font-display text-3xl text-astro-light">Nadir</h3>
+                            <p class="text-space-100 text-sm mt-2">The point directly below you</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Nadir</h3>
+                            <p class="text-sm text-left font-body mb-3">
+                                The point on the celestial sphere exactly opposite the zenith, located straight down beneath the observer.
+                            </p>
+                            <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
+                                <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
+                                <p class="text-xs text-space-100">
+                                    In the altitude-azimuth system, the nadir has altitude <strong>-90°</strong>. Zenith and nadir are endpoints of the observer's local vertical line.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Altitude -->
+                <div class="flip-card perspective-1000 h-[22rem] cursor-pointer group" onclick="flipCard(this, 't8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📐</div>
+                            <h3 class="font-display text-3xl text-star-cyan">Altitude</h3>
+                            <p class="text-space-100 text-sm mt-2">Angle above the horizon</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Altitude</h3>
+                            <p class="text-sm text-left font-body mb-3">
+                                The angular height of an object measured upward from the horizon to the object.
+                            </p>
+                            <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
+                                <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
+                                <p class="text-xs text-space-100">
+                                    Horizon = <strong>0°</strong>, zenith = <strong>+90°</strong>. Negative altitude means the object is below the horizon and not visible.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Azimuth -->
+                <div class="flip-card perspective-1000 h-[22rem] cursor-pointer group" onclick="flipCard(this, 't9')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧭</div>
+                            <h3 class="font-display text-3xl text-star-gold">Azimuth</h3>
+                            <p class="text-space-100 text-sm mt-2">Direction along the horizon</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Azimuth</h3>
+                            <p class="text-sm text-left font-body mb-3">
+                                The compass direction of an object measured around the horizon.
+                            </p>
+                            <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
+                                <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
+                                <p class="text-xs text-space-100">
+                                    In the common astronomy convention, azimuth starts at <strong>0° at north</strong> and increases through east, south, and west to <strong>360°</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Declination -->
+                <div class="flip-card perspective-1000 h-[22rem] cursor-pointer group" onclick="flipCard(this, 't10')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌍</div>
+                            <h3 class="font-display text-3xl text-star-green">Declination</h3>
+                            <p class="text-space-100 text-sm mt-2">Sky latitude</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Declination</h3>
+                            <p class="text-sm text-left font-body mb-3">
+                                The angular distance of an object north or south of the celestial equator.
+                            </p>
+                            <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
+                                <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
+                                <p class="text-xs text-space-100">
+                                    Declination works like latitude on Earth: <strong>0°</strong> on the celestial equator, <strong>+90°</strong> at the North Celestial Pole, and <strong>-90°</strong> at the South Celestial Pole.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Ascension -->
+                <div class="flip-card perspective-1000 h-[22rem] cursor-pointer group" onclick="flipCard(this, 't11')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⏱️</div>
+                            <h3 class="font-display text-3xl text-star-magenta leading-tight">Right Ascension</h3>
+                            <p class="text-space-100 text-sm mt-2">Sky longitude</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Right Ascension</h3>
+                            <p class="text-sm text-left font-body mb-3">
+                                The east-west coordinate used with declination to locate objects on the celestial sphere.
+                            </p>
+                            <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
+                                <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
+                                <p class="text-xs text-space-100">
+                                    Right ascension is measured along the celestial equator in <strong>hours, minutes, and seconds</strong>, with <strong>24h</strong> going all the way around the sky.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Circumpolar Star -->
+                <div class="flip-card perspective-1000 h-[22rem] cursor-pointer group" onclick="flipCard(this, 't12')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⭐</div>
+                            <h3 class="font-display text-3xl text-star-red leading-tight">Circumpolar Star</h3>
+                            <p class="text-space-100 text-sm mt-2">A star that never sets</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-astro-base flex flex-col justify-start bg-space-800 overflow-y-auto">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-astro-dark pb-1 w-full text-center">Circumpolar Star</h3>
+                            <p class="text-sm text-left font-body mb-3">
+                                A star close enough to the visible celestial pole that it stays above the horizon all day and all night.
+                            </p>
+                            <div class="bg-space-900 rounded-lg p-3 border border-star-gold/50 text-left">
+                                <p class="text-xs font-bold text-star-gold mb-1 flex items-center gap-1"><span>🏅</span> Olympiad Fact</p>
+                                <p class="text-xs text-space-100">
+                                    The higher your latitude, the larger the circumpolar zone becomes. At the equator, there are essentially no circumpolar stars.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -1156,7 +1294,7 @@
         if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
             cardsFlipped.add(cardId);
             addXP(10);
-            if(cardsFlipped.size === 6 && !achievements.readAll) {
+            if(cardsFlipped.size === 12 && !achievements.readAll) {
                 achievements.readAll = true;
                 showMsgBox("Dictionary Mastered", "You read all the Advanced Astronomical Terms! +50 Bonus XP", "📚");
                 addXP(50);
