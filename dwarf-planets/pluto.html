@@ -1,94 +1,945 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pluto — Solar System Explorer</title>
     <script>window.__IS_SUB_PAGE__ = true;</script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/shared.css">
+    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        space: { 900: '#05060f', 700: '#0f1430', 500: '#1a234d' },
-                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' }
+                        space: { 900: '#0a0514', 800: '#1a0b2e', 700: '#2d1b4e', 500: '#4c2882', 100: '#f8fafc' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
+                        pluto: { base: '#a855f7', dark: '#581c87', light: '#d8b4fe', ice: '#e9d5ff', rock: '#7e22ce' }
                     },
                     fontFamily: {
                         display: ['Fredoka', 'sans-serif'],
                         body: ['Nunito', 'sans-serif'],
                         mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s infinite alternate',
+                        'spin-slow': 'spin 120s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(168, 85, 247, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(168, 85, 247, 0.5)' },
+                        }
                     }
                 }
             }
         }
     </script>
-</head>
-<body class="font-body text-white antialiased">
-
-<main class="pt-24 pb-10 min-h-screen">
-    <section class="max-w-5xl mx-auto px-4">
-
-        <button onclick="navigate('../index.html')"
-                class="btn-press mb-6 mt-4 inline-flex items-center gap-2 text-star-cyan hover:text-white bg-space-700 px-4 py-2 rounded-full border border-space-500">
-            &larr; Back to Mission Control
-        </button>
-
-        <!-- Hero -->
-        <div class="glass-panel p-8 mb-8 flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
-            <div class="z-10 text-center md:text-left mb-6 md:mb-0">
-                <p class="text-star-magenta font-mono text-sm uppercase tracking-widest mb-2">Dwarf Planet</p>
-                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2">Pluto</h1>
-                <p class="text-xl text-star-cyan font-body italic">"Heart of the Kuiper Belt"</p>
-            </div>
-            <div class="z-10 relative">
-                <div class="w-40 h-40 md:w-56 md:h-56 planet-orb orb-pluto" style="animation: pulse 6s infinite alternate ease-in-out;"></div>
-            </div>
-        </div>
-
-        <!-- Coming-soon banner -->
-        <div class="glass-panel border-star-gold p-6 mb-10 flex items-center gap-4">
-            <span class="text-4xl">🚧</span>
-            <div>
-                <h2 class="font-display font-bold text-star-gold text-xl">Full Experience Coming Soon</h2>
-                <p class="font-body text-space-100 text-sm mt-1">You've still earned <span class="text-star-gold font-bold">+20 XP</span> for visiting! The complete page will include fact cards, a mini-game, and a quiz — same pattern as Earth.</p>
-            </div>
-        </div>
-
-        <!-- Preview grid -->
-        <h3 class="font-display text-xl text-star-cyan mb-3">What you'll explore here:</h3>
-        <div class="stub-preview-grid mb-10">
-            <div class="stub-preview-cell"><div class="text-3xl mb-1">🌞</div><div class="font-mono text-xs text-star-cyan">Distance from Sun</div></div>
-<div class="stub-preview-cell"><div class="text-3xl mb-1">📏</div><div class="font-mono text-xs text-star-cyan">Relative Size</div></div>
-<div class="stub-preview-cell"><div class="text-3xl mb-1">🌡️</div><div class="font-mono text-xs text-star-cyan">Temperature</div></div>
-<div class="stub-preview-cell"><div class="text-3xl mb-1">🧪</div><div class="font-mono text-xs text-star-cyan">Composition & Density</div></div>
-<div class="stub-preview-cell"><div class="text-3xl mb-1">⏱️</div><div class="font-mono text-xs text-star-cyan">Length of Day</div></div>
-<div class="stub-preview-cell"><div class="text-3xl mb-1">🗓️</div><div class="font-mono text-xs text-star-cyan">Length of Year</div></div>
-<div class="stub-preview-cell"><div class="text-3xl mb-1">🌕</div><div class="font-mono text-xs text-star-cyan">Moons</div></div>
-<div class="stub-preview-cell"><div class="text-3xl mb-1">💨</div><div class="font-mono text-xs text-star-cyan">Atmosphere</div></div>
-        </div>
-
-        
-        <div class="mb-10">
-            <button onclick="navigate('./index.html')"
-                    class="btn-press glass-panel p-3 inline-flex items-center gap-3 hover:border-star-cyan">
-                <span class="text-star-cyan text-sm">◂</span>
-                <span class="font-display font-bold">Back to Dwarf Planets Hub</span>
-            </button>
-        </div>
     
+    <style>
+        body {
+            background-color: #0a0514;
+            background-image: 
+                radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #a855f7 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #d8b4fe 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #7e22ce 100%, transparent),
+                radial-gradient(1px 1px at 45% 55%, #fff 100%, transparent),
+                radial-gradient(2px 2px at 35% 45%, #a855f7 100%, transparent);
+            background-size: 250px 250px;
+        }
 
+        .glass-panel {
+            background: rgba(26, 11, 46, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(10, 5, 20, 0.8), rgba(26, 11, 46, 0.9));
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(168, 85, 247, 0.6);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .orb-pluto {
+            background: radial-gradient(circle at 35% 35%, #d8b4fe, #a855f7, #7e22ce, #581c87, #2d1b4e);
+            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(168, 85, 247, 0.4);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        .orb-pluto::before {
+            content: '';
+            position: absolute;
+            top: 28%; left: 45%;
+            width: 30%; height: 28%;
+            background: radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.95) 0%, rgba(233,213,255,0.7) 30%, rgba(168,85,247,0.3) 60%, transparent 80%);
+            clip-path: path('M12,21.35l-1.45,-1.32C5.4,15.36,2,12.28,2,8.5C2,5.42,4.42,3,7.5,3c1.74,0,3.41,0.81,4.5,2.09C13.09,3.81,14.76,3,16.5,3C19.58,3,22,5.42,22,8.5c0,3.78,-3.4,6.86,-8.55,11.54L12,21.35z');
+            transform: scale(0.8) rotate(-10deg);
+            opacity: 0.9;
+        }
+
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        #gameCanvas {
+            image-rendering: pixelated;
+            box-shadow: inset 0 0 30px rgba(168, 85, 247, 0.2);
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0514; }
+        ::-webkit-scrollbar-thumb { background: #4c2882; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a855f7; }
+        
+        #msgBox { display: none; }
+        #msgBox.active { display: flex; }
+    </style>
+</head>
+<body class="font-body text-white antialiased overflow-x-hidden">
+
+<div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-pluto-base shadow-[0_0_40px_rgba(168,85,247,0.3)]">
+        <div id="msgIcon" class="text-5xl mb-4">🏆</div>
+        <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
+        <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
+        <button onclick="closeMsgBox()" class="w-full bg-pluto-base text-space-900 font-bold py-3 rounded-xl hover:bg-pluto-light transition-colors">Acknowledge</button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-40 glass-panel border-b-0 border-t-0 rounded-none px-4 py-3 bg-space-800/90">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <span class="text-2xl text-pluto-light">☄️</span>
+                <span class="font-display font-bold text-xl tracking-wide hidden md:block">Solar System Explorer</span>
+                <span class="font-display font-bold text-xl tracking-wide md:hidden">SSE</span>
+            </a>
+            <span class="text-space-500">|</span>
+            <a href="dwarf-planets.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-star-cyan">
+                <span class="text-xl">🪐</span>
+                <span class="font-display font-bold text-lg">Back to Dwarf Planets</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-space-900 rounded-full px-4 py-1 border border-space-500 flex items-center gap-2 shadow-inner">
+                <span class="text-star-gold">⭐</span>
+                <span id="xpCounter" class="font-mono font-bold text-pluto-light">0 XP</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 pb-20 min-h-screen">
+    <section class="max-w-6xl mx-auto px-4">
+
+        <div class="glass-panel p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border-pluto-dark">
+            <div class="flex-1 w-full">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-space-100 font-bold">Pluto Mission Progress</span>
+                    <span id="progressText" class="text-pluto-base font-mono">0%</span>
+                </div>
+                <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-pluto-dark to-pluto-base h-3 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center md:justify-end gap-2 text-xs font-mono">
+                <div id="badgeRead" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">1. Read Info</div>
+                <div id="badgeGame" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">2. Play Mini-Game</div>
+                <div id="badgeQuiz" class="px-3 py-1 rounded border border-space-500 text-space-500 transition-colors">3. Pass Quiz</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-pluto-dark">
+            <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
+            
+            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
+                <p class="text-pluto-base font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="w-2 h-2 rounded-full bg-pluto-light animate-ping"></span> Dwarf Planet
+                </p>
+                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Pluto</h1>
+                <p class="text-2xl text-pluto-light font-body italic mb-6">"Heart of the Kuiper Belt"</p>
+                <p class="text-space-100 text-lg leading-relaxed mb-8">
+                    A distant ice world with a giant heart-shaped plain, five known moons, and a thin atmosphere that freezes onto the surface as it retreats from the Sun. Once the ninth planet, now the king of dwarf planets.
+                </p>
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-pluto-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-pluto-light transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(168,85,247,0.5)]">
+                    Explore Pluto 👇
+                </button>
+            </div>
+            
+            <div class="z-10 relative mt-8 md:mt-0 flex justify-center items-center">
+                <div class="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                    <div class="w-full h-full orb-pluto animate-pulse-glow animate-spin-slow"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📏</div>
+                <div class="text-pluto-light font-mono text-xs uppercase mb-1">Diameter</div>
+                <div class="font-bold text-xl">2,377 km</div>
+                <div class="text-xs text-space-100 mt-1">Smaller than Earth's Moon</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">📍</div>
+                <div class="text-pluto-light font-mono text-xs uppercase mb-1">Distance</div>
+                <div class="font-bold text-xl">39.5 AU</div>
+                <div class="text-xs text-space-100 mt-1">From the Sun</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">⏳</div>
+                <div class="text-pluto-light font-mono text-xs uppercase mb-1">Orbital Period</div>
+                <div class="font-bold text-xl">248 yrs</div>
+                <div class="text-xs text-space-100 mt-1">One Pluto year</div>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center">
+                <div class="text-3xl mb-2">🧊</div>
+                <div class="text-pluto-light font-mono text-xs uppercase mb-1">Surface</div>
+                <div class="font-bold text-xl">Nitrogen Ice</div>
+                <div class="text-xs text-space-100 mt-1">With methane and CO</div>
+            </div>
+        </div>
+
+        <div id="explore-grid" class="mb-16 pt-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-display text-4xl text-white mb-2">Mission Data Files</h2>
+                    <p class="text-space-100 font-mono">Tap cards to decrypt Pluto data.</p>
+                </div>
+                <div class="hidden md:block text-pluto-light font-mono animate-pulse">Earn XP by reading!</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1: Discovery -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'p1')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🔭</div>
+                            <h3 class="font-display text-xl text-pluto-base">Discovery</h3>
+                            <p class="text-space-100 text-xs mt-2">Who found it first?</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-pluto-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-pluto-dark pb-1 w-full">February 18, 1930</h3>
+                            <ul class="text-left w-full space-y-2 text-sm font-body">
+                                <li>Discovered by American astronomer <strong>Clyde Tombaugh</strong> at Lowell Observatory in Arizona.</li>
+                                <li>A young 24-year-old Tombaugh found it by painstakingly comparing photographic plates.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Tombaugh Regio -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'p2')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">❤️</div>
+                            <h3 class="font-display text-xl text-pluto-base">Tombaugh Regio</h3>
+                            <p class="text-space-100 text-xs mt-2">The famous heart</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-pluto-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-pluto-dark pb-1 w-full">Heart of Pluto</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>A vast <strong>heart-shaped nitrogen ice plain</strong> on Pluto's surface, named after Clyde Tombaugh.</li>
+                                <li>It is smooth, young geologically, and formed by convection in the nitrogen ice sheet.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Atmosphere -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'p3')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">💨</div>
+                            <h3 class="font-display text-xl text-pluto-base">Atmosphere</h3>
+                            <p class="text-space-100 text-xs mt-2">A disappearing veil</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-pluto-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-pluto-dark pb-1 w-full">Thin & Seasonal</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Made of <strong>nitrogen, methane, and carbon monoxide</strong>.</li>
+                                <li>As Pluto moves farther from the Sun, its atmosphere freezes and collapses onto the surface, only to sublimate back when it gets closer.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Moons -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group" onclick="flipCard(this, 'p4')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🌙</div>
+                            <h3 class="font-display text-xl text-pluto-base">Moons</h3>
+                            <p class="text-space-100 text-xs mt-2">Five companions</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-pluto-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-lg text-white mb-2 border-b border-pluto-dark pb-1 w-full">5 Known Moons</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li><strong>Charon</strong> is by far the largest, nearly half Pluto's size.</li>
+                                <li>The others are tiny: <strong>Styx, Nix, Kerberos, and Hydra</strong>.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: New Horizons -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'p5')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🚀</div>
+                            <h3 class="font-display text-2xl text-pluto-base">New Horizons</h3>
+                            <p class="text-space-100 mt-2">The mission that flew by</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-pluto-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-3 border-b border-pluto-dark pb-2 w-full">July 14, 2015 Flyby</h3>
+                            <div class="grid grid-cols-2 gap-4 text-left w-full text-sm">
+                                <div>
+                                    <span class="text-pluto-light font-mono font-bold block mb-1">First Close-Up:</span>
+                                    NASA's New Horizons gave us our first close-up images of Pluto and Charon after a 9.5-year journey.
+                                </div>
+                                <div>
+                                    <span class="text-pluto-light font-mono font-bold block mb-1">Stunning Details:</span>
+                                    It revealed mountains of water ice, nitrogen glaciers, blue hazes in the atmosphere, and the iconic heart.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Composition -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'p6')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">🧊</div>
+                            <h3 class="font-display text-2xl text-pluto-base">Composition</h3>
+                            <p class="text-space-100 mt-2">Layers of ice and rock</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-pluto-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-pluto-dark pb-2 w-full">Ice World</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Pluto has a <strong>rocky core</strong>, surrounded by a mantle of <strong>water ice</strong>, and a surface coated with frozen nitrogen and methane.</li>
+                                <li>Its mountains are made of <strong>water ice</strong>, as hard as rock at Pluto's frigid temperatures.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Binary System -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'p7')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">⚖️</div>
+                            <h3 class="font-display text-2xl text-pluto-base">Binary System</h3>
+                            <p class="text-space-100 mt-2">Pluto and Charon dance</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-pluto-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-pluto-dark pb-2 w-full">Barycenter Outside Pluto</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>Pluto and Charon are so close in mass that they <strong>orbit a point in space between them</strong> called the barycenter.</li>
+                                <li>This makes them a binary (dwarf) planet system, unique in our solar system.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Demotion -->
+                <div class="flip-card perspective-1000 h-64 cursor-pointer group lg:col-span-2" onclick="flipCard(this, 'p8')">
+                    <div class="flip-card-inner relative w-full h-full text-center transform-style-3d">
+                        <div class="glass-card absolute w-full h-full backface-hidden rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="text-5xl mb-4">📉</div>
+                            <h3 class="font-display text-2xl text-pluto-base">Demotion</h3>
+                            <p class="text-space-100 mt-2">From planet to dwarf</p>
+                        </div>
+                        <div class="glass-panel absolute w-full h-full backface-hidden rounded-2xl p-6 rotate-y-180 border-pluto-base flex flex-col items-center justify-center bg-space-800">
+                            <h3 class="font-display text-xl text-white mb-2 border-b border-pluto-dark pb-2 w-full">2006 IAU Reclassification</h3>
+                            <ul class="text-left w-full space-y-2 text-sm">
+                                <li>In <strong>2006</strong>, the IAU reclassified Pluto as a dwarf planet after the discovery of <strong>Eris</strong>, a similar-sized body in the Kuiper Belt.</li>
+                                <li>Pluto had not "cleared its neighborhood" of other objects, one of the criteria for full planethood.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-16">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-pluto-base border-2 shadow-[0_0_30px_rgba(168,85,247,0.2)]">
+                <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
+                    <div class="flex-1 w-full text-center lg:text-left">
+                        <span class="inline-block px-3 py-1 bg-pluto-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
+                        <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Nitrogen Glacier Navigator</h2>
+                        <p class="text-space-100 mb-6">Pilot the New Horizons probe over Pluto! Collect <span class="text-pluto-light font-bold">bright heart-shaped data crystals</span> while dodging <span class="text-gray-400 font-bold">dark methane ice chunks</span>. Survive 20 seconds and collect 3 hearts to earn the <span class="text-pluto-light font-bold">Heart of Ice Badge</span>.</p>
+                        
+                        <div class="bg-space-800 p-4 rounded-xl mb-6 inline-block text-left w-full max-w-sm mx-auto lg:mx-0 border border-space-500">
+                            <h4 class="font-bold text-pluto-base mb-2 border-b border-space-500 pb-1">Controls:</h4>
+                            <ul class="text-sm space-y-2">
+                                <li>💻 <strong class="text-white">Desktop:</strong> Click canvas & use <kbd class="bg-space-700 px-2 rounded">←</kbd> and <kbd class="bg-space-700 px-2 rounded">→</kbd> Arrow Keys.</li>
+                                <li>📱 <strong class="text-white">Mobile:</strong> Tap/Hold left or right half of canvas.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <button id="startGameBtn" class="bg-star-green text-space-900 px-8 py-3 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105">
+                                ▶ Engage Navigator
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative w-full lg:w-auto flex justify-center">
+                        <div id="gameOverlay" class="absolute inset-0 bg-space-900 bg-opacity-80 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border border-pluto-base/30">
+                            <div class="text-5xl mb-2">🧊</div>
+                            <h3 class="font-display text-2xl text-white mb-1">Targeting Pluto</h3>
+                            <p class="text-pluto-light text-sm">Click Start to navigate</p>
+                        </div>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#0a0514] via-[#2d1b4e] to-[#4c2882] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-pluto-base"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl mb-12 bg-gradient-to-br from-space-800 to-space-900 border-pluto-base/50">
+            <div class="text-center mb-8">
+                <div class="text-4xl mb-2">🧠</div>
+                <h2 class="font-display text-3xl text-white">Mission Debrief (Quiz)</h2>
+                <p class="text-space-100">Test your knowledge to earn final XP and complete the Pluto module.</p>
+            </div>
+
+            <div id="quizContainer" class="max-w-2xl mx-auto">
+                <div id="quizStatus" class="flex items-center justify-between gap-4 mb-4 text-sm font-mono">
+                    <span class="text-space-100">Question <span id="quizCurrent">1</span> of <span id="quizTotal">10</span></span>
+                    <span class="text-pluto-light">Score: <span id="quizScore">0</span></span>
+                </div>
+
+                <div id="quizQuestionCard" class="quiz-q block glass-card rounded-2xl p-6">
+                    <h3 id="quizQuestion" class="text-xl font-bold mb-4 text-pluto-light"></h3>
+                    <div id="quizOptions" class="space-y-3"></div>
+                    <div id="quizExplanation" class="hidden mt-5 rounded-2xl border border-space-500 bg-space-900/80 p-4">
+                        <div id="quizAnswerLabel" class="font-bold mb-2"></div>
+                        <p id="quizExplanationText" class="text-space-100 leading-relaxed"></p>
+                    </div>
+                    <div class="mt-5 flex justify-end">
+                        <button id="nextQuestionBtn" onclick="goToNextQuestion()" disabled class="opacity-50 cursor-not-allowed bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full transition">Next</button>
+                    </div>
+                </div>
+
+                <div class="quiz-q hidden text-center py-8" id="q-result">
+                    <div class="text-6xl mb-4">🏅</div>
+                    <h3 class="text-3xl font-display text-star-gold mb-2">Quiz Complete!</h3>
+                    <p class="text-xl text-white mb-3">Score: <span id="scoreText" class="font-bold text-pluto-light">0/10</span></p>
+                    <p class="text-space-100 mb-6">Review the explanations as you play, then retry for a perfect score.</p>
+                    <button id="retryQuizBtn" onclick="resetQuiz()" class="hidden bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
     </section>
 </main>
 
-<script src="../assets/js/progress.js"></script>
-<script src="../assets/js/ui.js"></script>
 <script>
-function onPageReady() {
-    markVisited('pluto');
-}
+    /* GAME & APP STATE */
+    let xp = 0;
+    let cardsFlipped = new Set();
+    let achievements = {
+        readAll: false,
+        playedGame: false,
+        passedQuiz: false
+    };
+
+    /* UTILITY: Message Box */
+    function showMsgBox(title, text, icon="🏆") {
+        document.getElementById('msgTitle').innerText = title;
+        document.getElementById('msgText').innerText = text;
+        document.getElementById('msgIcon').innerText = icon;
+        document.getElementById('msgBox').classList.add('active');
+    }
+    
+    function closeMsgBox() {
+        document.getElementById('msgBox').classList.remove('active');
+    }
+
+    /* GAMIFICATION LOGIC */
+    function addXP(amount) {
+        xp += amount;
+        document.getElementById('xpCounter').innerText = `${xp} XP`;
+        document.getElementById('xpCounter').classList.add('animate-pulse');
+        setTimeout(() => document.getElementById('xpCounter').classList.remove('animate-pulse'), 1000);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        let totalTasks = 3;
+        let completedTasks = 0;
+        
+        if(achievements.readAll) completedTasks++;
+        if(achievements.playedGame) completedTasks++;
+        if(achievements.passedQuiz) completedTasks++;
+
+        let pct = Math.round((completedTasks / totalTasks) * 100);
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('progressText').innerText = `${pct}%`;
+
+        if(achievements.readAll) document.getElementById('badgeRead').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.playedGame) document.getElementById('badgeGame').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+        if(achievements.passedQuiz) document.getElementById('badgeQuiz').className = "px-3 py-1 rounded border border-star-green bg-star-green/10 text-star-green font-bold";
+
+        if(pct === 100 && !window.plutoCompleteAlerted) {
+            window.plutoCompleteAlerted = true;
+            setTimeout(() => {
+                showMsgBox("Pluto Module Complete!", "You have unlocked the 'Heart of Ice' badge. Excellent exploration!", "❤️");
+            }, 500);
+        }
+    }
+
+    /* CARD FLIP LOGIC */
+    function flipCard(element, cardId) {
+        element.classList.toggle('flipped');
+        
+        if (!cardsFlipped.has(cardId) && element.classList.contains('flipped')) {
+            cardsFlipped.add(cardId);
+            addXP(10);
+            
+            if(cardsFlipped.size === 8 && !achievements.readAll) {
+                achievements.readAll = true;
+                showMsgBox("Data Decrypted", "You read all the Pluto files! +50 Bonus XP", "📚");
+                addXP(50);
+            }
+        }
+    }
+
+    /* QUIZ LOGIC */
+    const quizQuestions = [
+        { question: "In what year was Pluto discovered?", options: [{ text: "1920", isCorrect: false }, { text: "1930", isCorrect: true }, { text: "1940", isCorrect: false }, { text: "1950", isCorrect: false }], explanation: "Clyde Tombaugh discovered Pluto on February 18, 1930, at Lowell Observatory in Arizona while comparing photographic plates." },
+        { question: "Who discovered Pluto?", options: [{ text: "Edwin Hubble", isCorrect: false }, { text: "Percival Lowell", isCorrect: false }, { text: "Clyde Tombaugh", isCorrect: true }, { text: "Carl Sagan", isCorrect: false }], explanation: "American astronomer Clyde Tombaugh discovered Pluto when he was just 24 years old, using a blink comparator to spot the moving object." },
+        { question: "What is the name of Pluto's largest moon?", options: [{ text: "Nix", isCorrect: false }, { text: "Hydra", isCorrect: false }, { text: "Charon", isCorrect: true }, { text: "Styx", isCorrect: false }], explanation: "Charon is Pluto's largest moon. It is so big—about half the size of Pluto—that the two orbit a common center of mass outside Pluto, forming a binary system." },
+        { question: "What is Pluto's thin atmosphere mainly made of?", options: [{ text: "Oxygen and nitrogen", isCorrect: false }, { text: "Nitrogen, methane, and carbon monoxide", isCorrect: true }, { text: "Carbon dioxide and argon", isCorrect: false }, { text: "Hydrogen and helium", isCorrect: false }], explanation: "Pluto's atmosphere is composed mainly of nitrogen with traces of methane and carbon monoxide. It freezes onto the surface when Pluto moves farther from the Sun." },
+        { question: "Why was Pluto demoted from planet to dwarf planet in 2006?", options: [{ text: "It was too small", isCorrect: false }, { text: "It had not cleared its orbital neighborhood of other objects", isCorrect: true }, { text: "It stopped orbiting the Sun", isCorrect: false }, { text: "It was discovered to be a comet", isCorrect: false }], explanation: "The IAU defined a planet as an object that orbits the Sun, is spherical, and has cleared its orbital neighborhood. Pluto meets the first two criteria but not the third because of other Kuiper Belt objects like Eris." },
+        { question: "What is Tombaugh Regio?", options: [{ text: "A mountain range on Charon", isCorrect: false }, { text: "A heart-shaped nitrogen ice plain on Pluto", isCorrect: true }, { text: "Pluto's largest crater", isCorrect: false }, { text: "A storm in Pluto's atmosphere", isCorrect: false }], explanation: "Tombaugh Regio is the famous heart-shaped plain of nitrogen ice on Pluto's surface, named after Clyde Tombaugh. It is smooth and geologically young." },
+        { question: "How many known moons does Pluto have?", options: [{ text: "2", isCorrect: false }, { text: "3", isCorrect: false }, { text: "4", isCorrect: false }, { text: "5", isCorrect: true }], explanation: "Pluto has five known moons: Charon (the largest), Styx, Nix, Kerberos, and Hydra. They were discovered between 1978 and 2012." },
+        { question: "What is the interior of Pluto thought to be made of?", options: [{ text: "Solid iron from core to surface", isCorrect: false }, { text: "Rock core, water ice mantle, nitrogen ice surface", isCorrect: true }, { text: "Liquid water ocean only", isCorrect: false }, { text: "Pure methane ice", isCorrect: false }], explanation: "Scientists believe Pluto has a rocky core, a mantle of water ice, and a surface coated with frozen nitrogen and methane. Mountains on Pluto are made of water ice." },
+        { question: "In what year did NASA's New Horizons spacecraft fly by Pluto?", options: [{ text: "2006", isCorrect: false }, { text: "2010", isCorrect: false }, { text: "2015", isCorrect: true }, { text: "2020", isCorrect: false }], explanation: "New Horizons flew past Pluto on July 14, 2015, after traveling for 9.5 years. It captured the first detailed images of Pluto's surface and atmosphere." },
+        { question: "How long is Pluto's orbital period around the Sun?", options: [{ text: "About 88 Earth years", isCorrect: false }, { text: "About 248 Earth years", isCorrect: true }, { text: "About 12 Earth years", isCorrect: false }, { text: "About 1,000 Earth years", isCorrect: false }], explanation: "Pluto takes about 248 Earth years to complete one orbit around the Sun. Since its discovery in 1930, it has not yet completed a full orbit." }
+    ];
+
+    let currentQ = 0;
+    let score = 0;
+    let questionOrder = [];
+    let currentQuestionSet = [];
+    let answeredCurrent = false;
+
+    function shuffleArray(items) {
+        const arr = [...items];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function prepareQuizData() {
+        questionOrder = shuffleArray(quizQuestions.map((_, idx) => idx));
+        currentQuestionSet = questionOrder.map((idx) => {
+            const q = JSON.parse(JSON.stringify(quizQuestions[idx]));
+            q.options = shuffleArray(q.options);
+            return q;
+        });
+    }
+
+    function renderQuestion() {
+        const total = currentQuestionSet.length;
+        const question = currentQuestionSet[currentQ];
+        answeredCurrent = false;
+
+        document.getElementById('q-result').classList.add('hidden');
+        document.getElementById('q-result').classList.remove('block');
+        document.getElementById('quizQuestionCard').classList.remove('hidden');
+        document.getElementById('quizQuestionCard').classList.add('block');
+        document.getElementById('quizCurrent').innerText = `${currentQ + 1}`;
+        document.getElementById('quizTotal').innerText = `${total}`;
+        document.getElementById('quizScore').innerText = `${score}`;
+        document.getElementById('quizQuestion').innerText = `${currentQ + 1}. ${question.question}`;
+
+        const optionsWrap = document.getElementById('quizOptions');
+        optionsWrap.innerHTML = '';
+        question.options.forEach((option) => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-pluto-base transition-all";
+            btn.innerText = option.text;
+            btn.onclick = () => answer(option.isCorrect, btn);
+            optionsWrap.appendChild(btn);
+        });
+
+        document.getElementById('quizExplanation').classList.add('hidden');
+        document.getElementById('quizAnswerLabel').innerText = '';
+        document.getElementById('quizExplanationText').innerText = '';
+
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.disabled = true;
+        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.remove('hover:bg-space-500');
+        nextBtn.innerText = currentQ === total - 1 ? 'See Results' : 'Next';
+    }
+
+    function answer(isCorrect, btnEl) {
+        if (answeredCurrent) return;
+        answeredCurrent = true;
+
+        const allButtons = document.querySelectorAll('#quizOptions button');
+        allButtons.forEach((btn) => {
+            btn.disabled = true;
+            btn.classList.remove('hover:bg-space-700', 'hover:border-pluto-base');
+            btn.classList.add('opacity-50');
+        });
+
+        btnEl.classList.remove('opacity-50', 'bg-space-800');
+
+        if (isCorrect) {
+            btnEl.classList.add('bg-star-green', 'text-space-900', 'font-bold', 'border-star-green');
+            score++;
+            addXP(20);
+        } else {
+            btnEl.classList.add('bg-star-red', 'text-white', 'border-star-red');
+            const correctBtn = Array.from(allButtons).find((btn) => currentQuestionSet[currentQ].options.find((opt) => opt.text === btn.innerText && opt.isCorrect));
+            if (correctBtn) {
+                correctBtn.classList.remove('opacity-50', 'bg-space-800');
+                correctBtn.classList.add('bg-star-green/20', 'border-star-green', 'font-bold');
+            }
+        }
+
+        document.getElementById('quizScore').innerText = `${score}`;
+        const explanationBox = document.getElementById('quizExplanation');
+        document.getElementById('quizAnswerLabel').innerText = isCorrect ? 'Correct!' : 'Explanation';
+        document.getElementById('quizAnswerLabel').className = isCorrect ? 'font-bold mb-2 text-star-green' : 'font-bold mb-2 text-star-red';
+        document.getElementById('quizExplanationText').innerText = currentQuestionSet[currentQ].explanation;
+        explanationBox.classList.remove('hidden');
+
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.add('hover:bg-space-500');
+    }
+
+    function goToNextQuestion() {
+        if (!answeredCurrent) return;
+        if (currentQ < currentQuestionSet.length - 1) {
+            currentQ++;
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('quizQuestionCard').classList.add('hidden');
+        document.getElementById('quizQuestionCard').classList.remove('block');
+        document.getElementById('q-result').classList.remove('hidden');
+        document.getElementById('q-result').classList.add('block');
+        document.getElementById('scoreText').innerText = `${score}/${currentQuestionSet.length}`;
+        document.getElementById('scoreText').classList.remove('text-star-green', 'text-star-red');
+
+        if (score === currentQuestionSet.length) {
+            document.getElementById('scoreText').classList.add('text-star-green');
+            if (!achievements.passedQuiz) {
+                achievements.passedQuiz = true;
+                addXP(100);
+                showMsgBox("Perfect Knowledge", "Perfect score on the Pluto Quiz! +100 XP", "🧠");
+            }
+        } else {
+            document.getElementById('scoreText').classList.add('text-star-red');
+            document.getElementById('retryQuizBtn').classList.remove('hidden');
+        }
+    }
+
+    function resetQuiz() {
+        score = 0;
+        currentQ = 0;
+        document.getElementById('retryQuizBtn').classList.add('hidden');
+        prepareQuizData();
+        renderQuestion();
+    }
+
+    prepareQuizData();
+    renderQuestion();
+
+    /* MINI GAME: Nitrogen Glacier Navigator */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startGameBtn');
+    const overlay = document.getElementById('gameOverlay');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 400 ? 400 : rect.width;
+        canvas.height = canvas.width * 1.25; 
+        if(canvas.height > 500) canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function() { resizeCanvas(); }
+
+    let gameActive = false;
+    let frames = 0;
+    let scoreFrames = 0;
+    let gameLoopReq;
+    let dataCollected = 0;
+
+    const player = {
+        x: 0, y: 0, width: 45, height: 40, speed: 8, color: '#f8fafc' 
+    };
+
+    let spaceObjects = [];
+    let keys = { ArrowLeft: false, ArrowRight: false };
+
+    window.addEventListener('keydown', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            keys[e.code] = true; 
+            if(gameActive) e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(e.code === 'ArrowLeft' || e.code === 'ArrowRight') keys[e.code] = false; 
+    });
+    
+    canvas.addEventListener('touchstart', (e) => {
+        if(!gameActive) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const relativeX = touch.clientX - rect.left;
+        if(relativeX < canvas.width/2) {
+            keys.ArrowLeft = true; keys.ArrowRight = false;
+        } else {
+            keys.ArrowRight = true; keys.ArrowLeft = false;
+        }
+    }, {passive: false});
+    
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys.ArrowLeft = false; keys.ArrowRight = false;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        if(!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        const relativeX = e.clientX - rect.left;
+        if(relativeX < canvas.width/2) {
+            keys.ArrowLeft = true; keys.ArrowRight = false;
+        } else {
+            keys.ArrowRight = true; keys.ArrowLeft = false;
+        }
+    });
+    
+    canvas.addEventListener('mouseup', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+    canvas.addEventListener('mouseleave', () => { keys.ArrowLeft = false; keys.ArrowRight = false; });
+
+    function initGame() {
+        resizeCanvas();
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - player.height - 30;
+        spaceObjects = [];
+        dataCollected = 0;
+        frames = 0;
+        scoreFrames = 0;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        startBtn.innerText = "Navigating...";
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50');
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+        if(gameLoopReq) cancelAnimationFrame(gameLoopReq);
+        gameLoop();
+    }
+
+    function spawnObject() {
+        let speedMult = 1 + (scoreFrames / 1500); 
+        let isData = Math.random() > 0.75; 
+        let w = isData ? 30 : (Math.random() * 25 + 20); 
+        let xPos = Math.random() * (canvas.width - w);
+        
+        spaceObjects.push({
+            x: xPos, y: -w, width: w, height: w, 
+            speedY: (Math.random() * 4 + 4) * speedMult,
+            rotation: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 0.1,
+            isData: isData
+        });
+    }
+
+    function drawHeart(x, y, size) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.beginPath();
+        ctx.moveTo(0, -size/4);
+        ctx.bezierCurveTo(size/2, -size/2, size/2, size/4, 0, size/2);
+        ctx.bezierCurveTo(-size/2, size/4, -size/2, -size/2, 0, -size/4);
+        ctx.fillStyle = '#fff';
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#ff5ac6';
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width/2, player.y + player.height/2);
+        ctx.fillStyle = (frames % 10 < 5) ? '#a855f7' : '#d8b4fe'; 
+        ctx.beginPath();
+        ctx.moveTo(-4, player.height/2);
+        ctx.lineTo(0, player.height/2 + 15 + Math.random()*5);
+        ctx.lineTo(4, player.height/2);
+        ctx.fill();
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.arc(0, -5, player.width/2, Math.PI, 0);
+        ctx.fill();
+        ctx.strokeStyle = '#a855f7';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = '#581c87';
+        ctx.fillRect(-6, -5, 12, 20);
+        ctx.fillStyle = '#e9d5ff';
+        ctx.beginPath();
+        ctx.arc(0, -10, 3, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawObjects() {
+        for (let i = 0; i < spaceObjects.length; i++) {
+            let o = spaceObjects[i];
+            ctx.save();
+            ctx.translate(o.x + o.width/2, o.y + o.height/2);
+            ctx.rotate(o.rotation);
+            if (o.isData) {
+                drawHeart(0, 0, o.width);
+            } else {
+                ctx.fillStyle = '#4a3b32'; 
+                ctx.shadowBlur = 0;
+                ctx.beginPath();
+                ctx.moveTo(-o.width/2.2, -o.height/3);
+                ctx.lineTo(0, -o.height/2);
+                ctx.lineTo(o.width/2.5, -o.height/4);
+                ctx.lineTo(o.width/3, o.height/2);
+                ctx.lineTo(-o.width/2.5, o.height/2.2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = '#2d1b1e';
+                ctx.beginPath();
+                ctx.arc(-o.width/5, -o.height/5, o.width/6, 0, Math.PI*2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+    }
+
+    function checkCollision(a) {
+        let hitX = player.x + 5;
+        let hitW = player.width - 10;
+        let hitY = player.y + 5;
+        let hitH = player.height - 10;
+        if (hitX < a.x + a.width && hitX + hitW > a.x && hitY < a.y + a.height && hitY + hitH > a.y) {
+            return true;
+        }
+        return false;
+    }
+
+    function updatePhysics() {
+        if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
+        if (keys.ArrowRight && player.x + player.width < canvas.width) player.x += player.speed;
+        let spawnRate = Math.max(15, 35 - Math.floor(scoreFrames/150));
+        if (frames % spawnRate === 0) spawnObject();
+        for (let i = spaceObjects.length - 1; i >= 0; i--) {
+            spaceObjects[i].y += spaceObjects[i].speedY;
+            spaceObjects[i].rotation += spaceObjects[i].rotSpeed;
+            if (checkCollision(spaceObjects[i])) {
+                if (spaceObjects[i].isData) {
+                    dataCollected++;
+                    addXP(10); 
+                    ctx.fillStyle = 'rgba(233, 213, 255, 0.4)';
+                    ctx.fillRect(0,0, canvas.width, canvas.height);
+                    spaceObjects.splice(i, 1);
+                    continue;
+                } else {
+                    gameOver("Probe damaged by methane ice chunk!");
+                    return;
+                }
+            }
+            if (spaceObjects[i].y > canvas.height) spaceObjects.splice(i, 1);
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+        ctx.fillStyle = 'rgba(10, 5, 20, 0.8)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        updatePhysics();
+        if(!gameActive) return; 
+        drawObjects();
+        drawPlayer();
+        scoreFrames++;
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'JetBrains Mono', monospace";
+        ctx.fillText(`Time: ${secondsAlive}s`, 10, 25);
+        ctx.fillStyle = "#e9d5ff"; 
+        ctx.fillText(`❤️ Collected: ${dataCollected}/3`, 10, 45);
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
+        if (secondsAlive >= 20 && dataCollected >= 3 && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox("Heart of Ice Badge Unlocked!", "You survived 20 seconds and collected 3 heart crystals! +100 XP", "❤️");
+            updateProgress();
+        }
+        frames++;
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(reason) {
+        gameActive = false;
+        startBtn.innerText = "▶ Relaunch Navigator";
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+        let secondsAlive = Math.floor(scoreFrames / 60);
+        let winStatus = (secondsAlive >= 20 && dataCollected >= 3);
+        overlay.innerHTML = `
+            <div class="text-6xl mb-2">💥</div>
+            <h3 class="font-display text-2xl text-star-red mb-1 text-center px-4">${reason}</h3>
+            <p class="text-white mb-2">You survived for ${secondsAlive}s.</p>
+            <p class="text-pluto-light mb-4 text-sm font-bold">❤️ Collected ${dataCollected} Heart Crystals</p>
+            ${!achievements.playedGame ? `<p class="text-space-100 text-sm mb-4">Survive 20s AND collect 3 hearts for the badge!</p>` : ''}
+        `;
+        overlay.classList.remove('hidden');
+        if(secondsAlive > 5 && !winStatus) addXP(5);
+    }
+
+    startBtn.addEventListener('click', () => { initGame(); });
+
 </script>
 </body>
 </html>
