@@ -123,6 +123,58 @@
             background: #5b21b6;
             border-radius: 2px;
         }
+
+
+        #sceneLabels {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+        .scene-label {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            padding: 0.28rem 0.55rem;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            white-space: nowrap;
+            background: rgba(6, 4, 18, 0.78);
+            border: 1px solid rgba(255,255,255,0.16);
+            color: white;
+            box-shadow: 0 0 14px rgba(0,0,0,0.35);
+            transition: opacity 0.25s ease, transform 0.25s ease, filter 0.25s ease;
+            pointer-events: none;
+        }
+        .scene-label.dimmed-label {
+            opacity: 0.28;
+            filter: saturate(0.7);
+        }
+        .scene-label.focused-label {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.04);
+            box-shadow: 0 0 18px rgba(255,255,255,0.08), 0 0 22px rgba(139,92,246,0.12);
+        }
+        .scene-label.hidden-label {
+            opacity: 0;
+        }
+        .scene-label::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: -7px;
+            width: 1px;
+            height: 7px;
+            background: currentColor;
+            opacity: 0.8;
+        }
+        .scene-label.cyan { color: #6ef0ff; }
+        .scene-label.gold { color: #ffd166; }
+        .scene-label.magenta { color: #ff5ac6; }
+        .scene-label.green { color: #4ef0a8; }
+        .scene-label.white { color: #ffffff; }
+        .scene-label.red { color: #ff6b6b; }
+
     </style>
 </head>
 <body class="font-body text-white antialiased overflow-x-hidden">
@@ -173,36 +225,113 @@
             </div>
         </div>
 
-        <div class="glass-panel p-8 md:p-12 mb-12 flex flex-col md:flex-row items-center justify-between relative overflow-hidden rounded-3xl group border-astro-dark">
+        <div class="glass-panel p-6 md:p-8 lg:p-10 mb-12 relative overflow-hidden rounded-3xl group border-astro-dark">
             <div class="absolute inset-0 bg-gradient-to-r from-space-800/80 to-transparent z-0"></div>
-            
-            <div class="z-10 text-center md:text-left mb-10 md:mb-0 max-w-xl">
-                <p class="text-astro-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center md:justify-start">
-                    <span class="w-2 h-2 rounded-full bg-astro-base animate-ping"></span> Advanced Navigation
-                </p>
-                <h1 class="font-display text-5xl md:text-6xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Astronomical Terms</h1>
-                <p class="text-2xl text-star-gold font-body italic mb-6">"Decoding the Cosmos at a Championship Level"</p>
-                <p class="text-space-100 text-lg leading-relaxed mb-6">
-                    To master the universe, you must understand the <strong>Celestial Sphere</strong>. Drag the 3D model to explore, and use the slider to see how your latitude changes the angle of the sky!
-                </p>
-                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-astro-base text-white px-8 py-3 rounded-full font-bold hover:bg-astro-light hover:text-space-900 transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(139,92,246,0.5)]">
-                    Access Advanced Dictionary 👇
-                </button>
-            </div>
-            
-            <!-- 3D Interactive Simulator -->
-            <div class="z-10 relative mt-8 md:mt-0 flex flex-col items-center w-full md:w-1/2 max-w-[400px]">
-                <div id="celestial-3d-container" class="w-full h-64 md:h-80 rounded-xl overflow-hidden shadow-[0_0_30px_rgba(139,92,246,0.3)] border border-astro-dark cursor-grab active:cursor-grabbing bg-space-900/80 backdrop-blur-md"></div>
-                
-                <div class="mt-4 glass-card p-4 rounded-xl w-full text-sm border-astro-base/40">
-                    <div class="flex justify-between items-center mb-3">
-                        <label class="font-bold text-white">Observer Latitude: <span id="latValue" class="text-star-cyan font-mono">40° N</span></label>
-                        <input type="range" id="latSlider" min="-90" max="90" value="40" class="w-1/2" oninput="updateLatitude()">
+
+            <div class="relative z-10 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(520px,1.35fr)] gap-8 items-start">
+                <div class="text-center xl:text-left max-w-2xl">
+                    <p class="text-astro-light font-mono text-sm uppercase tracking-widest mb-2 flex items-center gap-2 justify-center xl:justify-start">
+                        <span class="w-2 h-2 rounded-full bg-astro-base animate-ping"></span> Advanced Navigation
+                    </p>
+                    <h1 class="font-display text-5xl md:text-6xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Astronomical Terms</h1>
+                    <p class="text-2xl text-star-gold font-body italic mb-6">"Decoding the Cosmos at a Championship Level"</p>
+                    <p class="text-space-100 text-lg leading-relaxed mb-6">
+                        To master the universe, you must understand the <strong>Celestial Sphere</strong>. Drag the 3D model to explore, press play for a guided lesson, and use the slider to see how latitude changes the angle of the sky.
+                    </p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left mb-6">
+                        <div class="glass-card rounded-2xl p-4 border-astro-base/40">
+                            <p class="text-xs font-mono uppercase tracking-wider text-star-cyan mb-2">Latitude Insight</p>
+                            <p id="latitudeRule" class="text-white font-bold text-base mb-1">The pole altitude matches your latitude.</p>
+                            <p id="latitudeDetails" class="text-space-100 text-sm leading-relaxed">At 40° N, the North Celestial Pole sits 40° above the northern horizon.</p>
+                        </div>
+                        <div class="glass-card rounded-2xl p-4 border-astro-base/40">
+                            <p class="text-xs font-mono uppercase tracking-wider text-star-gold mb-2">Yearly Sun Motion</p>
+                            <p id="sunSeasonLabel" class="text-white font-bold text-base mb-1">Sun on the Ecliptic: March Equinox</p>
+                            <p id="sunSeasonDetails" class="text-space-100 text-sm leading-relaxed">The Sun is crossing the celestial equator, so day and night are close to equal.</p>
+                        </div>
                     </div>
-                    <div class="flex justify-center gap-2 flex-wrap">
-                        <button id="toggleEquator" onclick="toggle3D('equator')" class="px-3 py-1 bg-star-cyan text-space-900 text-xs rounded font-bold shadow-[0_0_10px_rgba(110,240,255,0.4)]">Equator</button>
-                        <button id="toggleEcliptic" onclick="toggle3D('ecliptic')" class="px-3 py-1 bg-star-gold text-space-900 text-xs rounded font-bold shadow-[0_0_10px_rgba(255,209,102,0.4)]">Ecliptic</button>
-                        <button id="toggleMeridian" onclick="toggle3D('meridian')" class="px-3 py-1 bg-star-magenta text-white text-xs rounded font-bold shadow-[0_0_10px_rgba(255,90,198,0.4)]">Meridian</button>
+
+                    <div class="glass-card rounded-2xl p-5 border-astro-base/40 mb-6 text-left">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                            <div>
+                                <p class="text-xs font-mono uppercase tracking-wider text-astro-light mb-1">Guided Lesson</p>
+                                <h3 id="guideTitle" class="font-display text-2xl text-white">Step 1 — Horizon</h3>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="prevGuideStep()" class="px-4 py-2 rounded-full border border-space-500 text-white text-sm hover:bg-space-700 transition-colors">◀ Prev</button>
+                                <button onclick="nextGuideStep()" class="px-4 py-2 rounded-full bg-astro-base text-white text-sm font-bold hover:bg-astro-light hover:text-space-900 transition-colors">Next ▶</button>
+                            </div>
+                        </div>
+                        <p id="guideText" class="text-space-100 text-sm leading-relaxed mb-3">The horizon is the boundary between the visible sky and the ground. It always sits at 0° altitude.</p>
+                        <div class="w-full bg-space-900 rounded-full h-2 border border-space-500 overflow-hidden mb-2">
+                            <div id="guideProgress" class="bg-gradient-to-r from-astro-dark to-astro-light h-2 rounded-full transition-all duration-500" style="width:20%"></div>
+                        </div>
+                        <p id="guideHint" class="text-xs text-star-gold font-mono">Hint: use the labels toggle if you want a cleaner view after learning each feature.</p>
+                    </div>
+
+                    <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-astro-base text-white px-8 py-3 rounded-full font-bold hover:bg-astro-light hover:text-space-900 transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(139,92,246,0.5)]">
+                        Access Advanced Dictionary 👇
+                    </button>
+                </div>
+
+                <!-- 3D Interactive Simulator -->
+                <div class="relative flex flex-col items-center w-full">
+                    <div class="relative w-full">
+                        <div id="celestial-3d-container" class="w-full h-[26rem] md:h-[34rem] xl:h-[40rem] rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(139,92,246,0.3)] border border-astro-dark cursor-grab active:cursor-grabbing bg-space-900/80 backdrop-blur-md"></div>
+                        <div id="sceneLabels" class="absolute inset-0 pointer-events-none z-20"></div>
+                        <div class="absolute top-4 left-4 right-4 flex flex-wrap gap-2 z-30 pointer-events-none justify-between items-start">
+                            <div id="sceneBadge" class="pointer-events-none glass-panel px-3 py-2 rounded-xl border border-astro-base/50 max-w-xs">
+                                <p class="text-[11px] font-mono uppercase tracking-wider text-star-gold">Focus</p>
+                                <p id="sceneBadgeText" class="text-sm text-white font-bold">Horizon highlighted</p>
+                            </div>
+                            <div class="pointer-events-auto flex flex-wrap justify-end gap-2">
+                                <button id="toggleLabelsBtn" onclick="toggleLabels()" class="px-3 py-2 bg-white/90 text-space-900 text-xs rounded-full font-bold shadow">Hide Labels</button>
+                                <button id="toggleSkySpinBtn" onclick="toggleSkyRotation()" class="px-3 py-2 bg-astro-base text-white text-xs rounded-full font-bold shadow-[0_0_10px_rgba(139,92,246,0.4)]">Pause Sky Spin</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 glass-card p-4 rounded-2xl w-full text-sm border-astro-base/40">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <div class="flex justify-between items-center mb-2 gap-3">
+                                    <label class="font-bold text-white">Observer Latitude: <span id="latValue" class="text-star-cyan font-mono">40° N</span></label>
+                                    <span id="latitudeMode" class="text-xs font-mono text-space-100">Mid-northern sky</span>
+                                </div>
+                                <input type="range" id="latSlider" min="-90" max="90" value="40" class="w-full" oninput="updateLatitude()">
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-center mb-2 gap-3">
+                                    <label class="font-bold text-white">Sun Position on Ecliptic</label>
+                                    <span id="sunDayValue" class="text-xs font-mono text-star-gold">Day 80 / 365</span>
+                                </div>
+                                <input type="range" id="sunSlider" min="0" max="364" value="80" class="w-full" oninput="updateSunPosition()">
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center gap-2 flex-wrap mb-3">
+                            <button id="toggleEquator" onclick="toggle3D('equator')" class="px-3 py-1 bg-star-cyan text-space-900 text-xs rounded font-bold shadow-[0_0_10px_rgba(110,240,255,0.4)]">Equator</button>
+                            <button id="toggleEcliptic" onclick="toggle3D('ecliptic')" class="px-3 py-1 bg-star-gold text-space-900 text-xs rounded font-bold shadow-[0_0_10px_rgba(255,209,102,0.4)]">Ecliptic</button>
+                            <button id="toggleMeridian" onclick="toggle3D('meridian')" class="px-3 py-1 bg-star-magenta text-white text-xs rounded font-bold shadow-[0_0_10px_rgba(255,90,198,0.4)]">Meridian</button>
+                            <button id="togglePoles" onclick="toggle3D('poles')" class="px-3 py-1 bg-white text-space-900 text-xs rounded font-bold shadow">Poles</button>
+                            <button id="toggleSun" onclick="toggle3D('sun')" class="px-3 py-1 bg-star-red text-white text-xs rounded font-bold shadow">Sun</button>
+                        </div>
+
+                        <div id="causeEffectPanel" class="grid grid-cols-1 md:grid-cols-3 gap-3 text-left">
+                            <div class="bg-space-900/80 rounded-xl p-3 border border-space-500">
+                                <p class="text-[11px] font-mono uppercase tracking-wider text-star-cyan mb-1">Pole altitude</p>
+                                <p id="causePole" class="text-sm text-white">North Celestial Pole: 40° high</p>
+                            </div>
+                            <div class="bg-space-900/80 rounded-xl p-3 border border-space-500">
+                                <p class="text-[11px] font-mono uppercase tracking-wider text-star-green mb-1">Equator angle</p>
+                                <p id="causeEquator" class="text-sm text-white">The celestial equator is tilted 50° from vertical.</p>
+                            </div>
+                            <div class="bg-space-900/80 rounded-xl p-3 border border-space-500">
+                                <p class="text-[11px] font-mono uppercase tracking-wider text-star-magenta mb-1">Meridian crossing</p>
+                                <p id="causeMeridian" class="text-sm text-white">Objects reach their highest altitude when they cross the meridian.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -476,7 +605,7 @@
 
                 <div id="quizStartScreen" class="text-center py-8 block">
                     <p class="text-space-100 mb-6">Warning: These questions match 5th-grade State Level Science Olympiad difficulty. Make sure you read the Olympiad Facts on the flashcards!</p>
-                    <button onclick="startQuiz()" class="bg-astro-base text-white px-8 py-3 rounded-full font-bold hover:bg-astro-light hover:text-space-900 transition-colors transform hover:scale-105">Begin Exam</button>
+                    <button id="startQuizBtn" type="button" onclick="startQuiz()" class="bg-astro-base text-white px-8 py-3 rounded-full font-bold hover:bg-astro-light hover:text-space-900 transition-colors transform hover:scale-105">Begin Exam</button>
                 </div>
 
                 <div id="quizResultScreen" class="hidden text-center py-8">
@@ -484,7 +613,7 @@
                     <h3 id="resultTitle" class="text-3xl font-display text-star-gold mb-2">Exam Complete!</h3>
                     <p class="text-xl text-white mb-6">Final Score: <span id="finalScoreText" class="font-bold">0/20</span></p>
                     <p id="resultMsg" class="text-space-100 mb-6">Let's see how you did.</p>
-                    <button id="retryQuizBtn" onclick="startQuiz()" class="bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
+                    <button id="retryQuizBtn" type="button" onclick="startQuiz()" class="bg-space-700 border border-space-500 text-white px-6 py-2 rounded-full hover:bg-space-500 transition mx-auto">Try Again</button>
                 </div>
             </div>
         </div>
@@ -554,151 +683,468 @@
        3D INTERACTIVE CELESTIAL SPHERE (Three.js)
        ========================================================= */
     let scene, camera, renderer, controls;
-    let celestialGroup;
+    let celestialGroup, earthMesh, horizonMesh, meridianMesh, poleMesh, zenithLine, sunMarker, sunHalo, sunOrbitGroup, visibleDomeMesh, hiddenDomeMesh;
     let rings = {};
+    let labelsVisible = true;
+    let skyRotationEnabled = true;
     let is3DInit = false;
+    let labelOverlays = {};
+    let guideStepIndex = 0;
+    let guideModeActive = true;
+
+    const guideSteps = [
+        {
+            title: 'Step 1 — Horizon',
+            text: 'The horizon is the boundary between the visible sky and the ground. It always sits at 0° altitude.',
+            hint: 'Notice the green ring cutting the sky into visible and hidden halves.',
+            badge: 'Horizon highlighted',
+            focus: { horizon: true, equator: false, ecliptic: false, meridian: false, poles: false, sun: false, zenith: false }
+        },
+        {
+            title: 'Step 2 — Zenith',
+            text: 'The zenith is the point directly overhead. It is local to the observer, not a fixed point in deep space.',
+            hint: 'Look straight up along the red vertical guide.',
+            badge: 'Zenith highlighted',
+            focus: { horizon: true, equator: false, ecliptic: false, meridian: false, poles: false, sun: false, zenith: true }
+        },
+        {
+            title: 'Step 3 — Meridian',
+            text: 'The celestial meridian runs from north to south through the zenith. Objects on it are at their highest daily altitude.',
+            hint: 'The magenta ring is the line of transit or culmination.',
+            badge: 'Meridian highlighted',
+            focus: { horizon: true, equator: false, ecliptic: false, meridian: true, poles: false, sun: false }
+        },
+        {
+            title: 'Step 4 — Celestial Equator',
+            text: "The celestial equator is Earth's equator projected onto the sky. Its angle changes with your latitude.",
+            hint: 'Move the latitude slider and watch the cyan ring tilt.',
+            badge: 'Celestial equator highlighted',
+            focus: { horizon: true, equator: true, ecliptic: false, meridian: false, poles: true, sun: false }
+        },
+        {
+            title: 'Step 5 — Ecliptic and Sun',
+            text: "The ecliptic is the Sun's yearly path through the sky, tilted 23.5° from the celestial equator.",
+            hint: 'Use the Sun slider to watch the Sun move along the golden ring through the seasons.',
+            badge: 'Ecliptic and Sun highlighted',
+            focus: { horizon: true, equator: true, ecliptic: true, meridian: false, poles: false, sun: true }
+        }
+    ];
 
     function init3DSphere() {
         const container = document.getElementById('celestial-3d-container');
         if(!container) return;
 
         scene = new THREE.Scene();
-        
-        // Setup Camera
-        camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
-        camera.position.set(0, 3, 7);
 
-        // Setup Renderer
+        camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+        camera.position.set(0, 3.2, 7.4);
+
         renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
         renderer.setSize(container.clientWidth, container.clientHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         container.appendChild(renderer.domElement);
 
-        // Controls
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.enablePan = false;
-        controls.minDistance = 3;
-        controls.maxDistance = 10;
+        controls.minDistance = 3.5;
+        controls.maxDistance = 12;
 
-        // 1. Base Horizon Plane & Earth
+        const ambient = new THREE.AmbientLight(0xffffff, 0.9);
+        scene.add(ambient);
+
         const earthGeo = new THREE.SphereGeometry(0.3, 32, 32);
         const earthMat = new THREE.MeshBasicMaterial({ color: 0x0ea5e9, wireframe: true });
-        scene.add(new THREE.Mesh(earthGeo, earthMat));
+        earthMesh = new THREE.Mesh(earthGeo, earthMat);
+        scene.add(earthMesh);
 
         const horizonGeo = new THREE.RingGeometry(1.95, 2.0, 64);
-        const horizonMat = new THREE.MeshBasicMaterial({ color: 0x4ef0a8, side: THREE.DoubleSide });
-        const horizon = new THREE.Mesh(horizonGeo, horizonMat);
-        horizon.rotation.x = Math.PI / 2;
-        scene.add(horizon);
-        
-        // Zenith Line (Y-axis of world)
-        const zenithGeo = new THREE.CylinderGeometry(0.01, 0.01, 2.5);
-        const zenithMat = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red for Zenith
-        const zenith = new THREE.Mesh(zenithGeo, zenithMat);
-        zenith.position.y = 1.25;
-        scene.add(zenith);
+        const horizonMat = new THREE.MeshBasicMaterial({ color: 0x4ef0a8, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
+        horizonMesh = new THREE.Mesh(horizonGeo, horizonMat);
+        horizonMesh.rotation.x = Math.PI / 2;
+        scene.add(horizonMesh);
 
-        // 2. Celestial Sphere Group (This rotates with latitude)
+        const upperDomeGeo = new THREE.SphereGeometry(1.92, 48, 48, 0, Math.PI * 2, 0, Math.PI / 2);
+        const upperDomeMat = new THREE.MeshBasicMaterial({ color: 0x5cc8ff, transparent: true, opacity: 0.10, side: THREE.DoubleSide });
+        visibleDomeMesh = new THREE.Mesh(upperDomeGeo, upperDomeMat);
+        visibleDomeMesh.rotation.x = Math.PI;
+        scene.add(visibleDomeMesh);
+
+        const lowerDomeGeo = new THREE.SphereGeometry(1.92, 48, 48, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
+        const lowerDomeMat = new THREE.MeshBasicMaterial({ color: 0x06101f, transparent: true, opacity: 0.22, side: THREE.DoubleSide });
+        hiddenDomeMesh = new THREE.Mesh(lowerDomeGeo, lowerDomeMat);
+        hiddenDomeMesh.rotation.x = Math.PI;
+        scene.add(hiddenDomeMesh);
+
+        const zenithGeo = new THREE.CylinderGeometry(0.01, 0.01, 2.5);
+        const zenithMat = new THREE.MeshBasicMaterial({ color: 0xff6b6b });
+        zenithLine = new THREE.Mesh(zenithGeo, zenithMat);
+        zenithLine.position.y = 1.25;
+        scene.add(zenithLine);
+
         celestialGroup = new THREE.Group();
         scene.add(celestialGroup);
 
-        // Celestial Equator
         rings.equator = new THREE.Mesh(
-            new THREE.TorusGeometry(2, 0.02, 16, 100), 
-            new THREE.MeshBasicMaterial({ color: 0x6ef0ff })
+            new THREE.TorusGeometry(2, 0.018, 16, 120),
+            new THREE.MeshBasicMaterial({ color: 0x6ef0ff, transparent: true, opacity: 0.88 })
         );
         rings.equator.rotation.x = Math.PI / 2;
         celestialGroup.add(rings.equator);
 
-        // Ecliptic (Tilted 23.5 degrees relative to equator)
         rings.ecliptic = new THREE.Mesh(
-            new THREE.TorusGeometry(2, 0.02, 16, 100), 
-            new THREE.MeshBasicMaterial({ color: 0xffd166 })
+            new THREE.TorusGeometry(2, 0.038, 20, 160),
+            new THREE.MeshBasicMaterial({ color: 0xffd166, transparent: true, opacity: 1 })
         );
         rings.ecliptic.rotation.x = Math.PI / 2;
         rings.ecliptic.rotation.y = 23.5 * Math.PI / 180;
         celestialGroup.add(rings.ecliptic);
 
-        // Celestial Meridian (Passes through poles and zenith usually, 
-        // but physically it's locked to North/South points on horizon and Zenith.
-        // We'll keep it static in the world space, NOT the celestial group, 
-        // because the meridian stays overhead while the sphere rotates!
-        rings.meridian = new THREE.Mesh(
-            new THREE.TorusGeometry(2, 0.02, 16, 100), 
-            new THREE.MeshBasicMaterial({ color: 0xff5ac6 })
+        meridianMesh = new THREE.Mesh(
+            new THREE.TorusGeometry(2, 0.025, 16, 100),
+            new THREE.MeshBasicMaterial({ color: 0xff5ac6, transparent: true, opacity: 1 })
         );
-        rings.meridian.rotation.y = Math.PI / 2;
-        scene.add(rings.meridian); // Note: Added to scene, not celestialGroup
+        meridianMesh.rotation.y = Math.PI / 2;
+        rings.meridian = meridianMesh;
+        scene.add(meridianMesh);
 
-        // Celestial Poles (Axis of rotation)
         const poleGeo = new THREE.CylinderGeometry(0.01, 0.01, 4.2);
-        const poleMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        const pole = new THREE.Mesh(poleGeo, poleMat);
-        celestialGroup.add(pole);
+        const poleMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 });
+        poleMesh = new THREE.Mesh(poleGeo, poleMat);
+        celestialGroup.add(poleMesh);
+        rings.poles = poleMesh;
 
-        // Initial setup
+        sunOrbitGroup = new THREE.Group();
+        sunOrbitGroup.rotation.x = Math.PI / 2;
+        sunOrbitGroup.rotation.y = 23.5 * Math.PI / 180;
+        celestialGroup.add(sunOrbitGroup);
+
+        const sunGeo = new THREE.SphereGeometry(0.16, 28, 28);
+        const sunMat = new THREE.MeshBasicMaterial({ color: 0xffd166 });
+        sunMarker = new THREE.Mesh(sunGeo, sunMat);
+        sunOrbitGroup.add(sunMarker);
+
+        const sunHaloGeo = new THREE.SphereGeometry(0.24, 20, 20);
+        const sunHaloMat = new THREE.MeshBasicMaterial({ color: 0xffd166, transparent: true, opacity: 0.22 });
+        sunHalo = new THREE.Mesh(sunHaloGeo, sunHaloMat);
+        sunMarker.add(sunHalo);
+        rings.sun = sunMarker;
+
+        createSceneLabels();
+
+        is3DInit = true;
         updateLatitude();
-        
-        // Handle window resize
+        updateSunPosition();
+        applyGuideStep();
+
         window.addEventListener('resize', () => {
             if(!container) return;
             camera.aspect = container.clientWidth / container.clientHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(container.clientWidth, container.clientHeight);
+            updateSceneLabels();
         });
 
-        is3DInit = true;
         animate3D();
+    }
+
+    function createSceneLabels() {
+        const holder = document.getElementById('sceneLabels');
+        if(!holder) return;
+        holder.innerHTML = '';
+        const defs = [
+            ['zenith','Zenith','red'],
+            ['horizon','Horizon','green'],
+            ['meridian','Celestial Meridian','magenta'],
+            ['equator','Celestial Equator','cyan'],
+            ['ecliptic','Ecliptic','gold'],
+            ['northPole','North Celestial Pole','white'],
+            ['southPole','South Celestial Pole','white'],
+            ['sun','Sun','gold']
+        ];
+        defs.forEach(([key, text, cls]) => {
+            const el = document.createElement('div');
+            el.className = `scene-label ${cls}`;
+            el.id = `label-${key}`;
+            el.textContent = text;
+            holder.appendChild(el);
+            labelOverlays[key] = el;
+        });
+    }
+
+
+    function getStepLabelState(step) {
+        const focused = new Set();
+        if (!step || !step.focus) return { focused, dimOthers: false };
+        if (step.focus.horizon) focused.add('horizon');
+        if (step.focus.zenith) focused.add('zenith');
+        if (step.focus.meridian) focused.add('meridian');
+        if (step.focus.equator) focused.add('equator');
+        if (step.focus.ecliptic) focused.add('ecliptic');
+        if (step.focus.sun) focused.add('sun');
+        if (step.focus.poles) {
+            focused.add('northPole');
+            focused.add('southPole');
+        }
+        return { focused, dimOthers: focused.size > 0 };
+    }
+
+    function resolveLabelCollisions(layouts) {
+        const sorted = layouts.slice().sort((a, b) => a.y - b.y);
+        const minGap = 36;
+        for (let i = 1; i < sorted.length; i++) {
+            if (Math.abs(sorted[i].x - sorted[i - 1].x) < 170 && sorted[i].y - sorted[i - 1].y < minGap) {
+                sorted[i].y = sorted[i - 1].y + minGap;
+            }
+        }
+    }
+
+    function updateHemisphereLabelEmphasis(lat) {
+        const north = labelOverlays.northPole;
+        const south = labelOverlays.southPole;
+        if (!north || !south) return;
+        north.style.opacity = '';
+        south.style.opacity = '';
+        north.classList.remove('focused-label', 'dimmed-label');
+        south.classList.remove('focused-label', 'dimmed-label');
+        const primary = lat >= 0 ? north : south;
+        const secondary = lat >= 0 ? south : north;
+        primary.classList.add('focused-label');
+        secondary.classList.add('dimmed-label');
+    }
+
+    function getWorldPoint(key) {
+        switch(key) {
+            case 'zenith': return new THREE.Vector3(0, 2.25, 0);
+            case 'horizon': return horizonMesh.localToWorld(new THREE.Vector3(1.45, 0, 0));
+            case 'meridian': return meridianMesh.localToWorld(new THREE.Vector3(0, 2.05, 0));
+            case 'equator': return rings.equator.localToWorld(new THREE.Vector3(-1.95, 0, 0));
+            case 'ecliptic': return rings.ecliptic.localToWorld(new THREE.Vector3(-1.95, 0, 0));
+            case 'northPole': return poleMesh.localToWorld(new THREE.Vector3(0, 2.05, 0));
+            case 'southPole': return poleMesh.localToWorld(new THREE.Vector3(0, -2.05, 0));
+            case 'sun': return sunMarker.localToWorld(new THREE.Vector3(0, 0.2, 0));
+            default: return new THREE.Vector3(0,0,0);
+        }
+    }
+
+    function updateSceneLabels() {
+        const container = document.getElementById('celestial-3d-container');
+        if(!container || !camera || !labelsVisible) return;
+        const rect = container.getBoundingClientRect();
+        const step = guideSteps[guideStepIndex];
+        const { focused, dimOthers } = getStepLabelState(step);
+        const layouts = [];
+
+        Object.entries(labelOverlays).forEach(([key, el]) => {
+            if (!el) return;
+            const world = getWorldPoint(key);
+            const projected = world.clone().project(camera);
+            const visible = projected.z < 1 && projected.z > -1;
+            el.style.display = visible ? 'block' : 'none';
+            el.classList.remove('dimmed-label', 'focused-label');
+            if (!visible) return;
+            let x = (projected.x * 0.5 + 0.5) * rect.width;
+            let y = (-projected.y * 0.5 + 0.5) * rect.height;
+
+            const nudges = {
+                zenith: { x: 0, y: -18 },
+                horizon: { x: 0, y: -14 },
+                meridian: { x: 0, y: -18 },
+                equator: { x: 0, y: 24 },
+                ecliptic: { x: 0, y: 26 },
+                northPole: { x: 0, y: -22 },
+                southPole: { x: 0, y: 24 },
+                sun: { x: 0, y: -20 }
+            };
+            const nudge = nudges[key] || { x: 0, y: 0 };
+            x += nudge.x;
+            y += nudge.y;
+
+            layouts.push({ key, el, x, y, focused: focused.has(key), alwaysShow: !guideModeActive });
+        });
+
+        resolveLabelCollisions(layouts);
+
+        layouts.forEach(item => {
+            const { key, el, x, y, focused: isFocused, alwaysShow } = item;
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            if (alwaysShow || !dimOthers) return;
+            if (isFocused) el.classList.add('focused-label');
+            else el.classList.add('dimmed-label');
+        });
+
+        const lat = parseFloat(document.getElementById('latSlider')?.value || '40');
+        updateHemisphereLabelEmphasis(lat);
+    }
+
+    function setMaterialEmphasis(obj, active=true) {
+        if(!obj || !obj.material) return;
+        obj.visible = active;
+        obj.material.opacity = active ? 1 : 0.15;
+    }
+
+    function applyGuideStep() {
+        const step = guideSteps[guideStepIndex];
+        document.getElementById('guideTitle').innerText = step.title;
+        document.getElementById('guideText').innerText = step.text;
+        document.getElementById('guideHint').innerText = `Hint: ${step.hint}`;
+        document.getElementById('sceneBadgeText').innerText = step.badge;
+        document.getElementById('guideProgress').style.width = `${((guideStepIndex + 1) / guideSteps.length) * 100}%`;
+
+        if(is3DInit) {
+            setMaterialEmphasis(horizonMesh, step.focus.horizon !== false);
+            zenithLine.visible = step.focus.zenith !== false;
+            setMaterialEmphasis(rings.equator, !!step.focus.equator);
+            setMaterialEmphasis(rings.ecliptic, !!step.focus.ecliptic);
+            setMaterialEmphasis(meridianMesh, !!step.focus.meridian);
+            setMaterialEmphasis(poleMesh, !!step.focus.poles);
+            sunMarker.visible = !!step.focus.sun;
+            if (sunHalo) sunHalo.visible = !!step.focus.sun;
+            if (visibleDomeMesh) visibleDomeMesh.material.opacity = step.focus.horizon ? 0.14 : 0.08;
+            if (hiddenDomeMesh) hiddenDomeMesh.material.opacity = step.focus.horizon ? 0.28 : 0.20;
+            syncToggleButton('equator', rings.equator.visible);
+            syncToggleButton('ecliptic', rings.ecliptic.visible);
+            syncToggleButton('meridian', meridianMesh.visible);
+            syncToggleButton('poles', poleMesh.visible);
+            syncToggleButton('sun', sunMarker.visible);
+        }
+    }
+
+    function prevGuideStep() {
+        guideStepIndex = (guideStepIndex - 1 + guideSteps.length) % guideSteps.length;
+        applyGuideStep();
+    }
+
+    function nextGuideStep() {
+        guideStepIndex = (guideStepIndex + 1) % guideSteps.length;
+        applyGuideStep();
     }
 
     function updateLatitude() {
         if(!is3DInit) return;
         const lat = parseFloat(document.getElementById('latSlider').value);
-        
-        // Formatting display
-        let dir = lat >= 0 ? "N" : "S";
-        document.getElementById('latValue').innerText = `${Math.abs(lat)}° ${dir}`;
-        
-        // Mathematical Core: 
-        // If lat = 90 (North Pole), Celestial Equator is parallel to Horizon (rotation.x = 0).
-        // If lat = 0 (Equator), Celestial Equator is perpendicular to Horizon (rotation.x = 90 deg).
+        const absLat = Math.abs(lat);
+        const dir = lat >= 0 ? 'N' : 'S';
+        document.getElementById('latValue').innerText = `${absLat}° ${dir}`;
+
         celestialGroup.rotation.x = (90 - lat) * (Math.PI / 180);
+
+        const hemisphere = lat > 10 ? 'Mid-northern sky' : lat < -10 ? 'Mid-southern sky' : 'Equatorial sky';
+        document.getElementById('latitudeMode').innerText = hemisphere;
+
+        const visiblePole = lat >= 0 ? 'North Celestial Pole' : 'South Celestial Pole';
+        const oppositePole = lat >= 0 ? 'South Celestial Pole' : 'North Celestial Pole';
+        const equatorFromVertical = Math.abs(lat);
+        const equatorFromHorizon = 90 - absLat;
+        const equatorDirection = lat >= 0 ? 'due south' : 'due north';
+        document.getElementById('latitudeRule').innerText = `The visible pole altitude matches your latitude: ${absLat}°.`;
+        document.getElementById('latitudeDetails').innerText = `At ${absLat}° ${dir}, the ${visiblePole} sits ${absLat}° above the ${lat >= 0 ? 'northern' : 'southern'} horizon, while the ${oppositePole} stays below the horizon.`;
+        document.getElementById('causePole').innerText = `${visiblePole}: ${absLat}° above the horizon`;
+        document.getElementById('causeEquator').innerText = `The celestial equator is ${equatorFromVertical}° from vertical and ${equatorFromHorizon}° above the horizon where it meets the meridian at ${equatorDirection}.`;
+        document.getElementById('causeMeridian').innerText = `Objects reach their highest altitude on the meridian, while the visible pole stays fixed and the rest of the sky turns around it.`;
+        updateSceneLabels();
+    }
+
+    function updateSunPosition() {
+        if(!is3DInit) return;
+        const day = parseInt(document.getElementById('sunSlider').value, 10);
+        const theta = ((day - 80) / 365) * Math.PI * 2;
+        const radius = 2;
+        sunMarker.position.set(radius * Math.cos(theta), 0, radius * Math.sin(theta));
+        document.getElementById('sunDayValue').innerText = `Day ${day} / 365`;
+
+        const lat = parseFloat(document.getElementById('latSlider')?.value || '40');
+        const hemiWord = lat >= 0 ? 'Northern' : 'Southern';
+        let seasonTitle = `${hemiWord} Spring`;
+        let seasonDetails = 'The Sun is moving northward along the ecliptic after the March equinox.';
+        if (day >= 75 && day <= 85) {
+            seasonTitle = 'March Equinox';
+            seasonDetails = 'The Sun is on the ecliptic and crossing the celestial equator, so day and night are close to equal.';
+        } else if (day > 85 && day < 172) {
+            seasonTitle = `${hemiWord} Spring`;
+            seasonDetails = 'The Sun is moving north of the celestial equator while staying on the ecliptic.';
+        } else if (day >= 172 && day <= 182) {
+            seasonTitle = lat >= 0 ? 'June Solstice / Northern Summer' : 'June Solstice / Southern Winter';
+            seasonDetails = 'The Sun is on the ecliptic at its farthest north point.';
+        } else if (day > 182 && day < 264) {
+            seasonTitle = lat >= 0 ? 'Northern Summer' : 'Southern Winter';
+            seasonDetails = 'The Sun is moving southward along the ecliptic after the June solstice.';
+        } else if (day >= 264 && day <= 274) {
+            seasonTitle = 'September Equinox';
+            seasonDetails = 'The Sun is on the ecliptic and crossing the celestial equator southward.';
+        } else if (day > 274 && day < 355) {
+            seasonTitle = lat >= 0 ? 'Northern Autumn' : 'Southern Spring';
+            seasonDetails = 'The Sun is south of the celestial equator but still remains on the ecliptic.';
+        } else if (day >= 355 || day <= 10) {
+            seasonTitle = lat >= 0 ? 'December Solstice / Northern Winter' : 'December Solstice / Southern Summer';
+            seasonDetails = 'The Sun is on the ecliptic at its farthest south point.';
+        } else {
+            seasonTitle = lat >= 0 ? 'Northern Winter' : 'Southern Summer';
+            seasonDetails = 'The Sun is moving northward along the ecliptic toward the March equinox.';
+        }
+        document.getElementById('sunSeasonLabel').innerText = `Sun on the Ecliptic: ${seasonTitle}`;
+        document.getElementById('sunSeasonDetails').innerText = seasonDetails;
+        updateSceneLabels();
+    }
+
+    function syncToggleButton(elementKey, isVisible) {
+        const btn = document.getElementById('toggle' + elementKey.charAt(0).toUpperCase() + elementKey.slice(1));
+        if (!btn) return;
+        btn.classList.toggle('opacity-50', !isVisible);
     }
 
     function toggle3D(elementKey) {
         if(!is3DInit) return;
-        rings[elementKey].visible = !rings[elementKey].visible;
-        
-        // Update button visual
-        const btn = document.getElementById('toggle' + elementKey.charAt(0).toUpperCase() + elementKey.slice(1));
-        if (rings[elementKey].visible) {
-            btn.classList.remove('opacity-50');
-        } else {
-            btn.classList.add('opacity-50');
-        }
+        let target = null;
+        if (elementKey === 'meridian') target = meridianMesh;
+        else if (elementKey === 'poles') target = poleMesh;
+        else if (elementKey === 'sun') target = sunMarker;
+        else target = rings[elementKey];
+        if(!target) return;
+        target.visible = !target.visible;
+        syncToggleButton(elementKey, target.visible);
+        updateSceneLabels();
+    }
+
+    function toggleLabels() {
+        labelsVisible = !labelsVisible;
+        const holder = document.getElementById('sceneLabels');
+        if (holder) holder.style.display = labelsVisible ? 'block' : 'none';
+        document.getElementById('toggleLabelsBtn').innerText = labelsVisible ? 'Hide Labels' : 'Show Labels';
+    }
+
+    function toggleSkyRotation() {
+        skyRotationEnabled = !skyRotationEnabled;
+        document.getElementById('toggleSkySpinBtn').innerText = skyRotationEnabled ? 'Pause Sky Spin' : 'Resume Sky Spin';
     }
 
     function animate3D() {
         requestAnimationFrame(animate3D);
         if(controls) controls.update();
-        if(renderer && scene && camera) renderer.render(scene, camera);
-        
-        // Slowly auto-rotate the earth and the ecliptic tilt slightly for effect
-        if(celestialGroup) {
-            // Earth spins inside
-            scene.children[0].rotation.y += 0.005;
-            // The celestial sphere spins around its poles (local Y axis)
-            celestialGroup.rotation.y += 0.001; 
+
+        if(earthMesh) {
+            earthMesh.rotation.y += 0.005;
+        }
+        if(sunHalo) {
+            const pulse = 1 + 0.06 * Math.sin(Date.now() * 0.006);
+            sunHalo.scale.set(pulse, pulse, pulse);
+        }
+        if(celestialGroup && skyRotationEnabled) {
+            celestialGroup.rotation.y += 0.002;
+        }
+
+        if(renderer && scene && camera) {
+            renderer.render(scene, camera);
+            updateSceneLabels();
         }
     }
 
-    // Initialize 3D when window loads
     window.addEventListener('load', () => {
         if(typeof THREE !== 'undefined') {
             init3DSphere();
         } else {
-            setTimeout(init3DSphere, 1000); // Wait for CDN if slow
+            setTimeout(init3DSphere, 1000);
         }
     });
 
@@ -809,6 +1255,18 @@
     canvas.addEventListener('touchmove', updateCrosshair, {passive: false});
     canvas.addEventListener('mousedown', handleScanClick);
     canvas.addEventListener('touchstart', handleScanClick, {passive: false});
+
+
+    startBtn.addEventListener('click', initGame);
+
+    const startQuizBtn = document.getElementById('startQuizBtn');
+    if (startQuizBtn) {
+        startQuizBtn.setAttribute('type', 'button');
+        startQuizBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            startQuiz();
+        });
+    }
 
     function initGame() {
         resizeCanvas1();
@@ -1256,6 +1714,15 @@
                 updateProgress();
             }
         }, 500);
+    }
+
+
+    function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
     }
 
 
