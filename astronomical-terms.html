@@ -175,6 +175,189 @@
         .scene-label.white { color: #ffffff; }
         .scene-label.red { color: #ff6b6b; }
 
+    
+
+        /* Dictionary concept animations */
+        .term-anim {
+            position: relative;
+            height: 118px;
+            margin: 0 0 0.85rem 0;
+            border-radius: 14px;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 30%, rgba(110,240,255,0.08), rgba(6,4,18,0.88));
+            border: 1px solid rgba(139, 92, 246, 0.28);
+            box-shadow: inset 0 0 24px rgba(110,240,255,0.08);
+            opacity: 0;
+            transform: translateY(8px) scale(0.98);
+        }
+        .flip-card.flipped .term-anim {
+            animation: termAnimReveal 0.65s ease-out 0.18s forwards;
+        }
+        @keyframes termAnimReveal {
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .term-anim .sky-dot, .term-anim .sun-dot, .term-anim .marker-dot, .term-anim .pole-dot {
+            position: absolute;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+        }
+        .term-anim .sun-dot { background: #ffd166; box-shadow: 0 0 14px rgba(255,209,102,0.95); }
+        .term-anim .sky-dot, .term-anim .marker-dot { background: #6ef0ff; box-shadow: 0 0 10px rgba(110,240,255,0.85); }
+        .term-anim .pole-dot { background: #ffffff; box-shadow: 0 0 10px rgba(255,255,255,0.85); }
+        .term-anim .line {
+            position: absolute;
+            background: rgba(255,255,255,0.38);
+            transform-origin: left center;
+        }
+        .term-anim .label {
+            position: absolute;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: rgba(241,245,249,0.88);
+            text-shadow: 0 0 8px rgba(0,0,0,0.55);
+        }
+        .term-anim .caption {
+            position: absolute;
+            left: 10px;
+            bottom: 8px;
+            font-size: 11px;
+            color: rgba(241,245,249,0.82);
+        }
+        .anim-zenith .observer {
+            position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+            width: 26px; height: 34px; border-radius: 13px 13px 8px 8px;
+            border: 2px solid rgba(255,255,255,0.6); border-bottom-width: 5px;
+        }
+        .anim-zenith .arrow {
+            position: absolute; left: 50%; bottom: 44px; width: 2px; height: 42px;
+            transform: translateX(-50%); background: linear-gradient(to top, rgba(255,90,198,0.25), rgba(255,90,198,1));
+            animation: pulseUp 1.8s ease-in-out infinite;
+        }
+        .anim-zenith .arrow::before {
+            content: ''; position: absolute; top: -8px; left: 50%; width: 0; height: 0; transform: translateX(-50%);
+            border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid #ff5ac6;
+        }
+        .anim-zenith .marker-dot { left: calc(50% - 5px); top: 16px; animation: pulseMarker 1.8s ease-in-out infinite; }
+        @keyframes pulseUp { 50% { height: 50px; box-shadow: 0 0 12px rgba(255,90,198,0.7); } }
+        @keyframes pulseMarker { 50% { transform: scale(1.35); } }
+
+        .anim-horizon .ground, .anim-horizon .sky {
+            position: absolute; left: 0; width: 100%;
+        }
+        .anim-horizon .sky { top: 0; height: 58%; background: linear-gradient(to bottom, rgba(110,240,255,0.14), transparent); }
+        .anim-horizon .ground { bottom: 0; height: 42%; background: linear-gradient(to top, rgba(78,240,168,0.16), rgba(10,5,21,0.25)); }
+        .anim-horizon .line { left: 6%; top: 58%; width: 88%; height: 2px; background: #4ef0a8; box-shadow: 0 0 10px rgba(78,240,168,0.7); }
+        .anim-horizon .sky-dot { left: 18%; top: 38%; animation: riseSet 3s ease-in-out infinite; }
+        @keyframes riseSet { 0%,100% { top: 60%; opacity: 0.45; } 50% { top: 30%; opacity: 1; } }
+
+        .anim-meridian .arch {
+            position: absolute; left: 50%; top: 12px; width: 120px; height: 82px; transform: translateX(-50%);
+            border: 3px solid #ff5ac6; border-bottom: none; border-radius: 120px 120px 0 0;
+            box-shadow: 0 0 12px rgba(255,90,198,0.45);
+        }
+        .anim-meridian .sky-dot { left: 22%; top: 64px; animation: transitArc 3s linear infinite; offset-path: path('M 26 72 Q 60 0 94 72'); offset-rotate: 0deg; }
+        @keyframes transitArc { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+        .anim-meridian .north, .anim-meridian .south { bottom: 10px; }
+        .anim-meridian .north { left: 18%; }
+        .anim-meridian .south { right: 18%; }
+        .anim-meridian .zen { left: calc(50% - 20px); top: 10px; }
+
+        .anim-poles .axis {
+            position: absolute; left: 50%; top: 12px; width: 2px; height: 86px; transform: translateX(-50%);
+            background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0.35));
+            box-shadow: 0 0 10px rgba(255,255,255,0.45);
+        }
+        .anim-poles .pole-dot.north { left: calc(50% - 5px); top: 10px; }
+        .anim-poles .pole-dot.south { left: calc(50% - 5px); top: 92px; }
+        .anim-poles .orbit {
+            position: absolute; left: 50%; top: 50%; width: 92px; height: 92px; transform: translate(-50%, -50%);
+            border: 1px dashed rgba(110,240,255,0.5); border-radius: 50%;
+        }
+        .anim-poles .sky-dot { left: 50%; top: 50%; margin-left: -5px; margin-top: -46px; animation: orbitPole 4s linear infinite; transform-origin: 0 46px; }
+        @keyframes orbitPole { to { transform: rotate(360deg); } }
+
+        .anim-equator .ring, .anim-ecliptic .ring {
+            position: absolute; left: 50%; top: 50%; width: 130px; height: 56px; transform: translate(-50%, -50%);
+            border: 3px solid #6ef0ff; border-radius: 50%;
+            box-shadow: 0 0 12px rgba(110,240,255,0.35);
+        }
+        .anim-equator .axis { position: absolute; left: 50%; top: 16px; width: 2px; height: 84px; transform: translateX(-50%); background: rgba(255,255,255,0.55); }
+        .anim-equator .ring::after {
+            content: ''; position: absolute; inset: -3px; border-radius: 50%; border-top-color: rgba(255,255,255,0.12);
+        }
+        .anim-equator .caption strong, .anim-ecliptic .caption strong { color: #6ef0ff; }
+
+        .anim-ecliptic .ring {
+            border-color: #ffd166; width: 136px; height: 60px; transform: translate(-50%, -50%) rotate(-23.5deg);
+            box-shadow: 0 0 16px rgba(255,209,102,0.45);
+        }
+        .anim-ecliptic .equator-ref {
+            position: absolute; left: 50%; top: 50%; width: 128px; height: 52px; transform: translate(-50%, -50%);
+            border: 1.5px dashed rgba(110,240,255,0.45); border-radius: 50%;
+        }
+        .anim-ecliptic .sun-dot { left: 50%; top: 50%; margin-left: -5px; margin-top: -30px; animation: orbitEcliptic 5s linear infinite; transform-origin: 0 30px; }
+        @keyframes orbitEcliptic { to { transform: rotate(360deg) rotate(-23.5deg); } }
+
+        .anim-nadir .observer {
+            position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+            width: 26px; height: 34px; border-radius: 13px 13px 8px 8px;
+            border: 2px solid rgba(255,255,255,0.6); border-top-width: 5px;
+        }
+        .anim-nadir .arrow {
+            position: absolute; left: 50%; top: 42px; width: 2px; height: 44px; transform: translateX(-50%);
+            background: linear-gradient(to bottom, rgba(255,90,198,0.25), rgba(255,90,198,1)); animation: pulseDown 1.8s ease-in-out infinite;
+        }
+        .anim-nadir .arrow::after {
+            content: ''; position: absolute; bottom: -8px; left: 50%; width: 0; height: 0; transform: translateX(-50%);
+            border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 10px solid #ff5ac6;
+        }
+        .anim-nadir .marker-dot { left: calc(50% - 5px); bottom: 16px; animation: pulseMarker 1.8s ease-in-out infinite; }
+        @keyframes pulseDown { 50% { height: 52px; box-shadow: 0 0 12px rgba(255,90,198,0.7); } }
+
+        .anim-altitude .line.horizon { left: 18px; bottom: 28px; width: 108px; height: 2px; background: #4ef0a8; }
+        .anim-altitude .line.sight { left: 20px; bottom: 28px; width: 78px; height: 2px; background: #6ef0ff; transform: rotate(-42deg); }
+        .anim-altitude .angle {
+            position: absolute; left: 22px; bottom: 28px; width: 44px; height: 44px;
+            border: 2px solid rgba(255,209,102,0.95); border-top: none; border-right: none; border-radius: 0 0 0 42px;
+            transform: rotate(42deg);
+        }
+        .anim-altitude .sky-dot { left: 78px; top: 24px; animation: altitudeBob 2.2s ease-in-out infinite; }
+        @keyframes altitudeBob { 50% { transform: translateY(-8px); } }
+
+        .anim-azimuth .compass {
+            position: absolute; left: 50%; top: 50%; width: 88px; height: 88px; transform: translate(-50%, -50%);
+            border: 2px solid rgba(255,255,255,0.35); border-radius: 50%;
+        }
+        .anim-azimuth .pointer {
+            position: absolute; left: 50%; top: 50%; width: 40px; height: 2px; background: #ffd166;
+            transform-origin: left center; animation: sweepAz 4s ease-in-out infinite;
+            box-shadow: 0 0 10px rgba(255,209,102,0.55);
+        }
+        @keyframes sweepAz { 0%,100% { transform: rotate(-90deg); } 50% { transform: rotate(45deg); } }
+
+        .anim-declination .equator { position: absolute; left: 14px; top: 58px; width: 118px; height: 2px; background: #6ef0ff; }
+        .anim-declination .offset { position: absolute; left: 34px; top: 34px; width: 78px; height: 2px; background: #4ef0a8; animation: declinationShift 2.8s ease-in-out infinite; }
+        .anim-declination .sky-dot { left: 100px; top: 29px; animation: declinationShiftDot 2.8s ease-in-out infinite; }
+        @keyframes declinationShift { 50% { top: 80px; } }
+        @keyframes declinationShiftDot { 50% { top: 75px; } }
+
+        .anim-ra .equator { position: absolute; left: 16px; top: 56px; width: 118px; height: 2px; background: rgba(110,240,255,0.5); }
+        .anim-ra .tick { position: absolute; top: 48px; width: 2px; height: 16px; background: rgba(255,255,255,0.6); }
+        .anim-ra .marker-dot { top: 51px; left: 22px; animation: raMove 4.5s linear infinite; }
+        @keyframes raMove { 0% { left: 22px; } 100% { left: 122px; } }
+
+        .anim-seasons .ring {
+            position: absolute; left: 50%; top: 50%; width: 134px; height: 58px; transform: translate(-50%, -50%) rotate(-23.5deg);
+            border: 3px solid #ffd166; border-radius: 50%; box-shadow: 0 0 16px rgba(255,209,102,0.42);
+        }
+        .anim-seasons .sun-dot { left: 50%; top: 50%; margin-left: -5px; margin-top: -30px; animation: seasonOrbit 8s linear infinite; transform-origin: 0 30px; }
+        .anim-seasons .eq, .anim-seasons .sol { position: absolute; font-size: 9px; font-weight: 700; color: rgba(241,245,249,0.84); }
+        .anim-seasons .eq.e1 { left: 18px; top: 54px; } .anim-seasons .eq.e2 { right: 18px; top: 42px; }
+        .anim-seasons .sol.s1 { left: 56px; top: 18px; } .anim-seasons .sol.s2 { right: 54px; bottom: 18px; }
+        @keyframes seasonOrbit { to { transform: rotate(360deg) rotate(-23.5deg); } }
+        
     </style>
 </head>
 <body class="font-body text-white antialiased overflow-x-hidden">
@@ -1304,6 +1487,136 @@
             }
         }
     }
+
+
+
+    function getTermAnimationMarkup(term) {
+        const maps = {
+            'Zenith': `
+                <div class="term-anim anim-zenith" aria-hidden="true">
+                    <div class="observer"></div>
+                    <div class="arrow"></div>
+                    <div class="marker-dot"></div>
+                    <div class="label" style="left:calc(50% - 18px); top:6px; color:#6ef0ff;">Zenith</div>
+                    <div class="caption">Directly overhead: the highest possible direction.</div>
+                </div>`,
+            'Horizon': `
+                <div class="term-anim anim-horizon" aria-hidden="true">
+                    <div class="sky"></div>
+                    <div class="ground"></div>
+                    <div class="line"></div>
+                    <div class="sky-dot"></div>
+                    <div class="label" style="left:10px; top:48px; color:#4ef0a8;">Horizon = 0°</div>
+                    <div class="caption">The boundary line between visible sky and Earth.</div>
+                </div>`,
+            'Celestial Meridian': `
+                <div class="term-anim anim-meridian" aria-hidden="true">
+                    <div class="arch"></div>
+                    <div class="sky-dot"></div>
+                    <div class="label north">N</div>
+                    <div class="label south">S</div>
+                    <div class="label zen" style="color:#ff5ac6;">Zenith</div>
+                    <div class="caption">Objects are highest when they cross this arch.</div>
+                </div>`,
+            'Celestial Poles': `
+                <div class="term-anim anim-poles" aria-hidden="true">
+                    <div class="axis"></div>
+                    <div class="pole-dot north"></div>
+                    <div class="pole-dot south"></div>
+                    <div class="orbit"></div>
+                    <div class="sky-dot"></div>
+                    <div class="label" style="left:calc(50% + 10px); top:8px;">NCP</div>
+                    <div class="label" style="left:calc(50% + 10px); top:90px;">SCP</div>
+                    <div class="caption">The whole sky appears to pivot around these points.</div>
+                </div>`,
+            'Celestial Equator': `
+                <div class="term-anim anim-equator" aria-hidden="true">
+                    <div class="axis"></div>
+                    <div class="ring"></div>
+                    <div class="label" style="left:16px; top:28px; color:#6ef0ff;">0° declination</div>
+                    <div class="caption"><strong>Earth’s equator</strong> projected onto the sky.</div>
+                </div>`,
+            'The Ecliptic': `
+                <div class="term-anim anim-ecliptic" aria-hidden="true">
+                    <div class="equator-ref"></div>
+                    <div class="ring"></div>
+                    <div class="sun-dot"></div>
+                    <div class="label" style="left:18px; top:16px; color:#ffd166;">Sun’s path</div>
+                    <div class="caption"><strong>23.5° tilted</strong> compared with the celestial equator.</div>
+                </div>`,
+            'Nadir': `
+                <div class="term-anim anim-nadir" aria-hidden="true">
+                    <div class="observer"></div>
+                    <div class="arrow"></div>
+                    <div class="marker-dot"></div>
+                    <div class="label" style="left:calc(50% - 14px); bottom:6px; color:#6ef0ff;">Nadir</div>
+                    <div class="caption">The point exactly opposite the zenith.</div>
+                </div>`,
+            'Altitude': `
+                <div class="term-anim anim-altitude" aria-hidden="true">
+                    <div class="line horizon"></div>
+                    <div class="line sight"></div>
+                    <div class="angle"></div>
+                    <div class="sky-dot"></div>
+                    <div class="label" style="left:16px; top:78px; color:#ffd166;">Measured up from horizon</div>
+                    <div class="caption">Altitude tells how high an object appears.</div>
+                </div>`,
+            'Azimuth': `
+                <div class="term-anim anim-azimuth" aria-hidden="true">
+                    <div class="compass"></div>
+                    <div class="pointer"></div>
+                    <div class="label" style="left:calc(50% - 4px); top:14px;">N</div>
+                    <div class="label" style="right:18px; top:calc(50% - 4px);">E</div>
+                    <div class="label" style="left:calc(50% - 4px); bottom:18px;">S</div>
+                    <div class="label" style="left:18px; top:calc(50% - 4px);">W</div>
+                    <div class="caption">Azimuth is compass direction around the horizon.</div>
+                </div>`,
+            'Declination': `
+                <div class="term-anim anim-declination" aria-hidden="true">
+                    <div class="equator"></div>
+                    <div class="offset"></div>
+                    <div class="sky-dot"></div>
+                    <div class="label" style="left:16px; top:44px; color:#6ef0ff;">Celestial equator</div>
+                    <div class="label" style="left:76px; top:18px; color:#4ef0a8;">+ Dec</div>
+                    <div class="caption">Declination is sky latitude north or south of the equator.</div>
+                </div>`,
+            'Right Ascension': `
+                <div class="term-anim anim-ra" aria-hidden="true">
+                    <div class="equator"></div>
+                    <div class="tick" style="left:24px;"></div>
+                    <div class="tick" style="left:50px;"></div>
+                    <div class="tick" style="left:76px;"></div>
+                    <div class="tick" style="left:102px;"></div>
+                    <div class="marker-dot"></div>
+                    <div class="label" style="left:16px; top:30px; color:#6ef0ff;">0h → 24h</div>
+                    <div class="caption">Right ascension measures eastward along the celestial equator.</div>
+                </div>`,
+            'Equinoxes & Solstices': `
+                <div class="term-anim anim-seasons" aria-hidden="true">
+                    <div class="ring"></div>
+                    <div class="sun-dot"></div>
+                    <div class="eq e1">Equinox</div>
+                    <div class="eq e2">Equinox</div>
+                    <div class="sol s1">Solstice</div>
+                    <div class="sol s2">Solstice</div>
+                    <div class="caption">Four key points mark the Sun’s yearly cycle.</div>
+                </div>`
+        };
+        return maps[term] || '';
+    }
+
+    function initDictionaryAnimations() {
+        document.querySelectorAll('#explore-grid .flip-card .glass-panel').forEach(panel => {
+            const title = panel.querySelector('h3');
+            const description = panel.querySelector('p.text-sm');
+            if (!title || !description || panel.querySelector('.term-anim')) return;
+            const markup = getTermAnimationMarkup(title.textContent.trim());
+            if (markup) {
+                description.insertAdjacentHTML('afterend', markup);
+            }
+        });
+    }
+    
 
     /* =========================================================
        MINI-GAME 1: TELESCOPE TARGETER
