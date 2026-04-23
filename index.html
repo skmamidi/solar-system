@@ -67,16 +67,25 @@
             display: inline-block;
         }
 
-        .planet-wrapper:hover .planet-orb,
-        .moon-wrapper:hover .planet-orb {
-            transform: scale(1.18);
-            filter: brightness(1.18);
-        }
+        @media (hover: hover) and (pointer: fine) {
+            .planet-wrapper:hover,
+            .moon-wrapper:hover {
+                z-index: 60;
+            }
 
-        .planet-wrapper:hover > span,
-        .moon-wrapper:hover > span {
-            transform: scale(1.16);
-            filter: brightness(1.12);
+            .planet-wrapper:hover .planet-orb,
+            .moon-wrapper:hover .planet-orb {
+                transform: scale(1.34);
+                filter: brightness(1.24) saturate(1.08);
+                box-shadow: 0 0 22px rgba(255,255,255,0.16), 0 0 48px rgba(110, 240, 255, 0.12);
+            }
+
+            .planet-wrapper:hover > span,
+            .moon-wrapper:hover > span {
+                transform: scale(1.28) translateY(2px);
+                filter: brightness(1.18);
+                text-shadow: 0 0 14px rgba(255,255,255,0.18);
+            }
         }
 
         /* =========================================================
@@ -869,47 +878,47 @@
         mercury: { feature: 'Caloris Basin', target: { x: 0.61, y: 0.43 }, duration: 1950 },
         venus: { feature: 'Cloud Deck', target: { x: 0.56, y: 0.37 }, atmosphere: true, duration: 2050 },
         earth: { feature: 'Cloud Bands', target: { x: 0.58, y: 0.42 }, atmosphere: true, duration: 2050 },
-        luna: { feature: 'Ray Crater Zone', target: { x: 0.46, y: 0.52 }, duration: 2300 },
+        luna: { feature: 'Ray Crater Zone', target: { x: 0.46, y: 0.52 }, duration: 2750 },
         mars: { feature: 'Valles Marineris', target: { x: 0.63, y: 0.49 }, atmosphere: true, duration: 2050 },
         deimos: { feature: 'Cratered Face', target: { x: 0.54, y: 0.46 }, duration: 1850 },
         phobos: { feature: 'Stickney Crater', target: { x: 0.48, y: 0.44 }, duration: 1850 },
         'asteroid-belt': { feature: 'Main Belt Cluster', target: { x: 0.57, y: 0.46 }, duration: 1850 },
-        ceres: { feature: 'Occator Bright Spots', target: { x: 0.55, y: 0.44 }, duration: 2300 },
-        vesta: { feature: 'Rheasilvia Basin', target: { x: 0.61, y: 0.46 }, duration: 2300 },
-        pallas: { feature: 'Cratered Highlands', target: { x: 0.53, y: 0.41 }, duration: 2300 },
-        hygiea: { feature: 'Dark Terrain', target: { x: 0.56, y: 0.48 }, duration: 2300 },
+        ceres: { feature: 'Occator Bright Spots', target: { x: 0.55, y: 0.44 }, duration: 2750 },
+        vesta: { feature: 'Rheasilvia Basin', target: { x: 0.61, y: 0.46 }, duration: 2750 },
+        pallas: { feature: 'Cratered Highlands', target: { x: 0.53, y: 0.41 }, duration: 2750 },
+        hygiea: { feature: 'Dark Terrain', target: { x: 0.56, y: 0.48 }, duration: 2750 },
         jupiter: { feature: 'Great Red Spot', target: { x: 0.63, y: 0.66 }, atmosphere: true, duration: 2200 },
-        io: { feature: 'Sulfur Plains', target: { x: 0.52, y: 0.42 }, duration: 2300 },
+        io: { feature: 'Sulfur Plains', target: { x: 0.52, y: 0.42 }, duration: 2750 },
         europa: { feature: 'Chaos Terrain', target: { x: 0.46, y: 0.39 }, duration: 1950 },
         ganymede: { feature: 'Grooved Terrain', target: { x: 0.56, y: 0.47 }, duration: 1950 },
         callisto: { feature: 'Valhalla Basin', target: { x: 0.49, y: 0.47 }, duration: 1950 },
         saturn: { feature: 'Storm Band', target: { x: 0.60, y: 0.43 }, atmosphere: true, duration: 2200 },
         mimas: { feature: 'Herschel Crater', target: { x: 0.40, y: 0.35 }, duration: 1850 },
-        enceladus: { feature: 'Tiger Stripes', target: { x: 0.55, y: 0.65 }, duration: 2300 },
+        enceladus: { feature: 'Tiger Stripes', target: { x: 0.55, y: 0.65 }, duration: 2750 },
         rhea: { feature: 'Bright Ice Terrain', target: { x: 0.51, y: 0.41 }, duration: 1850 },
-        titan: { feature: 'Methane Sea Margin', target: { x: 0.57, y: 0.56 }, atmosphere: true, duration: 2380 },
-        iapetus: { feature: 'Dark-Light Divide', target: { x: 0.50, y: 0.49 }, duration: 2300 },
-        uranus: { feature: 'Methane Haze', target: { x: 0.54, y: 0.40 }, atmosphere: true, duration: 2480 },
-        miranda: { feature: 'Patchwork Cliffs', target: { x: 0.47, y: 0.44 }, duration: 2300 },
-        ariel: { feature: 'Tectonic Chasmata', target: { x: 0.56, y: 0.45 }, duration: 2300 },
-        umbriel: { feature: 'Dark Crater Plain', target: { x: 0.56, y: 0.47 }, duration: 2300 },
-        titania: { feature: 'Fault Canyon', target: { x: 0.59, y: 0.42 }, duration: 2300 },
-        oberon: { feature: 'Bright-Rim Craters', target: { x: 0.49, y: 0.43 }, duration: 2300 },
-        neptune: { feature: 'Storm System', target: { x: 0.58, y: 0.44 }, atmosphere: true, duration: 2480 },
-        triton: { feature: 'Nitrogen Frost', target: { x: 0.55, y: 0.38 }, duration: 2300 },
+        titan: { feature: 'Methane Sea Margin', target: { x: 0.57, y: 0.56 }, atmosphere: true, duration: 2830 },
+        iapetus: { feature: 'Dark-Light Divide', target: { x: 0.50, y: 0.49 }, duration: 2750 },
+        uranus: { feature: 'Methane Haze', target: { x: 0.54, y: 0.40 }, atmosphere: true, duration: 2930 },
+        miranda: { feature: 'Patchwork Cliffs', target: { x: 0.47, y: 0.44 }, duration: 2750 },
+        ariel: { feature: 'Tectonic Chasmata', target: { x: 0.56, y: 0.45 }, duration: 2750 },
+        umbriel: { feature: 'Dark Crater Plain', target: { x: 0.56, y: 0.47 }, duration: 2750 },
+        titania: { feature: 'Fault Canyon', target: { x: 0.59, y: 0.42 }, duration: 2750 },
+        oberon: { feature: 'Bright-Rim Craters', target: { x: 0.49, y: 0.43 }, duration: 2750 },
+        neptune: { feature: 'Storm System', target: { x: 0.58, y: 0.44 }, atmosphere: true, duration: 2930 },
+        triton: { feature: 'Nitrogen Frost', target: { x: 0.55, y: 0.38 }, duration: 2750 },
         proteus: { feature: 'Rugged Craters', target: { x: 0.47, y: 0.43 }, duration: 1850 },
         nereid: { feature: 'Icy Bright Patches', target: { x: 0.55, y: 0.44 }, duration: 1850 },
         larissa: { feature: 'Dark Rocky Terrain', target: { x: 0.50, y: 0.47 }, duration: 1850 },
         'kuiper-belt': { feature: 'Icy Frontier', target: { x: 0.56, y: 0.46 }, duration: 1850 },
-        arrokoth: { feature: 'Bi-lobed Ridge', target: { x: 0.53, y: 0.43 }, duration: 2300 },
-        quaoar: { feature: 'Frozen Highlands', target: { x: 0.52, y: 0.41 }, duration: 2300 },
-        orcus: { feature: 'Icy Basin', target: { x: 0.58, y: 0.47 }, duration: 2300 },
-        salacia: { feature: 'Dark Ice Plain', target: { x: 0.54, y: 0.48 }, duration: 2300 },
+        arrokoth: { feature: 'Bi-lobed Ridge', target: { x: 0.53, y: 0.43 }, duration: 2750 },
+        quaoar: { feature: 'Frozen Highlands', target: { x: 0.52, y: 0.41 }, duration: 2750 },
+        orcus: { feature: 'Icy Basin', target: { x: 0.58, y: 0.47 }, duration: 2750 },
+        salacia: { feature: 'Dark Ice Plain', target: { x: 0.54, y: 0.48 }, duration: 2750 },
         'dwarf-planets': { feature: 'Trans-Neptunian Zone', target: { x: 0.56, y: 0.48 }, duration: 1850 },
         pluto: { feature: 'Sputnik Planitia', target: { x: 0.43, y: 0.60 }, duration: 1950 },
-        eris: { feature: 'Bright Frost Field', target: { x: 0.56, y: 0.44 }, duration: 2300 },
+        eris: { feature: 'Bright Frost Field', target: { x: 0.56, y: 0.44 }, duration: 2750 },
         haumea: { feature: 'Elongated Ice Face', target: { x: 0.62, y: 0.46 }, duration: 1950 },
-        makemake: { feature: 'Methane Frost', target: { x: 0.52, y: 0.40 }, duration: 2300 }
+        makemake: { feature: 'Methane Frost', target: { x: 0.52, y: 0.40 }, duration: 2750 }
     };
 
     const zoomVariantSets = {
@@ -1202,7 +1211,7 @@
         }
 
         const key = getZoomKey(btn, url);
-        const profile = zoomProfiles[key] || { feature: 'Surface Detail', target: { x: 0.56, y: 0.45 }, duration: 2300 };
+        const profile = zoomProfiles[key] || { feature: 'Surface Detail', target: { x: 0.56, y: 0.45 }, duration: 2850 };
         const variant = chooseZoomVariant(key, profile);
         const rect = orb.getBoundingClientRect();
         const screenCenterX = window.innerWidth / 2;
@@ -1276,54 +1285,82 @@
         document.body.appendChild(shell);
 
         const viewportMin = Math.min(window.innerWidth, window.innerHeight);
-        const targetSize = viewportMin * 0.88;
+        const targetSize = viewportMin * 0.9;
         const targetScale = targetSize / intrinsicSize;
-        const settleX = (0.5 - variant.target.x) * 180;
-        const settleY = (0.5 - variant.target.y) * 140;
-        const closeScale = targetScale * (2.14 + Math.random() * 0.22);
+        const settleX = (0.5 - variant.target.x) * 220;
+        const settleY = (0.5 - variant.target.y) * 172;
+        const closeScale = targetScale * (2.45 + Math.random() * 0.18);
+        const uiElements = document.querySelectorAll('button, h1, p, span, .glass-panel, .absolute');
 
-        document.querySelectorAll('button, h1, p, span, .glass-panel, .absolute').forEach(el => {
-            el.style.transition = 'opacity 0.75s ease-out';
+        uiElements.forEach(el => {
+            el.style.transition = 'opacity 0.95s ease, transform 1.05s cubic-bezier(0.22, 1, 0.36, 1)';
             el.style.opacity = '0';
+            el.style.transform = 'scale(0.985)';
         });
 
+        disc.style.transition = 'filter 1.2s ease, transform 1.25s ease';
+        disc.style.filter = 'blur(0.4px) saturate(0.98)';
+
         requestAnimationFrame(() => {
-            world.style.transition = 'transform 1.15s cubic-bezier(0.65, 0, 0.15, 1), filter 1.1s ease';
+            world.style.transition = 'transform 1.35s cubic-bezier(0.22, 1, 0.36, 1), filter 1.2s ease';
             world.style.transform = `translate(0px, 0px) scale(${targetScale})`;
-            world.style.filter = 'saturate(1.05)';
-            flash.style.opacity = '0.25';
-            setTimeout(() => { flash.style.opacity = '0'; }, 260);
+            world.style.filter = 'saturate(1.08) contrast(1.02)';
+            flash.style.opacity = '0.32';
+            setTimeout(() => { flash.style.opacity = '0'; }, 320);
 
             setTimeout(() => {
                 layers.feature.classList.add('active');
-                layers.feature.style.opacity = '0.78';
-                layers.overlays.forEach((layer, index) => { layer.classList.add('active'); layer.style.opacity = String(Math.min(0.88, 0.52 + index * 0.14)); });
-                if (profile.atmosphere) { layers.haze.classList.add('active'); layers.haze.style.opacity = '0.7'; }
-                starfield.style.opacity = '0.55';
-            }, 260);
+                layers.feature.style.opacity = '0.86';
+                layers.feature.style.transform = 'translate(0px, 0px) scale(1.04)';
+                layers.overlays.forEach((layer, index) => {
+                    layer.classList.add('active');
+                    layer.style.opacity = String(Math.min(0.96, 0.64 + index * 0.12));
+                    layer.style.transform = `translate(0px, 0px) scale(${1.03 + index * 0.03})`;
+                });
+                if (profile.atmosphere) {
+                    layers.haze.classList.add('active');
+                    layers.haze.style.opacity = '0.76';
+                }
+                disc.style.filter = 'blur(0px) saturate(1.05)';
+                starfield.style.opacity = '0.46';
+            }, 220);
 
             setTimeout(() => {
                 layers.micro.classList.add('active');
-                layers.micro.style.opacity = '0.88';
-                layers.feature.style.transform = `translate(${settleX * 0.22}px, ${settleY * 0.22}px) scale(1.12)`;
+                layers.micro.style.opacity = '0.94';
+                layers.feature.style.transform = `translate(${settleX * 0.16}px, ${settleY * 0.16}px) scale(1.14)`;
                 layers.overlays.forEach((layer, index) => {
-                    const depth = 0.18 + (index * 0.10);
-                    layer.style.transform = `translate(${settleX * depth}px, ${settleY * depth}px) scale(${1.12 + index * 0.08})`;
-                    layer.style.filter += ' brightness(1.04)';
+                    const depth = 0.2 + (index * 0.12);
+                    layer.style.transform = `translate(${settleX * depth}px, ${settleY * depth}px) scale(${1.14 + index * 0.1})`;
+                    layer.style.filter += ' brightness(1.08) contrast(1.05)';
                 });
-                layers.micro.style.transform = `translate(${settleX * 0.34}px, ${settleY * 0.34}px) scale(1.18)`;
-                if (profile.atmosphere) layers.haze.style.transform = `translate(${settleX * 0.08}px, ${settleY * 0.08}px) scale(1.03)`;
-                world.style.transition = 'transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), filter 0.8s ease';
+                layers.micro.style.transform = `translate(${settleX * 0.42}px, ${settleY * 0.42}px) scale(1.26)`;
+                if (profile.atmosphere) layers.haze.style.transform = `translate(${settleX * 0.1}px, ${settleY * 0.1}px) scale(1.05)`;
+                world.style.transition = 'transform 1s cubic-bezier(0.16, 1, 0.3, 1), filter 1s ease';
+                world.style.transform = `translate(${settleX * 0.48}px, ${settleY * 0.48}px) scale(${targetScale * 1.5})`;
+                world.style.filter = 'saturate(1.14) contrast(1.07)';
+                starfield.style.opacity = '0.24';
+            }, 920);
+
+            setTimeout(() => {
+                layers.feature.style.transform = `translate(${settleX * 0.3}px, ${settleY * 0.3}px) scale(1.2)`;
+                layers.overlays.forEach((layer, index) => {
+                    const depth = 0.34 + (index * 0.14);
+                    layer.style.transform = `translate(${settleX * depth}px, ${settleY * depth}px) scale(${1.24 + index * 0.12})`;
+                });
+                layers.micro.style.transform = `translate(${settleX * 0.62}px, ${settleY * 0.62}px) scale(1.42)`;
+                if (profile.atmosphere) layers.haze.style.transform = `translate(${settleX * 0.18}px, ${settleY * 0.18}px) scale(1.08)`;
+                world.style.transition = 'transform 1.15s cubic-bezier(0.12, 0.92, 0.24, 1), filter 1.05s ease';
                 world.style.transform = `translate(${settleX}px, ${settleY}px) scale(${closeScale})`;
-                world.style.filter = 'saturate(1.15) contrast(1.08)';
-                starfield.style.opacity = '0.2';
-            }, 980);
+                world.style.filter = 'saturate(1.22) contrast(1.12) brightness(1.02)';
+                starfield.style.opacity = '0.12';
+            }, 1480);
         });
 
         setTimeout(() => {
-            shell.style.transition = 'opacity 0.25s ease';
+            shell.style.transition = 'opacity 0.34s ease';
             shell.style.opacity = '0';
-        }, profile.duration - 160);
+        }, profile.duration - 220);
 
         setTimeout(() => {
             window.location.href = url;
