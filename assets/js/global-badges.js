@@ -63,6 +63,22 @@
         { key: 'dwarf-master', label: 'Dwarf Planets Master', members: ['dwarf-planets', 'pluto', 'eris', 'haumea', 'makemake'] },
         { key: 'astronomical-terms-master', label: 'Astronomical Terms Master', members: ['astronomical-terms'] }
     ];
+    const WORLD_BADGE_KEYS = [...new Set(MASTERY_GROUPS.flatMap((group) => group.members))];
+    const BADGE_ART = {
+        'mercury-master': 'assets/badges/mercury-master.svg',
+        'venus-master': 'assets/badges/venus-master.svg',
+        'earth-master': 'assets/badges/earth-master.svg',
+        'mars-master': 'assets/badges/mars-master.svg',
+        'jupiter-master': 'assets/badges/jupiter-master.svg',
+        'saturn-master': 'assets/badges/saturn-master.svg',
+        'uranus-master': 'assets/badges/uranus-master.svg',
+        'neptune-master': 'assets/badges/neptune-master.svg',
+        'asteroid-master': 'assets/badges/asteroid-master.svg',
+        'kuiper-master': 'assets/badges/kuiper-master.svg',
+        'dwarf-master': 'assets/badges/dwarf-master.svg',
+        'astronomical-terms-master': 'assets/badges/astronomical-terms-master.svg',
+        grand: 'assets/badges/solar-system-grand-master.svg'
+    };
 
     const DEFAULT_STATE = {
         pages: {},
@@ -311,33 +327,85 @@
         };
     }
 
+    function getBadgeArtPath(key) {
+        return BADGE_ART[key] || BADGE_ART.grand;
+    }
+
+    function getWorldBadgeCatalog(state = loadState()) {
+        return WORLD_BADGE_KEYS.map((key) => {
+            const page = state.pages[key];
+            const label = PAGE_LABELS[key] || key;
+            const earned = !!(page && page.badge);
+            const totalTasks = page && page.totalTasks ? page.totalTasks : null;
+            const completedTasks = page ? page.completedTasks || 0 : 0;
+
+            return {
+                key,
+                label,
+                earned,
+                completedTasks,
+                totalTasks,
+                description: `Complete every activity on ${label}: read the cards, finish the interactive challenge, and pass the quiz.`,
+                progressText: earned
+                    ? 'Earned'
+                    : totalTasks
+                        ? `${completedTasks}/${totalTasks} tasks done`
+                        : 'Not started'
+            };
+        });
+    }
+
+    function getMasteryCatalog(state = loadState()) {
+        return MASTERY_GROUPS.map((group) => {
+            const completedMembers = group.members.filter((member) => state.pages[member] && state.pages[member].badge).length;
+            const earned = !!state.groupBadges[group.key];
+            return {
+                ...group,
+                earned,
+                completedMembers,
+                totalMembers: group.members.length,
+                description: `Earn every badge in the ${group.label.replace(/ Master$/, '')} collection.`,
+                progressText: earned ? 'Earned' : `${completedMembers}/${group.members.length} badges earned`
+            };
+        });
+    }
+
     function renderLandingPageStatus() {
         const summary = getGroupProgress();
-        const card = document.getElementById('global-badge-card');
-        if (!card) return summary;
-
-        const title = document.getElementById('global-badge-title');
-        const subtitle = document.getElementById('global-badge-subtitle');
-        const icon = document.getElementById('global-badge-icon');
+        const trigger = document.getElementById('global-badge-trigger');
+        const triggerIcon = document.getElementById('global-badge-trigger-icon');
+        const triggerCount = document.getElementById('global-badge-trigger-count');
+        const triggerLabel = document.getElementById('global-badge-trigger-label');
+        const modalTitle = document.getElementById('global-badge-modal-title');
+        const modalSubtitle = document.getElementById('global-badge-modal-subtitle');
         const progress = document.getElementById('global-badge-progress');
         const progressBar = document.getElementById('global-badge-progress-bar');
-        const checklist = document.getElementById('global-badge-checklist');
-
+        const worldList = document.getElementById('badge-world-list');
+        const masteryList = document.getElementById('badge-mastery-list');
+        const finalCard = document.getElementById('badge-final-card');
         const percent = Math.round((summary.completedGroups / summary.totalGroups) * 100);
-        card.classList.toggle('ring-2', summary.appBadgeUnlocked);
-        card.classList.toggle('ring-star-gold', summary.appBadgeUnlocked);
-        card.classList.toggle('shadow-[0_0_40px_rgba(255,209,102,0.25)]', summary.appBadgeUnlocked);
 
-        if (title) {
-            title.textContent = summary.appBadgeUnlocked ? 'Global Badge Unlocked' : 'Global Badge In Progress';
+        if (trigger) {
+            trigger.classList.toggle('border-star-gold', summary.appBadgeUnlocked);
+            trigger.classList.toggle('border-white/10', !summary.appBadgeUnlocked);
+            trigger.classList.toggle('shadow-[0_0_18px_rgba(255,209,102,0.18)]', summary.appBadgeUnlocked);
         }
-        if (subtitle) {
-            subtitle.textContent = summary.appBadgeUnlocked
+        if (triggerIcon) {
+            triggerIcon.innerHTML = `<img src="${getBadgeArtPath('grand')}" alt="" class="h-7 w-7 rounded-full object-cover ${summary.appBadgeUnlocked ? '' : 'opacity-75 saturate-75'}">`;
+        }
+        if (triggerCount) {
+            triggerCount.textContent = `${summary.completedGroups}/${summary.totalGroups}`;
+        }
+        if (triggerLabel) {
+            triggerLabel.textContent = summary.appBadgeUnlocked ? 'All badges earned' : 'Badge guide';
+        }
+        if (modalTitle) {
+            modalTitle.textContent = summary.appBadgeUnlocked ? 'Badge Collection Complete' : 'Badge Collection';
+        }
+        if (modalSubtitle) {
+            modalSubtitle.textContent = summary.appBadgeUnlocked
                 ? 'Solar System Grand Master earned by mastering every tracked world cluster.'
-                : 'Master every planet system, belt region, and the astronomy course to earn the app-wide badge.';
-        }
-        if (icon) {
-            icon.textContent = summary.appBadgeUnlocked ? '🏅' : '🌠';
+                : 'Track every badge, see what is earned already, and find the next collection to finish.';
         }
         if (progress) {
             progress.textContent = `${summary.completedGroups}/${summary.totalGroups} mastery badges`;
@@ -345,13 +413,49 @@
         if (progressBar) {
             progressBar.style.width = `${percent}%`;
         }
-        if (checklist) {
-            checklist.innerHTML = summary.groups.map((group) => `
-                <div class="flex items-center justify-between gap-3 rounded-xl border px-3 py-2 ${group.unlocked ? 'border-star-gold bg-star-gold/10 text-white' : 'border-white/10 bg-black/20 text-gray-300'}">
-                    <span class="font-mono text-xs uppercase tracking-wide">${group.label}</span>
-                    <span class="font-mono text-xs">${group.completedMembers}/${group.totalMembers}</span>
-                </div>
+        if (worldList) {
+            worldList.innerHTML = getWorldBadgeCatalog(summary.state).map((badge) => `
+                <article class="rounded-2xl border px-4 py-3 ${badge.earned ? 'border-star-green/50 bg-star-green/10' : 'border-white/10 bg-black/25'}">
+                    <div class="flex items-center justify-between gap-3">
+                        <h3 class="font-display text-base ${badge.earned ? 'text-star-green' : 'text-white'}">${badge.label}</h3>
+                        <span class="font-mono text-[11px] uppercase tracking-[0.2em] ${badge.earned ? 'text-star-green' : 'text-gray-400'}">${badge.progressText}</span>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-300 leading-snug">${badge.description}</p>
+                </article>
             `).join('');
+        }
+        if (masteryList) {
+            masteryList.innerHTML = getMasteryCatalog(summary.state).map((group) => `
+                <article class="rounded-2xl border px-4 py-3 ${group.earned ? 'border-star-gold/60 bg-star-gold/10' : 'border-white/10 bg-black/25'}">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <img src="${getBadgeArtPath(group.key)}" alt="${group.label} badge" class="h-14 w-14 shrink-0 rounded-2xl border ${group.earned ? 'border-star-gold/50' : 'border-white/10'} bg-black/20 object-cover">
+                            <h3 class="font-display text-base ${group.earned ? 'text-star-gold' : 'text-white'}">${group.label}</h3>
+                        </div>
+                        <span class="font-mono text-[11px] uppercase tracking-[0.2em] ${group.earned ? 'text-star-gold' : 'text-gray-400'}">${group.progressText}</span>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-300 leading-snug">${group.description}</p>
+                </article>
+            `).join('');
+        }
+        if (finalCard) {
+            finalCard.className = `rounded-2xl border px-5 py-4 ${summary.appBadgeUnlocked ? 'border-star-gold bg-star-gold/10 shadow-[0_0_24px_rgba(255,209,102,0.14)]' : 'border-white/10 bg-black/25'}`;
+            finalCard.innerHTML = `
+                <div class="flex items-start gap-4">
+                    <img src="${getBadgeArtPath('grand')}" alt="Solar System Grand Master badge" class="h-16 w-16 shrink-0 rounded-[1.25rem] border ${summary.appBadgeUnlocked ? 'border-star-gold/60' : 'border-white/10'} bg-black/20 object-cover ${summary.appBadgeUnlocked ? '' : 'opacity-80 saturate-75'}">
+                    <div>
+                        <h3 class="font-display text-lg ${summary.appBadgeUnlocked ? 'text-star-gold' : 'text-white'}">Solar System Grand Master</h3>
+                        <p class="mt-1 text-sm text-gray-300 leading-snug">
+                            ${summary.appBadgeUnlocked
+                                ? 'Every mastery badge is complete. You earned the app-wide badge.'
+                                : 'Unlock all 12 mastery badges to earn the final app-wide award.'}
+                        </p>
+                        <p class="mt-2 font-mono text-[11px] uppercase tracking-[0.22em] ${summary.appBadgeUnlocked ? 'text-star-gold' : 'text-gray-400'}">
+                            ${summary.completedGroups}/${summary.totalGroups} mastery badges earned
+                        </p>
+                    </div>
+                </div>
+            `;
         }
 
         return summary;
@@ -375,12 +479,16 @@
         STORAGE_KEY,
         PAGE_LABELS,
         MASTERY_GROUPS,
+        BADGE_ART,
         loadState,
         saveState,
         restorePageState,
         syncCurrentPageState,
         renderLandingPageStatus,
         getGroupProgress,
+        getWorldBadgeCatalog,
+        getMasteryCatalog,
+        getBadgeArtPath,
         hasWorldVisited,
         hasWorldBadge,
         resetAllProgress

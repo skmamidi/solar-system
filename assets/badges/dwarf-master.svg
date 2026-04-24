@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title>Dwarf Planets Master Badge</title>
+  <desc>A badge with multiple colorful dwarf planets arranged in outer space.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e1530"/>
+      <stop offset="55%" stop-color="#462b5a"/>
+      <stop offset="100%" stop-color="#120f1e"/>
+    </linearGradient>
+  </defs>
+  <path d="M80 8l48 18v42c0 37-21 64-48 84C53 132 32 105 32 68V26L80 8z" fill="url(#bg)" stroke="#cfb1ff" stroke-width="4"/>
+  <circle cx="60" cy="73" r="14" fill="#d7c3ff"/>
+  <circle cx="90" cy="62" r="10" fill="#ffd2aa"/>
+  <ellipse cx="101" cy="92" rx="16" ry="11" fill="#f3a8a8"/>
+  <circle cx="66" cy="100" r="9" fill="#b7e8ff"/>
+  <ellipse cx="101" cy="92" rx="22" ry="6" fill="none" stroke="#ffffff" stroke-opacity=".28" stroke-width="2.5" transform="rotate(-22 101 92)"/>
+  <circle cx="60" cy="73" r="4" fill="#9e89d3" opacity=".45"/>
+  <circle cx="88" cy="60" r="3" fill="#ce9a5c" opacity=".45"/>
+  <rect x="30" y="114" width="100" height="22" rx="11" fill="#0e0c17" fill-opacity=".82" stroke="#cfb1ff" stroke-opacity=".45"/>
+  <text x="80" y="129" text-anchor="middle" fill="#cfb1ff" font-family="Verdana, sans-serif" font-size="12.5" font-weight="700" letter-spacing="1">DWARF PLANETS</text>
+</svg>

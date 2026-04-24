@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title>Jupiter System Master Badge</title>
+  <desc>A badge with banded Jupiter and its four large Galilean moons.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#241811"/>
+      <stop offset="55%" stop-color="#59412e"/>
+      <stop offset="100%" stop-color="#130f16"/>
+    </linearGradient>
+    <linearGradient id="jupiter" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ead7be"/>
+      <stop offset="22%" stop-color="#bc9a76"/>
+      <stop offset="48%" stop-color="#e4c8ab"/>
+      <stop offset="72%" stop-color="#9b7453"/>
+      <stop offset="100%" stop-color="#6c503e"/>
+    </linearGradient>
+  </defs>
+  <path d="M80 8l48 18v42c0 37-21 64-48 84C53 132 32 105 32 68V26L80 8z" fill="url(#bg)" stroke="#ffd166" stroke-width="4"/>
+  <circle cx="80" cy="82" r="31" fill="url(#jupiter)" stroke="#fff0d0" stroke-opacity=".3" stroke-width="2"/>
+  <ellipse cx="92" cy="93" rx="8" ry="5" fill="#b4543b" opacity=".7"/>
+  <path d="M53 70h54M50 80h60M54 90h53M58 100h44" stroke="#7b5d49" stroke-opacity=".55" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="38" cy="80" r="4.3" fill="#f7de8f"/>
+  <circle cx="49" cy="59" r="4" fill="#f2f1ec"/>
+  <circle cx="112" cy="55" r="5.3" fill="#a6a6a4"/>
+  <circle cx="123" cy="82" r="5" fill="#69707b"/>
+  <rect x="27" y="114" width="106" height="22" rx="11" fill="#0c0d13" fill-opacity=".8" stroke="#ffd166" stroke-opacity=".45"/>
+  <text x="80" y="129" text-anchor="middle" fill="#ffd166" font-family="Verdana, sans-serif" font-size="13" font-weight="700" letter-spacing="1">JUPITER SYSTEM</text>
+</svg>

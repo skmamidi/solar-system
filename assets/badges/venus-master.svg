@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title>Venus Master Badge</title>
+  <desc>A shield badge featuring Venus with swirling clouds and warm gold tones.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#34161d"/>
+      <stop offset="60%" stop-color="#6f3b2c"/>
+      <stop offset="100%" stop-color="#1a1018"/>
+    </linearGradient>
+    <linearGradient id="planet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffe3a3"/>
+      <stop offset="45%" stop-color="#f3b567"/>
+      <stop offset="100%" stop-color="#af6431"/>
+    </linearGradient>
+  </defs>
+  <path d="M80 8l48 18v42c0 37-21 64-48 84C53 132 32 105 32 68V26L80 8z" fill="url(#bg)" stroke="#ffd166" stroke-width="4"/>
+  <circle cx="80" cy="82" r="30" fill="url(#planet)" stroke="#fff2d6" stroke-opacity=".35" stroke-width="2"/>
+  <path d="M56 73c11-7 37-5 48 2M54 85c15-6 42-2 54 5M59 97c14-4 30-3 42 2" fill="none" stroke="#fff4da" stroke-opacity=".45" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="66" cy="64" r="36" fill="none" stroke="#ffd166" stroke-opacity=".22" stroke-width="2"/>
+  <rect x="48" y="114" width="64" height="22" rx="11" fill="#0a0d20" fill-opacity=".78" stroke="#ffd166" stroke-opacity=".45"/>
+  <text x="80" y="129" text-anchor="middle" fill="#ffd166" font-family="Verdana, sans-serif" font-size="15" font-weight="700" letter-spacing="1">VENUS</text>
+</svg>

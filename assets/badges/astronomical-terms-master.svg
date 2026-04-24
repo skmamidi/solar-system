@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title>Astronomical Terms Master Badge</title>
+  <desc>A badge with a celestial sphere grid, orbit lines, and a guiding star.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#17162d"/>
+      <stop offset="55%" stop-color="#43306d"/>
+      <stop offset="100%" stop-color="#10101f"/>
+    </linearGradient>
+  </defs>
+  <path d="M80 8l48 18v42c0 37-21 64-48 84C53 132 32 105 32 68V26L80 8z" fill="url(#bg)" stroke="#c5a8ff" stroke-width="4"/>
+  <circle cx="80" cy="82" r="29" fill="none" stroke="#e2d5ff" stroke-opacity=".55" stroke-width="2.5"/>
+  <ellipse cx="80" cy="82" rx="29" ry="10" fill="none" stroke="#6ef0ff" stroke-opacity=".55" stroke-width="2"/>
+  <ellipse cx="80" cy="82" rx="11" ry="29" fill="none" stroke="#ff5ac6" stroke-opacity=".5" stroke-width="2"/>
+  <path d="M51 82h58M80 53v58" stroke="#ffffff" stroke-opacity=".22" stroke-width="2"/>
+  <path d="M80 50l3 8h9l-7 5 3 8-8-5-8 5 3-8-7-5h9z" fill="#ffd166"/>
+  <rect x="20" y="114" width="120" height="22" rx="11" fill="#0b0c17" fill-opacity=".82" stroke="#c5a8ff" stroke-opacity=".45"/>
+  <text x="80" y="129" text-anchor="middle" fill="#c5a8ff" font-family="Verdana, sans-serif" font-size="11.5" font-weight="700" letter-spacing="1">ASTRONOMICAL TERMS</text>
+</svg>
