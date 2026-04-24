@@ -51,6 +51,13 @@
 
         .light-time-toggle-shell {
             position: relative;
+            opacity: 0.18;
+            transition: opacity 0.22s ease;
+        }
+
+        .light-time-toggle-shell:hover,
+        .light-time-toggle-shell:focus-within {
+            opacity: 0.62;
         }
 
         .btn-press { 
@@ -395,27 +402,27 @@
 
         .light-time-marker-label {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 9px;
-            letter-spacing: 0.14em;
+            font-size: 8px;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
-            color: rgba(255,255,255,0.38);
+            color: rgba(255,255,255,0.3);
             margin-bottom: 0.18rem;
             white-space: nowrap;
         }
 
         .light-time-marker-time {
             display: inline-block;
-            padding: 0.14rem 0.42rem;
+            padding: 0.12rem 0.38rem;
             border-radius: 9999px;
-            background: rgba(0,0,0,0.24);
-            border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.18);
+            border: 1px solid rgba(255,255,255,0.035);
             font-family: 'JetBrains Mono', monospace;
-            font-size: 9px;
-            letter-spacing: 0.14em;
+            font-size: 8px;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
-            color: rgba(247, 231, 182, 0.84);
+            color: rgba(247, 231, 182, 0.76);
             white-space: nowrap;
-            opacity: 0.86;
+            opacity: 0.8;
             transition: opacity 0.28s ease, transform 0.28s ease;
         }
 
@@ -429,12 +436,13 @@
 
         .light-toggle-btn {
             position: relative;
-            width: 34px;
-            height: 20px;
+            width: 28px;
+            height: 16px;
             border-radius: 9999px;
-            border: 1px solid rgba(255,255,255,0.08);
-            background: rgba(10, 13, 32, 0.56);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+            border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.02);
+            box-shadow: none;
+            backdrop-filter: blur(6px);
             transition: border-color 0.24s ease, background-color 0.24s ease;
         }
 
@@ -447,7 +455,7 @@
             border-radius: 9999px;
             background: rgba(5, 8, 20, 0.92);
             border: 1px solid rgba(255,255,255,0.08);
-            color: rgba(247, 231, 182, 0.88);
+            color: rgba(247, 231, 182, 0.82);
             font-family: 'JetBrains Mono', monospace;
             font-size: 9px;
             letter-spacing: 0.14em;
@@ -464,6 +472,11 @@
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        .light-toggle-btn:focus-visible {
+            outline: none;
+            border-color: rgba(247, 231, 182, 0.16);
         }
 
         body.light-time-off .light-time-track,
@@ -863,7 +876,7 @@
     <!-- Light Travel Overlay Controls -->
     <div class="absolute right-4 top-[4.35rem] md:right-6 md:top-[4.9rem] z-40 light-time-toggle-shell">
         <button id="light-time-toggle" type="button" class="light-toggle-btn btn-press" data-tooltip="Toggle light travel line" title="Toggle light travel line" aria-label="Toggle light travel line" aria-pressed="true" onclick="toggleLightTimeOverlay()">
-            <span id="light-time-toggle-thumb" class="absolute left-[2px] top-[2px] h-[14px] w-[14px] rounded-full bg-[rgba(247,231,182,0.84)] shadow-[0_0_10px_rgba(247,231,182,0.16)] transition-transform"></span>
+            <span id="light-time-toggle-thumb" class="absolute left-[2px] top-[2px] h-[10px] w-[10px] rounded-full bg-[rgba(255,255,255,0.34)] transition-transform"></span>
         </button>
     </div>
 
@@ -1269,7 +1282,7 @@
                         </div>
 
                         <div class="outer-body left-[25.6%] top-[236px]">
-                            <button type="button" class="body-link moon-wrapper group btn-press" data-wrapper="eris" onclick="zoomAndNavigate(event, 'dwarf-planets/eris.html')">
+                            <button type="button" class="body-link moon-wrapper group btn-press" data-wrapper="eris" data-light-key="eris" onclick="zoomAndNavigate(event, 'dwarf-planets/eris.html')">
                                 <div data-type="rocky" class="w-[7px] h-[7px] planet-orb orb-dwarf"></div>
                                 <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Eris</span>
                             </button>
@@ -1297,7 +1310,7 @@
 
                         <div class="outer-body left-[64.4%] top-[170px]">
                             <span class="distance-pill">~142 AU</span>
-                            <button type="button" class="body-link moon-wrapper group btn-press" data-wrapper="voyager-2" onclick="zoomAndNavigate(event, 'voyager-2.html')">
+                            <button type="button" class="body-link moon-wrapper group btn-press" data-wrapper="voyager-2" data-light-key="voyager-2" onclick="zoomAndNavigate(event, 'voyager-2.html')">
                                 <img src="assets/voyagers/voyager-2.svg" alt="Voyager 2" class="w-7 h-7 object-contain rounded-full border border-white/10 bg-space-900/70 shadow-[0_0_12px_rgba(110,240,255,0.32)]">
                                 <span class="font-mono text-[10px] text-gray-300 uppercase tracking-widest">Voyager 2</span>
                             </button>
@@ -1305,7 +1318,7 @@
 
                         <div class="outer-body left-[78.9%] top-[272px]">
                             <span class="distance-pill">~170 AU</span>
-                            <button type="button" class="body-link moon-wrapper group btn-press" data-wrapper="voyager-1" onclick="zoomAndNavigate(event, 'voyager-1.html')">
+                            <button type="button" class="body-link moon-wrapper group btn-press" data-wrapper="voyager-1" data-light-key="voyager-1" onclick="zoomAndNavigate(event, 'voyager-1.html')">
                                 <img src="assets/voyagers/voyager-1.svg" alt="Voyager 1" class="w-7 h-7 object-contain rounded-full border border-white/10 bg-space-900/70 shadow-[0_0_12px_rgba(255,209,102,0.34)]">
                                 <span class="font-mono text-[10px] text-gray-300 uppercase tracking-widest">Voyager 1</span>
                             </button>
@@ -1971,7 +1984,15 @@
         { key: 'saturn', label: 'Saturn', time: '1h 19m' },
         { key: 'uranus', label: 'Uranus', time: '2h 40m' },
         { key: 'neptune', label: 'Neptune', time: '4h 10m' },
-        { key: 'kuiper-belt', label: 'Kuiper Belt', time: '4h 10m-6h 56m' }
+        { key: 'kuiper-belt', label: 'Kuiper Belt', time: '4h 10m-6h 56m' },
+        { key: 'eris', label: 'Eris', time: '9h 23m' },
+        { key: 'heliosheath', label: 'Heliosheath', time: '11h 39m-16h 38m' },
+        { key: 'heliopause', label: 'Heliopause', time: '16h 38m' },
+        { key: 'voyager-2', label: 'Voyager 2', time: '19h 41m' },
+        { key: 'voyager-1', label: 'Voyager 1', time: '23h 34m' },
+        { key: 'inner-oort-cloud', label: 'Inner Oort', time: '11.6d' },
+        { key: 'outer-oort-cloud', label: 'Outer Oort', time: '1.6y' },
+        { key: 'proxima-centauri', label: 'Proxima', time: '4.24y' }
     ];
 
     function injectLightTimeMarkers() {
@@ -1987,20 +2008,8 @@
 
         const majorTargets = [...scrollInner.querySelectorAll('button[data-light-key]')];
 
-        const markerKeyMap = {
-            Mercury: 'mercury',
-            Venus: 'venus',
-            Earth: 'earth',
-            Mars: 'mars',
-            Jupiter: 'jupiter',
-            Saturn: 'saturn',
-            Uranus: 'uranus',
-            Neptune: 'neptune',
-            'Kuiper Belt': 'kuiper-belt'
-        };
-
         lightTimeMarkerData.forEach((item) => {
-            const markerKey = item.key || markerKeyMap[item.label];
+            const markerKey = item.key;
             if (!markerKey) return;
 
             const target = majorTargets.find((node) => node.dataset.lightKey === markerKey);
@@ -2047,12 +2056,14 @@
         const thumb = document.getElementById('light-time-toggle-thumb');
         if (toggle) {
             toggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
-            toggle.style.background = enabled ? 'rgba(59, 42, 10, 0.9)' : 'rgba(10, 13, 32, 0.8)';
-            toggle.style.borderColor = enabled ? 'rgba(246, 211, 122, 0.28)' : 'rgba(255,255,255,0.1)';
+            toggle.style.background = enabled ? 'rgba(247, 231, 182, 0.04)' : 'rgba(255,255,255,0.02)';
+            toggle.style.borderColor = enabled ? 'rgba(247, 231, 182, 0.12)' : 'rgba(255,255,255,0.05)';
         }
         if (thumb) {
-            thumb.style.transform = enabled ? 'translateX(20px)' : 'translateX(0px)';
-            thumb.style.opacity = enabled ? '1' : '0.7';
+            thumb.style.transform = enabled ? 'translateX(12px)' : 'translateX(0px)';
+            thumb.style.opacity = enabled ? '0.74' : '0.34';
+            thumb.style.background = enabled ? 'rgba(247,231,182,0.72)' : 'rgba(255,255,255,0.34)';
+            thumb.style.boxShadow = enabled ? '0 0 8px rgba(247,231,182,0.08)' : 'none';
         }
         window.localStorage.setItem('solarSystemLightTimeOverlay', enabled ? 'on' : 'off');
     }
