@@ -79,6 +79,53 @@
         'astronomical-terms-master': 'assets/badges/astronomical-terms-master.svg',
         grand: 'assets/badges/solar-system-grand-master.svg'
     };
+    const WORLD_URLS = {
+        mercury: 'mercury/mercury.html',
+        venus: 'venus/venus.html',
+        earth: 'earth/earth.html',
+        luna: 'earth/luna.html',
+        mars: 'mars/mars.html',
+        phobos: 'mars/phobos.html',
+        deimos: 'mars/deimos.html',
+        jupiter: 'jupiter/jupiter.html',
+        io: 'jupiter/io.html',
+        europa: 'jupiter/europa.html',
+        ganymede: 'jupiter/ganymede.html',
+        callisto: 'jupiter/callisto.html',
+        saturn: 'saturn/saturn.html',
+        titan: 'saturn/titan.html',
+        enceladus: 'saturn/enceladus.html',
+        iapetus: 'saturn/iapetus.html',
+        mimas: 'saturn/mimas.html',
+        rhea: 'saturn/rhea.html',
+        uranus: 'uranus/uranus.html',
+        miranda: 'uranus/miranda.html',
+        ariel: 'uranus/ariel.html',
+        umbriel: 'uranus/umbriel.html',
+        titania: 'uranus/titania.html',
+        oberon: 'uranus/oberon.html',
+        neptune: 'neptune/neptune.html',
+        triton: 'neptune/triton.html',
+        proteus: 'neptune/proteus.html',
+        nereid: 'neptune/Nereid.html',
+        larissa: 'neptune/larissa.html',
+        'asteroid-belt': 'asteroid-belt/asteroid-belt.html',
+        ceres: 'asteroid-belt/ceres.html',
+        vesta: 'asteroid-belt/vesta.html',
+        pallas: 'asteroid-belt/pallas.html',
+        hygiea: 'asteroid-belt/hygiea.html',
+        'kuiper-belt': 'kuiper-belt/kuiper-belt.html',
+        arrokoth: 'kuiper-belt/arrokoth.html',
+        quaoar: 'kuiper-belt/quaoar.html',
+        orcus: 'kuiper-belt/orcus.html',
+        salacia: 'kuiper-belt/salacia.html',
+        'dwarf-planets': 'dwarf-planets/dwarf-planets.html',
+        pluto: 'dwarf-planets/pluto.html',
+        eris: 'dwarf-planets/eris.html',
+        haumea: 'dwarf-planets/haumea.html',
+        makemake: 'dwarf-planets/makemake.html',
+        'astronomical-terms': 'astronomical-terms.html'
+    };
 
     const DEFAULT_STATE = {
         pages: {},
@@ -331,6 +378,38 @@
         return BADGE_ART[key] || BADGE_ART.grand;
     }
 
+    function getWorldBadgeHref(key) {
+        return WORLD_URLS[key] || 'index.html';
+    }
+
+    function getMasteryBadgeHref(groupKey, state = loadState()) {
+        const group = MASTERY_GROUPS.find((entry) => entry.key === groupKey);
+        if (!group) return 'index.html';
+
+        const nextMember = group.members.find((member) => !(state.pages[member] && state.pages[member].badge));
+        return getWorldBadgeHref(nextMember || group.members[0]);
+    }
+
+    function getGrandBadgeHref(state = loadState()) {
+        const nextGroup = MASTERY_GROUPS.find((group) => !state.groupBadges[group.key]);
+        return getMasteryBadgeHref(nextGroup ? nextGroup.key : MASTERY_GROUPS[0].key, state);
+    }
+
+    function navigateToBadgeTarget(url) {
+        if (!url) return;
+
+        if (typeof toggleBadgeModal === 'function') {
+            toggleBadgeModal(false);
+        }
+
+        if (typeof navigate === 'function') {
+            navigate(url);
+            return;
+        }
+
+        window.location.href = url;
+    }
+
     function getWorldBadgeCatalog(state = loadState()) {
         return WORLD_BADGE_KEYS.map((key) => {
             const page = state.pages[key];
@@ -415,18 +494,18 @@
         }
         if (worldList) {
             worldList.innerHTML = getWorldBadgeCatalog(summary.state).map((badge) => `
-                <article class="rounded-2xl border px-4 py-3 ${badge.earned ? 'border-star-green/50 bg-star-green/10' : 'border-white/10 bg-black/25'}">
+                <button type="button" onclick="GlobalBadges.navigateToBadgeTarget('${getWorldBadgeHref(badge.key)}')" class="w-full text-left rounded-2xl border px-4 py-3 transition-colors hover:border-star-cyan/50 hover:bg-white/5 ${badge.earned ? 'border-star-green/50 bg-star-green/10' : 'border-white/10 bg-black/25'}">
                     <div class="flex items-center justify-between gap-3">
                         <h3 class="font-display text-base ${badge.earned ? 'text-star-green' : 'text-white'}">${badge.label}</h3>
                         <span class="font-mono text-[11px] uppercase tracking-[0.2em] ${badge.earned ? 'text-star-green' : 'text-gray-400'}">${badge.progressText}</span>
                     </div>
                     <p class="mt-2 text-sm text-gray-300 leading-snug">${badge.description}</p>
-                </article>
+                </button>
             `).join('');
         }
         if (masteryList) {
             masteryList.innerHTML = getMasteryCatalog(summary.state).map((group) => `
-                <article class="rounded-2xl border px-4 py-3 ${group.earned ? 'border-star-gold/60 bg-star-gold/10' : 'border-white/10 bg-black/25'}">
+                <button type="button" onclick="GlobalBadges.navigateToBadgeTarget('${getMasteryBadgeHref(group.key, summary.state)}')" class="w-full text-left rounded-2xl border px-4 py-3 transition-colors hover:border-star-cyan/50 hover:bg-white/5 ${group.earned ? 'border-star-gold/60 bg-star-gold/10' : 'border-white/10 bg-black/25'}">
                     <div class="flex items-center justify-between gap-3">
                         <div class="flex items-center gap-3 min-w-0">
                             <img src="${getBadgeArtPath(group.key)}" alt="${group.label} badge" class="h-14 w-14 shrink-0 rounded-2xl border ${group.earned ? 'border-star-gold/50' : 'border-white/10'} bg-black/20 object-cover">
@@ -435,13 +514,13 @@
                         <span class="font-mono text-[11px] uppercase tracking-[0.2em] ${group.earned ? 'text-star-gold' : 'text-gray-400'}">${group.progressText}</span>
                     </div>
                     <p class="mt-2 text-sm text-gray-300 leading-snug">${group.description}</p>
-                </article>
+                </button>
             `).join('');
         }
         if (finalCard) {
             finalCard.className = `rounded-2xl border px-5 py-4 ${summary.appBadgeUnlocked ? 'border-star-gold bg-star-gold/10 shadow-[0_0_24px_rgba(255,209,102,0.14)]' : 'border-white/10 bg-black/25'}`;
             finalCard.innerHTML = `
-                <div class="flex items-start gap-4">
+                <button type="button" onclick="GlobalBadges.navigateToBadgeTarget('${getGrandBadgeHref(summary.state)}')" class="w-full text-left flex items-start gap-4 transition-opacity hover:opacity-100 opacity-100">
                     <img src="${getBadgeArtPath('grand')}" alt="Solar System Grand Master badge" class="h-16 w-16 shrink-0 rounded-[1.25rem] border ${summary.appBadgeUnlocked ? 'border-star-gold/60' : 'border-white/10'} bg-black/20 object-cover ${summary.appBadgeUnlocked ? '' : 'opacity-80 saturate-75'}">
                     <div>
                         <h3 class="font-display text-lg ${summary.appBadgeUnlocked ? 'text-star-gold' : 'text-white'}">Solar System Grand Master</h3>
@@ -454,7 +533,7 @@
                             ${summary.completedGroups}/${summary.totalGroups} mastery badges earned
                         </p>
                     </div>
-                </div>
+                </button>
             `;
         }
 
@@ -489,6 +568,10 @@
         getWorldBadgeCatalog,
         getMasteryCatalog,
         getBadgeArtPath,
+        getWorldBadgeHref,
+        getMasteryBadgeHref,
+        getGrandBadgeHref,
+        navigateToBadgeTarget,
         hasWorldVisited,
         hasWorldBadge,
         resetAllProgress
