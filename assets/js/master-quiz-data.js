@@ -1,6 +1,6 @@
 window.MASTER_QUIZ_DATA = {
-    "generatedAt": "2026-04-24T15:21:18.953Z",
-    "questionCount": 556,
+    "generatedAt": "2026-04-24T15:29:34.872Z",
+    "questionCount": 571,
     "topics": [
         "Asteroid Belt",
         "Deep Space",
@@ -11205,6 +11205,306 @@ window.MASTER_QUIZ_DATA = {
             "sourceTitle": "Proxima Centauri",
             "sourcePath": "proxima-centauri.html",
             "sourceType": "concept-quiz"
+        },
+        {
+            "id": "planetary-comparisons-physical-9",
+            "question": "Which pair of planets are most similar in diameter among the outer giants?",
+            "choices": [
+                "Uranus and Neptune",
+                "Jupiter and Saturn",
+                "Saturn and Uranus",
+                "Neptune and Jupiter"
+            ],
+            "correctIndex": 0,
+            "explanation": "Uranus and Neptune are very close in size, which is why they are often grouped together as the ice giants.",
+            "difficulty": "easy",
+            "topic": "Planetary Comparisons",
+            "subtopic": "Physical",
+            "topicSlug": "planetary-comparisons",
+            "subtopicSlug": "physical",
+            "sourceTitle": "Planetary Comparisons",
+            "sourcePath": "planetary-comparisons.html",
+            "sourceType": "generated-comparison"
+        },
+        {
+            "id": "planetary-comparisons-physical-10",
+            "question": "Which planet has the greatest mass in the comparison data?",
+            "choices": [
+                "Jupiter",
+                "Saturn",
+                "Neptune",
+                "Earth"
+            ],
+            "correctIndex": 0,
+            "explanation": "Jupiter is by far the most massive planet in the solar system.",
+            "difficulty": "easy",
+            "topic": "Planetary Comparisons",
+            "subtopic": "Physical",
+            "topicSlug": "planetary-comparisons",
+            "subtopicSlug": "physical",
+            "sourceTitle": "Planetary Comparisons",
+            "sourcePath": "planetary-comparisons.html",
+            "sourceType": "generated-comparison"
+        },
+        {
+            "id": "planetary-comparisons-physical-11",
+            "question": "Which planet has the smallest diameter of all eight planets?",
+            "choices": [
+                "Mercury",
+                "Mars",
+                "Venus",
+                "Neptune"
+            ],
+            "correctIndex": 0,
+            "explanation": "Mercury is the smallest planet by diameter.",
+            "difficulty": "easy",
+            "topic": "Planetary Comparisons",
+            "subtopic": "Physical",
+            "topicSlug": "planetary-comparisons",
+            "subtopicSlug": "physical",
+            "sourceTitle": "Planetary Comparisons",
+            "sourcePath": "planetary-comparisons.html",
+            "sourceType": "generated-comparison"
+        },
+        {
+            "id": "planetary-comparisons-physical-12",
+            "question": "Which planet is larger in diameter than Earth but smaller than Saturn?",
+            "choices": [
+                "Neptune",
+                "Mercury",
+                "Mars",
+                "Venus"
+            ],
+            "correctIndex": 0,
+            "explanation": "Neptune is much larger than Earth, but still far smaller than Saturn.",
+            "difficulty": "medium",
+            "topic": "Planetary Comparisons",
+            "subtopic": "Physical",
+            "topicSlug": "planetary-comparisons",
+            "subtopicSlug": "physical",
+            "sourceTitle": "Planetary Comparisons",
+            "sourcePath": "planetary-comparisons.html",
+            "sourceType": "generated-comparison"
+        },
+        {
+            "id": "planetary-comparisons-orbital-7",
+            "question": "Which planet has the slowest average orbital speed around the Sun?",
+            "choices": [
+                "Neptune",
+                "Uranus",
+                "Saturn",
+                "Mars"
+            ],
+            "correctIndex": 0,
+            "explanation": "Neptune is the farthest major planet, so it moves the most slowly along its orbit on average.",
+            "difficulty": "easy",
+            "topic": "Planetary Comparisons",
+            "subtopic": "Orbital",
+            "topicSlug": "planetary-comparisons",
+            "subtopicSlug": "orbital",
+            "sourceTitle": "Planetary Comparisons",
+            "sourcePath": "planetary-comparisons.html",
+            "sourceType": "generated-comparison"
+        },
+        {
+            "id": "planetary-comparisons-orbital-8",
+            "question": "Which planet has the longest day, meaning the slowest rotation, in the comparison data?",
+            "choices": [
+                "Venus",
+                "Mercury",
+                "Mars",
+                "Neptune"
+            ],
+            "correctIndex": 0,
+            "explanation": "Venus rotates extremely slowly, giving it the longest day of any planet in the set.",
+            "difficulty": "easy",
+            "topic": "Planetary Comparisons",
+            "subtopic": "Orbital",
+            "topicSlug": "planetary-comparisons",
+            "subtopicSlug": "orbital",
+            "sourceTitle": "Planetary Comparisons",
+            "sourcePath": "planetary-comparisons.html",
+            "sourceType": "generated-comparison"
+        },
+        {
+            "id": "planetary-comparisons-orbital-9",
+            "question": "Which planet is famous for rotating in the opposite direction from most planets?",
+            "choices": [
+                "Venus",
+                "Earth",
+                "Jupiter",
+                "Neptune"
+            ],
+            "correctIndex": 0,
+            "explanation": "Venus rotates retrograde, which means it spins in the opposite direction from most planets.",
+            "difficulty": "medium",
+            "topic": "Planetary Comparisons",
+            "subtopic": "Orbital",
+            "topicSlug": "planetary-comparisons",
+            "subtopicSlug": "orbital",
+            "sourceTitle": "Planetary Comparisons",
+            "sourcePath": "planetary-comparisons.html",
+            "sourceType": "generated-comparison"
+        },
+        {
+            "id": "planetary-comparisons-orbital-10",
+            "question": "Which planet combines a very short day with the largest diameter?",
+            "choices": [
+                "Jupiter",
+                "Saturn",
+                "Earth",
+                "Mercury"
+            ],
+            "correctIndex": 0,
+            "explanation": "Jupiter is both the largest planet and the fastest spinner, with a day of about 9.9 hours.",
+            "difficulty": "medium",
+            "topic": "Planetary Comparisons",
+            "subtopic": "Orbital",
+            "topicSlug": "planetary-comparisons",
+            "subtopicSlug": "orbital",
+            "sourceTitle": "Planetary Comparisons",
+            "sourcePath": "planetary-comparisons.html",
+            "sourceType": "generated-comparison"
+        },
+        {
+            "id": "planetary-comparisons-extremes-3",
+            "question": "Which planet has the strongest surface pressure in the comparison data?",
+            "choices": [
+                "Venus",
+                "Earth",
+                "Mars",
+                "Mercury"
+            ],
+            "correctIndex": 0,
+            "explanation": "Venus has an incredibly dense atmosphere, giving it the strongest surface pressure among the planets shown.",
+            "difficulty": "easy",
+            "topic": "Planetary Comparisons",
+            "subtopic": "Atmosphere & Extremes",
+            "topicSlug": "planetary-comparisons",
+            "subtopicSlug": "atmosphere-extremes",
+            "sourceTitle": "Planetary Comparisons",
+            "sourcePath": "planetary-comparisons.html",
+            "sourceType": "generated-comparison"
+        },
+        {
+            "id": "planetary-comparisons-extremes-4",
+            "question": "Which planet has the weakest surface pressure because it has almost no real atmosphere?",
+            "choices": [
+                "Mercury",
+                "Venus",
+                "Earth",
+                "Saturn"
+            ],
+            "correctIndex": 0,
+            "explanation": "Mercury has only an extremely thin exosphere, so its surface pressure is tiny compared with true atmospheres.",
+            "difficulty": "medium",
+            "topic": "Planetary Comparisons",
+            "subtopic": "Atmosphere & Extremes",
+            "topicSlug": "planetary-comparisons",
+            "subtopicSlug": "atmosphere-extremes",
+            "sourceTitle": "Planetary Comparisons",
+            "sourcePath": "planetary-comparisons.html",
+            "sourceType": "generated-comparison"
+        },
+        {
+            "id": "planetary-comparisons-extremes-5",
+            "question": "Which planet is known for the fastest winds in the solar system in the comparison data?",
+            "choices": [
+                "Neptune",
+                "Earth",
+                "Jupiter",
+                "Mars"
+            ],
+            "correctIndex": 0,
+            "explanation": "Neptune is famous for incredibly fast winds, the strongest among the planets in the set.",
+            "difficulty": "easy",
+            "topic": "Planetary Comparisons",
+            "subtopic": "Atmosphere & Extremes",
+            "topicSlug": "planetary-comparisons",
+            "subtopicSlug": "atmosphere-extremes",
+            "sourceTitle": "Planetary Comparisons",
+            "sourcePath": "planetary-comparisons.html",
+            "sourceType": "generated-comparison"
+        },
+        {
+            "id": "planetary-comparisons-extremes-6",
+            "question": "Which planet is hotter on average: Mercury or Venus?",
+            "choices": [
+                "Venus",
+                "Mercury",
+                "They are exactly the same",
+                "It changes every year"
+            ],
+            "correctIndex": 0,
+            "explanation": "Even though Mercury is closer to the Sun, Venus is hotter overall because of its extreme greenhouse atmosphere.",
+            "difficulty": "easy",
+            "topic": "Planetary Comparisons",
+            "subtopic": "Atmosphere & Extremes",
+            "topicSlug": "planetary-comparisons",
+            "subtopicSlug": "atmosphere-extremes",
+            "sourceTitle": "Planetary Comparisons",
+            "sourcePath": "planetary-comparisons.html",
+            "sourceType": "generated-comparison"
+        },
+        {
+            "id": "planetary-comparisons-extras-3",
+            "question": "Which planet in the comparison data has no known moons?",
+            "choices": [
+                "Mercury and Venus",
+                "Earth and Mars",
+                "Jupiter and Saturn",
+                "Uranus and Neptune"
+            ],
+            "correctIndex": 0,
+            "explanation": "Mercury and Venus are the only planets in the major set with no known natural moons.",
+            "difficulty": "easy",
+            "topic": "Planetary Comparisons",
+            "subtopic": "Moons & Missions",
+            "topicSlug": "planetary-comparisons",
+            "subtopicSlug": "moons-missions",
+            "sourceTitle": "Planetary Comparisons",
+            "sourcePath": "planetary-comparisons.html",
+            "sourceType": "generated-comparison"
+        },
+        {
+            "id": "planetary-comparisons-extras-4",
+            "question": "Which planet has more known moons in the data: Uranus or Neptune?",
+            "choices": [
+                "Uranus",
+                "Neptune",
+                "They are tied",
+                "The data shows neither has moons"
+            ],
+            "correctIndex": 0,
+            "explanation": "Uranus has more known moons than Neptune in the comparison data.",
+            "difficulty": "medium",
+            "topic": "Planetary Comparisons",
+            "subtopic": "Moons & Missions",
+            "topicSlug": "planetary-comparisons",
+            "subtopicSlug": "moons-missions",
+            "sourceTitle": "Planetary Comparisons",
+            "sourcePath": "planetary-comparisons.html",
+            "sourceType": "generated-comparison"
+        },
+        {
+            "id": "planetary-comparisons-extras-5",
+            "question": "Which planet is most strongly associated with the Great Red Spot?",
+            "choices": [
+                "Jupiter",
+                "Saturn",
+                "Neptune",
+                "Venus"
+            ],
+            "correctIndex": 0,
+            "explanation": "The Great Red Spot is Jupiter’s giant long-lived storm.",
+            "difficulty": "easy",
+            "topic": "Planetary Comparisons",
+            "subtopic": "Moons & Missions",
+            "topicSlug": "planetary-comparisons",
+            "subtopicSlug": "moons-missions",
+            "sourceTitle": "Planetary Comparisons",
+            "sourcePath": "planetary-comparisons.html",
+            "sourceType": "generated-comparison"
         }
     ]
 };
