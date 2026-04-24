@@ -499,9 +499,168 @@
         extras: [
             { title: 'Number of Moons', prop: 'moonsCount', type: 'bar' },
             { title: 'Magnetic Field', prop: 'magField', type: 'mag-popup' },
-            { title: 'Famous Missions', prop: 'missions', type: 'text' },
+            { title: 'Famous Missions', prop: 'missions', type: 'missions' },
             { title: 'Nicknames', prop: 'nicknamesStr', type: 'badge' }
         ]
+    };
+
+    const missionFacts = {
+        'Mariner 10': {
+            icon: '📸',
+            target: 'Mercury and Venus',
+            badge: 'First Mercury close-up',
+            intro: 'Mariner 10 was a speedy flyby spacecraft that gave scientists their first close-up look at Mercury.',
+            facts: [
+                'It was the first spacecraft to use one planet\'s gravity, Venus, to help steer it toward another planet.',
+                'It flew past Mercury three times in 1974 and 1975, photographing almost half the planet.',
+                'Its pictures showed Mercury is covered with craters, cliffs, and giant impact basins.'
+            ],
+            kidPrompt: 'Gravity assists are like cosmic slingshots: the spacecraft borrows a tiny bit of a planet\'s motion to change direction.'
+        },
+        'MESSENGER': {
+            icon: '🛰️',
+            target: 'Mercury',
+            badge: 'First Mercury orbiter',
+            intro: 'MESSENGER orbited Mercury and mapped the tiny planet in amazing detail.',
+            facts: [
+                'Its full name stood for MErcury Surface, Space ENvironment, GEochemistry, and Ranging.',
+                'It confirmed water ice hiding in permanently shadowed craters near Mercury\'s poles.',
+                'After running out of fuel, it ended its mission by impacting Mercury in 2015.'
+            ],
+            kidPrompt: 'Even the closest planet to the Sun can keep ice if the sunlight never reaches a crater floor.'
+        },
+        'Venera': {
+            icon: '🔥',
+            target: 'Venus',
+            badge: 'First surface photos from another planet',
+            intro: 'The Soviet Venera missions were tough landers built to survive Venus for a short time.',
+            facts: [
+                'Venus is hot enough to melt lead and has pressure like being deep underwater.',
+                'Venera landers sent back the first pictures ever taken from the surface of another planet.',
+                'Some landers lasted less than two hours, which was still a huge success on Venus.'
+            ],
+            kidPrompt: 'A Venus lander is like a robot in a pressure cooker, oven, and acid cloud world all at once.'
+        },
+        'Magellan': {
+            icon: '🗺️',
+            target: 'Venus',
+            badge: 'Radar mapmaker',
+            intro: 'Magellan used radar to see through Venus\'s thick clouds and map the hidden ground below.',
+            facts: [
+                'Radar let it map mountains, volcanoes, plains, and impact craters even though cameras could not see the surface.',
+                'It mapped nearly the entire planet in the early 1990s.',
+                'Its data showed Venus has many volcanic features and a very young-looking surface compared with Mercury or the Moon.'
+            ],
+            kidPrompt: 'Radar works a bit like shouting in a canyon and using the echo to learn the shape of the walls.'
+        },
+        'ISS': {
+            icon: '🏠',
+            target: 'Low Earth orbit',
+            badge: 'Space laboratory',
+            intro: 'The International Space Station is a giant science lab where astronauts live and work above Earth.',
+            facts: [
+                'It circles Earth about every 90 minutes, so astronauts see many sunrises and sunsets each day.',
+                'Crews study how plants, fluids, fire, and the human body behave in microgravity.',
+                'Many countries helped build and operate it, making it one of humanity\'s biggest teamwork projects.'
+            ],
+            kidPrompt: 'Microgravity does not mean there is no gravity; the station and astronauts are falling around Earth together.'
+        },
+        'Apollo': {
+            icon: '🌕',
+            target: 'The Moon',
+            badge: 'Humans on the Moon',
+            intro: 'Apollo carried astronauts from Earth to the Moon and back.',
+            facts: [
+                'Apollo 11 landed the first humans on the Moon in July 1969.',
+                'Apollo astronauts brought Moon rocks back to Earth so scientists could study lunar history.',
+                'The missions left reflectors on the Moon that scientists still use to measure its distance from Earth.'
+            ],
+            kidPrompt: 'Those reflectors helped prove the Moon is slowly moving away from Earth by a few centimeters each year.'
+        },
+        'Viking': {
+            icon: '🧪',
+            target: 'Mars',
+            badge: 'First successful Mars landers',
+            intro: 'Viking sent orbiters and landers to Mars to look closely at its surface and atmosphere.',
+            facts: [
+                'Viking 1 and Viking 2 landed on Mars in 1976.',
+                'They took the first successful photos from the Martian surface.',
+                'They tested Martian soil with biology experiments, helping shape how scientists search for life today.'
+            ],
+            kidPrompt: 'Viking was like sending a tiny chemistry lab to a cold desert world.'
+        },
+        'Curiosity': {
+            icon: '🚗',
+            target: 'Mars',
+            badge: 'Rolling chemistry lab',
+            intro: 'Curiosity is a car-sized rover exploring Gale Crater on Mars.',
+            facts: [
+                'It landed in 2012 using a rocket-powered sky crane.',
+                'It found evidence that ancient Mars had conditions that could have supported microbial life.',
+                'It can drill into rocks and analyze powder with instruments inside its body.'
+            ],
+            kidPrompt: 'The sky crane lowered Curiosity on cables, almost like a robot helicopter delivery.'
+        },
+        'Perseverance': {
+            icon: '🧱',
+            target: 'Mars',
+            badge: 'Sample collector',
+            intro: 'Perseverance is exploring Jezero Crater, an ancient lakebed on Mars.',
+            facts: [
+                'It is collecting rock cores that may one day be brought back to Earth.',
+                'It carried Ingenuity, the first powered aircraft to fly on another planet.',
+                'Its instruments study rocks for clues about ancient water and possible past life.'
+            ],
+            kidPrompt: 'A sample tube from Mars is like a time capsule from a world that once had rivers and lakes.'
+        },
+        'Galileo': {
+            icon: '🪐',
+            target: 'Jupiter',
+            badge: 'First Jupiter orbiter',
+            intro: 'Galileo orbited Jupiter and transformed what we know about its giant moons.',
+            facts: [
+                'It dropped a probe into Jupiter\'s atmosphere to measure clouds, winds, and chemistry.',
+                'It found strong evidence for a salty ocean under Europa\'s ice.',
+                'It ended by diving into Jupiter so it would not accidentally contaminate Europa.'
+            ],
+            kidPrompt: 'Galileo helped reveal that some moons may hide oceans under ice, even far from the Sun.'
+        },
+        'Juno': {
+            icon: '🌪️',
+            target: 'Jupiter',
+            badge: 'Polar explorer',
+            intro: 'Juno studies Jupiter from a looping orbit that dives over the planet\'s poles.',
+            facts: [
+                'It uses solar panels, even though Jupiter is five times farther from the Sun than Earth.',
+                'It studies Jupiter\'s deep atmosphere, gravity field, magnetic field, and auroras.',
+                'Its images revealed huge cyclones clustered around Jupiter\'s poles.'
+            ],
+            kidPrompt: 'Juno is helping scientists understand what is hidden below Jupiter\'s striped cloud tops.'
+        },
+        'Cassini-Huygens': {
+            icon: '💍',
+            target: 'Saturn and Titan',
+            badge: 'Saturn system explorer',
+            intro: 'Cassini-Huygens explored Saturn, its rings, and its moons for more than a decade.',
+            facts: [
+                'Cassini orbited Saturn from 2004 to 2017 and discovered geysers spraying from Enceladus.',
+                'The Huygens probe landed on Titan, becoming the first spacecraft to land in the outer solar system.',
+                'Cassini ended with a planned dive into Saturn to protect potentially habitable moons.'
+            ],
+            kidPrompt: 'Cassini showed that Saturn\'s moons are not boring ice balls; some have oceans, weather, and chemistry.'
+        },
+        'Voyager 2': {
+            icon: '⭐',
+            target: 'Jupiter, Saturn, Uranus, and Neptune',
+            badge: 'Grand tour champion',
+            intro: 'Voyager 2 is the only spacecraft to visit Uranus and Neptune up close.',
+            facts: [
+                'It launched in 1977 and used gravity assists to visit four giant planets.',
+                'It discovered new moons and rings at Uranus and Neptune.',
+                'It is now traveling through interstellar space, far beyond the planets.'
+            ],
+            kidPrompt: 'Voyager 2 is still sending messages home across billions of kilometers.'
+        }
     };
 
     const geologyData = [
@@ -569,6 +728,47 @@
         setTimeout(() => {
             overlay.classList.add('hidden');
         }, 300);
+    };
+
+    window.openMissionModal = function(missionName, planetId) {
+        const mission = missionFacts[missionName];
+        const planet = planetData.find(p => p.id === planetId);
+        if (!mission || !planet) return;
+
+        const factsHtml = mission.facts.map(fact => `
+            <li class="flex gap-3 bg-space-900/70 border border-space-500 rounded-xl p-3">
+                <span class="text-star-gold font-bold flex-shrink-0">★</span>
+                <span>${fact}</span>
+            </li>
+        `).join('');
+
+        openGlobalModal(`
+            <button onclick="closeGlobalModal()" class="absolute top-4 right-4 text-space-100 hover:text-white text-2xl font-bold z-10">&times;</button>
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="md:w-48 flex-shrink-0 text-center">
+                    <div class="w-28 h-28 mx-auto rounded-full flex items-center justify-center text-6xl border-4 shadow-[0_0_30px_rgba(110,240,255,0.18)]"
+                         style="border-color: ${planet.colorCode}; background-color: ${planet.colorCode}22;">
+                        ${mission.icon}
+                    </div>
+                    <div class="mt-4 inline-block px-3 py-1 rounded-full border font-mono text-[10px] uppercase tracking-wider"
+                         style="color: ${planet.colorCode}; border-color: ${planet.colorCode}; background-color: ${planet.colorCode}22;">
+                        ${mission.badge}
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <p class="font-mono text-star-cyan text-xs uppercase mb-2">${mission.target}</p>
+                    <h2 class="font-display text-3xl md:text-4xl text-white mb-3">${missionName}</h2>
+                    <p class="text-space-100 leading-relaxed mb-5">${mission.intro}</p>
+                    <ul class="space-y-3 text-sm text-space-100 mb-5">
+                        ${factsHtml}
+                    </ul>
+                    <div class="rounded-xl border border-star-cyan/40 bg-star-cyan/10 p-4">
+                        <div class="font-display text-star-cyan font-bold mb-1">Think Like a Mission Scientist</div>
+                        <p class="text-sm text-space-100">${mission.kidPrompt}</p>
+                    </div>
+                </div>
+            </div>
+        `);
     };
 
     // ==========================================
@@ -1046,6 +1246,29 @@
                                     <span class="font-mono text-[8px] lg:text-[9px] text-space-100 truncate w-full text-right mt-0.5">${p.magShape}</span>
                                 </div>
                             </button>
+                        </div>
+                    `;
+                } else if (conf.type === 'missions') {
+                    const missions = String(val || '').split(',').map(m => m.trim()).filter(Boolean);
+                    const missionButtons = missions.map(mission => {
+                        const details = missionFacts[mission];
+                        const icon = details ? details.icon : '🚀';
+                        const target = details ? details.target : 'Space mission';
+                        return `
+                            <button onclick="openMissionModal('${mission}', '${p.id}')"
+                                    class="group/mission inline-flex items-center gap-2 rounded-full border border-space-500 bg-space-800/80 px-3 py-1.5 text-[10px] lg:text-xs text-space-100 hover:text-white hover:border-star-cyan transition-colors shadow-sm"
+                                    title="${target}">
+                                <span class="text-sm group-hover/mission:scale-110 transition-transform">${icon}</span>
+                                <span class="font-bold">${mission}</span>
+                            </button>
+                        `;
+                    }).join('');
+
+                    valueHtml = `
+                        <div class="flex-1 flex items-center justify-end ml-4">
+                            <div class="flex flex-wrap justify-end gap-2 max-w-[320px]">
+                                ${missionButtons}
+                            </div>
                         </div>
                     `;
                 } else {
