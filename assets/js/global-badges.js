@@ -50,18 +50,18 @@
     };
 
     const MASTERY_GROUPS = [
-        { key: 'mercury-master', label: 'Mercury Master', members: ['mercury'] },
-        { key: 'venus-master', label: 'Venus Master', members: ['venus'] },
-        { key: 'earth-master', label: 'Earth & Luna Master', members: ['earth', 'luna'] },
-        { key: 'mars-master', label: 'Mars System Master', members: ['mars', 'phobos', 'deimos'] },
-        { key: 'jupiter-master', label: 'Jupiter System Master', members: ['jupiter', 'io', 'europa', 'ganymede', 'callisto'] },
-        { key: 'saturn-master', label: 'Saturn System Master', members: ['saturn', 'mimas', 'enceladus', 'rhea', 'titan', 'iapetus'] },
-        { key: 'uranus-master', label: 'Uranus System Master', members: ['uranus', 'miranda', 'ariel', 'umbriel', 'titania', 'oberon'] },
-        { key: 'neptune-master', label: 'Neptune System Master', members: ['neptune', 'triton', 'proteus', 'nereid', 'larissa'] },
-        { key: 'asteroid-master', label: 'Asteroid Belt Master', members: ['asteroid-belt', 'ceres', 'vesta', 'pallas', 'hygiea'] },
-        { key: 'kuiper-master', label: 'Kuiper Belt Master', members: ['kuiper-belt', 'arrokoth', 'quaoar', 'orcus', 'salacia'] },
-        { key: 'dwarf-master', label: 'Dwarf Planets Master', members: ['dwarf-planets', 'pluto', 'eris', 'haumea', 'makemake'] },
-        { key: 'astronomical-terms-master', label: 'Astronomical Terms Master', members: ['astronomical-terms'] }
+        { key: 'mercury-master', label: 'Caloris Trailblazer', collectionLabel: 'Mercury', members: ['mercury'] },
+        { key: 'venus-master', label: 'Cloud Crown Champion', collectionLabel: 'Venus', members: ['venus'] },
+        { key: 'earth-master', label: 'Blue Marble Guardian', collectionLabel: 'Earth & Luna', members: ['earth', 'luna'] },
+        { key: 'mars-master', label: 'Red Frontier Ranger', collectionLabel: 'Mars System', members: ['mars', 'phobos', 'deimos'] },
+        { key: 'jupiter-master', label: 'Storm King Scholar', collectionLabel: 'Jupiter System', members: ['jupiter', 'io', 'europa', 'ganymede', 'callisto'] },
+        { key: 'saturn-master', label: 'Ringmaster Supreme', collectionLabel: 'Saturn System', members: ['saturn', 'mimas', 'enceladus', 'rhea', 'titan', 'iapetus'] },
+        { key: 'uranus-master', label: 'Tilted Ice Titan', collectionLabel: 'Uranus System', members: ['uranus', 'miranda', 'ariel', 'umbriel', 'titania', 'oberon'] },
+        { key: 'neptune-master', label: 'Deep Blue Voyager', collectionLabel: 'Neptune System', members: ['neptune', 'triton', 'proteus', 'nereid', 'larissa'] },
+        { key: 'asteroid-master', label: 'Belt Blazer', collectionLabel: 'Asteroid Belt', members: ['asteroid-belt', 'ceres', 'vesta', 'pallas', 'hygiea'] },
+        { key: 'kuiper-master', label: 'Kuiper Quest Captain', collectionLabel: 'Kuiper Belt', members: ['kuiper-belt', 'arrokoth', 'quaoar', 'orcus', 'salacia'] },
+        { key: 'dwarf-master', label: 'Dwarf World Wanderer', collectionLabel: 'Dwarf Planets', members: ['dwarf-planets', 'pluto', 'eris', 'haumea', 'makemake'] },
+        { key: 'astronomical-terms-master', label: 'Star Words Sage', collectionLabel: 'Astronomical Terms', members: ['astronomical-terms'] }
     ];
     const WORLD_BADGE_KEYS = [...new Set(MASTERY_GROUPS.flatMap((group) => group.members))];
     const BADGE_ART = {
@@ -443,7 +443,7 @@
                 earned,
                 completedMembers,
                 totalMembers: group.members.length,
-                description: `Earn every badge in the ${group.label.replace(/ Master$/, '')} collection.`,
+                description: `Earn every badge in the ${group.collectionLabel || group.label} collection.`,
                 progressText: earned ? 'Earned' : `${completedMembers}/${group.members.length} badges earned`
             };
         });
