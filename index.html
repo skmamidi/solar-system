@@ -49,6 +49,10 @@
             transition: all 0.3s ease;
         }
 
+        .light-time-toggle-shell {
+            position: relative;
+        }
+
         .btn-press { 
             transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1); 
             cursor: pointer; touch-action: manipulation; 
@@ -327,6 +331,152 @@
             top: 10px;
             transform: translateX(-50%);
             text-align: center;
+        }
+
+        .light-time-track {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 82px;
+            height: 64px;
+            pointer-events: none;
+            z-index: 4;
+            opacity: 0.92;
+            transition: opacity 0.28s ease, transform 0.28s ease;
+        }
+
+        .light-time-wave {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 18px;
+            height: 28px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='28' viewBox='0 0 240 28'%3E%3Cpath d='M0 14 C20 2 40 2 60 14 S100 26 120 14 S160 2 180 14 S220 26 240 14' fill='none' stroke='%23f7e7b6' stroke-width='2' stroke-linecap='round' opacity='0.52'/%3E%3Cpath d='M0 14 C20 4 40 4 60 14 S100 24 120 14 S160 4 180 14 S220 24 240 14' fill='none' stroke='rgba(255,247,226,0.18)' stroke-width='5' stroke-linecap='round' opacity='0.14'/%3E%3C/svg%3E");
+            background-repeat: repeat-x;
+            background-size: 240px 28px;
+            filter: drop-shadow(0 0 8px rgba(247, 231, 182, 0.08));
+            opacity: 0.62;
+        }
+
+        .light-time-track::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 10px;
+            height: 44px;
+            background: linear-gradient(180deg, rgba(247, 231, 182, 0.03), transparent 60%);
+            opacity: 0.34;
+        }
+
+        .light-time-track-label {
+            position: absolute;
+            left: 0;
+            top: -2px;
+            padding: 0.22rem 0.7rem;
+            border-radius: 9999px;
+            background: rgba(0,0,0,0.32);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: rgba(247, 231, 182, 0.84);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .light-time-marker {
+            position: absolute;
+            top: 0;
+            transform: translateX(-50%);
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .light-time-marker-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.38);
+            margin-bottom: 0.18rem;
+            white-space: nowrap;
+        }
+
+        .light-time-marker-time {
+            display: inline-block;
+            padding: 0.14rem 0.42rem;
+            border-radius: 9999px;
+            background: rgba(0,0,0,0.24);
+            border: 1px solid rgba(255,255,255,0.05);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(247, 231, 182, 0.84);
+            white-space: nowrap;
+            opacity: 0.86;
+            transition: opacity 0.28s ease, transform 0.28s ease;
+        }
+
+        .light-time-marker-stick {
+            width: 1px;
+            height: 16px;
+            margin: 0.25rem auto 0;
+            background: linear-gradient(180deg, rgba(247, 231, 182, 0.42), rgba(247, 231, 182, 0.06));
+            opacity: 0.62;
+        }
+
+        .light-toggle-btn {
+            position: relative;
+            width: 34px;
+            height: 20px;
+            border-radius: 9999px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(10, 13, 32, 0.56);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+            transition: border-color 0.24s ease, background-color 0.24s ease;
+        }
+
+        .light-toggle-btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            padding: 0.28rem 0.55rem;
+            border-radius: 9999px;
+            background: rgba(5, 8, 20, 0.92);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: rgba(247, 231, 182, 0.88);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-4px);
+            transition: opacity 0.18s ease, transform 0.18s ease;
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            .light-toggle-btn:hover::after {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        body.light-time-off .light-time-track,
+        body.light-time-off .light-time-marker {
+            opacity: 0;
+        }
+
+        body.light-time-off .light-time-track {
+            transform: translateY(-6px);
+        }
+
+        body.light-time-off .light-time-marker {
+            display: none;
         }
 
         .outer-band-link,
@@ -710,6 +860,13 @@
         </button>
     </div>
 
+    <!-- Light Travel Overlay Controls -->
+    <div class="absolute right-4 top-[4.35rem] md:right-6 md:top-[4.9rem] z-40 light-time-toggle-shell">
+        <button id="light-time-toggle" type="button" class="light-toggle-btn btn-press" data-tooltip="Toggle light travel line" title="Toggle light travel line" aria-label="Toggle light travel line" aria-pressed="true" onclick="toggleLightTimeOverlay()">
+            <span id="light-time-toggle-thumb" class="absolute left-[2px] top-[2px] h-[14px] w-[14px] rounded-full bg-[rgba(247,231,182,0.84)] shadow-[0_0_10px_rgba(247,231,182,0.16)] transition-transform"></span>
+        </button>
+    </div>
+
     <!-- Solar system horizontal map -->
     <section id="view-hub" class="flex-grow relative overflow-hidden py-4">
 
@@ -722,10 +879,17 @@
                 <!-- Global Astronomical Distance Meter Line -->
                 <div class="absolute bottom-12 left-0 right-0 h-px bg-white/10 pointer-events-none z-0"></div>
 
+                <!-- Light Travel Time Overlay -->
+                <div class="light-time-track">
+                    <div class="light-time-track-label">Sunlight Travel Time</div>
+                    <div class="light-time-wave"></div>
+                    <div id="light-time-markers"></div>
+                </div>
+
                 <!-- SUN -->
                 <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative -ml-[1900px] mr-10">
                     <div></div>
-                    <button type="button" class="planet-wrapper btn-press focus:outline-none" data-wrapper="sun" onclick="zoomAndNavigate(event, 'sun.html')">
+                    <button type="button" class="planet-wrapper btn-press focus:outline-none" data-wrapper="sun" data-light-key="sun" onclick="zoomAndNavigate(event, 'sun.html')">
                         <div data-orb="sun" data-type="sun" class="w-[2000px] h-[2000px] orb-sun planet-orb flex items-center justify-end pr-16 animate-pulse-slow">
                             <span class="font-display font-bold text-4xl text-red-900 drop-shadow-md z-10 relative">SUN</span>
                         </div>
@@ -742,7 +906,7 @@
                 <!-- MERCURY -->
                 <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative">
                     <div></div>
-                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="mercury" onclick="zoomAndNavigate(event, 'mercury/mercury.html')">
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="mercury" data-light-key="mercury" onclick="zoomAndNavigate(event, 'mercury/mercury.html')">
                         <div data-orb="mercury" data-type="rocky" class="w-[12px] h-[12px] planet-orb orb-mercury"></div>
                         <span class="font-mono text-sm text-gray-100 uppercase tracking-widest">Mercury</span>
                     </button>
@@ -758,7 +922,7 @@
                 <!-- VENUS -->
                 <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative">
                     <div></div>
-                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="venus" onclick="zoomAndNavigate(event, 'venus/venus.html')">
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="venus" data-light-key="venus" onclick="zoomAndNavigate(event, 'venus/venus.html')">
                         <div data-orb="venus" data-type="gas" class="w-[30px] h-[30px] planet-orb orb-venus"></div>
                         <span class="font-mono text-sm text-gray-100 uppercase tracking-widest">Venus</span>
                     </button>
@@ -774,7 +938,7 @@
                 <!-- EARTH & LUNA -->
                 <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative">
                     <div></div>
-                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="earth" onclick="zoomAndNavigate(event, 'earth/earth.html')">
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="earth" data-light-key="earth" onclick="zoomAndNavigate(event, 'earth/earth.html')">
                         <div data-orb="earth" data-type="water" class="w-[32px] h-[32px] planet-orb orb-earth"></div>
                         <span class="font-mono text-sm text-gray-100 uppercase tracking-widest">Earth</span>
                     </button>
@@ -796,7 +960,7 @@
                 <!-- MARS & MOONS -->
                 <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative">
                     <div></div>
-                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="mars" onclick="zoomAndNavigate(event, 'mars/mars.html')">
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="mars" data-light-key="mars" onclick="zoomAndNavigate(event, 'mars/mars.html')">
                         <div data-orb="mars" data-type="rocky" class="w-[17px] h-[17px] planet-orb orb-mars"></div>
                         <span class="font-mono text-sm text-gray-100 uppercase tracking-widest">Mars</span>
                     </button>
@@ -860,7 +1024,7 @@
                 <!-- JUPITER & MOONS -->
                 <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative mx-10">
                     <div></div>
-                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="jupiter" onclick="zoomAndNavigate(event, 'jupiter/jupiter.html')">
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="jupiter" data-light-key="jupiter" onclick="zoomAndNavigate(event, 'jupiter/jupiter.html')">
                         <div data-orb="jupiter" data-type="gas" class="w-[350px] h-[350px] planet-orb orb-jupiter"></div>
                         <span class="font-mono text-sm text-gray-100 uppercase tracking-widest">Jupiter</span>
                     </button>
@@ -894,7 +1058,7 @@
                 <!-- SATURN & MOONS -->
                 <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative mx-24">
                     <div></div>
-                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="saturn" onclick="zoomAndNavigate(event, 'saturn/saturn.html')">
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="saturn" data-light-key="saturn" onclick="zoomAndNavigate(event, 'saturn/saturn.html')">
                         <div data-orb="saturn" data-type="gas" class="w-[290px] h-[290px] planet-orb orb-saturn mt-4">
                             <div class="ring-back ring-back-saturn"></div>
                             <div class="ring-front ring-front-saturn"></div>
@@ -935,7 +1099,7 @@
                 <!-- URANUS & MOONS -->
                 <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative">
                     <div></div>
-                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="uranus" onclick="zoomAndNavigate(event, 'uranus/uranus.html')">
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="uranus" data-light-key="uranus" onclick="zoomAndNavigate(event, 'uranus/uranus.html')">
                         <div data-orb="uranus" data-type="ice" class="w-[128px] h-[128px] planet-orb orb-uranus">
                             <div class="ring-back ring-back-uranus"></div>
                             <div class="ring-front ring-front-uranus"></div>
@@ -976,7 +1140,7 @@
                 <!-- NEPTUNE & MOONS -->
                 <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative">
                     <div></div>
-                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="neptune" onclick="zoomAndNavigate(event, 'neptune/neptune.html')">
+                    <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="neptune" data-light-key="neptune" onclick="zoomAndNavigate(event, 'neptune/neptune.html')">
                         <div data-orb="neptune" data-type="ice" class="w-[124px] h-[124px] planet-orb orb-neptune">
                             <div class="ring-back ring-back-neptune"></div>
                             <div class="ring-front ring-front-neptune"></div>
@@ -1046,7 +1210,7 @@
                             <div class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">50 AU</div>
                         </div>
 
-                        <button type="button" class="outer-region-link flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="kuiper-belt" onclick="zoomAndNavigate(event, 'kuiper-belt/kuiper-belt.html')">
+                        <button type="button" class="outer-region-link flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="kuiper-belt" data-light-key="kuiper-belt" onclick="zoomAndNavigate(event, 'kuiper-belt/kuiper-belt.html')">
                             <div class="flex gap-2 items-center justify-center h-10 w-24">
                                 <div data-orb="kuiper-belt" data-type="ice" class="w-[4px] h-[4px] planet-orb orb-kuiper"></div>
                                 <div data-type="ice" class="w-[5px] h-[5px] planet-orb orb-kuiper opacity-80"></div>
@@ -1111,22 +1275,22 @@
                             </button>
                         </div>
 
-                        <button type="button" class="outer-band-label outer-band-link left-[25.6%] top-[126px] btn-press focus:outline-none" onclick="zoomAndNavigate(event, 'scattered-disk.html')">
+                        <button type="button" class="outer-band-label outer-band-link left-[25.6%] top-[126px] btn-press focus:outline-none" data-light-key="scattered-disk" onclick="zoomAndNavigate(event, 'scattered-disk.html')">
                             <div class="font-mono text-[10px] text-star-magenta uppercase tracking-[0.24em]">Scattered Disk</div>
                             <div class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">50-100 AU</div>
                         </button>
 
-                        <button type="button" class="outer-band-label outer-band-link left-[36%] top-[126px] btn-press focus:outline-none" onclick="zoomAndNavigate(event, 'termination-shock.html')">
+                        <button type="button" class="outer-band-label outer-band-link left-[36%] top-[126px] btn-press focus:outline-none" data-light-key="termination-shock" onclick="zoomAndNavigate(event, 'termination-shock.html')">
                             <div class="font-mono text-[10px] text-star-gold uppercase tracking-[0.24em]">Termination Shock</div>
                             <div class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">~84-94 AU</div>
                         </button>
 
-                        <button type="button" class="outer-band-label outer-band-link left-[47%] top-[126px] btn-press focus:outline-none" onclick="zoomAndNavigate(event, 'heliosheath.html')">
+                        <button type="button" class="outer-band-label outer-band-link left-[47%] top-[126px] btn-press focus:outline-none" data-light-key="heliosheath" onclick="zoomAndNavigate(event, 'heliosheath.html')">
                             <div class="font-mono text-[10px] text-white uppercase tracking-[0.24em]">Heliosheath</div>
                             <div class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">~84-120 AU</div>
                         </button>
 
-                        <button type="button" class="outer-band-label outer-band-link left-[53%] top-[314px] btn-press focus:outline-none" onclick="zoomAndNavigate(event, 'heliopause.html')">
+                        <button type="button" class="outer-band-label outer-band-link left-[53%] top-[314px] btn-press focus:outline-none" data-light-key="heliopause" onclick="zoomAndNavigate(event, 'heliopause.html')">
                             <div class="font-mono text-[10px] text-star-green uppercase tracking-[0.24em]">Heliopause</div>
                             <div class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">~120 AU</div>
                         </button>
@@ -1171,7 +1335,7 @@
                             <div class="tick-label">268000 AU</div>
                         </div>
 
-                        <button type="button" class="deep-space-marker deep-space-link low left-[63%] btn-press focus:outline-none" onclick="zoomAndNavigate(event, 'oort-cloud.html')">
+                        <button type="button" class="deep-space-marker deep-space-link low left-[63%] btn-press focus:outline-none" data-light-key="inner-oort-cloud" onclick="zoomAndNavigate(event, 'oort-cloud.html')">
                             <div class="deep-space-distance">~2,000 AU</div>
                             <div class="deep-space-title text-star-cyan">Inner Oort Cloud</div>
                             <div class="deep-space-subtitle">The distant reservoir where long-period comet source regions likely begin.</div>
@@ -1179,7 +1343,7 @@
                             <div class="marker-line"></div>
                         </button>
 
-                        <button type="button" class="deep-space-marker deep-space-link tall left-[78%] btn-press focus:outline-none" onclick="zoomAndNavigate(event, 'oort-cloud.html')">
+                        <button type="button" class="deep-space-marker deep-space-link tall left-[78%] btn-press focus:outline-none" data-light-key="outer-oort-cloud" onclick="zoomAndNavigate(event, 'oort-cloud.html')">
                             <div class="deep-space-distance">~100,000 AU</div>
                             <div class="deep-space-title text-star-gold">Outer Oort Cloud</div>
                             <div class="deep-space-subtitle">The Sun's farthest known cometary sphere, roughly halfway to neighboring stars.</div>
@@ -1187,7 +1351,7 @@
                             <div class="marker-line"></div>
                         </button>
 
-                        <button type="button" class="deep-space-marker deep-space-link low left-[93%] btn-press focus:outline-none" onclick="zoomAndNavigate(event, 'proxima-centauri.html')">
+                        <button type="button" class="deep-space-marker deep-space-link low left-[93%] btn-press focus:outline-none" data-light-key="proxima-centauri" onclick="zoomAndNavigate(event, 'proxima-centauri.html')">
                             <div class="deep-space-distance">~268,000 AU</div>
                             <div class="deep-space-title text-star-red">Proxima Centauri</div>
                             <div class="deep-space-subtitle">The nearest known star to the Sun, about 4.24 light-years away.</div>
@@ -1798,6 +1962,108 @@
         }
     }
 
+    const lightTimeMarkerData = [
+        { key: 'mercury', label: 'Mercury', time: '3m 20s' },
+        { key: 'venus', label: 'Venus', time: '5m 50s' },
+        { key: 'earth', label: 'Earth', time: '8m 19s' },
+        { key: 'mars', label: 'Mars', time: '12m 29s' },
+        { key: 'jupiter', label: 'Jupiter', time: '43m 15s' },
+        { key: 'saturn', label: 'Saturn', time: '1h 19m' },
+        { key: 'uranus', label: 'Uranus', time: '2h 40m' },
+        { key: 'neptune', label: 'Neptune', time: '4h 10m' },
+        { key: 'kuiper-belt', label: 'Kuiper Belt', time: '4h 10m-6h 56m' }
+    ];
+
+    function injectLightTimeMarkers() {
+        if (document.body.dataset.lightTimeBound === 'true') return;
+        document.body.dataset.lightTimeBound = 'true';
+
+        const track = document.querySelector('.light-time-track');
+        const markersRoot = document.getElementById('light-time-markers');
+        const scrollInner = document.querySelector('#view-hub .min-w-max');
+        if (!track || !markersRoot || !scrollInner) return;
+
+        markersRoot.innerHTML = '';
+
+        const majorTargets = [...scrollInner.querySelectorAll('button[data-light-key]')];
+
+        const markerKeyMap = {
+            Mercury: 'mercury',
+            Venus: 'venus',
+            Earth: 'earth',
+            Mars: 'mars',
+            Jupiter: 'jupiter',
+            Saturn: 'saturn',
+            Uranus: 'uranus',
+            Neptune: 'neptune',
+            'Kuiper Belt': 'kuiper-belt'
+        };
+
+        lightTimeMarkerData.forEach((item) => {
+            const markerKey = item.key || markerKeyMap[item.label];
+            if (!markerKey) return;
+
+            const target = majorTargets.find((node) => node.dataset.lightKey === markerKey);
+            if (!target) return;
+
+            const monospaceLabels = [...target.querySelectorAll('.font-mono')];
+            const labelEl = target.querySelector('.deep-space-title')
+                || monospaceLabels[monospaceLabels.length - 1];
+            if (!labelEl) return;
+
+            const marker = document.createElement('div');
+            marker.className = 'light-time-marker';
+
+            const name = document.createElement('div');
+            name.className = 'light-time-marker-label';
+            name.textContent = item.label;
+
+            const time = document.createElement('div');
+            time.className = 'light-time-marker-time';
+            time.textContent = item.time;
+
+            const stick = document.createElement('div');
+            stick.className = 'light-time-marker-stick';
+
+            marker.append(name, time, stick);
+            markersRoot.appendChild(marker);
+
+            const positionMarker = () => {
+                const trackRect = track.getBoundingClientRect();
+                const labelRect = labelEl.getBoundingClientRect();
+                const center = labelRect.left + (labelRect.width / 2) - trackRect.left;
+                marker.style.left = `${center}px`;
+            };
+
+            positionMarker();
+            window.addEventListener('resize', positionMarker);
+            document.fonts?.ready?.then(positionMarker);
+        });
+    }
+
+    function applyLightTimeOverlayState(enabled) {
+        document.body.classList.toggle('light-time-off', !enabled);
+        const toggle = document.getElementById('light-time-toggle');
+        const thumb = document.getElementById('light-time-toggle-thumb');
+        if (toggle) {
+            toggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+            toggle.style.background = enabled ? 'rgba(59, 42, 10, 0.9)' : 'rgba(10, 13, 32, 0.8)';
+            toggle.style.borderColor = enabled ? 'rgba(246, 211, 122, 0.28)' : 'rgba(255,255,255,0.1)';
+        }
+        if (thumb) {
+            thumb.style.transform = enabled ? 'translateX(20px)' : 'translateX(0px)';
+            thumb.style.opacity = enabled ? '1' : '0.7';
+        }
+        window.localStorage.setItem('solarSystemLightTimeOverlay', enabled ? 'on' : 'off');
+    }
+
+    function toggleLightTimeOverlay(forceState) {
+        const nextState = typeof forceState === 'boolean'
+            ? forceState
+            : document.body.classList.contains('light-time-off');
+        applyLightTimeOverlayState(nextState);
+    }
+
     function toggleBadgeModal(forceOpen) {
         const modal = document.getElementById('global-badge-modal');
         const trigger = document.getElementById('global-badge-trigger');
@@ -1815,6 +2081,8 @@
 
     function onPageReady() {
         refreshLandingProgress();
+        injectLightTimeMarkers();
+        applyLightTimeOverlayState(window.localStorage.getItem('solarSystemLightTimeOverlay') !== 'off');
 
         const scrollContainer = document.querySelector('.overflow-x-auto');
         if (scrollContainer && !scrollContainer.dataset.wheelBound) {
@@ -1849,6 +2117,7 @@
 
     window.addEventListener('DOMContentLoaded', onPageReady);
     window.addEventListener('global-badges:updated', refreshLandingProgress);
+    window.toggleLightTimeOverlay = toggleLightTimeOverlay;
 </script>
 
 <script src="assets/js/global-badges.js"></script>
