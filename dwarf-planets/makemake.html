@@ -470,6 +470,8 @@
     </section>
 </main>
 
+    <script src="../assets/js/master-quiz-data.js"></script>
+    <script src="../assets/js/quiz-bank.js"></script>
 <script>
     /* GAME & APP STATE */
     let xp = 0;
@@ -542,18 +544,7 @@
     }
 
     /* QUIZ LOGIC */
-    const quizQuestions = [
-        { question: "In what year was Makemake discovered?", options: [{ text: "2003", isCorrect: false }, { text: "2005", isCorrect: true }, { text: "2006", isCorrect: false }, { text: "2010", isCorrect: false }], explanation: "Makemake was discovered by Mike Brown's team at Caltech on March 31, 2005." },
-        { question: "Who led the team that discovered Makemake?", options: [{ text: "Neil deGrasse Tyson", isCorrect: false }, { text: "Alan Stern", isCorrect: false }, { text: "Mike Brown", isCorrect: true }, { text: "Carolyn Porco", isCorrect: false }], explanation: "Astronomer Mike Brown and his team at Caltech discovered Makemake, along with other dwarf planets like Eris and Haumea." },
-        { question: "What is the nickname of Makemake's moon?", options: [{ text: "Charon", isCorrect: false }, { text: "MK2", isCorrect: true }, { text: "Nix", isCorrect: false }, { text: "Hydra", isCorrect: false }], explanation: "Makemake's moon is nicknamed MK2. It was discovered by the Hubble Space Telescope in 2015 and is unusually dark." },
-        { question: "Why does Makemake have a reddish-brown color?", options: [{ text: "Iron oxide rust", isCorrect: false }, { text: "Frozen methane and organic tholins", isCorrect: true }, { text: "Volcanic lava flows", isCorrect: false }, { text: "Red dust storms", isCorrect: false }], explanation: "The reddish-brown color comes from frozen methane and organic compounds called tholins, formed by sunlight breaking apart methane over billions of years." },
-        { question: "What covers most of Makemake's surface?", options: [{ text: "Liquid water oceans", isCorrect: false }, { text: "Rocky desert", isCorrect: false }, { text: "Pellets of frozen methane", isCorrect: true }, { text: "Sulfuric acid clouds", isCorrect: false }], explanation: "Makemake's surface is covered in pellets of frozen methane, possibly centimeters across, giving it a unique icy texture." },
-        { question: "Where is Makemake located in the solar system?", options: [{ text: "Asteroid Belt", isCorrect: false }, { text: "Classical Kuiper Belt", isCorrect: true }, { text: "Oort Cloud", isCorrect: false }, { text: "Between Jupiter and Saturn", isCorrect: false }], explanation: "Makemake is a classical Kuiper Belt object, orbiting at an average distance of 45.8 AU with low eccentricity compared to Pluto." },
-        { question: "How long is Makemake's orbital period around the Sun?", options: [{ text: "88 Earth years", isCorrect: false }, { text: "248 Earth years", isCorrect: false }, { text: "306 Earth years", isCorrect: true }, { text: "500 Earth years", isCorrect: false }], explanation: "Makemake takes about 306 Earth years to complete one full orbit around the Sun." },
-        { question: "Makemake is named after the creator god of which culture?", options: [{ text: "Ancient Greek", isCorrect: false }, { text: "Norse", isCorrect: false }, { text: "Rapa Nui (Easter Island)", isCorrect: true }, { text: "Mayan", isCorrect: false }], explanation: "Makemake is named after the creator god of the Rapa Nui people of Easter Island. It is pronounced mah-kee-mah-kee." },
-        { question: "Does Makemake have a significant atmosphere?", options: [{ text: "Yes, a thick nitrogen atmosphere", isCorrect: false }, { text: "Yes, a thin methane atmosphere", isCorrect: false }, { text: "No, it is too small and cold", isCorrect: true }, { text: "Only during summer", isCorrect: false }], explanation: "Makemake is too small and too cold to hold onto a significant atmosphere. Unlike Pluto, its gravity cannot keep gases from escaping." },
-        { question: "How does Makemake's diameter compare to Pluto's?", options: [{ text: "About the same size", isCorrect: false }, { text: "About two-thirds the diameter of Pluto", isCorrect: true }, { text: "About one-third the diameter of Pluto", isCorrect: false }, { text: "Twice as large as Pluto", isCorrect: false }], explanation: "Makemake is about 1,430 km in diameter, roughly two-thirds the size of Pluto, making it one of the larger known dwarf planets." }
-    ];
+    const quizQuestions = window.QuizBank.getPageQuizData({ sourcePath: 'dwarf-planets/makemake.html', format: 'option-strings' });
 
     let currentQ = 0;
     let score = 0;

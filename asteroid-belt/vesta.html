@@ -462,6 +462,8 @@
     </section>
 </main>
 
+    <script src="../assets/js/master-quiz-data.js"></script>
+    <script src="../assets/js/quiz-bank.js"></script>
 <script>
     /* GAME & APP STATE */
     let xp = 0;
@@ -534,18 +536,7 @@
     }
 
     /* QUIZ LOGIC */
-    const quizQuestions = [
-        { question: "Why is Vesta called a 'protoplanet'?", options: [{ text: "It has a differentiated interior with a core, mantle, and crust", isCorrect: true }, { text: "It has rings like Saturn", isCorrect: false }, { text: "It orbits a planet instead of the Sun", isCorrect: false }, { text: "It is made entirely of gas", isCorrect: false }], explanation: "Vesta has a core, mantle, and crust just like Earth, proving it was on its way to becoming a full planet before Jupiter disrupted its growth." },
-        { question: "What is the name of the massive impact basin on Vesta?", options: [{ text: "Occator Crater", isCorrect: false }, { text: "Rheasilvia", isCorrect: true }, { text: "Caloris Basin", isCorrect: false }, { text: "Hellas Planitia", isCorrect: false }], explanation: "The Rheasilvia basin is about 500 km across—nearly 90% of Vesta's diameter—and contains one of the tallest mountains in the solar system." },
-        { question: "How long is a day on Vesta?", options: [{ text: "About 24 hours", isCorrect: false }, { text: "About 5.3 hours", isCorrect: true }, { text: "About 1 month", isCorrect: false }, { text: "About 1 year", isCorrect: false }], explanation: "Vesta rotates extremely fast, completing one full spin in just 5.3 hours. This rapid rotation has squashed it into an oblate shape." },
-        { question: "What are HED meteorites believed to be?", options: [{ text: "Rocks from the Moon", isCorrect: false }, { text: "Fragments from Vesta's crust", isCorrect: true }, { text: "Comet debris", isCorrect: false }, { text: "Martian rocks", isCorrect: false }], explanation: "HED meteorites (Howardite, Eucrite, Diogenite) match Vesta's crust composition and are believed to have been blasted off Vesta by impacts." },
-        { question: "Which spacecraft orbited Vesta from 2011 to 2012?", options: [{ text: "Voyager 1", isCorrect: false }, { text: "OSIRIS-REx", isCorrect: false }, { text: "Dawn", isCorrect: true }, { text: "Cassini", isCorrect: false }], explanation: "NASA's Dawn spacecraft orbited Vesta for 14 months before departing for Ceres, making it the first mission to orbit two extraterrestrial bodies." },
-        { question: "Who discovered Vesta in 1807?", options: [{ text: "Galileo Galilei", isCorrect: false }, { text: "Heinrich Olbers", isCorrect: true }, { text: "Giuseppe Piazzi", isCorrect: false }, { text: "Carl Sagan", isCorrect: false }], explanation: "German astronomer Heinrich Olbers discovered Vesta on March 29, 1807. He had also discovered Pallas a few years earlier." },
-        { question: "What is Vesta's crust primarily made of?", options: [{ text: "Basaltic rock from ancient lava flows", isCorrect: true }, { text: "Pure ice", isCorrect: false }, { text: "Solid gold", isCorrect: false }, { text: "Frozen methane", isCorrect: false }], explanation: "Vesta's crust is composed of basaltic rock, which forms from cooled lava. This indicates Vesta once had volcanic activity." },
-        { question: "What shape is Vesta due to its fast rotation?", options: [{ text: "A perfect sphere", isCorrect: false }, { text: "Flattened at the poles and wider at the equator", isCorrect: true }, { text: "A cube", isCorrect: false }, { text: "A pyramid", isCorrect: false }], explanation: "Vesta's rapid 5.3-hour spin has created an equatorial bulge, making it wider at the middle than at the poles—an oblate spheroid." },
-        { question: "Approximately how large is Vesta?", options: [{ text: "About 525 km in diameter", isCorrect: true }, { text: "About 100 km in diameter", isCorrect: false }, { text: "About 2,000 km in diameter", isCorrect: false }, { text: "About 50 km in diameter", isCorrect: false }], explanation: "Vesta is about 525 km in diameter, making it the second most massive object in the asteroid belt after Ceres." },
-        { question: "What does Vesta's differentiated interior tell scientists?", options: [{ text: "It was once hot enough to melt and separate into layers", isCorrect: true }, { text: "It is hollow inside", isCorrect: false }, { text: "It formed yesterday", isCorrect: false }, { text: "It is made of liquid water", isCorrect: false }], explanation: "Vesta's layered structure—metallic core, rocky mantle, basaltic crust—shows it was once hot enough to melt, allowing dense material to sink and light material to rise." }
-    ];
+    const quizQuestions = window.QuizBank.getPageQuizData({ sourcePath: 'asteroid-belt/vesta.html', format: 'option-objects' });
 
     let currentQ = 0;
     let score = 0;

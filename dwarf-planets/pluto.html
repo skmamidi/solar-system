@@ -461,6 +461,8 @@
     </section>
 </main>
 
+    <script src="../assets/js/master-quiz-data.js"></script>
+    <script src="../assets/js/quiz-bank.js"></script>
 <script>
     /* GAME & APP STATE */
     let xp = 0;
@@ -533,18 +535,7 @@
     }
 
     /* QUIZ LOGIC */
-    const quizQuestions = [
-        { question: "In what year was Pluto discovered?", options: [{ text: "1920", isCorrect: false }, { text: "1930", isCorrect: true }, { text: "1940", isCorrect: false }, { text: "1950", isCorrect: false }], explanation: "Clyde Tombaugh discovered Pluto on February 18, 1930, at Lowell Observatory in Arizona while comparing photographic plates." },
-        { question: "Who discovered Pluto?", options: [{ text: "Edwin Hubble", isCorrect: false }, { text: "Percival Lowell", isCorrect: false }, { text: "Clyde Tombaugh", isCorrect: true }, { text: "Carl Sagan", isCorrect: false }], explanation: "American astronomer Clyde Tombaugh discovered Pluto when he was just 24 years old, using a blink comparator to spot the moving object." },
-        { question: "What is the name of Pluto's largest moon?", options: [{ text: "Nix", isCorrect: false }, { text: "Hydra", isCorrect: false }, { text: "Charon", isCorrect: true }, { text: "Styx", isCorrect: false }], explanation: "Charon is Pluto's largest moon. It is so big—about half the size of Pluto—that the two orbit a common center of mass outside Pluto, forming a binary system." },
-        { question: "What is Pluto's thin atmosphere mainly made of?", options: [{ text: "Oxygen and nitrogen", isCorrect: false }, { text: "Nitrogen, methane, and carbon monoxide", isCorrect: true }, { text: "Carbon dioxide and argon", isCorrect: false }, { text: "Hydrogen and helium", isCorrect: false }], explanation: "Pluto's atmosphere is composed mainly of nitrogen with traces of methane and carbon monoxide. It freezes onto the surface when Pluto moves farther from the Sun." },
-        { question: "Why was Pluto demoted from planet to dwarf planet in 2006?", options: [{ text: "It was too small", isCorrect: false }, { text: "It had not cleared its orbital neighborhood of other objects", isCorrect: true }, { text: "It stopped orbiting the Sun", isCorrect: false }, { text: "It was discovered to be a comet", isCorrect: false }], explanation: "The IAU defined a planet as an object that orbits the Sun, is spherical, and has cleared its orbital neighborhood. Pluto meets the first two criteria but not the third because of other Kuiper Belt objects like Eris." },
-        { question: "What is Tombaugh Regio?", options: [{ text: "A mountain range on Charon", isCorrect: false }, { text: "A heart-shaped nitrogen ice plain on Pluto", isCorrect: true }, { text: "Pluto's largest crater", isCorrect: false }, { text: "A storm in Pluto's atmosphere", isCorrect: false }], explanation: "Tombaugh Regio is the famous heart-shaped plain of nitrogen ice on Pluto's surface, named after Clyde Tombaugh. It is smooth and geologically young." },
-        { question: "How many known moons does Pluto have?", options: [{ text: "2", isCorrect: false }, { text: "3", isCorrect: false }, { text: "4", isCorrect: false }, { text: "5", isCorrect: true }], explanation: "Pluto has five known moons: Charon (the largest), Styx, Nix, Kerberos, and Hydra. They were discovered between 1978 and 2012." },
-        { question: "What is the interior of Pluto thought to be made of?", options: [{ text: "Solid iron from core to surface", isCorrect: false }, { text: "Rock core, water ice mantle, nitrogen ice surface", isCorrect: true }, { text: "Liquid water ocean only", isCorrect: false }, { text: "Pure methane ice", isCorrect: false }], explanation: "Scientists believe Pluto has a rocky core, a mantle of water ice, and a surface coated with frozen nitrogen and methane. Mountains on Pluto are made of water ice." },
-        { question: "In what year did NASA's New Horizons spacecraft fly by Pluto?", options: [{ text: "2006", isCorrect: false }, { text: "2010", isCorrect: false }, { text: "2015", isCorrect: true }, { text: "2020", isCorrect: false }], explanation: "New Horizons flew past Pluto on July 14, 2015, after traveling for 9.5 years. It captured the first detailed images of Pluto's surface and atmosphere." },
-        { question: "How long is Pluto's orbital period around the Sun?", options: [{ text: "About 88 Earth years", isCorrect: false }, { text: "About 248 Earth years", isCorrect: true }, { text: "About 12 Earth years", isCorrect: false }, { text: "About 1,000 Earth years", isCorrect: false }], explanation: "Pluto takes about 248 Earth years to complete one orbit around the Sun. Since its discovery in 1930, it has not yet completed a full orbit." }
-    ];
+    const quizQuestions = window.QuizBank.getPageQuizData({ sourcePath: 'dwarf-planets/pluto.html', format: 'option-strings' });
 
     let currentQ = 0;
     let score = 0;

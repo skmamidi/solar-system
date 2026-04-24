@@ -461,6 +461,8 @@
     </section>
 </main>
 
+    <script src="../assets/js/master-quiz-data.js"></script>
+    <script src="../assets/js/quiz-bank.js"></script>
 <script>
     /* GAME & APP STATE */
     let xp = 0;
@@ -533,18 +535,7 @@
     }
 
     /* QUIZ LOGIC */
-    const quizQuestions = [
-        { question: "Who discovered Pallas in 1802?", options: [{ text: "Galileo Galilei", isCorrect: false }, { text: "Heinrich Olbers", isCorrect: true }, { text: "Isaac Newton", isCorrect: false }, { text: "Johannes Kepler", isCorrect: false }], explanation: "German astronomer Heinrich Olbers discovered Pallas on March 28, 1802. He also discovered Vesta five years later." },
-        { question: "What makes Pallas's orbit unusual?", options: [{ text: "It is highly tilted at 34.8 degrees", isCorrect: true }, { text: "It orbits backwards", isCorrect: false }, { text: "It is perfectly circular", isCorrect: false }, { text: "It crosses Earth's orbit", isCorrect: false }], explanation: "Pallas's orbit is tilted 34.8 degrees relative to the plane of the planets, the most of any large asteroid, causing it to travel high above and below the main belt." },
-        { question: "Why is Pallas so heavily cratered?", options: [{ text: "Its tilted orbit means it crosses more debris", isCorrect: true }, { text: "It is the oldest object in the solar system", isCorrect: false }, { text: "It has no gravity to protect it", isCorrect: false }, { text: "It is made of soft material", isCorrect: false }], explanation: "Pallas's steeply inclined orbit carries it through regions with more debris than other asteroids, leading to more frequent impacts and a heavily cratered surface." },
-        { question: "What type of asteroid is Pallas classified as?", options: [{ text: "B-type (carbon-rich)", isCorrect: true }, { text: "M-type (metallic)", isCorrect: false }, { text: "S-type (silicate)", isCorrect: false }, { text: "V-type (basaltic)", isCorrect: false }], explanation: "Pallas is a B-type asteroid, meaning it is rich in carbon and contains primitive material that has changed little since the solar system formed." },
-        { question: "After whom is Pallas named?", options: [{ text: "Pallas Athena, Greek goddess of wisdom", isCorrect: true }, { text: "A Roman emperor", isCorrect: false }, { text: "A famous astronaut", isCorrect: false }, { text: "A type of rock", isCorrect: false }], explanation: "Pallas is named after Pallas Athena, the Greek goddess of wisdom, warfare, and crafts." },
-        { question: "What is the approximate diameter of Pallas?", options: [{ text: "About 512 km", isCorrect: true }, { text: "About 100 km", isCorrect: false }, { text: "About 2,000 km", isCorrect: false }, { text: "About 50 km", isCorrect: false }], explanation: "Pallas is about 512 km in diameter, making it the third most massive object in the asteroid belt after Ceres and Vesta." },
-        { question: "What is the Pallas family?", options: [{ text: "A group of smaller asteroids believed to be fragments from Pallas", isCorrect: true }, { text: "Pallas's moons", isCorrect: false }, { text: "A series of craters on Pallas", isCorrect: false }, { text: "A constellation", isCorrect: false }], explanation: "The Pallas family is a group of smaller asteroids that share similar orbits and are thought to be fragments blasted off Pallas by a massive impact." },
-        { question: "Why is Pallas not spherical like Ceres?", options: [{ text: "It is not massive enough for gravity to pull it into a sphere", isCorrect: true }, { text: "It spins too slowly", isCorrect: false }, { text: "It is made of gas", isCorrect: false }, { text: "It has been sculpted by aliens", isCorrect: false }], explanation: "Unlike Ceres, Pallas lacks sufficient mass for its gravity to overcome the rigidity of its rocks and pull it into a spherical shape." },
-        { question: "Has any spacecraft visited Pallas?", options: [{ text: "No, though it has been studied by telescopes", isCorrect: true }, { text: "Yes, Dawn orbited it", isCorrect: false }, { text: "Yes, Voyager 2 flew past it", isCorrect: false }, { text: "Yes, Hubble landed on it", isCorrect: false }], explanation: "No spacecraft has visited Pallas yet. Its difficult orbit makes it harder to reach than Ceres or Vesta, but future missions are being proposed." },
-        { question: "What evidence suggests Pallas may have had water in the past?", options: [{ text: "It contains hydrated minerals with water locked in their structure", isCorrect: true }, { text: "It has rivers on its surface", isCorrect: false }, { text: "It has clouds of water vapor", isCorrect: false }, { text: "It is covered in ice", isCorrect: false }], explanation: "Pallas contains hydrated minerals—rocks with water molecules trapped inside their crystal structure—suggesting it may have had water in the past." }
-    ];
+    const quizQuestions = window.QuizBank.getPageQuizData({ sourcePath: 'asteroid-belt/pallas.html', format: 'option-objects' });
 
     let currentQ = 0;
     let score = 0;

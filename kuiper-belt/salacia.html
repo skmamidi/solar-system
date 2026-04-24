@@ -463,6 +463,8 @@
     </section>
 </main>
 
+    <script src="../assets/js/master-quiz-data.js"></script>
+    <script src="../assets/js/quiz-bank.js"></script>
 <script>
     /* GAME & APP STATE */
     let xp = 0;
@@ -535,18 +537,7 @@
     }
 
     /* QUIZ LOGIC */
-    const quizQuestions = [
-        { question: "What makes Salacia's surface unusual compared to other large KBOs?", options: [{ text: "It is extremely dark, reflecting only about 4% of sunlight", isCorrect: true }, { text: "It glows in the dark", isCorrect: false }, { text: "It is perfectly smooth", isCorrect: false }, { text: "It is covered in craters", isCorrect: false }], explanation: "Salacia has one of the lowest albedos (reflectivity) of any large KBO, reflecting only about 4% of the light that hits it—darker than charcoal." },
-        { question: "What type of system are Salacia and Actaea?", options: [{ text: "A binary system orbiting a common center of mass", isCorrect: true }, { text: "A planet and its artificial satellite", isCorrect: false }, { text: "Two independent asteroids", isCorrect: false }, { text: "A star and its companion", isCorrect: false }], explanation: "Salacia and Actaea form a binary system, meaning they orbit a common center of mass rather than one simply orbiting the other." },
-        { question: "Who was Salacia named after?", options: [{ text: "The Roman goddess of salt water", isCorrect: true }, { text: "A Greek warrior princess", isCorrect: false }, { text: "An Egyptian pharaoh", isCorrect: false }, { text: "A famous astronomer", isCorrect: false }], explanation: "Salacia was named after the Roman goddess of salt water and the wife of Neptune, connecting it to the planet whose gravity dominates its region." },
-        { question: "Approximately how large is Salacia?", options: [{ text: "About 850-900 km in diameter", isCorrect: true }, { text: "About 100 km in diameter", isCorrect: false }, { text: "About 2,000 km in diameter", isCorrect: false }, { text: "About 50 km in diameter", isCorrect: false }], explanation: "Salacia is estimated to be about 850-900 km in diameter, making it one of the largest known classical Kuiper Belt Objects." },
-        { question: "Who is Actaea in Greek mythology?", options: [{ text: "One of the 50 Nereids, sea nymphs who attended Poseidon", isCorrect: true }, { text: "The goddess of war", isCorrect: false }, { text: "The queen of the underworld", isCorrect: false }, { text: "A Titan who ruled the sky", isCorrect: false }], explanation: "Actaea is named after one of the 50 Nereids, sea nymphs in Greek mythology who attended Poseidon, the Greek equivalent of Neptune." },
-        { question: "Why was Salacia discovered later than some smaller KBOs?", options: [{ text: "Because its extremely dark surface makes it hard to see", isCorrect: true }, { text: "Because it moves faster than light", isCorrect: false }, { text: "Because it is hidden behind Neptune", isCorrect: false }, { text: "Because it did not exist until 2004", isCorrect: false }], explanation: "Despite being one of the largest KBOs, Salacia's extremely low albedo (darkness) made it difficult to detect until powerful telescopes spotted it in 2004." },
-        { question: "What is Salacia's approximate orbital period?", options: [{ text: "About 273 Earth years", isCorrect: true }, { text: "About 100 Earth years", isCorrect: false }, { text: "About 50 Earth years", isCorrect: false }, { text: "About 500 Earth years", isCorrect: false }], explanation: "Salacia takes approximately 273 Earth years to complete one orbit around the Sun." },
-        { question: "What is a 'classical' Kuiper Belt Object?", options: [{ text: "One with a nearly circular orbit that was not scattered by Neptune", isCorrect: true }, { text: "One that orbits inside Neptune's path", isCorrect: false }, { text: "One made entirely of rock", isCorrect: false }, { text: "One discovered before 1900", isCorrect: false }], explanation: "Classical KBOs have stable, nearly circular orbits and were not scattered by Neptune's gravity, unlike resonant or scattered disc objects." },
-        { question: "How far is Salacia from the Sun on average?", options: [{ text: "About 46 AU", isCorrect: true }, { text: "About 30 AU", isCorrect: false }, { text: "About 100 AU", isCorrect: false }, { text: "About 5 AU", isCorrect: false }], explanation: "Salacia orbits at about 46 AU from the Sun, placing it well within the classical Kuiper Belt region beyond Neptune." },
-        { question: "What does the Salacia-Actaea system's high combined mass suggest?", options: [{ text: "That Salacia has a higher density than typical KBOs", isCorrect: true }, { text: "That it is hollow inside", isCorrect: false }, { text: "That it is made entirely of metal", isCorrect: false }, { text: "That it has no ice", isCorrect: false }], explanation: "The surprisingly high mass of the Salacia-Actaea system suggests Salacia is denser than many other KBOs, containing more rock relative to ice." }
-    ];
+    const quizQuestions = window.QuizBank.getPageQuizData({ sourcePath: 'kuiper-belt/salacia.html', format: 'option-strings' });
 
     let currentQ = 0;
     let score = 0;

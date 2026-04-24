@@ -474,6 +474,8 @@
     </section>
 </main>
 
+    <script src="../assets/js/master-quiz-data.js"></script>
+    <script src="../assets/js/quiz-bank.js"></script>
 <script>
     /* GAME & APP STATE */
     let xp = 0;
@@ -546,18 +548,7 @@
     }
 
     /* QUIZ LOGIC */
-    const quizQuestions = [
-        { question: "Why is Orcus called the 'Anti-Pluto'?", options: [{ text: "It is made of antimatter", isCorrect: false }, { text: "It shares Pluto's orbital resonance but stays on the opposite side of the Sun", isCorrect: true }, { text: "It orbits backwards", isCorrect: false }, { text: "It is the same size as Pluto", isCorrect: false }], explanation: "Orcus shares Pluto's 2:3 orbital resonance with Neptune, but it is always positioned on the opposite side of the Sun from Pluto, making it a mirror image." },
-        { question: "What is Orcus's orbital resonance with Neptune?", options: [{ text: "1:1", isCorrect: false }, { text: "2:3", isCorrect: true }, { text: "3:2", isCorrect: false }, { text: "5:4", isCorrect: false }], explanation: "For every 2 orbits Neptune completes, Orcus completes exactly 3 orbits. This is the same 2:3 resonance that Pluto has." },
-        { question: "What is the name of Orcus's moon?", options: [{ text: "Charon", isCorrect: false }, { text: "Weywot", isCorrect: false }, { text: "Vanth", isCorrect: true }, { text: "Actaea", isCorrect: false }], explanation: "Orcus's moon is named Vanth, after an Etruscan spirit who guided souls to the underworld." },
-        { question: "Orcus was named after a Roman god associated with what?", options: [{ text: "The sky and thunder", isCorrect: false }, { text: "The underworld and broken oaths", isCorrect: true }, { text: "The sea and storms", isCorrect: false }, { text: "Love and beauty", isCorrect: false }], explanation: "Orcus was a Roman god of the underworld who specifically punished people who broke their oaths." },
-        { question: "Approximately how large is Orcus?", options: [{ text: "About 910 km in diameter", isCorrect: true }, { text: "About 2,400 km in diameter", isCorrect: false }, { text: "About 100 km in diameter", isCorrect: false }, { text: "About 5,000 km in diameter", isCorrect: false }], explanation: "Orcus is about 910 km in diameter—much smaller than Pluto but still large enough to be roughly spherical." },
-        { question: "How does the 2:3 resonance protect Orcus from colliding with Neptune?", options: [{ text: "It keeps them in a stable gravitational lock so they never get close", isCorrect: true }, { text: "It creates a force field", isCorrect: false }, { text: "It makes Orcus invisible to Neptune", isCorrect: false }, { text: "It causes Orcus to orbit backwards", isCorrect: false }], explanation: "The resonance creates a stable gravitational relationship that keeps Orcus and Neptune separated by predictable distances, preventing close approaches." },
-        { question: "What is unusual about Vanth's size relative to Orcus?", options: [{ text: "It is about one-third the size of Orcus, which is unusually large", isCorrect: true }, { text: "It is larger than Orcus", isCorrect: false }, { text: "It is microscopic", isCorrect: false }, { text: "It is exactly the same size", isCorrect: false }], explanation: "Vanth is unusually large for a moon—about 1/3 the diameter of Orcus—suggesting they may have formed from a major collision." },
-        { question: "What is Orcus's approximate orbital period?", options: [{ text: "About 245 Earth years", isCorrect: true }, { text: "About 100 Earth years", isCorrect: false }, { text: "About 500 Earth years", isCorrect: false }, { text: "About 50 Earth years", isCorrect: false }], explanation: "Orcus takes about 245 Earth years to complete one orbit around the Sun." },
-        { question: "How does Orcus differ from Pluto in terms of geology?", options: [{ text: "Orcus appears geologically dead while Pluto is active", isCorrect: true }, { text: "Orcus has more volcanoes", isCorrect: false }, { text: "Orcus has a thicker atmosphere", isCorrect: false }, { text: "They are geologically identical", isCorrect: false }], explanation: "Unlike Pluto, which shows signs of geological activity and has a thin atmosphere, Orcus appears to be a cold, geologically dead world." },
-        { question: "What is the approximate tilt of Orcus's orbit relative to the planets?", options: [{ text: "About 21 degrees", isCorrect: true }, { text: "About 90 degrees", isCorrect: false }, { text: "About 0 degrees (perfectly flat)", isCorrect: false }, { text: "About 45 degrees", isCorrect: false }], explanation: "Orcus's orbit is tilted about 21 degrees relative to the ecliptic plane, making it a moderately inclined Kuiper Belt Object." }
-    ];
+    const quizQuestions = window.QuizBank.getPageQuizData({ sourcePath: 'kuiper-belt/orcus.html', format: 'option-strings' });
 
     let currentQ = 0;
     let score = 0;

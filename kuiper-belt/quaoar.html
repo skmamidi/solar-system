@@ -463,6 +463,8 @@
     </section>
 </main>
 
+    <script src="../assets/js/master-quiz-data.js"></script>
+    <script src="../assets/js/quiz-bank.js"></script>
 <script>
     /* GAME & APP STATE */
     let xp = 0;
@@ -535,18 +537,7 @@
     }
 
     /* QUIZ LOGIC */
-    const quizQuestions = [
-        { question: "Who discovered Quaoar in 2002?", options: [{ text: "Neil deGrasse Tyson", isCorrect: false }, { text: "Chad Trujillo and Michael Brown", isCorrect: true }, { text: "Carl Sagan", isCorrect: false }, { text: "Edwin Hubble", isCorrect: false }], explanation: "Astronomers Chad Trujillo and Michael Brown discovered Quaoar at Palomar Observatory in California in 2002." },
-        { question: "Quaoar is named after the creator deity of which Native American people?", options: [{ text: "Navajo", isCorrect: false }, { text: "Tongva", isCorrect: true }, { text: "Cherokee", isCorrect: false }, { text: "Inuit", isCorrect: false }], explanation: "Quaoar is named after the creator deity of the Tongva people, who traditionally lived in the Los Angeles Basin area." },
-        { question: "What surprising feature did scientists discover around Quaoar in 2023?", options: [{ text: "A ring system outside its Roche limit", isCorrect: true }, { text: "Active volcanoes", isCorrect: false }, { text: "A thick atmosphere", isCorrect: false }, { text: "Liquid water oceans", isCorrect: false }], explanation: "Scientists discovered Quaoar has a ring system located outside its Roche limit, which defies classical ring theory." },
-        { question: "What is the name of Quaoar's moon?", options: [{ text: "Charon", isCorrect: false }, { text: "Actaea", isCorrect: false }, { text: "Weywot", isCorrect: true }, { text: "Vanth", isCorrect: false }], explanation: "Quaoar's moon is named Weywot, after Quaoar's son in Tongva mythology, who is the god of the sky." },
-        { question: "Approximately how large is Quaoar?", options: [{ text: "About 1,110 km in diameter", isCorrect: true }, { text: "About 500 km in diameter", isCorrect: false }, { text: "About 2,400 km in diameter", isCorrect: false }, { text: "About 100 km in diameter", isCorrect: false }], explanation: "Quaoar is about 1,110 km in diameter, roughly half the size of Pluto and one of the largest known Kuiper Belt Objects." },
-        { question: "Why is Quaoar's ring system considered impossible by classical physics?", options: [{ text: "It is located outside the Roche limit where rings should clump into moons", isCorrect: true }, { text: "It is made of liquid water", isCorrect: false }, { text: "It orbits backwards", isCorrect: false }, { text: "It glows in the dark", isCorrect: false }], explanation: "The Roche limit is the distance within which rings are held together by tidal forces. Beyond it, material should clump into moons, not stay as rings." },
-        { question: "What shape is Quaoar's orbit around the Sun?", options: [{ text: "Nearly circular", isCorrect: true }, { text: "Highly elliptical", isCorrect: false }, { text: "Figure-eight", isCorrect: false }, { text: "Perfectly straight", isCorrect: false }], explanation: "Quaoar has a nearly circular orbit, making it a classical Kuiper Belt Object with a stable, predictable path." },
-        { question: "What is Quaoar's approximate orbital period?", options: [{ text: "About 288 Earth years", isCorrect: true }, { text: "About 50 Earth years", isCorrect: false }, { text: "About 1,000 Earth years", isCorrect: false }, { text: "About 10 Earth years", isCorrect: false }], explanation: "Quaoar takes approximately 288 Earth years to complete one full orbit around the Sun." },
-        { question: "What does spectroscopy reveal about Quaoar's surface?", options: [{ text: "Crystalline water ice and possibly methane ice", isCorrect: true }, { text: "Liquid lava flows", isCorrect: false }, { text: "Pure gold deposits", isCorrect: false }, { text: "Dense forest canopies", isCorrect: false }], explanation: "Spectroscopic studies show Quaoar's surface contains crystalline water ice and possibly methane ice, along with traces of tholins." },
-        { question: "Why is Quaoar considered a 'candidate dwarf planet' but not officially classified as one?", options: [{ text: "The IAU has not yet officially designated it, despite its size and spherical shape", isCorrect: true }, { text: "It is too small to be spherical", isCorrect: false }, { text: "It orbits a planet instead of the Sun", isCorrect: false }, { text: "It has no moons", isCorrect: false }], explanation: "Quaoar is massive enough to be spherical and meets many dwarf planet criteria, but the International Astronomical Union has not yet officially classified it." }
-    ];
+    const quizQuestions = window.QuizBank.getPageQuizData({ sourcePath: 'kuiper-belt/quaoar.html', format: 'option-strings' });
 
     let currentQ = 0;
     let score = 0;

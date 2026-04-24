@@ -470,6 +470,8 @@
     </section>
 </main>
 
+    <script src="../assets/js/master-quiz-data.js"></script>
+    <script src="../assets/js/quiz-bank.js"></script>
 <script>
     /* GAME & APP STATE */
     let xp = 0;
@@ -542,18 +544,7 @@
     }
 
     /* QUIZ LOGIC */
-    const quizQuestions = [
-        { question: "Who discovered Ceres in 1801?", options: [{ text: "Galileo Galilei", isCorrect: false }, { text: "Giuseppe Piazzi", isCorrect: true }, { text: "Isaac Newton", isCorrect: false }, { text: "Edwin Hubble", isCorrect: false }], explanation: "Italian astronomer Giuseppe Piazzi discovered Ceres on January 1, 1801 at the Palermo Observatory in Sicily." },
-        { question: "What are the bright white spots in Ceres's Occator Crater made of?", options: [{ text: "Ice crystals", isCorrect: false }, { text: "Sodium carbonate salt deposits", isCorrect: true }, { text: "Diamond dust", isCorrect: false }, { text: "Frozen methane", isCorrect: false }], explanation: "The bright spots are sodium carbonate salt deposits, left behind when briny water from beneath the surface reached the crater and evaporated." },
-        { question: "Which spacecraft orbited Ceres from 2015 to 2018?", options: [{ text: "Voyager 2", isCorrect: false }, { text: "Cassini", isCorrect: false }, { text: "Dawn", isCorrect: true }, { text: "New Horizons", isCorrect: false }], explanation: "NASA's Dawn spacecraft orbited Ceres and mapped its surface, discovering the bright spots and organic compounds." },
-        { question: "Why is Ceres classified as a dwarf planet rather than a planet?", options: [{ text: "It has not cleared its orbital neighborhood of other asteroids", isCorrect: true }, { text: "It is too large to be a planet", isCorrect: false }, { text: "It orbits a star other than the Sun", isCorrect: false }, { text: "It has no moons", isCorrect: false }], explanation: "Ceres meets two criteria for planethood (orbits the Sun and is spherical) but has not cleared its orbital neighborhood, making it a dwarf planet." },
-        { question: "What percentage of the asteroid belt's total mass does Ceres make up?", options: [{ text: "About 1%", isCorrect: false }, { text: "About one third", isCorrect: true }, { text: "About 90%", isCorrect: false }, { text: "About 0.1%", isCorrect: false }], explanation: "Ceres makes up roughly one third of the entire mass of the asteroid belt, despite being just one of millions of objects." },
-        { question: "What is Ahuna Mons on Ceres?", options: [{ text: "A cryovolcano made of ice and mud", isCorrect: true }, { text: "An impact crater", isCorrect: false }, { text: "A metallic mountain", isCorrect: false }, { text: "A frozen ocean", isCorrect: false }], explanation: "Ahuna Mons is a cryovolcano about 4 km tall, made of ice and mud. It is the closest known cryovolcano to the Sun." },
-        { question: "Approximately how much of Ceres's mass is water?", options: [{ text: "Less than 1%", isCorrect: false }, { text: "About 25%", isCorrect: true }, { text: "About 80%", isCorrect: false }, { text: "Exactly 50%", isCorrect: false }], explanation: "Ceres contains about 25% water by mass, mostly in the form of ice and possibly a subsurface ocean—more freshwater than Earth has on its surface." },
-        { question: "What is Ceres's approximate diameter?", options: [{ text: "About 940 km", isCorrect: true }, { text: "About 100 km", isCorrect: false }, { text: "About 5,000 km", isCorrect: false }, { text: "About 50 km", isCorrect: false }], explanation: "Ceres is about 940 km in diameter, making it the largest object in the asteroid belt and the 33rd largest body in the solar system by volume." },
-        { question: "What did Dawn discover about Ceres that excited astrobiologists?", options: [{ text: "Organic compounds and evidence of a subsurface ocean", isCorrect: true }, { text: "Living bacteria on the surface", isCorrect: false }, { text: "A thick atmosphere with oxygen", isCorrect: false }, { text: "Active lava flows", isCorrect: false }], explanation: "Dawn detected organic compounds and found evidence that Ceres may have a subsurface ocean, making it an interesting target in the search for life." },
-        { question: "How long is Ceres's orbital period around the Sun?", options: [{ text: "About 4.6 Earth years", isCorrect: true }, { text: "About 1 Earth year", isCorrect: false }, { text: "About 100 Earth years", isCorrect: false }, { text: "About 10 Earth years", isCorrect: false }], explanation: "Ceres orbits the Sun at about 2.77 AU and takes roughly 4.6 Earth years to complete one full orbit." }
-    ];
+    const quizQuestions = window.QuizBank.getPageQuizData({ sourcePath: 'asteroid-belt/ceres.html', format: 'option-strings' });
 
     let currentQ = 0;
     let score = 0;

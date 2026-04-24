@@ -462,6 +462,8 @@
     </section>
 </main>
 
+    <script src="../assets/js/master-quiz-data.js"></script>
+    <script src="../assets/js/quiz-bank.js"></script>
 <script>
     /* GAME & APP STATE */
     let xp = 0;
@@ -534,18 +536,7 @@
     }
 
     /* QUIZ LOGIC */
-    const quizQuestions = [
-        { question: "What was Arrokoth's original nickname before it received its official name?", options: [{ text: "Santa Claus", isCorrect: false }, { text: "Ultima Thule", isCorrect: true }, { text: "Snowball One", isCorrect: false }, { text: "Red Dwarf", isCorrect: false }], explanation: "Arrokoth was originally nicknamed Ultima Thule, a Latin term meaning a distant place beyond the known world." },
-        { question: "What type of object is Arrokoth?", options: [{ text: "A single spherical asteroid", isCorrect: false }, { text: "A contact binary", isCorrect: true }, { text: "A gas giant moon", isCorrect: false }, { text: "A comet nucleus", isCorrect: false }], explanation: "Arrokoth is a contact binary, meaning it consists of two distinct lobes that gently collided and stuck together." },
-        { question: "Which spacecraft performed the flyby of Arrokoth on January 1, 2019?", options: [{ text: "Voyager 2", isCorrect: false }, { text: "Cassini", isCorrect: false }, { text: "New Horizons", isCorrect: true }, { text: "Dawn", isCorrect: false }], explanation: "NASA's New Horizons spacecraft flew past Arrokoth after its historic Pluto encounter in 2015." },
-        { question: "What gives Arrokoth its reddish color?", options: [{ text: "Iron oxide rust", isCorrect: false }, { text: "Tholins created by cosmic radiation", isCorrect: true }, { text: "Active volcanoes", isCorrect: false }, { text: "Reflected light from Mars", isCorrect: false }], explanation: "The reddish color comes from tholins—complex organic molecules formed when methane ice is bombarded by cosmic rays over billions of years." },
-        { question: "Approximately how far from Earth was Arrokoth during the New Horizons flyby?", options: [{ text: "1 billion km", isCorrect: false }, { text: "6.6 billion km", isCorrect: true }, { text: "100 million km", isCorrect: false }, { text: "500 million km", isCorrect: false }], explanation: "The flyby occurred at about 6.6 billion kilometers from Earth, making Arrokoth the most distant object ever visited by a spacecraft." },
-        { question: "What are the two lobes of Arrokoth called?", options: [{ text: "Alpha and Beta", isCorrect: false }, { text: "Ultima and Thule", isCorrect: true }, { text: "Romulus and Remus", isCorrect: false }, { text: "Fred and George", isCorrect: false }], explanation: "The larger lobe is called Ultima and the smaller one is Thule, names from the original nickname." },
-        { question: "What does the name 'Arrokoth' mean?", options: [{ text: "Sky in the Powhatan language", isCorrect: true }, { text: "Red snow in Latin", isCorrect: false }, { text: "Distant world in Greek", isCorrect: false }, { text: "Ice giant in Navajo", isCorrect: false }], explanation: "Arrokoth means 'sky' in the Powhatan/Algonquian language, honoring the indigenous peoples of the region where New Horizons is operated." },
-        { question: "Why is Arrokoth considered important for understanding planet formation?", options: [{ text: "It shows gentle accumulation of planetesimals", isCorrect: true }, { text: "It has active volcanoes", isCorrect: false }, { text: "It is made entirely of metal", isCorrect: false }, { text: "It orbits backward", isCorrect: false }], explanation: "Arrokoth's two lobes merged gently, supporting the theory that planetesimals formed by slow accumulation rather than violent collisions." },
-        { question: "Approximately how long is Arrokoth?", options: [{ text: "About 36 km", isCorrect: true }, { text: "About 100 km", isCorrect: false }, { text: "About 1 km", isCorrect: false }, { text: "About 500 km", isCorrect: false }], explanation: "Arrokoth is about 36 km (22 miles) in its longest dimension, making it a relatively small Kuiper Belt Object." },
-        { question: "Why does Arrokoth have so few craters?", options: [{ text: "The Kuiper Belt has fewer small objects than expected", isCorrect: true }, { text: "It has a protective magnetic field", isCorrect: false }, { text: "Craters are hidden under ice", isCorrect: false }, { text: "It is too young to have craters", isCorrect: false }], explanation: "The lack of craters suggests the Kuiper Belt contains far fewer small bodies than scientists previously believed, meaning Arrokoth has had few impacts." }
-    ];
+    const quizQuestions = window.QuizBank.getPageQuizData({ sourcePath: 'kuiper-belt/arrokoth.html', format: 'option-strings' });
 
     let currentQ = 0;
     let score = 0;

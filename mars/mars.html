@@ -601,6 +601,8 @@
     </section>
 </main>
 
+    <script src="../assets/js/master-quiz-data.js"></script>
+    <script src="../assets/js/quiz-bank.js"></script>
 <script>
     /* GAME & APP STATE */
     let xp = 0;
@@ -674,158 +676,7 @@
     }
 
     /* ENHANCED QUIZ DATA (25 Olympiad-level questions) */
-    const masterQuizData = [
-        {
-            q: "Which specific iron oxide compound is primarily responsible for giving Mars its distinctive reddish-brown color?",
-            opts: ["Magnetite (Fe3O4)", "Hematite (Fe2O3)", "Wüstite (FeO)", "Goethite (FeO(OH))"],
-            ans: 1, // index of correct option
-            exp: "Hematite (Fe2O3) is a reddish-brown iron oxide. On Mars, widespread iron-rich minerals oxidized (rusted) over billions of years, coating the surface in fine hematite dust."
-        },
-        {
-            q: "Olympus Mons, the largest volcano in the solar system, is classified as what type of volcano?",
-            opts: ["Stratovolcano", "Cinder Cone", "Shield Volcano", "Lava Dome"],
-            ans: 2,
-            exp: "Olympus Mons is a massive shield volcano. It formed from highly fluid lava over a long period. Mars's lack of moving tectonic plates allowed lava to pile up in one spot for billions of years."
-        },
-        {
-            q: "What is the primary constituent of the Martian atmosphere, comprising approximately 95% of its volume?",
-            opts: ["Nitrogen (N2)", "Methane (CH4)", "Oxygen (O2)", "Carbon Dioxide (CO2)"],
-            ans: 3,
-            exp: "The Martian atmosphere is very thin but is dominated by Carbon Dioxide (95.3%), followed by minor amounts of Nitrogen (2.7%) and Argon (1.6%)."
-        },
-        {
-            q: "The Martian moon Phobos orbits below the planet's synchronous altitude. What will likely be its ultimate fate?",
-            opts: ["It will escape Mars's gravity and become a near-Earth asteroid.", "It will eventually be torn apart by tidal forces to form a ring system.", "It will crash into the other moon, Deimos.", "It will drift away and be captured by Jupiter."],
-            ans: 1,
-            exp: "Because Phobos orbits so closely and quickly, tidal deceleration is slowly pulling it inward. In roughly 50 million years, it will likely be shattered by Mars's tidal forces, creating a rocky ring."
-        },
-        {
-            q: "Valles Marineris is a massive geological feature on Mars. How is it thought to have primarily formed?",
-            opts: ["Tectonic rifting associated with the Tharsis bulge", "A massive meteor impact during the Late Heavy Bombardment", "Billions of years of liquid water erosion", "Subglacial volcanic eruptions"],
-            ans: 0,
-            exp: "Valles Marineris is a massive tectonic crack. As the Tharsis region (containing Olympus Mons) swelled with magma, the crust stretched and fractured, creating the massive canyon system."
-        },
-        {
-            q: "During the Martian winter, the polar ice caps grow significantly. What is primarily depositing out of the atmosphere to cause this?",
-            opts: ["Water ice", "Methane clathrates", "Solid Carbon Dioxide (Dry Ice)", "Ammonia ice"],
-            ans: 2,
-            exp: "During winter, temperatures drop so low that up to 30% of the CO2 in the atmosphere freezes (deposes) directly onto the poles as dry ice."
-        },
-        {
-            q: "Why does Mars currently lack a global dipole magnetic field like Earth's?",
-            opts: ["It is too far from the sun to generate one.", "Its core cooled down and ceased convective dynamo action.", "A massive impact stripped it away.", "It spins too slowly to generate a magnetic field."],
-            ans: 1,
-            exp: "Mars is smaller than Earth, so it cooled much faster. Its liquid iron core is thought to have largely solidified or stopped convecting, halting the internal dynamo that generates a magnetic field."
-        },
-        {
-            q: "The Martian day is approximately 39 minutes longer than an Earth day. What is the astronomical term for a Martian solar day?",
-            opts: ["Sol", "Lunation", "Sidereal Period", "Martian Cycle"],
-            ans: 0,
-            exp: "A 'Sol' is a solar day on Mars, lasting 24 hours, 39 minutes, and 35 seconds. Spacecraft operations on Mars schedule their activities by Sols rather than Earth days."
-        },
-        {
-            q: "The Opportunity rover discovered spherical hematite concretions informally called 'blueberries'. What do these formations strongly imply about Mars's history?",
-            opts: ["High-velocity volcanic eruptions", "The past presence of standing or flowing liquid water", "Frequent lightning strikes melting sand", "Biological processes creating shells"],
-            ans: 1,
-            exp: "On Earth, similar hematite concretions form when minerals precipitate out of groundwater flowing through porous rock, strongly pointing to a wet history for Mars."
-        },
-        {
-            q: "Which statement best describes the difference in surface gravity between Mars and Earth?",
-            opts: ["Mars gravity is about 80% of Earth's.", "Mars gravity is roughly equal to Earth's.", "Mars gravity is about 38% of Earth's.", "Mars gravity is about 15% of Earth's."],
-            ans: 2,
-            exp: "Due to its smaller mass and radius, the surface gravity on Mars is roughly 3.72 m/s², which is about 38% of standard Earth gravity."
-        },
-        {
-            q: "Which region on Mars contains the highest concentration of massive shield volcanoes?",
-            opts: ["Hellas Planitia", "Argyre Basin", "Tharsis Montes", "Elysium Planitia"],
-            ans: 2,
-            exp: "The Tharsis Montes (or Tharsis bulge) is a massive volcanic plateau containing three huge shield volcanoes (Ascraeus, Pavonis, and Arsia), and sits adjacent to Olympus Mons."
-        },
-        {
-            q: "What is the average atmospheric surface pressure on Mars compared to Earth at sea level?",
-            opts: ["Roughly 50%", "Roughly 10%", "Roughly 1%", "Roughly 0.6%"],
-            ans: 3,
-            exp: "Mars has a very thin atmosphere. The average surface pressure is only about 6 millibars, which is less than 1% (approx 0.6%) of Earth's sea-level pressure."
-        },
-        {
-            q: "Mars experiences global dust storms that can cover the entire planet. What provides the primary energy for these storms?",
-            opts: ["Geothermal venting from dormant volcanoes", "Solar heating driving atmospheric convection", "Tidal forces from Jupiter", "The evaporation of polar dry ice"],
-            ans: 1,
-            exp: "Solar heating warms the Martian surface, causing air to rise. This convection picks up fine dust, which absorbs more sunlight, heating the air further and creating a feedback loop that spawns massive storms."
-        },
-        {
-            q: "The Northern Hemisphere of Mars is distinctly different from the Southern Hemisphere. What is this phenomenon called?",
-            opts: ["The Martian Dichotomy", "The Tharsis Imbalance", "The Equatorial Divide", "The Orbital Eccentricity"],
-            ans: 0,
-            exp: "The Martian Dichotomy refers to the sharp contrast between the heavily cratered, high-elevation Southern highlands and the smooth, low-elevation Northern plains."
-        },
-        {
-            q: "In 2021, the Perseverance mission successfully deployed Ingenuity. What historical milestone did Ingenuity achieve?",
-            opts: ["First autonomous rover to find signs of life.", "First powered, controlled atmospheric flight on another planet.", "First drilling into a Martian subsurface lake.", "First sample returned from Mars to Earth."],
-            ans: 1,
-            exp: "Ingenuity is a small robotic helicopter that proved powered, controlled aerodynamic flight is possible in Mars's extremely thin atmosphere."
-        },
-        {
-            q: "Which rare isotope group of meteorites found on Earth are definitively known to have originated from Mars?",
-            opts: ["Chondrites", "Pallasites", "SNC (Shergottites, Nakhlites, Chassignites)", "Tektites"],
-            ans: 2,
-            exp: "SNC meteorites are igneous rocks that were blasted off Mars by asteroid impacts. Trapped gas bubbles inside them perfectly match the atmospheric composition measured by the Viking landers."
-        },
-        {
-            q: "What causes the apparent 'retrograde motion' of Mars when observed from Earth over several months?",
-            opts: ["Mars occasionally reverses its orbit due to Jupiter's gravity.", "Earth, orbiting faster on an inner track, 'laps' Mars, making it appear to move backward.", "The tilt of Earth's axis alters our viewing angle.", "Optical distortion from the solar wind."],
-            ans: 1,
-            exp: "Retrograde motion is an optical illusion. Because Earth is closer to the Sun, it orbits faster. When Earth passes Mars, Mars temporarily appears to move backward against the background stars."
-        },
-        {
-            q: "Which of the following gases has been detected on Mars in variable 'spikes', intriguing scientists because it is often tied to biological or geological activity?",
-            opts: ["Ozone (O3)", "Methane (CH4)", "Sulfur Dioxide (SO2)", "Helium (He)"],
-            ans: 1,
-            exp: "Methane has been detected in localized, temporary spikes. On Earth, methane is largely produced by life or active geology, making its presence on Mars a major subject of ongoing research."
-        },
-        {
-            q: "How does the axial tilt of Mars compare to Earth's axial tilt?",
-            opts: ["It is almost exactly 90 degrees (like Uranus).", "It has zero tilt.", "It is 25.19 degrees, very similar to Earth's 23.4 degrees.", "It is 45 degrees, causing extreme seasons."],
-            ans: 2,
-            exp: "Mars's axial tilt is 25.19 degrees. Because this is so close to Earth's 23.4 degrees, Mars experiences distinct seasons, though they last roughly twice as long."
-        },
-        {
-            q: "What is Hellas Planitia on Mars?",
-            opts: ["A massive impact crater/basin in the southern hemisphere", "The largest canyon system", "A region of frozen methane", "A prominent shield volcano"],
-            ans: 0,
-            exp: "Hellas Planitia is a massive, roughly circular impact basin in the southern hemisphere. It is one of the largest impact craters in the solar system, plunging 7,152 meters deep."
-        },
-        {
-            q: "Because Mars lost its magnetic field, what continuous process slowly strips away its upper atmosphere?",
-            opts: ["Tidal stripping by Jupiter", "Sublimation from cosmic background radiation", "Sputtering and interaction with the Solar Wind", "Frictional loss from global dust storms"],
-            ans: 2,
-            exp: "Without a protective magnetic field, the high-speed charged particles of the solar wind collide directly with the upper atmosphere, knocking molecules into space—a process called sputtering."
-        },
-        {
-            q: "If you were standing on the equator of Mars at noon, what temperature range might you experience near your feet?",
-            opts: ["Over 100°C (boiling)", "Around 20°C (68°F)", "Always below -50°C", "Around 200°C"],
-            ans: 1,
-            exp: "Despite the cold average temperature, the Martian equator at noon in the summer can reach a surprisingly comfortable 20°C (68°F), though the air at head-height would be much colder due to thin atmosphere."
-        },
-        {
-            q: "Who was the astronomer that, in the late 19th century, mistakenly popularized the idea of artificial 'canals' on Mars?",
-            opts: ["Galileo Galilei", "Percival Lowell", "Johannes Kepler", "Edwin Hubble"],
-            ans: 1,
-            exp: "Percival Lowell built an observatory to study Mars and firmly believed he saw a network of canals built by an intelligent civilization to transport water. It was an optical illusion caused by poor telescope resolution."
-        },
-        {
-            q: "What is the orbital period (length of a year) of Mars in Earth days?",
-            opts: ["365 days", "687 days", "10,000 days", "88 days"],
-            ans: 1,
-            exp: "Mars takes 687 Earth days to complete one orbit around the Sun. This means a Martian year is nearly twice as long as an Earth year."
-        },
-        {
-            q: "Which spacecraft was the first to successfully land on Mars and return images of the surface in 1976?",
-            opts: ["Curiosity", "Viking 1", "Pathfinder", "Mariner 4"],
-            ans: 1,
-            exp: "NASA's Viking 1 lander touched down on July 20, 1976, becoming the first spacecraft to successfully land on Mars and perform its mission, which included the first high-resolution surface images."
-        }
-    ];
+    const masterQuizData = window.QuizBank.getPageQuizData({ sourcePath: 'mars/mars.html', format: 'quiz-opts' });
 
     let currentQuizPool = [];
     let currentQIndex = 0;

@@ -457,6 +457,8 @@
     </section>
 </main>
 
+    <script src="../assets/js/master-quiz-data.js"></script>
+    <script src="../assets/js/quiz-bank.js"></script>
 <script>
     /* GAME & APP STATE */
     let xp = 0;
@@ -529,18 +531,7 @@
     }
 
     /* QUIZ LOGIC */
-    const quizQuestions = [
-        { question: "Who discovered Hygiea in 1849?", options: [{ text: "Galileo Galilei", isCorrect: false }, { text: "Annibale de Gasparis", isCorrect: true }, { text: "Heinrich Olbers", isCorrect: false }, { text: "Giuseppe Piazzi", isCorrect: false }], explanation: "Italian astronomer Annibale de Gasparis discovered Hygiea on April 12, 1849 at the Naples Observatory." },
-        { question: "Why is Hygiea so difficult to see from Earth despite its large size?", options: [{ text: "It reflects only about 7% of sunlight", isCorrect: true }, { text: "It is hidden behind Jupiter", isCorrect: false }, { text: "It is too small to see", isCorrect: false }, { text: "It moves faster than light", isCorrect: false }], explanation: "Hygiea's carbon-rich surface is extremely dark, reflecting only about 7% of sunlight—about as dark as fresh asphalt—making it surprisingly hard to spot." },
-        { question: "What type of asteroid is Hygiea?", options: [{ text: "C-type (carbonaceous)", isCorrect: true }, { text: "M-type (metallic)", isCorrect: false }, { text: "S-type (silicate)", isCorrect: false }, { text: "V-type (basaltic)", isCorrect: false }], explanation: "Hygiea is a C-type asteroid, rich in carbon, clay, and silicate rocks. Its material is among the most primitive in the solar system." },
-        { question: "Hygiea is named after which Greek figure?", options: [{ text: "The goddess of health and hygiene", isCorrect: true }, { text: "A famous warrior queen", isCorrect: false }, { text: "The god of the underworld", isCorrect: false }, { text: "A Titan who ruled the sky", isCorrect: false }], explanation: "Hygiea is named after Hygieia, the Greek goddess of health, cleanliness, and sanitation. The word 'hygiene' comes from her name." },
-        { question: "Approximately how large is Hygiea?", options: [{ text: "About 430 km in diameter", isCorrect: true }, { text: "About 100 km in diameter", isCorrect: false }, { text: "About 1,000 km in diameter", isCorrect: false }, { text: "About 50 km in diameter", isCorrect: false }], explanation: "Hygiea is about 430 km in diameter, making it the fourth largest object in the asteroid belt." },
-        { question: "What is the Hygiea family?", options: [{ text: "A large group of smaller asteroids believed to be fragments from Hygiea", isCorrect: true }, { text: "Hygiea's moons", isCorrect: false }, { text: "A series of impact craters", isCorrect: false }, { text: "A constellation near Jupiter", isCorrect: false }], explanation: "The Hygiea family is one of the largest asteroid families, containing thousands of smaller C-type asteroids thought to be fragments blasted off Hygiea by an impact." },
-        { question: "Where does Hygiea orbit relative to the other large asteroids?", options: [{ text: "Farther from the Sun than Ceres, Vesta, and Pallas", isCorrect: true }, { text: "Closer to the Sun than all of them", isCorrect: false }, { text: "Between Earth and Mars", isCorrect: false }, { text: "In Jupiter's orbit", isCorrect: false }], explanation: "Hygiea orbits at about 3.14 AU, farther from the Sun than Ceres, Vesta, or Pallas, placing it in the outer part of the main asteroid belt." },
-        { question: "What surprising discovery about Hygiea's shape was made in 2019?", options: [{ text: "It is nearly spherical enough to be a dwarf planet", isCorrect: true }, { text: "It is perfectly cubic", isCorrect: false }, { text: "It has rings", isCorrect: false }, { text: "It is hollow inside", isCorrect: false }], explanation: "In 2019, telescope observations revealed Hygiea is surprisingly round—nearly spherical enough to potentially qualify as a dwarf planet, though it has not been officially reclassified." },
-        { question: "How long does it take Hygiea to orbit the Sun?", options: [{ text: "About 5.6 Earth years", isCorrect: true }, { text: "About 1 Earth year", isCorrect: false }, { text: "About 10 Earth years", isCorrect: false }, { text: "About 100 Earth years", isCorrect: false }], explanation: "Hygiea takes approximately 5.6 Earth years to complete one orbit around the Sun due to its distance of about 3.14 AU." },
-        { question: "Has any spacecraft visited Hygiea?", options: [{ text: "No, but future missions are being proposed", isCorrect: true }, { text: "Yes, Dawn orbited it", isCorrect: false }, { text: "Yes, New Horizons flew past it", isCorrect: false }, { text: "Yes, Voyager 1 visited it", isCorrect: false }], explanation: "No spacecraft has visited Hygiea yet, though its large family and primitive composition make it an interesting target for future exploration." }
-    ];
+    const quizQuestions = window.QuizBank.getPageQuizData({ sourcePath: 'asteroid-belt/hygiea.html', format: 'option-objects' });
 
     let currentQ = 0;
     let score = 0;

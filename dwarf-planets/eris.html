@@ -470,6 +470,8 @@
     </section>
 </main>
 
+    <script src="../assets/js/master-quiz-data.js"></script>
+    <script src="../assets/js/quiz-bank.js"></script>
 <script>
     /* GAME & APP STATE */
     let xp = 0;
@@ -542,18 +544,7 @@
     }
 
     /* QUIZ LOGIC */
-    const quizQuestions = [
-        { question: "In what year was Eris discovered?", options: [{ text: "1999", isCorrect: false }, { text: "2005", isCorrect: true }, { text: "2010", isCorrect: false }, { text: "1985", isCorrect: false }], explanation: "Eris was discovered on January 5, 2005 by Mike Brown, Chad Trujillo, and David Rabinowitz at Palomar Observatory." },
-        { question: "Which astronomer led the team that discovered Eris?", options: [{ text: "Neil deGrasse Tyson", isCorrect: false }, { text: "Carl Sagan", isCorrect: false }, { text: "Mike Brown", isCorrect: true }, { text: "Edwin Hubble", isCorrect: false }], explanation: "Mike Brown led the team, along with Chad Trujillo and David Rabinowitz, that discovered Eris and other distant solar system objects." },
-        { question: "What is the name of Eris's moon?", options: [{ text: "Charon", isCorrect: false }, { text: "Titan", isCorrect: false }, { text: "Dysnomia", isCorrect: true }, { text: "Europa", isCorrect: false }], explanation: "Dysnomia is Eris's only known moon. Its discovery helped astronomers calculate Eris's mass by observing its orbital motion." },
-        { question: "Why did Eris cause Pluto to be demoted from planet to dwarf planet?", options: [{ text: "It was found to be more massive than Pluto", isCorrect: true }, { text: "It crashed into Pluto", isCorrect: false }, { text: "It proved Pluto was a star", isCorrect: false }, { text: "It pulled Pluto out of orbit", isCorrect: false }], explanation: "Eris is about 27% more massive than Pluto. Its discovery forced astronomers to redefine what a planet is, leading to Pluto's reclassification as a dwarf planet in 2006." },
-        { question: "Where in the solar system does Eris orbit?", options: [{ text: "The asteroid belt", isCorrect: false }, { text: "The Kuiper Belt", isCorrect: false }, { text: "The scattered disc", isCorrect: true }, { text: "Between Mars and Jupiter", isCorrect: false }], explanation: "Eris orbits in the scattered disc, a distant region of icy objects beyond the Kuiper Belt with highly elliptical orbits." },
-        { question: "About how long is Eris's orbital period around the Sun?", options: [{ text: "12 years", isCorrect: false }, { text: "248 years", isCorrect: false }, { text: "557 to 560 years", isCorrect: true }, { text: "10,000 years", isCorrect: false }], explanation: "Eris takes about 557 to 560 Earth years to complete one orbit around the Sun due to its extreme distance." },
-        { question: "What is Eris primarily composed of?", options: [{ text: "Molten rock and iron", isCorrect: false }, { text: "Rocky core with nitrogen ice surface", isCorrect: true }, { text: "Pure hydrogen gas", isCorrect: false }, { text: "Liquid water ocean", isCorrect: false }], explanation: "Eris has a rocky core covered by a thick surface of nitrogen ice, with possible methane ice as well." },
-        { question: "How reflective is Eris's surface?", options: [{ text: "Very dark, like coal", isCorrect: false }, { text: "About as bright as the Moon", isCorrect: false }, { text: "Extremely reflective, almost as bright as fresh snow", isCorrect: true }, { text: "Invisible to telescopes", isCorrect: false }], explanation: "Eris reflects about 96% of sunlight, making it one of the most reflective bodies in the solar system—almost as bright as fresh snow." },
-        { question: "How does Eris's diameter compare to Pluto's?", options: [{ text: "Exactly the same", isCorrect: false }, { text: "Slightly smaller", isCorrect: true }, { text: "Twice as large", isCorrect: false }, { text: "Ten times larger", isCorrect: false }], explanation: "Eris is slightly smaller in diameter than Pluto (about 2,326 km vs Pluto's ~2,377 km), but it is more massive." },
-        { question: "Eris is named after which figure from mythology?", options: [{ text: "The Roman god of war", isCorrect: false }, { text: "The Greek goddess of discord", isCorrect: true }, { text: "The Egyptian sun god", isCorrect: false }, { text: "The Norse god of thunder", isCorrect: false }], explanation: "Eris is named after the Greek goddess of discord and strife, a fitting name for the object that caused the debate over Pluto's status." }
-    ];
+    const quizQuestions = window.QuizBank.getPageQuizData({ sourcePath: 'dwarf-planets/eris.html', format: 'option-strings' });
 
     let currentQ = 0;
     let score = 0;

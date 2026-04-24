@@ -470,6 +470,8 @@
     </section>
 </main>
 
+    <script src="../assets/js/master-quiz-data.js"></script>
+    <script src="../assets/js/quiz-bank.js"></script>
 <script>
     /* GAME & APP STATE */
     let xp = 0;
@@ -542,18 +544,7 @@
     }
 
     /* QUIZ LOGIC */
-    const quizQuestions = [
-        { question: "In what year was Haumea discovered?", options: [{ text: "1999", isCorrect: false }, { text: "2004", isCorrect: true }, { text: "2010", isCorrect: false }, { text: "1985", isCorrect: false }], explanation: "Haumea was discovered in 2004 by a team at Caltech, though a Spanish team also announced the discovery shortly after." },
-        { question: "How long does it take Haumea to spin once on its axis?", options: [{ text: "24 hours", isCorrect: false }, { text: "3.9 hours", isCorrect: true }, { text: "1 year", isCorrect: false }, { text: "12 hours", isCorrect: false }], explanation: "Haumea spins incredibly fast, completing one full rotation in just 3.9 hours. This makes it the fastest-spinning large object known in the solar system." },
-        { question: "What is Haumea's overall shape?", options: [{ text: "Perfect sphere", isCorrect: false }, { text: "Flat disc", isCorrect: false }, { text: "Football/ellipsoid shape", isCorrect: true }, { text: "Cube", isCorrect: false }], explanation: "Haumea's extremely fast rotation stretched it into an elongated ellipsoid, or football-like shape, measuring about 2,322 x 1,704 x 1,138 km." },
-        { question: "When were Haumea's rings discovered, and how?", options: [{ text: "2015 by the Dawn spacecraft", isCorrect: false }, { text: "2004 with a telescope", isCorrect: false }, { text: "2017 during a stellar occultation", isCorrect: true }, { text: "2020 by Hubble", isCorrect: false }], explanation: "In 2017, astronomers observed Haumea passing in front of a distant star (a stellar occultation) and discovered a ring around it, making Haumea the first known dwarf planet with rings." },
-        { question: "What are the names of Haumea's two moons?", options: [{ text: "Charon and Nix", isCorrect: false }, { text: "Europa and Ganymede", isCorrect: false }, { text: "Phobos and Deimos", isCorrect: false }, { text: "Hi'iaka and Namaka", isCorrect: true }], explanation: "Haumea has two moons named Hi'iaka and Namaka, named after daughters of the Hawaiian goddess Haumea." },
-        { question: "What do scientists think caused Haumea's unusual family of orbiting objects?", options: [{ text: "A passing black hole", isCorrect: false }, { text: "Solar wind erosion", isCorrect: false }, { text: "A giant impact long ago", isCorrect: true }, { text: "Volcanic eruptions", isCorrect: false }], explanation: "Haumea shares its orbit with other objects that have similar orbits and colors. Scientists believe these are remnants from a giant impact that broke off pieces of Haumea long ago." },
-        { question: "Where is Haumea located in the solar system?", options: [{ text: "In the asteroid belt", isCorrect: false }, { text: "Between Mars and Jupiter", isCorrect: false }, { text: "In the Kuiper Belt beyond Neptune", isCorrect: true }, { text: "Orbiting Saturn", isCorrect: false }], explanation: "Haumea orbits in the Kuiper Belt, a region of icy bodies beyond Neptune, at an average distance of about 43 AU from the Sun." },
-        { question: "What is Haumea's surface mainly made of?", options: [{ text: "Liquid water", isCorrect: false }, { text: "Sand and dust", isCorrect: false }, { text: "Crystalline water ice", isCorrect: true }, { text: "Molten rock", isCorrect: false }], explanation: "Haumea's surface is covered in bright crystalline water ice, which reflects a lot of light and makes Haumea one of the brightest objects in the Kuiper Belt." },
-        { question: "What are Haumea's approximate dimensions?", options: [{ text: "940 km across", isCorrect: false }, { text: "12,000 km across", isCorrect: false }, { text: "2,322 x 1,704 x 1,138 km", isCorrect: true }, { text: "500 x 300 x 200 km", isCorrect: false }], explanation: "Haumea measures approximately 2,322 km along its longest axis, 1,704 km along the middle, and 1,138 km along the shortest axis due to its stretched shape." },
-        { question: "Haumea is named after a figure from which culture's mythology?", options: [{ text: "Greek", isCorrect: false }, { text: "Roman", isCorrect: false }, { text: "Hawaiian", isCorrect: true }, { text: "Japanese", isCorrect: false }], explanation: "Haumea is named after the Hawaiian goddess of childbirth, fitting the tradition of naming Kuiper Belt objects after creation deities." }
-    ];
+    const quizQuestions = window.QuizBank.getPageQuizData({ sourcePath: 'dwarf-planets/haumea.html', format: 'option-strings' });
 
     let currentQ = 0;
     let score = 0;
