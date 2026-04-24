@@ -328,6 +328,21 @@
             text-align: center;
         }
 
+        .outer-band-link,
+        .deep-space-link {
+            background: transparent;
+            border: 0;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .outer-band-link:hover .font-mono,
+        .deep-space-link:hover .deep-space-title,
+        .deep-space-link:hover .deep-space-subtitle,
+        .deep-space-link:hover .deep-space-distance {
+            color: #ffffff;
+        }
+
         .outer-body {
             position: absolute;
             display: flex;
@@ -1039,56 +1054,49 @@
                             <span class="font-mono text-xs text-gray-100 uppercase tracking-widest text-center">Kuiper<br>Belt</span>
                         </button>
 
-                        <div class="outer-body left-[10.8%] top-[258px]">
-                            <span class="distance-pill">39.2 AU</span>
+                        <div class="outer-body left-[10.8%] top-[364px]">
                             <button type="button" class="body-link moon-wrapper group btn-press" data-wrapper="orcus" onclick="zoomAndNavigate(event, 'kuiper-belt/orcus.html')">
                                 <div data-type="ice" class="w-[6px] h-[6px] planet-orb orb-kuiper opacity-90"></div>
                                 <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Orcus</span>
                             </button>
                         </div>
 
-                        <div class="outer-body left-[11%] top-[148px]">
-                            <span class="distance-pill">39.5 AU</span>
+                        <div class="outer-body left-[11%] top-[132px]">
                             <button type="button" class="body-link moon-wrapper group btn-press" data-wrapper="pluto" onclick="zoomAndNavigate(event, 'dwarf-planets/pluto.html')">
                                 <div data-type="rocky" class="w-[8px] h-[8px] planet-orb orb-dwarf"></div>
                                 <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Pluto</span>
                             </button>
                         </div>
 
-                        <div class="outer-body left-[12.4%] top-[332px]">
-                            <span class="distance-pill">42.2 AU</span>
+                        <div class="outer-body left-[12.4%] top-[422px]">
                             <button type="button" class="body-link moon-wrapper group btn-press" data-wrapper="salacia" onclick="zoomAndNavigate(event, 'kuiper-belt/salacia.html')">
                                 <div data-type="ice" class="w-[5px] h-[5px] planet-orb orb-kuiper opacity-75"></div>
                                 <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Salacia</span>
                             </button>
                         </div>
 
-                        <div class="outer-body left-[12.8%] top-[196px]">
-                            <span class="distance-pill">43.1 AU</span>
+                        <div class="outer-body left-[12.8%] top-[248px]">
                             <button type="button" class="body-link moon-wrapper group btn-press" data-wrapper="haumea" onclick="zoomAndNavigate(event, 'dwarf-planets/haumea.html')">
                                 <div data-type="rocky" class="w-[8px] h-[6px] planet-orb orb-dwarf rounded-[45%]"></div>
                                 <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Haumea</span>
                             </button>
                         </div>
 
-                        <div class="outer-body left-[13.1%] top-[98px]">
-                            <span class="distance-pill">43.7 AU</span>
+                        <div class="outer-body left-[13.1%] top-[72px]">
                             <button type="button" class="body-link moon-wrapper group btn-press" data-wrapper="quaoar" onclick="zoomAndNavigate(event, 'kuiper-belt/quaoar.html')">
                                 <div data-type="ice" class="w-[7px] h-[7px] planet-orb orb-kuiper"></div>
                                 <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Quaoar</span>
                             </button>
                         </div>
 
-                        <div class="outer-body left-[14.2%] top-[280px]">
-                            <span class="distance-pill">45.7 AU</span>
+                        <div class="outer-body left-[14.2%] top-[306px]">
                             <button type="button" class="body-link moon-wrapper group btn-press" data-wrapper="makemake" onclick="zoomAndNavigate(event, 'dwarf-planets/makemake.html')">
                                 <div data-type="rocky" class="w-[7px] h-[7px] planet-orb orb-dwarf opacity-90"></div>
                                 <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Makemake</span>
                             </button>
                         </div>
 
-                        <div class="outer-body left-[13.6%] top-[164px]">
-                            <span class="distance-pill">44.6 AU</span>
+                        <div class="outer-body left-[13.6%] top-[190px]">
                             <button type="button" class="body-link moon-wrapper group btn-press" data-wrapper="arrokoth" onclick="zoomAndNavigate(event, 'kuiper-belt/arrokoth.html')">
                                 <div data-type="ice" class="w-[5px] h-[5px] planet-orb orb-kuiper"></div>
                                 <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Arrokoth</span>
@@ -1103,25 +1111,25 @@
                             </button>
                         </div>
 
-                        <div class="outer-band-label left-[25.6%] top-[126px]">
+                        <button type="button" class="outer-band-label outer-band-link left-[25.6%] top-[126px] btn-press focus:outline-none" onclick="zoomAndNavigate(event, 'scattered-disk.html')">
                             <div class="font-mono text-[10px] text-star-magenta uppercase tracking-[0.24em]">Scattered Disk</div>
                             <div class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">50-100 AU</div>
-                        </div>
+                        </button>
 
-                        <div class="outer-band-label left-[36%] top-[126px]">
+                        <button type="button" class="outer-band-label outer-band-link left-[36%] top-[126px] btn-press focus:outline-none" onclick="zoomAndNavigate(event, 'termination-shock.html')">
                             <div class="font-mono text-[10px] text-star-gold uppercase tracking-[0.24em]">Termination Shock</div>
                             <div class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">~84-94 AU</div>
-                        </div>
+                        </button>
 
-                        <div class="outer-band-label left-[47%] top-[126px]">
+                        <button type="button" class="outer-band-label outer-band-link left-[47%] top-[126px] btn-press focus:outline-none" onclick="zoomAndNavigate(event, 'heliosheath.html')">
                             <div class="font-mono text-[10px] text-white uppercase tracking-[0.24em]">Heliosheath</div>
                             <div class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">~84-120 AU</div>
-                        </div>
+                        </button>
 
-                        <div class="outer-band-label left-[53%] top-[314px]">
+                        <button type="button" class="outer-band-label outer-band-link left-[53%] top-[314px] btn-press focus:outline-none" onclick="zoomAndNavigate(event, 'heliopause.html')">
                             <div class="font-mono text-[10px] text-star-green uppercase tracking-[0.24em]">Heliopause</div>
                             <div class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">~120 AU</div>
-                        </div>
+                        </button>
 
                         <div class="outer-body left-[64.4%] top-[170px]">
                             <span class="distance-pill">~142 AU</span>
@@ -1163,37 +1171,29 @@
                             <div class="tick-label">268000 AU</div>
                         </div>
 
-                        <div class="deep-space-marker tall left-[8%]">
-                            <div class="deep-space-distance">200 AU</div>
-                            <div class="deep-space-title text-star-cyan">Beyond Linear Scale</div>
-                            <div class="deep-space-subtitle">From here outward, the map compresses huge distances so the Oort Cloud and nearest star can still fit.</div>
-                            <div class="marker-orb bg-star-cyan"></div>
-                            <div class="marker-line"></div>
-                        </div>
-
-                        <div class="deep-space-marker low left-[63%]">
+                        <button type="button" class="deep-space-marker deep-space-link low left-[63%] btn-press focus:outline-none" onclick="zoomAndNavigate(event, 'oort-cloud.html')">
                             <div class="deep-space-distance">~2,000 AU</div>
                             <div class="deep-space-title text-star-cyan">Inner Oort Cloud</div>
                             <div class="deep-space-subtitle">The distant reservoir where long-period comet source regions likely begin.</div>
                             <div class="marker-orb bg-star-cyan"></div>
                             <div class="marker-line"></div>
-                        </div>
+                        </button>
 
-                        <div class="deep-space-marker tall left-[78%]">
+                        <button type="button" class="deep-space-marker deep-space-link tall left-[78%] btn-press focus:outline-none" onclick="zoomAndNavigate(event, 'oort-cloud.html')">
                             <div class="deep-space-distance">~100,000 AU</div>
                             <div class="deep-space-title text-star-gold">Outer Oort Cloud</div>
                             <div class="deep-space-subtitle">The Sun's farthest known cometary sphere, roughly halfway to neighboring stars.</div>
                             <div class="marker-orb bg-star-gold"></div>
                             <div class="marker-line"></div>
-                        </div>
+                        </button>
 
-                        <div class="deep-space-marker low left-[93%]">
+                        <button type="button" class="deep-space-marker deep-space-link low left-[93%] btn-press focus:outline-none" onclick="zoomAndNavigate(event, 'proxima-centauri.html')">
                             <div class="deep-space-distance">~268,000 AU</div>
                             <div class="deep-space-title text-star-red">Proxima Centauri</div>
                             <div class="deep-space-subtitle">The nearest known star to the Sun, about 4.24 light-years away.</div>
                             <div class="marker-orb bg-star-red"></div>
                             <div class="marker-line"></div>
-                        </div>
+                        </button>
                     </div>
                 </div>
                 
