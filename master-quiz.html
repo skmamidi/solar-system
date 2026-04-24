@@ -134,6 +134,13 @@
                             <option value="all">All available</option>
                         </select>
                     </label>
+
+                    <label class="block">
+                        <span class="font-mono text-xs uppercase tracking-[0.25em] text-space-100 mb-2 block">Difficulty</span>
+                        <select id="difficultySelect" class="w-full rounded-2xl border border-space-500 bg-space-900/80 px-4 py-3 text-white focus:outline-none focus:border-star-cyan">
+                            <option value="all">All difficulties</option>
+                        </select>
+                    </label>
                 </div>
 
                 <div class="mt-6 space-y-3">
@@ -183,6 +190,7 @@
                     <div class="flex flex-wrap items-center gap-2 mb-5">
                         <span id="topicBadge" class="px-3 py-1 rounded-full bg-star-cyan/15 border border-star-cyan/30 text-star-cyan text-xs font-mono uppercase tracking-[0.22em]"></span>
                         <span id="subtopicBadge" class="px-3 py-1 rounded-full bg-star-gold/15 border border-star-gold/30 text-star-gold text-xs font-mono uppercase tracking-[0.22em]"></span>
+                        <span id="difficultyBadge" class="px-3 py-1 rounded-full bg-star-magenta/15 border border-star-magenta/30 text-star-magenta text-xs font-mono uppercase tracking-[0.22em]"></span>
                     </div>
 
                     <h3 id="questionText" class="font-display text-2xl md:text-3xl leading-tight mb-6"></h3>
@@ -231,6 +239,7 @@
         const topicSelect = document.getElementById('topicSelect');
         const subtopicSelect = document.getElementById('subtopicSelect');
         const lengthSelect = document.getElementById('lengthSelect');
+        const difficultySelect = document.getElementById('difficultySelect');
         const heroQuestionCount = document.getElementById('heroQuestionCount');
         const heroTopicCount = document.getElementById('heroTopicCount');
         const heroFilterLabel = document.getElementById('heroFilterLabel');
@@ -245,6 +254,7 @@
         const resultsCard = document.getElementById('resultsCard');
         const topicBadge = document.getElementById('topicBadge');
         const subtopicBadge = document.getElementById('subtopicBadge');
+        const difficultyBadge = document.getElementById('difficultyBadge');
         const questionText = document.getElementById('questionText');
         const optionsWrap = document.getElementById('optionsWrap');
         const feedbackBox = document.getElementById('feedbackBox');
@@ -275,6 +285,16 @@
             });
         }
 
+        function populateDifficultyOptions() {
+            difficultySelect.innerHTML = '<option value="all">All difficulties</option>';
+            (quizData.difficulties || ['easy', 'medium', 'hard']).forEach(difficulty => {
+                const option = document.createElement('option');
+                option.value = difficulty;
+                option.textContent = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+                difficultySelect.appendChild(option);
+            });
+        }
+
         function populateSubtopicOptions() {
             const selectedTopic = topicSelect.value;
             const subtopics = selectedTopic === 'all'
@@ -294,7 +314,8 @@
             return quizData.questions.filter(question => {
                 const topicMatch = topicSelect.value === 'all' || question.topic === topicSelect.value;
                 const subtopicMatch = subtopicSelect.value === 'all' || question.subtopic === subtopicSelect.value;
-                return topicMatch && subtopicMatch;
+                const difficultyMatch = difficultySelect.value === 'all' || question.difficulty === difficultySelect.value;
+                return topicMatch && subtopicMatch && difficultyMatch;
             });
         }
 
@@ -307,10 +328,13 @@
             const filteredQuestions = getFilteredQuestions();
             const topicLabel = topicSelect.value === 'all' ? 'All topics' : topicSelect.value;
             const subtopicLabel = subtopicSelect.value === 'all' ? 'All subtopics' : subtopicSelect.value;
+            const difficultyLabel = difficultySelect.value === 'all'
+                ? 'All difficulties'
+                : `${difficultySelect.value.charAt(0).toUpperCase()}${difficultySelect.value.slice(1)}`;
 
             heroQuestionCount.textContent = quizData.questionCount.toLocaleString();
             heroTopicCount.textContent = quizData.topics.length.toLocaleString();
-            heroFilterLabel.textContent = `${topicLabel} • ${subtopicLabel}`;
+            heroFilterLabel.textContent = `${topicLabel} • ${subtopicLabel} • ${difficultyLabel}`;
             availableCount.textContent = filteredQuestions.length.toLocaleString();
             runCount.textContent = getRunLength(filteredQuestions).toLocaleString();
         }
@@ -363,6 +387,7 @@
             state.answered = false;
             topicBadge.textContent = question.topic;
             subtopicBadge.textContent = question.subtopic;
+            difficultyBadge.textContent = question.difficulty;
             questionText.textContent = question.question;
             optionsWrap.innerHTML = '';
             feedbackBox.classList.add('hidden');
@@ -472,12 +497,14 @@
 
         subtopicSelect.addEventListener('change', updateFilterStats);
         lengthSelect.addEventListener('change', updateFilterStats);
+        difficultySelect.addEventListener('change', updateFilterStats);
         document.getElementById('newQuizBtn').addEventListener('click', startQuiz);
         document.getElementById('reshuffleBtn').addEventListener('click', startQuiz);
         document.getElementById('retryBtn').addEventListener('click', startQuiz);
         nextBtn.addEventListener('click', goToNextQuestion);
 
         populateTopicOptions();
+        populateDifficultyOptions();
         populateSubtopicOptions();
         updateFilterStats();
         startQuiz();

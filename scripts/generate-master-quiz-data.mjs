@@ -217,12 +217,22 @@ function normalizeQuestion(rawQuestion, meta, index) {
         return null;
     }
 
+    const difficulty = classifyDifficulty({
+        prompt: String(prompt).trim(),
+        explanation: String(explanation).trim(),
+        choices: choices.map(choice => String(choice).trim()),
+        topic: meta.topic,
+        subtopic: meta.subtopic,
+        sourceTitle: meta.title
+    });
+
     return {
         id: `${meta.topicSlug}-${meta.subtopicSlug}-${index + 1}`,
         question: String(prompt).trim(),
         choices: choices.map(choice => String(choice).trim()),
         correctIndex,
         explanation: String(explanation).trim(),
+        difficulty,
         topic: meta.topic,
         subtopic: meta.subtopic,
         topicSlug: meta.topicSlug,
@@ -231,6 +241,62 @@ function normalizeQuestion(rawQuestion, meta, index) {
         sourcePath: meta.relPath,
         sourceType: 'page-quiz'
     };
+}
+
+function classifyDifficulty({ prompt, explanation, choices, topic, subtopic, sourceTitle }) {
+    const text = `${prompt} ${explanation} ${choices.join(' ')} ${topic} ${subtopic} ${sourceTitle}`.toLowerCase();
+    let score = 0;
+
+    const hardTerms = [
+        'spectral', 'sidereal', 'synodic', 'libration', 'radiometric', 'precession',
+        'magnetosphere', 'convection', 'tectonic', 'oxidation', 'hematite', 'anorthosite',
+        'concretions', 'dichotomy', 'synchronous altitude', 'tidal', 'dynamo',
+        'corona', 'chromosphere', 'photosphere', 'radiative zone', 'convective zone',
+        'eccentric', 'retrograde', 'cryovolcanism', 'occultation', 'albedo',
+        'heliosphere', 'syzygy', 'barycenter', 'porosity', 'regolith', 'mohorovi',
+        'discontinuity', 'aphelion', 'perihelion', 'kepler', 'electrolysis'
+    ];
+
+    const mediumTerms = [
+        'orbit', 'density', 'atmosphere', 'gravity', 'diameter', 'volume', 'surface pressure',
+        'orbital speed', 'axial tilt', 'greenhouse', 'carbon dioxide', 'methane', 'nitrogen',
+        'helium', 'hydrogen', 'volcano', 'crater', 'ring system', 'moon', 'asteroid',
+        'dwarf planet', 'solar cycle', 'solar wind', 'magnetic field', 'planetary comparisons'
+    ];
+
+    const easyTerms = [
+        'largest', 'smallest', 'closest', 'farthest', 'hottest', 'coldest', 'red planet',
+        'how many', 'what color', 'which planet', 'which moon', 'named after', 'discovered by'
+    ];
+
+    const wordCount = prompt.split(/\s+/).filter(Boolean).length;
+    const explanationWordCount = explanation.split(/\s+/).filter(Boolean).length;
+
+    if (wordCount > 22) score += 2;
+    else if (wordCount > 14) score += 1;
+
+    if (explanationWordCount > 45) score += 2;
+    else if (explanationWordCount > 28) score += 1;
+
+    hardTerms.forEach(term => {
+        if (text.includes(term)) score += 2;
+    });
+
+    mediumTerms.forEach(term => {
+        if (text.includes(term)) score += 1;
+    });
+
+    easyTerms.forEach(term => {
+        if (text.includes(term)) score -= 1;
+    });
+
+    if (topic === 'Planetary Comparisons') score -= 1;
+    if (subtopic === 'Physical' || subtopic === 'Orbital') score -= 1;
+    if (sourceTitle.includes('Master Quiz')) score += 1;
+
+    if (score >= 6) return 'hard';
+    if (score >= 2) return 'medium';
+    return 'easy';
 }
 
 function getQuizQuestionsFromFile(filePath) {
@@ -274,6 +340,14 @@ function createComparisonQuestion(question, correct, distractors, explanation, s
         choices: options,
         correctIndex: options.indexOf(correct),
         explanation,
+        difficulty: classifyDifficulty({
+            prompt: question,
+            explanation,
+            choices: options,
+            topic: 'Planetary Comparisons',
+            subtopic,
+            sourceTitle: 'Planetary Comparisons'
+        }),
         topic: 'Planetary Comparisons',
         subtopic,
         topicSlug: 'planetary-comparisons',
@@ -468,6 +542,7 @@ function buildMasterBank() {
     const bank = [...pageQuestions, ...comparisonQuestions];
 
     const topics = [...new Set(bank.map(question => question.topic))].sort();
+    const difficulties = ['easy', 'medium', 'hard'];
     const subtopicsByTopic = topics.reduce((acc, topic) => {
         acc[topic] = [...new Set(
             bank
@@ -481,6 +556,7 @@ function buildMasterBank() {
         generatedAt: new Date().toISOString(),
         questionCount: bank.length,
         topics,
+        difficulties,
         subtopicsByTopic,
         questions: bank
     };
