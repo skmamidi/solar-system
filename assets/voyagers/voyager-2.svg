@@ -1,0 +1,138 @@
+<svg width="1200" height="1200" viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Voyager 2 spacecraft illustration</title>
+  <desc id="desc">A realistic vector illustration of the Voyager 2 spacecraft with a cool-blue deep space backdrop, showing its dish antenna, booms, instruments, and power generators.</desc>
+  <defs>
+    <linearGradient id="space2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#020617"/>
+      <stop offset="55%" stop-color="#071b31"/>
+      <stop offset="100%" stop-color="#04122a"/>
+    </linearGradient>
+    <radialGradient id="neptuneGlow" cx="0.86" cy="0.18" r="0.72">
+      <stop offset="0%" stop-color="#8ce7ff" stop-opacity="0.95"/>
+      <stop offset="28%" stop-color="#6ef0ff" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#6ef0ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="dishRim2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#b6c5d8"/>
+      <stop offset="100%" stop-color="#526579"/>
+    </linearGradient>
+    <radialGradient id="dishFace2" cx="0.42" cy="0.34" r="0.8">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="38%" stop-color="#d6e0ec"/>
+      <stop offset="72%" stop-color="#7f92a8"/>
+      <stop offset="100%" stop-color="#243447"/>
+    </radialGradient>
+    <linearGradient id="foil2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fef3c7"/>
+      <stop offset="24%" stop-color="#e8c267"/>
+      <stop offset="50%" stop-color="#bb8a28"/>
+      <stop offset="70%" stop-color="#7a510b"/>
+      <stop offset="100%" stop-color="#f7d97e"/>
+    </linearGradient>
+    <linearGradient id="metal2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="45%" stop-color="#9db0c3"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <filter id="blueGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="1200" fill="url(#space2)"/>
+  <circle cx="1010" cy="170" r="260" fill="url(#neptuneGlow)"/>
+  <g fill="#ffffff">
+    <circle cx="162" cy="120" r="2"/>
+    <circle cx="238" cy="810" r="1.7"/>
+    <circle cx="370" cy="956" r="2.2"/>
+    <circle cx="1036" cy="914" r="2.2"/>
+    <circle cx="904" cy="1048" r="1.8"/>
+    <circle cx="892" cy="152" r="1.7"/>
+    <circle cx="1048" cy="344" r="1.6"/>
+    <circle cx="760" cy="92" r="2.1"/>
+    <circle cx="118" cy="614" r="1.5"/>
+    <circle cx="516" cy="144" r="1.9"/>
+    <circle cx="1080" cy="618" r="2.3"/>
+    <circle cx="604" cy="1066" r="1.6"/>
+  </g>
+
+  <g transform="translate(620 618) rotate(17)">
+    <ellipse cx="-228" cy="-174" rx="235" ry="235" fill="#6ef0ff" opacity="0.12" filter="url(#blueGlow)"/>
+    <circle cx="-228" cy="-174" r="214" fill="none" stroke="url(#dishRim2)" stroke-width="16"/>
+    <circle cx="-228" cy="-174" r="196" fill="url(#dishFace2)" stroke="#e2e8f0" stroke-width="3"/>
+    <circle cx="-228" cy="-174" r="12" fill="#1e293b" stroke="#cbd5e1" stroke-width="4"/>
+    <path d="M-228 -174 L-34 -8" stroke="#cbd5e1" stroke-width="10" stroke-linecap="round"/>
+    <path d="M-228 -174 L-68 -68" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+    <path d="M-228 -174 L-108 54" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+
+    <g transform="translate(0 0)">
+      <rect x="-38" y="-66" width="134" height="146" rx="10" fill="url(#foil2)" stroke="#fef3c7" stroke-width="4"/>
+      <rect x="-20" y="-44" width="98" height="104" rx="8" fill="#5b4319" opacity="0.22"/>
+      <rect x="-8" y="-18" width="78" height="18" rx="4" fill="url(#metal2)"/>
+      <rect x="-8" y="10" width="78" height="18" rx="4" fill="url(#metal2)"/>
+      <rect x="-8" y="38" width="78" height="18" rx="4" fill="url(#metal2)"/>
+    </g>
+
+    <g stroke="#cbd5e1" stroke-linecap="round">
+      <path d="M76 -50 L226 -74" stroke-width="8"/>
+      <path d="M76 -10 L218 10" stroke-width="7"/>
+      <path d="M64 48 L210 132" stroke-width="7"/>
+      <path d="M2 74 L-64 264" stroke-width="10"/>
+      <path d="M102 72 L336 314" stroke-width="8"/>
+      <path d="M98 -74 L290 -276" stroke-width="7"/>
+    </g>
+
+    <g transform="translate(270 -288)">
+      <rect x="-16" y="-16" width="28" height="182" rx="8" fill="url(#metal2)"/>
+      <circle cx="-2" cy="182" r="22" fill="#dbeafe" stroke="#7dd3fc" stroke-width="5"/>
+      <circle cx="-2" cy="182" r="9" fill="#0f172a"/>
+    </g>
+
+    <g transform="translate(346 326)">
+      <rect x="-10" y="-8" width="160" height="18" rx="7" fill="url(#metal2)"/>
+      <circle cx="166" cy="1" r="22" fill="#111827" stroke="#cbd5e1" stroke-width="5"/>
+      <circle cx="166" cy="1" r="7" fill="#6ef0ff"/>
+    </g>
+
+    <g transform="translate(-74 294)">
+      <path d="M0 0 L-76 40" stroke="#cbd5e1" stroke-width="7" stroke-linecap="round"/>
+      <path d="M0 0 L-8 124" stroke="#cbd5e1" stroke-width="7" stroke-linecap="round"/>
+      <path d="M0 0 L84 74" stroke="#cbd5e1" stroke-width="7" stroke-linecap="round"/>
+      <g fill="#3f3f46" stroke="#fbbf24" stroke-width="4">
+        <circle cx="-86" cy="46" r="28"/>
+        <circle cx="-12" cy="138" r="28"/>
+        <circle cx="94" cy="80" r="28"/>
+      </g>
+    </g>
+
+    <g transform="translate(218 144)">
+      <rect x="-10" y="-58" width="22" height="116" rx="7" fill="url(#metal2)"/>
+      <rect x="16" y="-48" width="66" height="20" rx="6" fill="#111827" stroke="#9ca3af" stroke-width="4"/>
+      <rect x="16" y="-16" width="48" height="18" rx="6" fill="#111827" stroke="#9ca3af" stroke-width="4"/>
+      <rect x="16" y="16" width="58" height="18" rx="6" fill="#111827" stroke="#9ca3af" stroke-width="4"/>
+    </g>
+
+    <g transform="translate(238 -70)" fill="#111827" stroke="#cbd5e1" stroke-width="4">
+      <circle cx="0" cy="0" r="18"/>
+      <circle cx="34" cy="-24" r="12"/>
+      <circle cx="44" cy="22" r="12"/>
+    </g>
+
+    <g transform="translate(228 6)" fill="#111827" stroke="#cbd5e1" stroke-width="4">
+      <rect x="-14" y="-14" width="28" height="28" rx="6"/>
+      <circle cx="36" cy="0" r="12"/>
+    </g>
+
+    <g transform="translate(198 126)" fill="#0f172a" stroke="#cbd5e1" stroke-width="4">
+      <rect x="-18" y="-16" width="34" height="34" rx="7"/>
+      <circle cx="30" cy="-20" r="12"/>
+      <circle cx="28" cy="20" r="12"/>
+    </g>
+  </g>
+
+  <g fill="#e0f2fe" opacity="0.92">
+    <text x="84" y="1064" font-family="JetBrains Mono, monospace" font-size="28" letter-spacing="5">VOYAGER 2</text>
+    <text x="84" y="1100" font-family="Nunito, sans-serif" font-size="20" opacity="0.72">Grand Tour mission profile illustration</text>
+  </g>
+</svg>
