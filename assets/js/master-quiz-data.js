@@ -1,8 +1,9 @@
 window.MASTER_QUIZ_DATA = {
-    "generatedAt": "2026-04-24T10:16:41.194Z",
-    "questionCount": 538,
+    "generatedAt": "2026-04-24T15:21:18.953Z",
+    "questionCount": 556,
     "topics": [
         "Asteroid Belt",
+        "Deep Space",
         "Dwarf Planets",
         "Earth",
         "Jupiter",
@@ -73,6 +74,16 @@ window.MASTER_QUIZ_DATA = {
         ],
         "Sun": [
             "Sun"
+        ],
+        "Deep Space": [
+            "Heliopause",
+            "Heliosheath",
+            "Oort Cloud",
+            "Proxima Centauri",
+            "Scattered Disk",
+            "Termination Shock",
+            "Voyager 1",
+            "Voyager 2"
         ]
     },
     "questions": [
@@ -10834,6 +10845,366 @@ window.MASTER_QUIZ_DATA = {
             "sourceTitle": "Planetary Comparisons",
             "sourcePath": "planetary-comparisons.html",
             "sourceType": "generated-comparison"
+        },
+        {
+            "id": "deep-space-voyager-1-1",
+            "question": "Why did Voyager 1 not continue on to Uranus and Neptune?",
+            "choices": [
+                "Its cameras failed at Saturn",
+                "Its Titan flyby bent it out of the planetary plane",
+                "NASA canceled all outer-planet targets in 1979",
+                "Jupiter gravity pushed it back inward"
+            ],
+            "correctIndex": 1,
+            "explanation": "Voyager 1’s close Titan encounter changed its path, sending it north out of the ecliptic instead of toward Uranus and Neptune.",
+            "difficulty": "medium",
+            "topic": "Deep Space",
+            "subtopic": "Voyager 1",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "voyager-1",
+            "sourceTitle": "Voyager 1",
+            "sourcePath": "voyager-1.html",
+            "sourceType": "page-quiz"
+        },
+        {
+            "id": "deep-space-voyager-1-2",
+            "question": "Which milestone makes Voyager 1 unique among all spacecraft?",
+            "choices": [
+                "First spacecraft to Jupiter",
+                "First probe to visit Uranus",
+                "First human-made object to enter interstellar space",
+                "First mission to carry plutonium power"
+            ],
+            "correctIndex": 2,
+            "explanation": "Voyager 1 became the first human-made object to enter interstellar space in August 2012.",
+            "difficulty": "easy",
+            "topic": "Deep Space",
+            "subtopic": "Voyager 1",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "voyager-1",
+            "sourceTitle": "Voyager 1",
+            "sourcePath": "voyager-1.html",
+            "sourceType": "page-quiz"
+        },
+        {
+            "id": "deep-space-voyager-1-3",
+            "question": "Which pair of giant planets did Voyager 1 fly past up close?",
+            "choices": [
+                "Jupiter and Saturn",
+                "Saturn and Uranus",
+                "Uranus and Neptune",
+                "Jupiter and Neptune"
+            ],
+            "correctIndex": 0,
+            "explanation": "Voyager 1’s prime planetary tour covered Jupiter and Saturn.",
+            "difficulty": "easy",
+            "topic": "Deep Space",
+            "subtopic": "Voyager 1",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "voyager-1",
+            "sourceTitle": "Voyager 1",
+            "sourcePath": "voyager-1.html",
+            "sourceType": "page-quiz"
+        },
+        {
+            "id": "deep-space-voyager-2-1",
+            "question": "What makes Voyager 2 unique in planetary exploration history?",
+            "choices": [
+                "It was the first spacecraft to leave Earth orbit",
+                "It is the only spacecraft to visit Uranus and Neptune",
+                "It returned samples from Jupiter",
+                "It orbited all four giant planets"
+            ],
+            "correctIndex": 1,
+            "explanation": "Voyager 2 remains the only spacecraft to have visited Uranus and Neptune.",
+            "difficulty": "easy",
+            "topic": "Deep Space",
+            "subtopic": "Voyager 2",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "voyager-2",
+            "sourceTitle": "Voyager 2",
+            "sourcePath": "voyager-2.html",
+            "sourceType": "page-quiz"
+        },
+        {
+            "id": "deep-space-voyager-2-2",
+            "question": "Which sequence correctly lists Voyager 2’s giant-planet flybys?",
+            "choices": [
+                "Saturn, Jupiter, Uranus, Neptune",
+                "Jupiter, Saturn, Uranus, Neptune",
+                "Jupiter, Uranus, Saturn, Neptune",
+                "Saturn, Uranus, Neptune, Jupiter"
+            ],
+            "correctIndex": 1,
+            "explanation": "Voyager 2 flew by Jupiter, then Saturn, then Uranus, then Neptune.",
+            "difficulty": "medium",
+            "topic": "Deep Space",
+            "subtopic": "Voyager 2",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "voyager-2",
+            "sourceTitle": "Voyager 2",
+            "sourcePath": "voyager-2.html",
+            "sourceType": "page-quiz"
+        },
+        {
+            "id": "deep-space-voyager-2-3",
+            "question": "What happened to Voyager 2 in 2018?",
+            "choices": [
+                "It reached the asteroid belt",
+                "It entered interstellar space",
+                "It orbited Neptune again",
+                "It stopped transmitting permanently"
+            ],
+            "correctIndex": 1,
+            "explanation": "Voyager 2 crossed the heliopause and entered interstellar space in 2018.",
+            "difficulty": "easy",
+            "topic": "Deep Space",
+            "subtopic": "Voyager 2",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "voyager-2",
+            "sourceTitle": "Voyager 2",
+            "sourcePath": "voyager-2.html",
+            "sourceType": "page-quiz"
+        },
+        {
+            "id": "deep-space-scattered-disk-1",
+            "question": "What best describes the scattered disk?",
+            "choices": [
+                "A neat circular ring inside Mars",
+                "A broad outer region of icy bodies with stretched and tilted orbits",
+                "A cloud of gas around the Sun",
+                "A zone of only rocky asteroids"
+            ],
+            "correctIndex": 1,
+            "explanation": "NASA describes the scattered disk as a linked extension of the Kuiper Belt filled with objects on elongated and often inclined orbits.",
+            "difficulty": "medium",
+            "topic": "Deep Space",
+            "subtopic": "Scattered Disk",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "scattered-disk",
+            "sourceTitle": "Scattered Disk",
+            "sourcePath": "scattered-disk.html",
+            "sourceType": "concept-quiz"
+        },
+        {
+            "id": "deep-space-scattered-disk-2",
+            "question": "Which giant planet most strongly helped shape the scattered disk?",
+            "choices": [
+                "Jupiter",
+                "Saturn",
+                "Neptune",
+                "Earth"
+            ],
+            "correctIndex": 2,
+            "explanation": "Neptune’s gravity and outward migration are central to the leading explanation for the scattered disk.",
+            "difficulty": "easy",
+            "topic": "Deep Space",
+            "subtopic": "Scattered Disk",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "scattered-disk",
+            "sourceTitle": "Scattered Disk",
+            "sourcePath": "scattered-disk.html",
+            "sourceType": "concept-quiz"
+        },
+        {
+            "id": "deep-space-termination-shock-1",
+            "question": "What happens to the solar wind at the termination shock?",
+            "choices": [
+                "It speeds up and gets hotter",
+                "It turns into liquid",
+                "It slows from supersonic to slower speeds",
+                "It disappears completely"
+            ],
+            "correctIndex": 2,
+            "explanation": "The termination shock is where the solar wind abruptly slows as it begins to feel stronger interstellar pressure.",
+            "difficulty": "easy",
+            "topic": "Deep Space",
+            "subtopic": "Termination Shock",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "termination-shock",
+            "sourceTitle": "Termination Shock",
+            "sourcePath": "termination-shock.html",
+            "sourceType": "concept-quiz"
+        },
+        {
+            "id": "deep-space-termination-shock-2",
+            "question": "What did the different Voyager termination-shock crossing distances show?",
+            "choices": [
+                "That the heliosphere is perfectly round",
+                "That the heliosphere is uneven or squashed",
+                "That Pluto controls the solar wind",
+                "That the Oort Cloud is flat"
+            ],
+            "correctIndex": 1,
+            "explanation": "Voyager 1 and 2 crossed at different distances, showing the heliosphere is not a perfect sphere.",
+            "difficulty": "medium",
+            "topic": "Deep Space",
+            "subtopic": "Termination Shock",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "termination-shock",
+            "sourceTitle": "Termination Shock",
+            "sourcePath": "termination-shock.html",
+            "sourceType": "concept-quiz"
+        },
+        {
+            "id": "deep-space-heliosheath-1",
+            "question": "The heliosheath lies between which two boundaries?",
+            "choices": [
+                "The asteroid belt and Jupiter",
+                "The termination shock and the heliopause",
+                "Mars and the Kuiper Belt",
+                "The Oort Cloud and Proxima Centauri"
+            ],
+            "correctIndex": 1,
+            "explanation": "The heliosheath is the region between the termination shock and the heliopause.",
+            "difficulty": "easy",
+            "topic": "Deep Space",
+            "subtopic": "Heliosheath",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "heliosheath",
+            "sourceTitle": "Heliosheath",
+            "sourcePath": "heliosheath.html",
+            "sourceType": "concept-quiz"
+        },
+        {
+            "id": "deep-space-heliosheath-2",
+            "question": "What is the solar wind like in the heliosheath?",
+            "choices": [
+                "Fast and neatly ordered",
+                "Slowed, compressed, and more turbulent",
+                "Frozen into solid ice",
+                "Gone forever"
+            ],
+            "correctIndex": 1,
+            "explanation": "NASA describes the heliosheath as a region where the solar wind slows, piles up, and becomes more disturbed.",
+            "difficulty": "easy",
+            "topic": "Deep Space",
+            "subtopic": "Heliosheath",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "heliosheath",
+            "sourceTitle": "Heliosheath",
+            "sourcePath": "heliosheath.html",
+            "sourceType": "concept-quiz"
+        },
+        {
+            "id": "deep-space-heliopause-1",
+            "question": "What is the heliopause?",
+            "choices": [
+                "The place where the Sun’s gravity ends",
+                "The outer boundary of the heliosphere",
+                "A ring around Saturn",
+                "A type of comet"
+            ],
+            "correctIndex": 1,
+            "explanation": "The heliopause is the boundary where the Sun’s solar-wind bubble meets interstellar space.",
+            "difficulty": "easy",
+            "topic": "Deep Space",
+            "subtopic": "Heliopause",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "heliopause",
+            "sourceTitle": "Heliopause",
+            "sourcePath": "heliopause.html",
+            "sourceType": "concept-quiz"
+        },
+        {
+            "id": "deep-space-heliopause-2",
+            "question": "Which spacecraft crossed the heliopause first?",
+            "choices": [
+                "Voyager 2",
+                "New Horizons",
+                "Voyager 1",
+                "Cassini"
+            ],
+            "correctIndex": 2,
+            "explanation": "Voyager 1 crossed first in 2012, and Voyager 2 crossed later in 2018.",
+            "difficulty": "easy",
+            "topic": "Deep Space",
+            "subtopic": "Heliopause",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "heliopause",
+            "sourceTitle": "Heliopause",
+            "sourcePath": "heliopause.html",
+            "sourceType": "concept-quiz"
+        },
+        {
+            "id": "deep-space-oort-cloud-1",
+            "question": "What shape is the Oort Cloud thought to have?",
+            "choices": [
+                "A flat ring like Saturn’s rings",
+                "A roughly spherical shell around the solar system",
+                "A straight line beyond Neptune",
+                "A cube around the Sun"
+            ],
+            "correctIndex": 1,
+            "explanation": "The Oort Cloud is thought to form a distant spherical shell of icy bodies around the solar system.",
+            "difficulty": "easy",
+            "topic": "Deep Space",
+            "subtopic": "Oort Cloud",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "oort-cloud",
+            "sourceTitle": "Oort Cloud",
+            "sourcePath": "oort-cloud.html",
+            "sourceType": "concept-quiz"
+        },
+        {
+            "id": "deep-space-oort-cloud-2",
+            "question": "What kind of objects are many long-period comets thought to come from?",
+            "choices": [
+                "The Oort Cloud",
+                "The Moon",
+                "Mercury’s core",
+                "The Sun’s corona"
+            ],
+            "correctIndex": 0,
+            "explanation": "Many long-period comets are thought to come from the distant Oort Cloud.",
+            "difficulty": "easy",
+            "topic": "Deep Space",
+            "subtopic": "Oort Cloud",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "oort-cloud",
+            "sourceTitle": "Oort Cloud",
+            "sourcePath": "oort-cloud.html",
+            "sourceType": "concept-quiz"
+        },
+        {
+            "id": "deep-space-proxima-centauri-1",
+            "question": "What is Proxima Centauri?",
+            "choices": [
+                "The nearest known star beyond our Sun",
+                "A moon of Neptune",
+                "A dwarf planet in the Kuiper Belt",
+                "A spacecraft"
+            ],
+            "correctIndex": 0,
+            "explanation": "Proxima Centauri is the closest known star to the Sun, a little over 4.2 light-years away.",
+            "difficulty": "easy",
+            "topic": "Deep Space",
+            "subtopic": "Proxima Centauri",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "proxima-centauri",
+            "sourceTitle": "Proxima Centauri",
+            "sourcePath": "proxima-centauri.html",
+            "sourceType": "concept-quiz"
+        },
+        {
+            "id": "deep-space-proxima-centauri-2",
+            "question": "What kind of star is Proxima Centauri?",
+            "choices": [
+                "Blue giant",
+                "Yellow supergiant",
+                "Red dwarf",
+                "White dwarf"
+            ],
+            "correctIndex": 2,
+            "explanation": "NASA describes Proxima Centauri as a small, cool red dwarf star.",
+            "difficulty": "easy",
+            "topic": "Deep Space",
+            "subtopic": "Proxima Centauri",
+            "topicSlug": "deep-space",
+            "subtopicSlug": "proxima-centauri",
+            "sourceTitle": "Proxima Centauri",
+            "sourcePath": "proxima-centauri.html",
+            "sourceType": "concept-quiz"
         }
     ]
 };
