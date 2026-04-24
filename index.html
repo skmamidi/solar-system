@@ -843,6 +843,30 @@
         </div>
     </section>
 
+    <section class="max-w-6xl mx-auto w-full px-4 mt-6 z-20">
+        <div id="global-badge-card" class="glass-panel rounded-3xl p-6 md:p-7">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                <div class="max-w-2xl">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div id="global-badge-icon" class="text-5xl">🌠</div>
+                        <div>
+                            <h2 id="global-badge-title" class="font-display font-bold text-2xl text-star-gold">Global Badge In Progress</h2>
+                            <p id="global-badge-subtitle" class="text-sm md:text-base text-gray-300 leading-relaxed">Master every planet system, belt region, and the astronomy course to earn the app-wide badge.</p>
+                        </div>
+                    </div>
+                    <div class="mb-3 flex items-center justify-between gap-4 text-sm font-mono">
+                        <span class="text-star-cyan uppercase tracking-widest">Mastery Progress</span>
+                        <span id="global-badge-progress" class="text-white">0/12 mastery badges</span>
+                    </div>
+                    <div class="w-full bg-space-900 rounded-full h-3 border border-space-500 overflow-hidden">
+                        <div id="global-badge-progress-bar" class="bg-gradient-to-r from-star-gold via-star-cyan to-star-green h-3 rounded-full transition-all duration-700" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div id="global-badge-checklist" class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:min-w-[22rem]"></div>
+            </div>
+        </div>
+    </section>
+
     <!-- Bottom utility row -->
     <div class="utility-row max-w-6xl mx-auto w-full px-4 mt-6 grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 z-20">
         <button onclick="zoomAndNavigate(event, 'astronomical-terms.html')"
@@ -1379,43 +1403,41 @@
         }, profile.duration);
     }
 
-    function getSystemState() {
-        try { return JSON.parse(localStorage.getItem('solarSystemState')) || {}; } 
-        catch(e) { return {}; }
-    }
-
-    function hasVisited(key) {
-        const state = getSystemState();
-        return state[key] && state[key].visited;
-    }
-
-    function hasBadge(key) {
-        const state = getSystemState();
-        return state[key] && state[key].badge;
-    }
-
-    function onPageReady() {
+    function refreshLandingProgress() {
         document.querySelectorAll('.planet-wrapper, .moon-wrapper').forEach(wrapper => {
             const key = wrapper.dataset.wrapper;
             wrapper.classList.remove('visited', 'badged');
-            if (hasBadge(key)) {
+            if (window.GlobalBadges && window.GlobalBadges.hasWorldBadge(key)) {
                 wrapper.classList.add('badged');
-            } else if (hasVisited(key)) {
+            } else if (window.GlobalBadges && window.GlobalBadges.hasWorldVisited(key)) {
                 wrapper.classList.add('visited');
             }
         });
-        
+
+        if (window.GlobalBadges) {
+            window.GlobalBadges.renderLandingPageStatus();
+        }
+    }
+
+    function onPageReady() {
+        refreshLandingProgress();
+
         const scrollContainer = document.querySelector('.overflow-x-auto');
-        scrollContainer.addEventListener('wheel', (evt) => {
-            if (evt.deltaY !== 0) {
-                evt.preventDefault();
-                scrollContainer.scrollLeft += evt.deltaY * 2;
-            }
-        });
+        if (scrollContainer && !scrollContainer.dataset.wheelBound) {
+            scrollContainer.dataset.wheelBound = 'true';
+            scrollContainer.addEventListener('wheel', (evt) => {
+                if (evt.deltaY !== 0) {
+                    evt.preventDefault();
+                    scrollContainer.scrollLeft += evt.deltaY * 2;
+                }
+            });
+        }
     }
 
     window.addEventListener('DOMContentLoaded', onPageReady);
+    window.addEventListener('global-badges:updated', refreshLandingProgress);
 </script>
 
+<script src="assets/js/global-badges.js"></script>
 </body>
 </html>
