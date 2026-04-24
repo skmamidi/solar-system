@@ -1158,6 +1158,18 @@
         return html;
     }
 
+    function formatEarthDiameterMultiple(diameterKm) {
+        const earth = planetData.find(planet => planet.id === 'earth');
+        if (!earth || typeof diameterKm !== 'number' || !earth.diameterKm) return '';
+
+        const multiple = diameterKm / earth.diameterKm;
+        const formattedMultiple = Number.isInteger(multiple)
+            ? multiple.toLocaleString()
+            : multiple.toFixed(multiple >= 10 ? 1 : 2).replace(/\.0$/, '').replace(/(\.\d*[1-9])0$/, '$1');
+
+        return ` (${formattedMultiple} Earth diameters)`;
+    }
+
     function renderStaticGrid(tabId) {
         const configs = layoutConfig[tabId];
         if (!configs) return '';
@@ -1178,6 +1190,7 @@
                     let safeVal = val !== undefined ? val : 0;
                     let pct = Math.max((safeVal / maxVal) * 100, 2);
                     if(safeVal === 0) pct = 0;
+                    const extraText = conf.prop === 'diameterKm' ? formatEarthDiameterMultiple(safeVal) : '';
 
                     let extraBadge = '';
                     if (conf.prop === 'density') {
@@ -1188,7 +1201,7 @@
                     valueHtml = `
                         <div class="flex-1 flex flex-col justify-center ml-4">
                             <div class="text-[10px] lg:text-xs font-mono text-white mb-1 flex justify-between items-center">
-                                <span class="flex items-center">${safeVal.toLocaleString()}${conf.suffix||''} ${extraBadge}</span>
+                                <span class="flex items-center">${safeVal.toLocaleString()}${conf.suffix||''}${extraText} ${extraBadge}</span>
                                 <span class="text-space-100 font-body text-[8px] lg:text-[10px] text-right whitespace-nowrap overflow-hidden text-ellipsis max-w-[50%]">${conf.subProp && p[conf.subProp] !== undefined ? p[conf.subProp] : ''}</span>
                             </div>
                             <div class="w-full bg-space-900 h-1.5 lg:h-2 rounded-full overflow-hidden border border-space-500">
