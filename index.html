@@ -1213,12 +1213,12 @@
                             <div class="tick-label">200 AU</div>
                         </div>
 
-                        <div class="outer-band-label left-[4.8%]">
+                        <div class="outer-band-label left-[4.8%]" data-light-key="kuiper-belt-start">
                             <div class="font-mono text-[10px] text-star-cyan uppercase tracking-[0.28em]">Start Of Kuiper Belt</div>
                             <div class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">30 AU</div>
                         </div>
 
-                        <div class="outer-band-label left-[18.1%]">
+                        <div class="outer-band-label left-[18.1%]" data-light-key="kuiper-belt-end">
                             <div class="font-mono text-[10px] text-star-cyan uppercase tracking-[0.28em]">End Of Kuiper Belt</div>
                             <div class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">50 AU</div>
                         </div>
@@ -1975,6 +1975,8 @@
         }
     }
 
+    const lightTimeStorageKey = 'solarSystemLightTimeOverlayV2';
+
     const lightTimeMarkerData = [
         { key: 'mercury', label: 'Mercury', time: '3m 20s' },
         { key: 'venus', label: 'Venus', time: '5m 50s' },
@@ -1984,7 +1986,8 @@
         { key: 'saturn', label: 'Saturn', time: '1h 19m' },
         { key: 'uranus', label: 'Uranus', time: '2h 40m' },
         { key: 'neptune', label: 'Neptune', time: '4h 10m' },
-        { key: 'kuiper-belt', label: 'Kuiper Belt', time: '4h 10m-6h 56m' },
+        { key: 'kuiper-belt-start', label: 'Kuiper Start', time: '4h 10m' },
+        { key: 'kuiper-belt-end', label: 'Kuiper End', time: '6h 56m' },
         { key: 'eris', label: 'Eris', time: '9h 23m' },
         { key: 'heliosheath', label: 'Heliosheath', time: '11h 39m-16h 38m' },
         { key: 'heliopause', label: 'Heliopause', time: '16h 38m' },
@@ -2006,7 +2009,7 @@
 
         markersRoot.innerHTML = '';
 
-        const majorTargets = [...scrollInner.querySelectorAll('button[data-light-key]')];
+        const majorTargets = [...scrollInner.querySelectorAll('[data-light-key]')];
 
         lightTimeMarkerData.forEach((item) => {
             const markerKey = item.key;
@@ -2065,7 +2068,7 @@
             thumb.style.background = enabled ? 'rgba(247,231,182,0.72)' : 'rgba(255,255,255,0.34)';
             thumb.style.boxShadow = enabled ? '0 0 8px rgba(247,231,182,0.08)' : 'none';
         }
-        window.localStorage.setItem('solarSystemLightTimeOverlay', enabled ? 'on' : 'off');
+        window.localStorage.setItem(lightTimeStorageKey, enabled ? 'on' : 'off');
     }
 
     function toggleLightTimeOverlay(forceState) {
@@ -2093,7 +2096,7 @@
     function onPageReady() {
         refreshLandingProgress();
         injectLightTimeMarkers();
-        applyLightTimeOverlayState(window.localStorage.getItem('solarSystemLightTimeOverlay') !== 'off');
+        applyLightTimeOverlayState(window.localStorage.getItem(lightTimeStorageKey) !== 'off');
 
         const scrollContainer = document.querySelector('.overflow-x-auto');
         if (scrollContainer && !scrollContainer.dataset.wheelBound) {
