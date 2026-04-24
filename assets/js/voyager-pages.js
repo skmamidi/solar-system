@@ -1,21 +1,21 @@
 (function () {
     const COMMON_ASSEMBLY_PARTS = [
-        { id: 'hga', label: 'High-Gain Antenna', short: 'HGA', slot: 'hga', summary: 'The 3.7-meter dish keeps commands and telemetry locked to Earth across interstellar distances.' },
-        { id: 'rss', label: 'Radio Science System', short: 'RSS', slot: 'rss', summary: 'Radio science uses the telecom system to probe atmospheres, rings, and plasma along the signal path.' },
-        { id: 'scan', label: 'Scan Platform', short: 'SCAN', slot: 'scan', summary: 'The steerable platform aimed cameras and remote-sensing instruments during planetary flybys.' },
-        { id: 'iss', label: 'Imaging Science System', short: 'ISS', slot: 'iss', summary: 'The twin cameras created many of Voyager’s most famous images.' },
-        { id: 'uvs', label: 'Ultraviolet Spectrometer', short: 'UVS', slot: 'uvs', summary: 'Measured ultraviolet light from atmospheres, auroras, and stars.' },
-        { id: 'iris', label: 'Infrared Interferometer Spectrometer', short: 'IRIS', slot: 'iris', summary: 'Mapped temperatures and infrared signatures in clouds, rings, and atmospheres.' },
-        { id: 'pps', label: 'Photopolarimeter', short: 'PPS', slot: 'pps', summary: 'Studied light intensity and polarization, especially useful for rings and hazes.' },
-        { id: 'pra', label: 'Planetary Radio Astronomy', short: 'PRA', slot: 'pra', summary: 'Listened for radio emissions from planets and plasma environments.' },
-        { id: 'pws', label: 'Plasma Wave Subsystem', short: 'PWS', slot: 'pws', summary: 'Detects plasma oscillations and wave activity in space.' },
-        { id: 'pls', label: 'Plasma Science', short: 'PLS', slot: 'pls', summary: 'Measured the density, temperature, and flow of low-energy plasma.' },
-        { id: 'lecp', label: 'Low-Energy Charged Particles', short: 'LECP', slot: 'lecp', summary: 'Tracked energetic ions and electrons across the solar wind and planetary magnetospheres.' },
-        { id: 'crs', label: 'Cosmic Ray Subsystem', short: 'CRS', slot: 'crs', summary: 'Counts extremely energetic particles from the heliosphere and beyond.' },
-        { id: 'magboom', label: 'Magnetometer Boom', short: 'BOOM', slot: 'magboom', summary: 'A long fiberglass boom separates magnetic sensors from spacecraft interference.' },
-        { id: 'mag', label: 'Magnetometer', short: 'MAG', slot: 'mag', summary: 'Measures magnetic fields around planets and in interstellar space.' },
-        { id: 'fieldboom', label: 'Science Boom', short: 'BOOM', slot: 'fieldboom', summary: 'Carries several particles-and-fields experiments away from the main bus.' },
-        { id: 'rtg', label: 'RTG Power Cluster', short: 'RTG', slot: 'rtg', summary: 'Three radioisotope thermoelectric generators converted plutonium heat into electrical power.' }
+        { id: 'hga', label: 'High-Gain Antenna', short: 'HGA', slot: 'hga', summary: 'This giant dish is Voyager’s big space ear and mouth. It helps the spacecraft listen for messages from Earth and talk back across an enormous distance.' },
+        { id: 'rss', label: 'Radio Science System', short: 'RSS', slot: 'rss', summary: 'This system uses radio signals like a science flashlight. By seeing how the signal changes, scientists can learn about rings, air, and space plasma.' },
+        { id: 'scan', label: 'Scan Platform', short: 'SCAN', slot: 'scan', summary: 'This moving platform acts like a careful pointing arm. It turns instruments toward planets, moons, and other targets.' },
+        { id: 'iss', label: 'Imaging Science System', short: 'ISS', slot: 'iss', summary: 'These cameras are Voyager’s eyes. They took many of the amazing pictures we still use to explore the mission today.' },
+        { id: 'uvs', label: 'Ultraviolet Spectrometer', short: 'UVS', slot: 'uvs', summary: 'This tool studies a kind of light our eyes cannot see. It helps scientists learn about glowing gases and thin atmospheres.' },
+        { id: 'iris', label: 'Infrared Interferometer Spectrometer', short: 'IRIS', slot: 'iris', summary: 'This instrument looks for heat. It helps scientists tell which places are warmer, cooler, or made of different materials.' },
+        { id: 'pps', label: 'Photopolarimeter', short: 'PPS', slot: 'pps', summary: 'This instrument checks how light is shining and bouncing. That helps scientists study hazes, clouds, and rings.' },
+        { id: 'pra', label: 'Planetary Radio Astronomy', short: 'PRA', slot: 'pra', summary: 'This is a radio listener for space. It picks up natural radio sounds coming from planets and charged particles.' },
+        { id: 'pws', label: 'Plasma Wave Subsystem', short: 'PWS', slot: 'pws', summary: 'This instrument listens to waves in super-thin space gas called plasma. It helps scientists hear what space is doing around Voyager.' },
+        { id: 'pls', label: 'Plasma Science', short: 'PLS', slot: 'pls', summary: 'This tool measures tiny charged particles flowing through space, a bit like checking the speed and temperature of a cosmic wind.' },
+        { id: 'lecp', label: 'Low-Energy Charged Particles', short: 'LECP', slot: 'lecp', summary: 'This instrument counts fast-moving particles in space. It helps show what the solar wind and magnetic environments are like.' },
+        { id: 'crs', label: 'Cosmic Ray Subsystem', short: 'CRS', slot: 'crs', summary: 'This tool counts super-energetic particles zooming through space. It helps Voyager study conditions near and beyond the heliosphere.' },
+        { id: 'magboom', label: 'Magnetometer Boom', short: 'BOOM', slot: 'magboom', summary: 'This long arm holds magnetic tools far from the spacecraft so Voyager can measure space magnetism without too much interference from itself.' },
+        { id: 'mag', label: 'Magnetometer', short: 'MAG', slot: 'mag', summary: 'This instrument is like a magnetic compass for space. It measures invisible magnetic fields around planets and in deep space.' },
+        { id: 'fieldboom', label: 'Science Boom', short: 'BOOM', slot: 'fieldboom', summary: 'This extra arm carries science tools away from the main body so they can make cleaner measurements.' },
+        { id: 'rtg', label: 'RTG Power Cluster', short: 'RTG', slot: 'rtg', summary: 'These power units are Voyager’s long-lasting batteries. They make electricity from heat so the spacecraft can keep working far from the Sun.' }
     ];
 
     const SLOT_LAYOUT = [
