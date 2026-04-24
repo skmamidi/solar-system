@@ -361,9 +361,9 @@
         .outer-region-link {
             position: absolute;
             left: 28%;
-            top: 250px;
+            top: 488px;
             transform: translateX(-50%);
-            width: 120px;
+            width: 128px;
         }
 
         .deep-space-band {
@@ -394,13 +394,6 @@
                 radial-gradient(circle at 52% 50%, rgba(255,255,255,0.035), transparent 30%),
                 linear-gradient(90deg, rgba(9,13,24,0.2), rgba(18,27,53,0.22), rgba(9,13,24,0.1));
             box-shadow: inset 0 0 50px rgba(110,240,255,0.03);
-        }
-
-        .deep-space-note {
-            position: absolute;
-            left: 80px;
-            top: 64px;
-            max-width: 320px;
         }
 
         .deep-space-marker {
@@ -460,6 +453,32 @@
             line-height: 1.35;
             color: #94a3b8;
             margin-top: 0.3rem;
+        }
+
+        .scale-tick {
+            position: absolute;
+            bottom: 26px;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+            pointer-events: none;
+        }
+
+        .scale-tick .tick-line {
+            width: 1px;
+            height: 14px;
+            background: rgba(255,255,255,0.3);
+        }
+
+        .scale-tick .tick-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #64748b;
+            white-space: nowrap;
         }
 
         .utility-row {
@@ -980,6 +999,14 @@
                     <div class="outer-system-band">
                         <div class="outer-band-zone"></div>
                         <div class="outer-band-line"></div>
+                        <div class="scale-tick left-[6%]">
+                            <div class="tick-line"></div>
+                            <div class="tick-label">30 AU</div>
+                        </div>
+                        <div class="scale-tick left-[63%]">
+                            <div class="tick-line"></div>
+                            <div class="tick-label">50 AU</div>
+                        </div>
 
                         <div class="outer-band-label left-[6%]">
                             <div class="font-mono text-[10px] text-star-cyan uppercase tracking-[0.28em]">Start Of Kuiper Belt</div>
@@ -1076,12 +1103,25 @@
                     <div class="deep-space-band">
                         <div class="deep-space-zone"></div>
                         <div class="deep-space-line"></div>
-
-                        <div class="deep-space-note">
-                            <div class="font-mono text-[10px] text-star-cyan uppercase tracking-[0.28em]">Compressed Deep-Space Scale</div>
-                            <p class="mt-2 text-xs text-gray-400 leading-relaxed">
-                                Beyond 50 AU, distances become too large for the planetary scale used at left. This section preserves the correct order and approximate landmark spacing while using a compressed map.
-                            </p>
+                        <div class="scale-tick left-[19%]">
+                            <div class="tick-line"></div>
+                            <div class="tick-label">100 AU</div>
+                        </div>
+                        <div class="scale-tick left-[48%]">
+                            <div class="tick-line"></div>
+                            <div class="tick-label">120 AU</div>
+                        </div>
+                        <div class="scale-tick left-[63%]">
+                            <div class="tick-line"></div>
+                            <div class="tick-label">2000 AU</div>
+                        </div>
+                        <div class="scale-tick left-[78%]">
+                            <div class="tick-line"></div>
+                            <div class="tick-label">100000 AU</div>
+                        </div>
+                        <div class="scale-tick left-[93%]">
+                            <div class="tick-line"></div>
+                            <div class="tick-label">268000 AU</div>
                         </div>
 
                         <div class="deep-space-marker tall left-[8%]">
