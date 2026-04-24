@@ -366,6 +366,102 @@
             width: 120px;
         }
 
+        .deep-space-band {
+            position: relative;
+            width: 1720px;
+            height: 700px;
+        }
+
+        .deep-space-line {
+            position: absolute;
+            left: 80px;
+            right: 80px;
+            bottom: 48px;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(110,240,255,0.3), rgba(255,255,255,0.1));
+        }
+
+        .deep-space-zone {
+            position: absolute;
+            left: 80px;
+            right: 80px;
+            top: 110px;
+            height: 450px;
+            border-radius: 36px;
+            border: 1px dashed rgba(110,240,255,0.14);
+            background:
+                radial-gradient(circle at 12% 50%, rgba(110,240,255,0.07), transparent 24%),
+                radial-gradient(circle at 52% 50%, rgba(255,255,255,0.035), transparent 30%),
+                linear-gradient(90deg, rgba(9,13,24,0.2), rgba(18,27,53,0.22), rgba(9,13,24,0.1));
+            box-shadow: inset 0 0 50px rgba(110,240,255,0.03);
+        }
+
+        .deep-space-note {
+            position: absolute;
+            left: 80px;
+            top: 64px;
+            max-width: 320px;
+        }
+
+        .deep-space-marker {
+            position: absolute;
+            top: 132px;
+            transform: translateX(-50%);
+            width: 150px;
+            text-align: center;
+        }
+
+        .deep-space-marker.tall {
+            top: 92px;
+        }
+
+        .deep-space-marker.low {
+            top: 284px;
+        }
+
+        .deep-space-marker .marker-orb {
+            width: 14px;
+            height: 14px;
+            border-radius: 9999px;
+            margin: 0 auto 0.55rem;
+            box-shadow: 0 0 14px rgba(255,255,255,0.18);
+        }
+
+        .deep-space-marker .marker-line {
+            width: 1px;
+            height: 190px;
+            margin: 0 auto;
+            background: linear-gradient(180deg, rgba(110,240,255,0.28), rgba(255,255,255,0.08));
+        }
+
+        .deep-space-marker.low .marker-line {
+            height: 92px;
+        }
+
+        .deep-space-distance {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            margin-bottom: 0.25rem;
+        }
+
+        .deep-space-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #f8fafc;
+        }
+
+        .deep-space-subtitle {
+            font-size: 11px;
+            line-height: 1.35;
+            color: #94a3b8;
+            margin-top: 0.3rem;
+        }
+
         .utility-row {
             position: relative;
         }
@@ -971,6 +1067,85 @@
                         <div class="outer-band-label left-[86.5%] top-[126px]">
                             <div class="font-mono text-[10px] text-star-magenta uppercase tracking-[0.24em]">Beyond Main Belt</div>
                             <div class="font-mono text-[10px] text-gray-500 tracking-widest mt-1">Scattered Disk</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COMPRESSED DEEP SPACE SCALE -->
+                <div class="h-[700px] shrink-0 snap-center relative mr-10 md:mr-24">
+                    <div class="deep-space-band">
+                        <div class="deep-space-zone"></div>
+                        <div class="deep-space-line"></div>
+
+                        <div class="deep-space-note">
+                            <div class="font-mono text-[10px] text-star-cyan uppercase tracking-[0.28em]">Compressed Deep-Space Scale</div>
+                            <p class="mt-2 text-xs text-gray-400 leading-relaxed">
+                                Beyond 50 AU, distances become too large for the planetary scale used at left. This section preserves the correct order and approximate landmark spacing while using a compressed map.
+                            </p>
+                        </div>
+
+                        <div class="deep-space-marker tall left-[8%]">
+                            <div class="deep-space-distance">50 AU</div>
+                            <div class="deep-space-title text-star-cyan">End Of Kuiper Belt</div>
+                            <div class="deep-space-subtitle">Main Kuiper Belt fades into more distant trans-Neptunian populations.</div>
+                            <div class="marker-orb bg-star-cyan"></div>
+                            <div class="marker-line"></div>
+                        </div>
+
+                        <div class="deep-space-marker low left-[19%]">
+                            <div class="deep-space-distance">50-100 AU</div>
+                            <div class="deep-space-title text-star-magenta">Scattered Disk</div>
+                            <div class="deep-space-subtitle">Highly elongated orbits, including Eris and many dynamically scattered worlds.</div>
+                            <div class="marker-orb bg-star-magenta"></div>
+                            <div class="marker-line"></div>
+                        </div>
+
+                        <div class="deep-space-marker tall left-[29%]">
+                            <div class="deep-space-distance">~84-94 AU</div>
+                            <div class="deep-space-title text-star-gold">Termination Shock</div>
+                            <div class="deep-space-subtitle">Where the supersonic solar wind slows abruptly after meeting interstellar pressure.</div>
+                            <div class="marker-orb bg-star-gold"></div>
+                            <div class="marker-line"></div>
+                        </div>
+
+                        <div class="deep-space-marker low left-[39%]">
+                            <div class="deep-space-distance">~84-120 AU</div>
+                            <div class="deep-space-title text-white">Heliosheath</div>
+                            <div class="deep-space-subtitle">A turbulent outer shell of slowed solar wind between the shock and the heliopause.</div>
+                            <div class="marker-orb bg-white"></div>
+                            <div class="marker-line"></div>
+                        </div>
+
+                        <div class="deep-space-marker tall left-[48%]">
+                            <div class="deep-space-distance">~120 AU</div>
+                            <div class="deep-space-title text-star-green">Heliopause</div>
+                            <div class="deep-space-subtitle">The practical edge of the heliosphere, where solar wind pressure gives way to the interstellar medium.</div>
+                            <div class="marker-orb bg-star-green"></div>
+                            <div class="marker-line"></div>
+                        </div>
+
+                        <div class="deep-space-marker low left-[63%]">
+                            <div class="deep-space-distance">~2,000 AU</div>
+                            <div class="deep-space-title text-star-cyan">Inner Oort Cloud</div>
+                            <div class="deep-space-subtitle">The distant reservoir where long-period comet source regions likely begin.</div>
+                            <div class="marker-orb bg-star-cyan"></div>
+                            <div class="marker-line"></div>
+                        </div>
+
+                        <div class="deep-space-marker tall left-[78%]">
+                            <div class="deep-space-distance">~100,000 AU</div>
+                            <div class="deep-space-title text-star-gold">Outer Oort Cloud</div>
+                            <div class="deep-space-subtitle">The Sun's farthest known cometary sphere, roughly halfway to neighboring stars.</div>
+                            <div class="marker-orb bg-star-gold"></div>
+                            <div class="marker-line"></div>
+                        </div>
+
+                        <div class="deep-space-marker low left-[93%]">
+                            <div class="deep-space-distance">~268,000 AU</div>
+                            <div class="deep-space-title text-star-red">Proxima Centauri</div>
+                            <div class="deep-space-subtitle">The nearest known star to the Sun, about 4.24 light-years away.</div>
+                            <div class="marker-orb bg-star-red"></div>
+                            <div class="marker-line"></div>
                         </div>
                     </div>
                 </div>
