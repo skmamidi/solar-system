@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Solar System Master Quiz</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 950: '#02030a', 900: '#05060f', 800: '#0a0d20', 700: '#0f1430', 500: '#1a234d', 100: '#e2e8f0' },
+                        star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' }
+                    },
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style>
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(110, 240, 255, 0.12), transparent 30%),
+                radial-gradient(circle at top right, rgba(255, 90, 198, 0.12), transparent 25%),
+                linear-gradient(180deg, #02030a 0%, #05060f 35%, #091127 100%);
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: rgba(15, 20, 48, 0.7);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(110, 240, 255, 0.16);
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+        }
+
+        .starfield {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.55;
+            background-image:
+                radial-gradient(1px 1px at 12% 22%, rgba(255,255,255,0.9) 100%, transparent),
+                radial-gradient(1px 1px at 80% 16%, rgba(255,209,102,0.95) 100%, transparent),
+                radial-gradient(1px 1px at 64% 64%, rgba(110,240,255,0.85) 100%, transparent),
+                radial-gradient(1.5px 1.5px at 35% 80%, rgba(255,255,255,0.7) 100%, transparent);
+            background-size: 280px 280px;
+        }
+
+        .option-btn {
+            transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="font-body text-white antialiased">
+    <div class="starfield"></div>
+
+    <main class="relative z-10 max-w-6xl mx-auto px-4 py-8 md:py-10">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
+            <button onclick="window.location.href='index.html'" class="glass-panel inline-flex items-center gap-2 px-4 py-2 rounded-full text-star-cyan text-sm font-bold hover:border-white transition-colors self-start">
+                &larr; Back to Mission Control
+            </button>
+            <div class="text-left md:text-right">
+                <p class="font-mono text-xs uppercase tracking-[0.35em] text-star-gold mb-2">Unified Question Bank</p>
+                <h1 class="font-display text-3xl md:text-5xl font-bold">Master Quiz</h1>
+            </div>
+        </div>
+
+        <section class="glass-panel rounded-[28px] p-6 md:p-8 mb-8 overflow-hidden relative">
+            <div class="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-star-cyan/10 blur-3xl"></div>
+            <div class="absolute -bottom-16 -left-10 w-40 h-40 rounded-full bg-star-magenta/10 blur-3xl"></div>
+            <div class="relative grid gap-6 lg:grid-cols-[1.3fr_0.7fr] items-start">
+                <div>
+                    <p class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-star-magenta/15 border border-star-magenta/30 text-star-magenta text-xs font-mono uppercase tracking-[0.28em]">Every quiz. One launchpad.</p>
+                    <h2 class="font-display text-2xl md:text-4xl mt-4 mb-3">Study by world, by subtopic, or mix everything together.</h2>
+                    <p class="text-space-100 max-w-2xl leading-relaxed">This page combines the question banks from across the site and adds comparison-based questions from the planetary data hub. Every reload reshuffles both the question order and the answer positions.</p>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="rounded-2xl border border-space-500 bg-space-900/70 p-4">
+                        <div class="text-xs font-mono uppercase tracking-[0.25em] text-space-100 mb-2">Total Questions</div>
+                        <div id="heroQuestionCount" class="font-display text-3xl text-star-cyan">0</div>
+                    </div>
+                    <div class="rounded-2xl border border-space-500 bg-space-900/70 p-4">
+                        <div class="text-xs font-mono uppercase tracking-[0.25em] text-space-100 mb-2">Topics</div>
+                        <div id="heroTopicCount" class="font-display text-3xl text-star-gold">0</div>
+                    </div>
+                    <div class="rounded-2xl border border-space-500 bg-space-900/70 p-4 col-span-2">
+                        <div class="text-xs font-mono uppercase tracking-[0.25em] text-space-100 mb-2">Current Filter</div>
+                        <div id="heroFilterLabel" class="text-lg font-bold text-white">All topics • All subtopics</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+            <aside class="glass-panel rounded-[28px] p-5 md:p-6 h-fit">
+                <div class="flex items-center justify-between gap-4 mb-5">
+                    <div>
+                        <h2 class="font-display text-2xl text-white">Quiz Filters</h2>
+                        <p class="text-sm text-space-100">Choose a scope, then start a fresh shuffled run.</p>
+                    </div>
+                    <div class="text-3xl">🧠</div>
+                </div>
+
+                <div class="space-y-4">
+                    <label class="block">
+                        <span class="font-mono text-xs uppercase tracking-[0.25em] text-space-100 mb-2 block">Topic</span>
+                        <select id="topicSelect" class="w-full rounded-2xl border border-space-500 bg-space-900/80 px-4 py-3 text-white focus:outline-none focus:border-star-cyan"></select>
+                    </label>
+
+                    <label class="block">
+                        <span class="font-mono text-xs uppercase tracking-[0.25em] text-space-100 mb-2 block">Subtopic</span>
+                        <select id="subtopicSelect" class="w-full rounded-2xl border border-space-500 bg-space-900/80 px-4 py-3 text-white focus:outline-none focus:border-star-cyan"></select>
+                    </label>
+
+                    <label class="block">
+                        <span class="font-mono text-xs uppercase tracking-[0.25em] text-space-100 mb-2 block">Quiz Length</span>
+                        <select id="lengthSelect" class="w-full rounded-2xl border border-space-500 bg-space-900/80 px-4 py-3 text-white focus:outline-none focus:border-star-cyan">
+                            <option value="10">10 questions</option>
+                            <option value="25" selected>25 questions</option>
+                            <option value="50">50 questions</option>
+                            <option value="all">All available</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="mt-6 space-y-3">
+                    <button id="newQuizBtn" class="w-full rounded-2xl bg-star-cyan text-space-900 font-bold py-3.5 hover:opacity-90 transition-opacity">Start New Randomized Quiz</button>
+                    <button id="reshuffleBtn" class="w-full rounded-2xl border border-space-500 bg-space-900/70 py-3.5 font-bold hover:border-star-gold hover:text-star-gold transition-colors">Reshuffle Current Filter</button>
+                </div>
+
+                <div class="mt-6 rounded-2xl border border-space-500 bg-space-900/60 p-4 space-y-2 text-sm">
+                    <div class="flex justify-between gap-4">
+                        <span class="text-space-100">Available in filter</span>
+                        <span id="availableCount" class="font-bold text-star-cyan">0</span>
+                    </div>
+                    <div class="flex justify-between gap-4">
+                        <span class="text-space-100">Questions in run</span>
+                        <span id="runCount" class="font-bold text-star-gold">0</span>
+                    </div>
+                    <div class="flex justify-between gap-4">
+                        <span class="text-space-100">Current score</span>
+                        <span id="sidebarScore" class="font-bold text-star-green">0 / 0</span>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="space-y-6">
+                <div class="glass-panel rounded-[28px] p-5 md:p-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+                        <div>
+                            <h2 class="font-display text-2xl text-white">Active Quiz</h2>
+                            <p id="quizSummary" class="text-space-100 text-sm">Preparing question set...</p>
+                        </div>
+                        <div class="text-sm font-mono text-space-100">
+                            <span id="progressLabel">Question 0 / 0</span>
+                        </div>
+                    </div>
+                    <div class="w-full h-3 bg-space-900 rounded-full border border-space-500 overflow-hidden">
+                        <div id="progressBar" class="h-full rounded-full bg-gradient-to-r from-star-cyan via-star-gold to-star-magenta transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div id="emptyState" class="glass-panel rounded-[28px] p-8 text-center hidden">
+                    <div class="text-5xl mb-4">🛰️</div>
+                    <h3 class="font-display text-3xl text-white mb-3">No questions match this filter</h3>
+                    <p class="text-space-100 max-w-xl mx-auto">Try widening the topic or subtopic selection, then launch a fresh randomized set.</p>
+                </div>
+
+                <div id="questionCard" class="glass-panel rounded-[28px] p-6 md:p-8 hidden">
+                    <div class="flex flex-wrap items-center gap-2 mb-5">
+                        <span id="topicBadge" class="px-3 py-1 rounded-full bg-star-cyan/15 border border-star-cyan/30 text-star-cyan text-xs font-mono uppercase tracking-[0.22em]"></span>
+                        <span id="subtopicBadge" class="px-3 py-1 rounded-full bg-star-gold/15 border border-star-gold/30 text-star-gold text-xs font-mono uppercase tracking-[0.22em]"></span>
+                    </div>
+
+                    <h3 id="questionText" class="font-display text-2xl md:text-3xl leading-tight mb-6"></h3>
+
+                    <div id="optionsWrap" class="space-y-3"></div>
+
+                    <div id="feedbackBox" class="hidden mt-6 rounded-[24px] border p-5">
+                        <div id="feedbackLabel" class="font-display text-2xl mb-2"></div>
+                        <p id="feedbackExplanation" class="text-space-100 leading-relaxed"></p>
+                        <a id="feedbackSource" href="#" class="inline-flex items-center gap-2 mt-4 text-sm font-bold text-star-cyan hover:text-white transition-colors">
+                            Review source page
+                            <span>&rarr;</span>
+                        </a>
+                    </div>
+
+                    <div class="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div id="liveScore" class="text-sm font-mono text-space-100">Score: 0 / 0</div>
+                        <button id="nextBtn" class="rounded-full bg-star-magenta text-white px-6 py-3 font-bold opacity-40 cursor-not-allowed" disabled>Next Question</button>
+                    </div>
+                </div>
+
+                <div id="resultsCard" class="glass-panel rounded-[28px] p-8 text-center hidden">
+                    <div class="text-5xl mb-4">🚀</div>
+                    <h3 class="font-display text-4xl text-white mb-3">Quiz Complete</h3>
+                    <p id="resultsScore" class="text-5xl font-display text-star-gold mb-3">0 / 0</p>
+                    <p id="resultsMessage" class="text-space-100 max-w-2xl mx-auto mb-6"></p>
+                    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                        <button id="retryBtn" class="rounded-full bg-star-cyan text-space-900 px-6 py-3 font-bold hover:opacity-90 transition-opacity">Run Again With Same Filter</button>
+                        <button onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" class="rounded-full border border-space-500 bg-space-900/70 px-6 py-3 font-bold hover:border-white transition-colors">Adjust Filters</button>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <script src="assets/js/master-quiz-data.js"></script>
+    <script>
+        const quizData = window.MASTER_QUIZ_DATA || { questions: [], topics: [], subtopicsByTopic: {} };
+        const state = {
+            activeQuestions: [],
+            currentIndex: 0,
+            score: 0,
+            answered: false
+        };
+
+        const topicSelect = document.getElementById('topicSelect');
+        const subtopicSelect = document.getElementById('subtopicSelect');
+        const lengthSelect = document.getElementById('lengthSelect');
+        const heroQuestionCount = document.getElementById('heroQuestionCount');
+        const heroTopicCount = document.getElementById('heroTopicCount');
+        const heroFilterLabel = document.getElementById('heroFilterLabel');
+        const availableCount = document.getElementById('availableCount');
+        const runCount = document.getElementById('runCount');
+        const sidebarScore = document.getElementById('sidebarScore');
+        const quizSummary = document.getElementById('quizSummary');
+        const progressLabel = document.getElementById('progressLabel');
+        const progressBar = document.getElementById('progressBar');
+        const emptyState = document.getElementById('emptyState');
+        const questionCard = document.getElementById('questionCard');
+        const resultsCard = document.getElementById('resultsCard');
+        const topicBadge = document.getElementById('topicBadge');
+        const subtopicBadge = document.getElementById('subtopicBadge');
+        const questionText = document.getElementById('questionText');
+        const optionsWrap = document.getElementById('optionsWrap');
+        const feedbackBox = document.getElementById('feedbackBox');
+        const feedbackLabel = document.getElementById('feedbackLabel');
+        const feedbackExplanation = document.getElementById('feedbackExplanation');
+        const feedbackSource = document.getElementById('feedbackSource');
+        const liveScore = document.getElementById('liveScore');
+        const nextBtn = document.getElementById('nextBtn');
+        const resultsScore = document.getElementById('resultsScore');
+        const resultsMessage = document.getElementById('resultsMessage');
+
+        function shuffle(array) {
+            const clone = [...array];
+            for (let i = clone.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [clone[i], clone[j]] = [clone[j], clone[i]];
+            }
+            return clone;
+        }
+
+        function populateTopicOptions() {
+            topicSelect.innerHTML = '<option value="all">All topics</option>';
+            quizData.topics.forEach(topic => {
+                const option = document.createElement('option');
+                option.value = topic;
+                option.textContent = topic;
+                topicSelect.appendChild(option);
+            });
+        }
+
+        function populateSubtopicOptions() {
+            const selectedTopic = topicSelect.value;
+            const subtopics = selectedTopic === 'all'
+                ? [...new Set(quizData.questions.map(question => question.subtopic))].sort()
+                : (quizData.subtopicsByTopic[selectedTopic] || []);
+
+            subtopicSelect.innerHTML = '<option value="all">All subtopics</option>';
+            subtopics.forEach(subtopic => {
+                const option = document.createElement('option');
+                option.value = subtopic;
+                option.textContent = subtopic;
+                subtopicSelect.appendChild(option);
+            });
+        }
+
+        function getFilteredQuestions() {
+            return quizData.questions.filter(question => {
+                const topicMatch = topicSelect.value === 'all' || question.topic === topicSelect.value;
+                const subtopicMatch = subtopicSelect.value === 'all' || question.subtopic === subtopicSelect.value;
+                return topicMatch && subtopicMatch;
+            });
+        }
+
+        function getRunLength(filteredQuestions) {
+            if (lengthSelect.value === 'all') return filteredQuestions.length;
+            return Math.min(Number(lengthSelect.value), filteredQuestions.length);
+        }
+
+        function updateFilterStats() {
+            const filteredQuestions = getFilteredQuestions();
+            const topicLabel = topicSelect.value === 'all' ? 'All topics' : topicSelect.value;
+            const subtopicLabel = subtopicSelect.value === 'all' ? 'All subtopics' : subtopicSelect.value;
+
+            heroQuestionCount.textContent = quizData.questionCount.toLocaleString();
+            heroTopicCount.textContent = quizData.topics.length.toLocaleString();
+            heroFilterLabel.textContent = `${topicLabel} • ${subtopicLabel}`;
+            availableCount.textContent = filteredQuestions.length.toLocaleString();
+            runCount.textContent = getRunLength(filteredQuestions).toLocaleString();
+        }
+
+        function prepareQuestion(question) {
+            const indexedChoices = question.choices.map((choice, index) => ({
+                text: choice,
+                isCorrect: index === question.correctIndex
+            }));
+            const shuffledChoices = shuffle(indexedChoices);
+            return {
+                ...question,
+                shuffledChoices
+            };
+        }
+
+        function startQuiz() {
+            const filteredQuestions = getFilteredQuestions();
+            const runLength = getRunLength(filteredQuestions);
+
+            updateFilterStats();
+            state.activeQuestions = shuffle(filteredQuestions).slice(0, runLength).map(prepareQuestion);
+            state.currentIndex = 0;
+            state.score = 0;
+            state.answered = false;
+
+            sidebarScore.textContent = `0 / ${state.activeQuestions.length}`;
+            resultsCard.classList.add('hidden');
+
+            if (!state.activeQuestions.length) {
+                questionCard.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                quizSummary.textContent = 'No questions available with the current filter selection.';
+                progressLabel.textContent = 'Question 0 / 0';
+                progressBar.style.width = '0%';
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            questionCard.classList.remove('hidden');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const question = state.activeQuestions[state.currentIndex];
+            const total = state.activeQuestions.length;
+            const answeredCount = state.currentIndex;
+            const progressPercent = total ? Math.round((answeredCount / total) * 100) : 0;
+
+            state.answered = false;
+            topicBadge.textContent = question.topic;
+            subtopicBadge.textContent = question.subtopic;
+            questionText.textContent = question.question;
+            optionsWrap.innerHTML = '';
+            feedbackBox.classList.add('hidden');
+            feedbackBox.className = 'hidden mt-6 rounded-[24px] border p-5';
+            liveScore.textContent = `Score: ${state.score} / ${answeredCount}`;
+            sidebarScore.textContent = `${state.score} / ${total}`;
+            quizSummary.textContent = `${question.sourceType === 'generated-comparison' ? 'Generated comparison question' : 'Collected from'} ${question.sourceTitle}`;
+            progressLabel.textContent = `Question ${state.currentIndex + 1} / ${total}`;
+            progressBar.style.width = `${progressPercent}%`;
+            nextBtn.disabled = true;
+            nextBtn.className = 'rounded-full bg-star-magenta text-white px-6 py-3 font-bold opacity-40 cursor-not-allowed';
+            nextBtn.textContent = state.currentIndex === total - 1 ? 'See Results' : 'Next Question';
+
+            question.shuffledChoices.forEach((choice, index) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'option-btn w-full text-left rounded-[22px] border border-space-500 bg-space-900/70 p-4 md:p-5 hover:border-star-cyan hover:bg-space-800';
+                button.innerHTML = `<div class="flex gap-4 items-start"><span class="font-mono text-star-cyan">${String.fromCharCode(65 + index)}.</span><span class="flex-1">${choice.text}</span></div>`;
+                button.addEventListener('click', () => answerQuestion(index));
+                optionsWrap.appendChild(button);
+            });
+        }
+
+        function answerQuestion(selectedIndex) {
+            if (state.answered) return;
+            state.answered = true;
+
+            const question = state.activeQuestions[state.currentIndex];
+            const buttons = [...optionsWrap.querySelectorAll('button')];
+            let selectedWasCorrect = false;
+
+            buttons.forEach((button, index) => {
+                const isCorrect = question.shuffledChoices[index].isCorrect;
+                button.disabled = true;
+                button.classList.remove('hover:border-star-cyan', 'hover:bg-space-800');
+
+                if (isCorrect) {
+                    button.classList.add('border-star-green', 'bg-star-green/15');
+                }
+
+                if (index === selectedIndex) {
+                    if (isCorrect) {
+                        selectedWasCorrect = true;
+                        button.classList.add('ring-2', 'ring-star-green');
+                    } else {
+                        button.classList.add('border-star-red', 'bg-star-red/15', 'ring-2', 'ring-star-red/60');
+                    }
+                }
+            });
+
+            if (selectedWasCorrect) state.score++;
+
+            liveScore.textContent = `Score: ${state.score} / ${state.currentIndex + 1}`;
+            sidebarScore.textContent = `${state.score} / ${state.activeQuestions.length}`;
+            feedbackLabel.textContent = selectedWasCorrect ? 'Correct' : 'Not quite';
+            feedbackLabel.className = selectedWasCorrect ? 'font-display text-2xl mb-2 text-star-green' : 'font-display text-2xl mb-2 text-star-red';
+            feedbackExplanation.textContent = question.explanation || 'No explanation was provided for this question.';
+            feedbackSource.href = question.sourcePath;
+            feedbackSource.textContent = question.sourceType === 'generated-comparison'
+                ? 'Open planetary comparisons source'
+                : `Review ${question.sourceTitle}`;
+            feedbackBox.classList.remove('hidden');
+            if (selectedWasCorrect) {
+                feedbackBox.classList.add('border-star-green/40', 'bg-star-green/10');
+            } else {
+                feedbackBox.classList.add('border-star-red/40', 'bg-star-red/10');
+            }
+
+            nextBtn.disabled = false;
+            nextBtn.className = 'rounded-full bg-star-magenta text-white px-6 py-3 font-bold hover:opacity-90 transition-opacity';
+        }
+
+        function showResults() {
+            questionCard.classList.add('hidden');
+            resultsCard.classList.remove('hidden');
+            const total = state.activeQuestions.length;
+            const percent = total ? Math.round((state.score / total) * 100) : 0;
+            resultsScore.textContent = `${state.score} / ${total}`;
+
+            let message = 'Nice work. You can rerun the same filter for a fresh randomized order.';
+            if (percent >= 90) message = 'Outstanding run. You are flying through this bank like mission control.';
+            else if (percent >= 75) message = 'Strong score. A quick reshuffle should lock in the last few details.';
+            else if (percent < 50) message = 'This is a good diagnostic run. Narrow the filter and build topic by topic.';
+
+            resultsMessage.textContent = `${message} Final accuracy: ${percent}%.`;
+            progressLabel.textContent = `Question ${total} / ${total}`;
+            progressBar.style.width = '100%';
+            quizSummary.textContent = 'Quiz finished. Start another randomized set any time.';
+        }
+
+        function goToNextQuestion() {
+            if (!state.answered) return;
+
+            state.currentIndex++;
+            if (state.currentIndex >= state.activeQuestions.length) {
+                showResults();
+                return;
+            }
+
+            renderQuestion();
+        }
+
+        topicSelect.addEventListener('change', () => {
+            populateSubtopicOptions();
+            updateFilterStats();
+        });
+
+        subtopicSelect.addEventListener('change', updateFilterStats);
+        lengthSelect.addEventListener('change', updateFilterStats);
+        document.getElementById('newQuizBtn').addEventListener('click', startQuiz);
+        document.getElementById('reshuffleBtn').addEventListener('click', startQuiz);
+        document.getElementById('retryBtn').addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', goToNextQuestion);
+
+        populateTopicOptions();
+        populateSubtopicOptions();
+        updateFilterStats();
+        startQuiz();
+    </script>
+</body>
+</html>

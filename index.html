@@ -843,25 +843,36 @@
     </section>
 
     <!-- Bottom utility row -->
-    <div class="utility-row max-w-6xl mx-auto w-full px-4 mt-6 grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-6 z-20">
+    <div class="utility-row max-w-6xl mx-auto w-full px-4 mt-6 grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 z-20">
         <button onclick="zoomAndNavigate(event, 'astronomical-terms.html')"
-                class="btn-press glass-panel border-star-magenta p-6 text-left hover:border-white transition-colors rounded-2xl group w-full">
-            <div class="flex items-center gap-4">
-                <span class="text-5xl group-hover:scale-110 transition-transform">🌌</span>
+                class="btn-press glass-panel border-star-magenta p-5 text-left hover:border-white transition-colors rounded-2xl group w-full">
+            <div class="flex items-center gap-3">
+                <span class="text-4xl group-hover:scale-110 transition-transform">🌌</span>
                 <div>
-                    <h2 class="font-display font-bold text-xl text-star-magenta mb-1 group-hover:text-white transition-colors">Astronomical Terms</h2>
-                    <p class="font-body text-sm text-gray-300 leading-snug">Learn Zenith, Horizon, Meridian, Ecliptic &amp; more. Discover how to find the planets in the night sky.</p>
+                    <h2 class="font-display font-bold text-lg text-star-magenta mb-1 group-hover:text-white transition-colors">Astronomical Terms</h2>
+                    <p class="font-body text-sm text-gray-300 leading-snug">Learn Zenith, Horizon, Meridian, Ecliptic &amp; more.</p>
+                </div>
+            </div>
+        </button>
+
+        <button onclick="zoomAndNavigate(event, 'master-quiz.html')"
+                class="btn-press glass-panel border-star-cyan p-5 text-left hover:border-white transition-colors rounded-2xl group w-full">
+            <div class="flex items-center gap-3">
+                <span class="text-4xl group-hover:scale-110 transition-transform">🧠</span>
+                <div>
+                    <h2 class="font-display font-bold text-lg text-star-cyan mb-1 group-hover:text-white transition-colors">Master Quiz</h2>
+                    <p class="font-body text-sm text-gray-300 leading-snug">Mix quizzes from across the site and filter by topic or subtopic.</p>
                 </div>
             </div>
         </button>
 
         <button onclick="zoomAndNavigate(event, 'planetary-comparisons.html')"
-                class="btn-press glass-panel border-star-gold p-6 text-left hover:border-white transition-colors rounded-2xl group w-full">
-            <div class="flex items-center gap-4">
-                <span class="text-5xl group-hover:scale-110 transition-transform">📊</span>
+                class="btn-press glass-panel border-star-gold p-5 text-left hover:border-white transition-colors rounded-2xl group w-full">
+            <div class="flex items-center gap-3">
+                <span class="text-4xl group-hover:scale-110 transition-transform">📊</span>
                 <div>
-                    <h2 class="font-display font-bold text-xl text-star-gold mb-1 group-hover:text-white transition-colors">Planetary Comparisons</h2>
-                    <p class="font-body text-sm text-gray-300 leading-snug">See how the worlds stack up against each other in size, speed, and extremes.</p>
+                    <h2 class="font-display font-bold text-lg text-star-gold mb-1 group-hover:text-white transition-colors">Planetary Comparisons</h2>
+                    <p class="font-body text-sm text-gray-300 leading-snug">See how the worlds stack up in size, speed, density, and extremes.</p>
                 </div>
             </div>
         </button>
