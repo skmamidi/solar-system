@@ -55,6 +55,7 @@
         return classes.contains('bg-star-red')
             || classes.contains('text-star-red')
             || classes.contains('border-star-red')
+            || classes.contains('incorrect')
             || text.includes('incorrect')
             || text.includes('not quite');
     }
