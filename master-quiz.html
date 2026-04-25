@@ -221,6 +221,7 @@
                     <p id="resultsMessage" class="text-space-100 max-w-2xl mx-auto mb-6"></p>
                     <div class="flex flex-col sm:flex-row gap-3 justify-center">
                         <button id="retryBtn" class="rounded-full bg-star-cyan text-space-900 px-6 py-3 font-bold hover:opacity-90 transition-opacity">Run Again With Same Filter</button>
+                        <button id="reviewMissedBtn" class="hidden rounded-full bg-star-magenta text-white px-6 py-3 font-bold hover:opacity-90 transition-opacity">Review Missed Questions</button>
                         <button onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" class="rounded-full border border-space-500 bg-space-900/70 px-6 py-3 font-bold hover:border-white transition-colors">Adjust Filters</button>
                     </div>
                 </div>
@@ -233,9 +234,11 @@
         const quizData = window.MASTER_QUIZ_DATA || { questions: [], topics: [], subtopicsByTopic: {} };
         const state = {
             activeQuestions: [],
+            missedQuestions: [],
             currentIndex: 0,
             score: 0,
-            answered: false
+            answered: false,
+            reviewMode: false
         };
 
         const topicSelect = document.getElementById('topicSelect');
@@ -267,6 +270,7 @@
         const nextBtn = document.getElementById('nextBtn');
         const resultsScore = document.getElementById('resultsScore');
         const resultsMessage = document.getElementById('resultsMessage');
+        const reviewMissedBtn = document.getElementById('reviewMissedBtn');
 
         function shuffle(array) {
             const clone = [...array];
@@ -359,12 +363,15 @@
 
             updateFilterStats();
             state.activeQuestions = shuffle(filteredQuestions).slice(0, runLength).map(prepareQuestion);
+            state.missedQuestions = [];
             state.currentIndex = 0;
             state.score = 0;
             state.answered = false;
+            state.reviewMode = false;
 
             sidebarScore.textContent = `0 / ${state.activeQuestions.length}`;
             resultsCard.classList.add('hidden');
+            reviewMissedBtn.classList.add('hidden');
 
             if (!state.activeQuestions.length) {
                 questionCard.classList.add('hidden');
@@ -375,6 +382,24 @@
                 return;
             }
 
+            emptyState.classList.add('hidden');
+            questionCard.classList.remove('hidden');
+            renderQuestion();
+        }
+
+        function startMissedReview() {
+            if (!state.missedQuestions.length) return;
+
+            state.activeQuestions = state.missedQuestions.map(prepareQuestion);
+            state.missedQuestions = [];
+            state.currentIndex = 0;
+            state.score = 0;
+            state.answered = false;
+            state.reviewMode = true;
+
+            sidebarScore.textContent = `0 / ${state.activeQuestions.length}`;
+            resultsCard.classList.add('hidden');
+            reviewMissedBtn.classList.add('hidden');
             emptyState.classList.add('hidden');
             questionCard.classList.remove('hidden');
             renderQuestion();
@@ -396,7 +421,9 @@
             feedbackBox.className = 'hidden mt-6 rounded-[24px] border p-5';
             liveScore.textContent = `Score: ${state.score} / ${answeredCount}`;
             sidebarScore.textContent = `${state.score} / ${total}`;
-            quizSummary.textContent = `${question.sourceType === 'generated-comparison' ? 'Generated comparison question' : 'Collected from'} ${question.sourceTitle}`;
+            quizSummary.textContent = state.reviewMode
+                ? `Reviewing missed questions from your last run: ${question.sourceTitle}`
+                : `${question.sourceType === 'generated-comparison' ? 'Generated comparison question' : 'Collected from'} ${question.sourceTitle}`;
             progressLabel.textContent = `Question ${state.currentIndex + 1} / ${total}`;
             progressBar.style.width = `${progressPercent}%`;
             nextBtn.disabled = true;
@@ -440,7 +467,11 @@
                 }
             });
 
-            if (selectedWasCorrect) state.score++;
+            if (selectedWasCorrect) {
+                state.score++;
+            } else {
+                state.missedQuestions.push(question);
+            }
 
             liveScore.textContent = `Score: ${state.score} / ${state.currentIndex + 1}`;
             sidebarScore.textContent = `${state.score} / ${state.activeQuestions.length}`;
@@ -467,6 +498,7 @@
             resultsCard.classList.remove('hidden');
             const total = state.activeQuestions.length;
             const percent = total ? Math.round((state.score / total) * 100) : 0;
+            const missedCount = state.missedQuestions.length;
             resultsScore.textContent = `${state.score} / ${total}`;
 
             let message = 'Nice work. You can rerun the same filter for a fresh randomized order.';
@@ -475,9 +507,17 @@
             else if (percent < 50) message = 'This is a good diagnostic run. Narrow the filter and build topic by topic.';
 
             resultsMessage.textContent = `${message} Final accuracy: ${percent}%.`;
+            if (missedCount > 0) {
+                reviewMissedBtn.textContent = `Review ${missedCount} Missed ${missedCount === 1 ? 'Question' : 'Questions'}`;
+                reviewMissedBtn.classList.remove('hidden');
+            } else {
+                reviewMissedBtn.classList.add('hidden');
+            }
             progressLabel.textContent = `Question ${total} / ${total}`;
             progressBar.style.width = '100%';
-            quizSummary.textContent = 'Quiz finished. Start another randomized set any time.';
+            quizSummary.textContent = state.reviewMode
+                ? 'Review finished. Retake the full quiz any time.'
+                : 'Quiz finished. Start another randomized set any time.';
         }
 
         function goToNextQuestion() {
@@ -503,6 +543,7 @@
         document.getElementById('newQuizBtn').addEventListener('click', startQuiz);
         document.getElementById('reshuffleBtn').addEventListener('click', startQuiz);
         document.getElementById('retryBtn').addEventListener('click', startQuiz);
+        reviewMissedBtn.addEventListener('click', startMissedReview);
         nextBtn.addEventListener('click', goToNextQuestion);
 
         populateTopicOptions();
