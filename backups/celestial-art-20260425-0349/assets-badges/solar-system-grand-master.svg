@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-labelledby="title desc">
+  <title>Solar System Grand Master Badge</title>
+  <desc>A grand final badge with a radiant sun, orbital rings, planets, and laurel stars.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#11172f"/>
+      <stop offset="55%" stop-color="#2c2958"/>
+      <stop offset="100%" stop-color="#0c0f1a"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#fff4bf"/>
+      <stop offset="55%" stop-color="#ffd166"/>
+      <stop offset="100%" stop-color="#ff8c42"/>
+    </radialGradient>
+  </defs>
+  <path d="M90 10l54 20v48c0 42-24 72-54 92C60 150 36 120 36 78V30L90 10z" fill="url(#bg)" stroke="#ffd166" stroke-width="5"/>
+  <circle cx="90" cy="88" r="24" fill="url(#sun)" stroke="#fff6da" stroke-opacity=".4" stroke-width="3"/>
+  <circle cx="90" cy="88" r="40" fill="none" stroke="#6ef0ff" stroke-opacity=".45" stroke-width="2.6"/>
+  <ellipse cx="90" cy="88" rx="58" ry="23" fill="none" stroke="#c5a8ff" stroke-opacity=".38" stroke-width="2.6"/>
+  <ellipse cx="90" cy="88" rx="23" ry="58" fill="none" stroke="#ff5ac6" stroke-opacity=".25" stroke-width="2"/>
+  <circle cx="50" cy="88" r="5.2" fill="#9c9185"/>
+  <circle cx="78" cy="47" r="4.6" fill="#f3b567"/>
+  <circle cx="126" cy="76" r="6" fill="#2e7dd1"/>
+  <circle cx="103" cy="136" r="5" fill="#d34b38"/>
+  <ellipse cx="126" cy="76" rx="10" ry="3.5" fill="none" stroke="#d9c49c" stroke-opacity=".45" stroke-width="1.8"/>
+  <path d="M52 124c7 10 17 17 28 20M128 124c-7 10-17 17-28 20" fill="none" stroke="#ffd166" stroke-opacity=".45" stroke-width="3" stroke-linecap="round"/>
+  <path d="M90 34l3.2 8.8h9.4l-7.6 5.4 2.9 8.8-7.9-5.3-7.9 5.3 2.9-8.8-7.6-5.4h9.4z" fill="#ffffff" opacity=".9"/>
+  <rect x="26" y="136" width="128" height="24" rx="12" fill="#0b0d18" fill-opacity=".84" stroke="#ffd166" stroke-opacity=".5"/>
+  <text x="90" y="152" text-anchor="middle" fill="#ffd166" font-family="Verdana, sans-serif" font-size="12" font-weight="700" letter-spacing="1">SOLAR SYSTEM GRAND MASTER</text>
+</svg>

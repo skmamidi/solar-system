@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title>Earth and Luna Master Badge</title>
+  <desc>A shield badge featuring Earth, its moon, and orbital glow.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0c1e36"/>
+      <stop offset="55%" stop-color="#143d67"/>
+      <stop offset="100%" stop-color="#0a1121"/>
+    </linearGradient>
+    <radialGradient id="earth" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#79d8ff"/>
+      <stop offset="60%" stop-color="#2e7dd1"/>
+      <stop offset="100%" stop-color="#163f7d"/>
+    </radialGradient>
+  </defs>
+  <path d="M80 8l48 18v42c0 37-21 64-48 84C53 132 32 105 32 68V26L80 8z" fill="url(#bg)" stroke="#6ef0ff" stroke-width="4"/>
+  <circle cx="73" cy="82" r="28" fill="url(#earth)" stroke="#d7f9ff" stroke-opacity=".35" stroke-width="2"/>
+  <path d="M60 72c8-7 11-7 17-9 4 5 8 8 12 11-3 8-8 14-17 18-7-1-13-5-18-12 1-4 3-6 6-8z" fill="#35c786" opacity=".9"/>
+  <path d="M80 88c8 0 14 3 18 7-3 5-8 8-15 9-4-4-5-9-3-16z" fill="#1fb87a" opacity=".9"/>
+  <path d="M95 63c13 6 23 18 25 32" fill="none" stroke="#ffffff" stroke-opacity=".45" stroke-width="2.5" stroke-dasharray="4 5"/>
+  <circle cx="118" cy="100" r="8" fill="#dfe7ef" stroke="#ffffff" stroke-opacity=".35"/>
+  <rect x="31" y="114" width="98" height="22" rx="11" fill="#08111e" fill-opacity=".8" stroke="#6ef0ff" stroke-opacity=".4"/>
+  <text x="80" y="129" text-anchor="middle" fill="#6ef0ff" font-family="Verdana, sans-serif" font-size="13" font-weight="700" letter-spacing="1">EARTH + LUNA</text>
+</svg>

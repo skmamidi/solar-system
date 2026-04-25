@@ -71,15 +71,6 @@
             border-radius: 50%; position: relative; 
             transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
             transform-origin: center center;
-            --orb-scale: 1;
-            --axis-tilt: 0deg;
-            --polar-ratio: 1;
-            --disc-shadow: inset -6px -6px 14px rgba(0,0,0,0.88), inset 2px 2px 8px rgba(255,255,255,0.24);
-            transform: rotate(var(--axis-tilt)) scaleY(var(--polar-ratio)) scale(var(--orb-scale));
-            overflow: hidden;
-            background-clip: padding-box;
-            isolation: isolate;
-            filter: contrast(1.08) saturate(1.12);
         }
 
         .planet-wrapper > span, .moon-wrapper > span {
@@ -96,7 +87,7 @@
 
             .planet-wrapper:hover .planet-orb,
             .moon-wrapper:hover .planet-orb {
-                --orb-scale: 1.34;
+                transform: scale(1.34);
                 filter: brightness(1.24) saturate(1.08);
                 box-shadow: 0 0 22px rgba(255,255,255,0.16), 0 0 48px rgba(110, 240, 255, 0.12);
             }
@@ -114,78 +105,55 @@
         ========================================================= */
         
         .orb-sun {
-            --axis-tilt: 7.25deg;
             background: radial-gradient(circle at 95% 50%, #ffffff 0%, #ffd166 5%, #f97316 20%, #7f1d1d 80%, #450a0a 100%);
             box-shadow: 0 0 150px rgba(249, 115, 22, 0.6), inset -20px -20px 60px rgba(127, 29, 29, 0.8);
-            filter: contrast(1.18) saturate(1.24);
         }
         
         .orb-mercury { 
-            --axis-tilt: 0.034deg;
-            background:
-                radial-gradient(circle at 38% 32%, rgba(255,255,255,0.24) 0 7%, transparent 7.5%),
-                radial-gradient(circle at 63% 58%, rgba(0,0,0,0.34) 0 11%, transparent 11.5%),
-                radial-gradient(circle at 31% 68%, rgba(255,255,255,0.12) 0 5%, transparent 5.5%),
-                radial-gradient(circle at 35% 35%, #c0bbb2 0%, #807d77 48%, #3b3f46 100%);
-            box-shadow: var(--disc-shadow);
+            background: radial-gradient(circle at 35% 35%, #a3a3a3 0%, #6b7280 60%, #374151 100%); 
+            box-shadow: inset -3px -3px 6px rgba(0,0,0,0.9); 
         }
         
         .orb-venus { 
-            --axis-tilt: 177.4deg;
             background: 
-                radial-gradient(circle at 30% 30%, transparent 35%, rgba(0,0,0,0.74) 92%),
-                repeating-linear-gradient(12deg, rgba(255,247,211,0.24) 0 9%, rgba(203,126,34,0.16) 9% 17%),
-                linear-gradient(135deg, #fff0b7 0%, #f6c35e 32%, #c86d24 68%, #6f3418 100%);
-            box-shadow: var(--disc-shadow), 0 0 12px rgba(251,191,36,0.18);
-            filter: contrast(1.1) saturate(1.08);
+                radial-gradient(circle at 30% 30%, transparent 40%, rgba(0,0,0,0.8) 90%),
+                linear-gradient(135deg, #fef3c7 0%, #fcd34d 30%, #d97706 70%, #92400e 100%);
+            box-shadow: inset -6px -6px 12px rgba(0,0,0,0.9);
+            filter: contrast(0.95) sepia(0.1);
         }
         
         .orb-earth { 
-            --axis-tilt: 23.4deg;
-            --polar-ratio: 0.9966;
             background: 
-                radial-gradient(circle at 35% 30%, rgba(255,255,255,0.42) 0 9%, transparent 9.5%),
-                radial-gradient(ellipse at 30% 40%, #16a34a 8%, transparent 28%),
-                radial-gradient(ellipse at 68% 58%, #22c55e 12%, transparent 35%),
-                radial-gradient(ellipse at 47% 14%, #f8fafc 4%, transparent 17%),
-                radial-gradient(ellipse at 64% 73%, rgba(255,255,255,0.28) 4%, transparent 16%),
-                radial-gradient(circle at 35% 35%, #2dd4ff 0%, #1664c0 50%, #082f68 100%);
-            box-shadow: var(--disc-shadow), inset 1px 1px 4px rgba(255,255,255,0.5);
+                radial-gradient(circle at 35% 35%, rgba(255,255,255,0.25) 0%, transparent 40%),
+                radial-gradient(ellipse at 30% 40%, #10b981 10%, transparent 30%),
+                radial-gradient(ellipse at 70% 60%, #10b981 15%, transparent 40%),
+                radial-gradient(ellipse at 40% 10%, #d4d4d8 5%, transparent 20%),
+                #1e3a8a;
+            box-shadow: inset -6px -6px 12px rgba(0,0,0,0.9), inset 1px 1px 4px rgba(255,255,255,0.5); 
         }
         
         .orb-mars { 
-            --axis-tilt: 25.2deg;
-            --polar-ratio: 0.994;
             background: 
-                radial-gradient(ellipse at 50% 10%, #fff7ed 0 11%, transparent 18%),
-                radial-gradient(circle at 30% 30%, transparent 38%, rgba(0,0,0,0.78) 92%),
-                radial-gradient(ellipse at 42% 60%, #7f1d1d 10%, transparent 40%),
-                radial-gradient(ellipse at 68% 38%, rgba(255,199,125,0.24) 0 13%, transparent 32%),
-                linear-gradient(145deg, #ef7a35 0%, #c2410c 42%, #7c1d12 100%);
-            box-shadow: var(--disc-shadow);
+                radial-gradient(circle at 50% 10%, #ffffff 0%, transparent 18%),
+                radial-gradient(circle at 30% 30%, transparent 40%, rgba(0,0,0,0.85) 90%),
+                radial-gradient(ellipse at 40% 60%, #7f1d1d 15%, transparent 45%),
+                #dc2626;
+            box-shadow: inset -4px -4px 10px rgba(0,0,0,0.9); 
         }
         
         .orb-jupiter { 
-            --axis-tilt: 3.1deg;
-            --polar-ratio: 0.9351;
             background: 
-                radial-gradient(circle at 35% 35%, transparent 42%, rgba(0,0,0,0.78) 93%),
-                repeating-linear-gradient(180deg,
-                    rgba(255,255,255,0.08) 0 1.8%,
-                    rgba(0,0,0,0.04) 1.8% 3.4%),
+                radial-gradient(circle at 35% 35%, transparent 40%, rgba(0,0,0,0.85) 90%),
                 linear-gradient(180deg, 
-                    #3b2b20 0%, #c4aa82 8%, #f0ddbf 15%, #8b6548 24%,
-                    #d8bea0 33%, #694b35 43%, #f3dfc2 55%, #aa805d 66%,
-                    #dcc6aa 76%, #6f5843 88%, #342820 100%);
-            box-shadow: inset -25px -25px 60px rgba(0,0,0,0.88), inset 10px 8px 32px rgba(255,255,255,0.22);
-            filter: contrast(1.16) saturate(1.14);
+                    #4b3a2a 0%, #b29e84 10%, #dcd0c0 20%, #9e7f60 30%, 
+                    #c8b39a 40%, #82664d 50%, #cbb8a1 65%, #a8947f 80%, #5c4a3d 100%);
+            box-shadow: inset -25px -25px 60px rgba(0,0,0,0.9);
         }
         .orb-jupiter::after { 
             content: ''; position: absolute; top: 62%; left: 45%;
             width: 14%; height: 9%; border-radius: 50%;
-            background: radial-gradient(ellipse at 42% 44%, #f2b07e 0 18%, #b95f3c 28%, #6f2d22 76%);
-            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5), 0 0 8px rgba(255,210,170,0.16);
-            transform: rotate(-10deg); filter: blur(0.25px) contrast(1.08);
+            background: #9b4b32; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5);
+            transform: rotate(-10deg); filter: blur(0.5px);
         }
 
         /* 3D RINGS ENGINE (Infinitely Scalable Vectors via Radial-Gradients) */
@@ -198,15 +166,8 @@
         
         /* Saturn Body & Rings */
         .orb-saturn { 
-            --axis-tilt: 26.7deg;
-            --polar-ratio: 0.9020;
-            background:
-                radial-gradient(circle at 34% 32%, transparent 38%, rgba(0,0,0,0.72) 94%),
-                repeating-linear-gradient(180deg, rgba(255,255,255,0.06) 0 2.6%, rgba(88,65,36,0.05) 2.6% 5.2%),
-                linear-gradient(180deg, #cbb58e 0%, #f0ddb9 18%, #aa8a5f 38%, #dcc9a7 58%, #8d744d 78%, #c2ad84 100%);
-            box-shadow: inset -15px -15px 30px rgba(0,0,0,0.86), inset 8px 8px 28px rgba(255,255,255,0.20);
-            overflow: visible;
-            filter: contrast(1.12) saturate(1.1);
+            background: linear-gradient(180deg, #d4c2a5 0%, #e6d5b8 20%, #b89f78 45%, #d6c6a1 60%, #a68d5e 80%, #c2b08d 100%);
+            box-shadow: inset -15px -15px 30px rgba(0,0,0,0.9); overflow: visible;
         }
         .ring-back-saturn, .ring-front-saturn {
             width: 240%; height: 240%;
@@ -224,14 +185,8 @@
         
         /* Uranus Body & Rings */
         .orb-uranus { 
-            --axis-tilt: 97.8deg;
-            --polar-ratio: 0.9771;
-            background:
-                radial-gradient(circle at 28% 43%, rgba(255,255,255,0.36) 0 9%, transparent 10%),
-                repeating-linear-gradient(180deg, rgba(255,255,255,0.05) 0 5%, rgba(6,95,120,0.04) 5% 10%),
-                radial-gradient(circle at 25% 50%, #d9ffff 0%, #63d4e8 40%, #1294be 80%, #06364d 100%);
-            box-shadow: inset -15px 0px 30px rgba(0,0,0,0.84), inset 8px 2px 24px rgba(255,255,255,0.18);
-            overflow: visible;
+            background: radial-gradient(circle at 25% 50%, #e0f2fe 0%, #38bdf8 40%, #0284c7 80%, #082f49 100%);
+            box-shadow: inset -15px 0px 30px rgba(0,0,0,0.9); overflow: visible;
         }
         .ring-back-uranus, .ring-front-uranus {
             width: 220%; height: 220%;
@@ -247,16 +202,8 @@
         
         /* Neptune Body & Rings */
         .orb-neptune { 
-            --axis-tilt: 28.3deg;
-            --polar-ratio: 0.9829;
-            background:
-                radial-gradient(circle at 36% 34%, rgba(255,255,255,0.30) 0 8%, transparent 9%),
-                radial-gradient(ellipse at 64% 48%, rgba(10,24,110,0.55) 0 11%, transparent 19%),
-                repeating-linear-gradient(180deg, rgba(255,255,255,0.06) 0 4%, rgba(10,38,145,0.05) 4% 9%),
-                radial-gradient(circle at 35% 35%, #7ab7ff 0%, #235eea 45%, #0c247a 88%);
-            box-shadow: inset -15px -15px 30px rgba(0,0,0,0.86), inset 6px 6px 24px rgba(255,255,255,0.18);
-            overflow: visible;
-            filter: contrast(1.16) saturate(1.22);
+            background: radial-gradient(circle at 35% 35%, #60a5fa 0%, #2563eb 45%, #1e3a8a 85%);
+            box-shadow: inset -15px -15px 30px rgba(0,0,0,0.9); overflow: visible;
         }
         .ring-back-neptune, .ring-front-neptune {
             width: 200%; height: 200%;
@@ -276,34 +223,7 @@
 
         .orb-asteroid { background: #78716c; box-shadow: inset -2px -2px 5px rgba(0,0,0,0.9); border-radius: 40% 60% 70% 30%; }
         .orb-kuiper { background: #bae6fd; box-shadow: inset -2px -2px 5px rgba(0,0,0,0.8); }
-        .orb-dwarf {
-            --axis-tilt: 119.5deg;
-            background:
-                radial-gradient(ellipse at 44% 55%, rgba(255,248,218,0.50) 0 22%, transparent 32%),
-                radial-gradient(circle at 35% 35%, #f0c9a0, #c47d51 42%, #523025 100%);
-            box-shadow: var(--disc-shadow);
-        }
-        [data-wrapper="haumea"] .orb-dwarf {
-            --axis-tilt: 28.2deg;
-            --polar-ratio: 0.5;
-            background:
-                radial-gradient(ellipse at 42% 48%, rgba(255,255,255,0.55) 0 20%, transparent 34%),
-                radial-gradient(ellipse at 35% 35%, #f8fafc, #9fd7ff 44%, #4b6a80 100%);
-        }
-        [data-wrapper="makemake"] .orb-dwarf {
-            --axis-tilt: 29deg;
-            --polar-ratio: 1;
-            background:
-                radial-gradient(circle at 35% 35%, rgba(255,246,230,0.34) 0 22%, transparent 34%),
-                radial-gradient(circle at 35% 35%, #d99561, #9f4f31 48%, #3b2019 100%);
-        }
-        [data-wrapper="eris"] .orb-dwarf {
-            --axis-tilt: 78deg;
-            --polar-ratio: 1;
-            background:
-                radial-gradient(circle at 34% 35%, rgba(255,255,255,0.46) 0 22%, transparent 34%),
-                radial-gradient(circle at 35% 35%, #f8fafc, #c8d3df 52%, #5e6875 100%);
-        }
+        .orb-dwarf { background: radial-gradient(circle at 35% 35%, #d8b4fe, #a855f7, #581c87); box-shadow: inset -3px -3px 6px rgba(0,0,0,0.9); }
 
         /* MOONS */
         .moon-wrapper { z-index: 20; position: relative; }
@@ -841,7 +761,6 @@
             transform-origin: center center;
             will-change: transform, filter, opacity;
             overflow: visible;
-            contain: layout style;
         }
 
         .planet-zoom-disc {
@@ -851,24 +770,15 @@
             overflow: hidden;
             isolation: isolate;
             background: #222;
-            --axis-tilt: 0deg;
-            --polar-ratio: 1;
-            transform: rotate(var(--axis-tilt)) scaleY(var(--polar-ratio));
-            transform-origin: center center;
-            clip-path: ellipse(50% 50% at 50% 50%);
-            contain: paint;
-            backface-visibility: hidden;
         }
 
         .planet-zoom-layer {
             position: absolute;
-            inset: 0;
+            inset: -12%;
             border-radius: 50%;
             opacity: 0;
             transition: opacity 0.7s ease, transform 1.2s ease, filter 1.2s ease;
             will-change: transform, opacity;
-            overflow: hidden;
-            clip-path: ellipse(50% 50% at 50% 50%);
         }
 
         .planet-zoom-layer.active { opacity: 1; }
@@ -1068,13 +978,13 @@
                     </button>
                     
                     <div class="flex flex-wrap justify-center gap-4 self-start mt-6 w-[80px]">
-                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="phobos" onclick="zoomAndNavigate(event, 'mars/phobos.html')">
-                            <div data-type="rocky" class="w-[5px] h-[5px] planet-orb orb-phobos"></div>
-                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Phobos</span>
-                        </button>
                         <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="deimos" onclick="zoomAndNavigate(event, 'mars/deimos.html')">
                             <div data-type="rocky" class="w-[4px] h-[4px] planet-orb orb-deimos"></div>
                             <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Deimos</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="phobos" onclick="zoomAndNavigate(event, 'mars/phobos.html')">
+                            <div data-type="rocky" class="w-[5px] h-[5px] planet-orb orb-phobos"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Phobos</span>
                         </button>
                     </div>
 
@@ -1251,21 +1161,21 @@
                     </button>
                     
                     <div class="flex flex-wrap justify-center gap-4 self-start mt-6 w-[200px]">
-                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="larissa" onclick="zoomAndNavigate(event, 'neptune/larissa.html')">
-                            <div data-type="rocky" class="w-[3px] h-[3px] planet-orb orb-larissa"></div>
-                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Larissa</span>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="triton" onclick="zoomAndNavigate(event, 'neptune/triton.html')">
+                            <div data-type="rocky" class="w-[7px] h-[7px] planet-orb orb-triton"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Triton</span>
                         </button>
                         <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="proteus" onclick="zoomAndNavigate(event, 'neptune/proteus.html')">
                             <div data-type="rocky" class="w-[4px] h-[4px] planet-orb orb-proteus"></div>
                             <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Proteus</span>
                         </button>
-                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="triton" onclick="zoomAndNavigate(event, 'neptune/triton.html')">
-                            <div data-type="rocky" class="w-[7px] h-[7px] planet-orb orb-triton"></div>
-                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Triton</span>
-                        </button>
-                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="nereid" onclick="zoomAndNavigate(event, 'neptune/Nereid.html')">
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="nereid" onclick="zoomAndNavigate(event, 'neptune/nereid.html')">
                             <div data-type="rocky" class="w-[3px] h-[3px] planet-orb orb-nereid"></div>
                             <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Nereid</span>
+                        </button>
+                        <button type="button" class="moon-wrapper flex flex-col items-center gap-1 group btn-press" data-wrapper="larissa" onclick="zoomAndNavigate(event, 'neptune/larissa.html')">
+                            <div data-type="rocky" class="w-[3px] h-[3px] planet-orb orb-larissa"></div>
+                            <span class="font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors uppercase tracking-widest">Larissa</span>
                         </button>
                     </div>
 
@@ -1595,23 +1505,6 @@
         makemake: { feature: 'Methane Frost', target: { x: 0.52, y: 0.40 }, duration: 2750 }
     };
 
-    const bodyShapeProfiles = {
-        sun: { tilt: 7.25, polarRatio: 1 },
-        mercury: { tilt: 0.034, polarRatio: 1 },
-        venus: { tilt: 177.4, polarRatio: 1 },
-        earth: { tilt: 23.4, polarRatio: 0.9966 },
-        luna: { tilt: 6.7, polarRatio: 0.999 },
-        mars: { tilt: 25.2, polarRatio: 0.994 },
-        jupiter: { tilt: 3.1, polarRatio: 0.9351 },
-        saturn: { tilt: 26.7, polarRatio: 0.902 },
-        uranus: { tilt: 97.8, polarRatio: 0.9771 },
-        neptune: { tilt: 28.3, polarRatio: 0.9829 },
-        pluto: { tilt: 119.5, polarRatio: 1 },
-        haumea: { tilt: 28.2, polarRatio: 0.5 },
-        makemake: { tilt: 29, polarRatio: 1 },
-        eris: { tilt: 78, polarRatio: 1 }
-    };
-
     const zoomVariantSets = {
         sun: [
             { feature: 'Sunspot Group', target: { x: 0.68, y: 0.38 }, overlays: ['storm'], micro: ['storm'] },
@@ -1712,13 +1605,6 @@
     function getOrbBackground(orb) {
         const compStyle = window.getComputedStyle(orb);
         return compStyle.backgroundImage && compStyle.backgroundImage !== 'none' ? compStyle.backgroundImage : compStyle.background;
-    }
-
-    function applyBodyShape(el, key) {
-        const shape = bodyShapeProfiles[key];
-        if (!shape) return;
-        el.style.setProperty('--axis-tilt', `${shape.tilt}deg`);
-        el.style.setProperty('--polar-ratio', String(shape.polarRatio));
     }
 
     function chooseZoomVariant(key, profile) {
@@ -1943,7 +1829,6 @@
 
         const disc = document.createElement('div');
         disc.className = 'planet-zoom-disc';
-        applyBodyShape(disc, key);
         world.appendChild(disc);
 
         const orbBackground = getOrbBackground(orb);

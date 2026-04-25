@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title>Saturn System Master Badge</title>
+  <desc>A badge featuring ringed Saturn with icy moon sparkles.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1b1722"/>
+      <stop offset="55%" stop-color="#4d3d34"/>
+      <stop offset="100%" stop-color="#121018"/>
+    </linearGradient>
+    <linearGradient id="planet" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5dfb8"/>
+      <stop offset="50%" stop-color="#d0b084"/>
+      <stop offset="100%" stop-color="#9d7d57"/>
+    </linearGradient>
+  </defs>
+  <path d="M80 8l48 18v42c0 37-21 64-48 84C53 132 32 105 32 68V26L80 8z" fill="url(#bg)" stroke="#ffd166" stroke-width="4"/>
+  <ellipse cx="80" cy="79" rx="43" ry="14" fill="none" stroke="#d9c49c" stroke-width="8" opacity=".7"/>
+  <ellipse cx="80" cy="79" rx="49" ry="17" fill="none" stroke="#7d684d" stroke-width="3" opacity=".6"/>
+  <circle cx="80" cy="82" r="24" fill="url(#planet)" stroke="#fff6e3" stroke-opacity=".28" stroke-width="2"/>
+  <path d="M62 76h36M60 86h40M64 95h31" stroke="#b48f60" stroke-opacity=".6" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="41" cy="61" r="3.5" fill="#f3f5f7"/>
+  <circle cx="119" cy="58" r="4" fill="#c9d0d8"/>
+  <circle cx="121" cy="102" r="3.2" fill="#f6c46d"/>
+  <rect x="31" y="114" width="98" height="22" rx="11" fill="#0d0d13" fill-opacity=".8" stroke="#ffd166" stroke-opacity=".45"/>
+  <text x="80" y="129" text-anchor="middle" fill="#ffd166" font-family="Verdana, sans-serif" font-size="13" font-weight="700" letter-spacing="1">SATURN SYSTEM</text>
+</svg>

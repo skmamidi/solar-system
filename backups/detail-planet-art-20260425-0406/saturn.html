@@ -97,15 +97,6 @@
             box-shadow: inset -25px -25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(234, 179, 8, 0.4);
             border-radius: 50%;
             position: relative;
-            overflow: hidden;
-            clip-path: ellipse(50% 50% at 50% 50%);
-            contain: paint;
-            isolation: isolate;
-            background-clip: padding-box;
-            backface-visibility: hidden;
-            transform: rotate(26.7deg) scaleY(0.902);
-            transform-origin: center center;
-            filter: contrast(1.12) saturate(1.1);
             animation: band-shift 50s linear infinite alternate;
             z-index: 2;
         }
@@ -275,7 +266,7 @@
                 </div>
 
                 <!-- Central Saturn & Rings -->
-                <div class="absolute w-40 h-40 md:w-56 md:h-56 rounded-full animate-pulse-glow z-20 pointer-events-none">
+                <div class="absolute w-40 h-40 md:w-56 md:h-56 animate-pulse-glow z-20 pointer-events-none">
                     <div class="saturn-rings"></div>
                     <div class="w-full h-full orb-saturn"></div>
                 </div>

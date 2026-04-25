@@ -85,32 +85,17 @@
 
         /* Jupiter Graphic */
         .orb-jupiter {
-            background:
-                radial-gradient(circle at 35% 35%, transparent 42%, rgba(0,0,0,0.78) 93%),
-                repeating-linear-gradient(
-                    180deg,
-                    rgba(255,255,255,0.08) 0 1.8%,
-                    rgba(0,0,0,0.04) 1.8% 3.4%
-                ),
-                linear-gradient(
-                    to bottom,
-                    #3b2b20 0%, #c4aa82 8%, #f0ddbf 15%, #8b6548 24%,
-                    #d8bea0 33%, #694b35 43%, #f3dfc2 55%, #aa805d 66%,
-                    #dcc6aa 76%, #6f5843 88%, #342820 100%
+            background: linear-gradient(
+                to bottom,
+                #92400e 0%, #d97706 12%, #fcd34d 22%, #b45309 35%, 
+                #fef3c7 48%, #d97706 60%, #92400e 75%, #fde68a 88%, #78350f 100%
             );
             background-size: 200% 200%;
-            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.86), inset 10px 8px 32px rgba(255,255,255,0.20), 0 0 48px rgba(217, 119, 6, 0.42);
+            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(217, 119, 6, 0.4);
             border-radius: 50%;
             position: relative;
             overflow: hidden;
-            clip-path: ellipse(50% 50% at 50% 50%);
-            contain: paint;
-            background-clip: padding-box;
             animation: band-shift 40s linear infinite alternate;
-            transform: rotate(3.1deg) scaleY(0.9351);
-            transform-origin: center center;
-            filter: contrast(1.16) saturate(1.14);
-            isolation: isolate;
         }
         
         .orb-jupiter::after {
@@ -118,11 +103,11 @@
             position: absolute;
             top: 55%; left: 30%;
             width: 35%; height: 18%;
-            background: radial-gradient(ellipse at center, #f2b07e 0%, #b95f3c 34%, #7f1d1d 58%, rgba(180, 83, 9, 0.45) 78%, transparent 100%);
+            background: radial-gradient(ellipse at center, #7f1d1d 0%, #991b1b 40%, rgba(180, 83, 9, 0.6) 70%, transparent 100%);
             border-radius: 50%;
-            filter: blur(0.7px) contrast(1.08);
+            filter: blur(2px);
             transform: rotate(-5deg);
-            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.35), 0 0 10px rgba(255,210,170,0.14);
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
         }
 
         .jupiter-rings {

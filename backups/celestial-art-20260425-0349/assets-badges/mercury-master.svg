@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title>Mercury Master Badge</title>
+  <desc>A space-themed shield badge with a cratered Mercury planet and solar arcs.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22162e"/>
+      <stop offset="55%" stop-color="#3d2b3d"/>
+      <stop offset="100%" stop-color="#120f1f"/>
+    </linearGradient>
+    <radialGradient id="planet" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#f0e7dc"/>
+      <stop offset="55%" stop-color="#9c9185"/>
+      <stop offset="100%" stop-color="#4a4543"/>
+    </radialGradient>
+  </defs>
+  <path d="M80 8l48 18v42c0 37-21 64-48 84C53 132 32 105 32 68V26L80 8z" fill="url(#bg)" stroke="#ffd166" stroke-width="4"/>
+  <circle cx="80" cy="80" r="48" fill="#ffffff" opacity=".05"/>
+  <path d="M45 48c17-21 53-28 75-12" fill="none" stroke="#ffd166" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+  <circle cx="80" cy="84" r="28" fill="url(#planet)" stroke="#f7f3ee" stroke-opacity=".35" stroke-width="2"/>
+  <circle cx="72" cy="76" r="7" fill="#695f59" opacity=".55"/>
+  <circle cx="89" cy="90" r="5" fill="#5b534e" opacity=".5"/>
+  <circle cx="93" cy="72" r="3.5" fill="#524a46" opacity=".5"/>
+  <rect x="42" y="114" width="76" height="22" rx="11" fill="#0a0d20" fill-opacity=".78" stroke="#ffd166" stroke-opacity=".45"/>
+  <text x="80" y="129" text-anchor="middle" fill="#ffd166" font-family="Verdana, sans-serif" font-size="14" font-weight="700" letter-spacing="1">MERCURY</text>
+</svg>

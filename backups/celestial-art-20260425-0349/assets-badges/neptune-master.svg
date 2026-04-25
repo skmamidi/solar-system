@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title>Neptune System Master Badge</title>
+  <desc>A badge with deep blue Neptune, a dark storm, and icy moon accents.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d1433"/>
+      <stop offset="55%" stop-color="#163772"/>
+      <stop offset="100%" stop-color="#090f1f"/>
+    </linearGradient>
+    <radialGradient id="planet" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#8bc9ff"/>
+      <stop offset="55%" stop-color="#2f6de2"/>
+      <stop offset="100%" stop-color="#122f7e"/>
+    </radialGradient>
+  </defs>
+  <path d="M80 8l48 18v42c0 37-21 64-48 84C53 132 32 105 32 68V26L80 8z" fill="url(#bg)" stroke="#7ec8ff" stroke-width="4"/>
+  <circle cx="80" cy="82" r="29" fill="url(#planet)" stroke="#e0f1ff" stroke-opacity=".28" stroke-width="2"/>
+  <ellipse cx="92" cy="86" rx="9" ry="6" fill="#0d266e" opacity=".62"/>
+  <path d="M58 72h43M56 82h49M61 94h39" stroke="#9ed8ff" stroke-opacity=".22" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="42" cy="92" r="5" fill="#f3c6e5"/>
+  <circle cx="117" cy="64" r="4" fill="#687482"/>
+  <rect x="27" y="114" width="106" height="22" rx="11" fill="#09101b" fill-opacity=".82" stroke="#7ec8ff" stroke-opacity=".45"/>
+  <text x="80" y="129" text-anchor="middle" fill="#7ec8ff" font-family="Verdana, sans-serif" font-size="12.5" font-weight="700" letter-spacing="1">NEPTUNE SYSTEM</text>
+</svg>
