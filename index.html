@@ -194,32 +194,143 @@
             border-radius: 50%; pointer-events: none;
         }
         .ring-back { z-index: -1; }
-        .ring-front { z-index: 5; clip-path: polygon(0 50%, 100% 50%, 100% 100%, 0 100%); }
+        .ring-front { z-index: 5; }
         
         /* Saturn Body & Rings */
-        .orb-saturn { 
-            --axis-tilt: 26.7deg;
-            --polar-ratio: 0.9020;
-            background:
-                radial-gradient(circle at 34% 32%, transparent 38%, rgba(0,0,0,0.72) 94%),
-                repeating-linear-gradient(180deg, rgba(255,255,255,0.06) 0 2.6%, rgba(88,65,36,0.05) 2.6% 5.2%),
-                linear-gradient(180deg, #cbb58e 0%, #f0ddb9 18%, #aa8a5f 38%, #dcc9a7 58%, #8d744d 78%, #c2ad84 100%);
-            box-shadow: inset -15px -15px 30px rgba(0,0,0,0.86), inset 8px 8px 28px rgba(255,255,255,0.20);
+        .saturn-art {
+            width: clamp(360px, 35vw, 520px);
+            height: clamp(230px, 22vw, 330px);
+            border-radius: 0;
+            background: transparent;
             overflow: visible;
-            filter: contrast(1.12) saturate(1.1);
+            contain: layout style;
+            isolation: isolate;
+            --orb-scale: 1;
+            --saturn-system-tilt: -8deg;
+            transform: scale(var(--orb-scale));
+            filter: none;
         }
-        .ring-back-saturn, .ring-front-saturn {
-            width: 240%; height: 240%;
-            background: radial-gradient(circle,
-                transparent 45%,
-                rgba(220, 205, 175, 0.9) 46%,
-                rgba(190, 175, 140, 0.95) 51%,
-                rgba(20, 15, 10, 0.85) 52%, /* Cassini Division */
-                rgba(200, 185, 150, 0.85) 54%,
-                rgba(160, 145, 115, 0.5) 63%,
-                transparent 66%
-            );
-            transform: translate(-50%, -50%) rotate(-20deg) scaleY(0.25);
+        .saturn-system {
+            position: absolute;
+            inset: 0;
+            transform: rotate(var(--saturn-system-tilt));
+            transform-origin: center center;
+        }
+        .saturn-body {
+            position: absolute;
+            z-index: 3;
+            top: 50%;
+            left: 50%;
+            width: 49%;
+            aspect-ratio: 1 / 0.902;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 34% 28%, rgba(255,255,255,0.26) 0 9%, transparent 24%),
+                radial-gradient(circle at 34% 32%, transparent 0 46%, rgba(0,0,0,0.62) 82%, rgba(0,0,0,0.88) 100%),
+                linear-gradient(180deg,
+                    #7b7566 0%,
+                    #a79778 11%,
+                    #e2d1aa 19%,
+                    #b99d72 30%,
+                    #f0ddb6 43%,
+                    #d6bc91 52%,
+                    #a98b5e 63%,
+                    #ddc9a3 75%,
+                    #8c7657 88%,
+                    #514637 100%);
+            box-shadow:
+                inset -24px -20px 44px rgba(8, 6, 4, 0.78),
+                inset 14px 10px 30px rgba(255, 239, 194, 0.22),
+                0 0 16px rgba(226, 199, 145, 0.18);
+            filter: contrast(1.08) saturate(1.04);
+        }
+        .saturn-body::before {
+            content: '';
+            position: absolute;
+            inset: -4% -2%;
+            background:
+                repeating-linear-gradient(180deg,
+                    rgba(255, 249, 220, 0.16) 0 4.5%,
+                    rgba(98, 71, 39, 0.08) 4.5% 8%,
+                    rgba(255, 238, 194, 0.10) 8% 12%),
+                linear-gradient(180deg,
+                    transparent 0 34%,
+                    rgba(92, 63, 34, 0.24) 35% 41%,
+                    transparent 42% 70%,
+                    rgba(70, 51, 34, 0.18) 71% 76%,
+                    transparent 77%);
+            filter: blur(0.3px);
+            mix-blend-mode: multiply;
+            opacity: 0.68;
+        }
+        .saturn-body::after {
+            content: '';
+            position: absolute;
+            left: -88%;
+            top: 45%;
+            width: 276%;
+            height: 48%;
+            border-radius: 50%;
+            border-top: 10px solid rgba(18, 13, 7, 0.28);
+            border-bottom: 7px solid rgba(18, 13, 7, 0.16);
+            transform: rotate(0deg);
+            filter: blur(1px);
+            opacity: 0.82;
+        }
+        .ring-back-saturn,
+        .ring-front-saturn {
+            width: 132%;
+            height: 132%;
+            top: 50%;
+            left: 50%;
+            background:
+                radial-gradient(ellipse at center,
+                    transparent 0 39.6%,
+                    rgba(116, 103, 79, 0.18) 40.2% 43.6%,
+                    rgba(231, 218, 184, 0.92) 44.1% 47.3%,
+                    rgba(255, 237, 187, 0.98) 47.8% 49.7%,
+                    rgba(156, 134, 91, 0.66) 50.3% 54.2%,
+                    rgba(7, 6, 4, 0.96) 54.8% 56.1%,
+                    rgba(209, 194, 157, 0.86) 56.8% 61.2%,
+                    rgba(128, 115, 87, 0.48) 62.1% 66.2%,
+                    transparent 67.1% 100%);
+            transform: translate(-50%, -50%) scaleY(0.315);
+            -webkit-mask: radial-gradient(ellipse at center, transparent 0 39.5%, #000 40.2% 66.8%, transparent 67.5%);
+            mask: radial-gradient(ellipse at center, transparent 0 39.5%, #000 40.2% 66.8%, transparent 67.5%);
+        }
+        .ring-back-saturn {
+            z-index: 1;
+            opacity: 0.58;
+            filter: blur(0.25px) brightness(0.8) contrast(1.04);
+        }
+        .ring-back-saturn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: linear-gradient(98deg, transparent 46%, rgba(0, 0, 0, 0.66) 57%, rgba(0, 0, 0, 0.22) 69%, transparent 78%);
+            mix-blend-mode: multiply;
+        }
+        .ring-front-saturn {
+            z-index: 5;
+            opacity: 0.98;
+            clip-path: ellipse(50% 19% at 50% 63%);
+            filter: drop-shadow(0 -1px 2px rgba(0,0,0,0.58)) contrast(1.08) saturate(1.04);
+        }
+        [data-wrapper="saturn"].visited .saturn-art,
+        [data-wrapper="saturn"].badged .saturn-art,
+        .planet-wrapper:hover .saturn-art {
+            border: 0 !important;
+            box-shadow: none !important;
+        }
+        .planet-wrapper:hover .saturn-art { filter: brightness(1.06) saturate(1.04); }
+        .planet-zoom-ring-plane .ring-back-saturn,
+        .planet-zoom-ring-plane .ring-front-saturn {
+            width: 252%;
+            height: 252%;
+            transform: translate(-50%, -50%) rotate(-20deg) scaleY(0.255);
         }
         
         /* Uranus Body & Rings */
@@ -277,11 +388,21 @@
         .orb-asteroid { background: #78716c; box-shadow: inset -2px -2px 5px rgba(0,0,0,0.9); border-radius: 40% 60% 70% 30%; }
         .orb-kuiper { background: #bae6fd; box-shadow: inset -2px -2px 5px rgba(0,0,0,0.8); }
         .orb-dwarf {
-            --axis-tilt: 119.5deg;
+            --axis-tilt: 4deg;
             background:
-                radial-gradient(ellipse at 44% 55%, rgba(255,248,218,0.50) 0 22%, transparent 32%),
-                radial-gradient(circle at 35% 35%, #f0c9a0, #c47d51 42%, #523025 100%);
+                radial-gradient(circle at 56% 37%, rgba(255,255,255,0.42) 0 12%, transparent 18%),
+                radial-gradient(circle at 35% 35%, #d9d4ca, #8f877c 45%, #3b3734 100%);
             box-shadow: var(--disc-shadow);
+        }
+        [data-wrapper="pluto"] .orb-dwarf {
+            --axis-tilt: 119.5deg;
+            --polar-ratio: 1;
+            background:
+                radial-gradient(ellipse at 43% 57%, rgba(255,239,205,0.78) 0 16%, rgba(236,201,158,0.42) 17% 25%, transparent 33%),
+                radial-gradient(ellipse at 62% 43%, rgba(111,47,28,0.38) 0 12%, transparent 22%),
+                radial-gradient(circle at 35% 35%, #e7c49a 0%, #b87852 38%, #7b3e2b 68%, #2f211d 100%);
+            box-shadow: var(--disc-shadow), 0 0 10px rgba(226, 173, 116, 0.22);
+            filter: contrast(1.14) saturate(1.08);
         }
         [data-wrapper="haumea"] .orb-dwarf {
             --axis-tilt: 28.2deg;
@@ -847,6 +968,7 @@
         .planet-zoom-disc {
             position: absolute;
             inset: 0;
+            z-index: 2;
             border-radius: 50%;
             overflow: hidden;
             isolation: isolate;
@@ -859,6 +981,21 @@
             contain: paint;
             backface-visibility: hidden;
         }
+
+        .planet-zoom-ring-plane {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            transform-origin: center center;
+            --axis-tilt: 0deg;
+            --polar-ratio: 1;
+            transform: rotate(var(--axis-tilt)) scaleY(var(--polar-ratio));
+        }
+
+        .planet-zoom-ring-plane.back { z-index: 1; }
+        .planet-zoom-ring-plane.front { z-index: 3; }
+        .planet-zoom-ring-plane .ring-back,
+        .planet-zoom-ring-plane .ring-front { z-index: 0; }
 
         .planet-zoom-layer {
             position: absolute;
@@ -1161,9 +1298,12 @@
                 <div class="grid grid-rows-[1fr_auto_1fr] items-center justify-items-center h-[700px] shrink-0 snap-center relative mx-24">
                     <div></div>
                     <button type="button" class="flex flex-col items-center gap-3 planet-wrapper btn-press focus:outline-none" data-wrapper="saturn" data-light-key="saturn" onclick="zoomAndNavigate(event, 'saturn/saturn.html')">
-                        <div data-orb="saturn" data-type="gas" class="w-[290px] h-[290px] planet-orb orb-saturn mt-4">
-                            <div class="ring-back ring-back-saturn"></div>
-                            <div class="ring-front ring-front-saturn"></div>
+                        <div data-orb="saturn" data-type="gas" class="planet-orb saturn-art mt-4">
+                            <div class="saturn-system">
+                                <div class="ring-back ring-back-saturn"></div>
+                                <div class="saturn-body"></div>
+                                <div class="ring-front ring-front-saturn"></div>
+                            </div>
                         </div>
                         <span class="font-mono text-sm text-gray-100 uppercase tracking-widest mt-4">Saturn</span>
                     </button>
@@ -1698,10 +1838,10 @@
             { feature: 'Cantaloupe Terrain', target: { x: 0.41, y: 0.41 }, overlays: ['fracture'], micro: ['fracture'] }
         ],
         pluto: [
-            { feature: 'Sputnik Planitia', target: { x: 0.43, y: 0.60 }, overlays: ['fracture'], micro: ['fracture'] },
-            { feature: 'Bladed Methane Ice', target: { x: 0.59, y: 0.39 }, overlays: ['fracture'], micro: ['fracture'] },
+            { feature: 'Sputnik Planitia', target: { x: 0.43, y: 0.60 }, overlays: [], micro: [] },
+            { feature: 'Bladed Methane Ice', target: { x: 0.59, y: 0.39 }, overlays: [], micro: [] },
             { feature: 'Dark Equatorial Terrain', target: { x: 0.55, y: 0.49 }, overlays: ['crater'], micro: ['crater'] },
-            { feature: 'Frosted Highlands', target: { x: 0.38, y: 0.42 }, overlays: ['fracture'], micro: ['fracture'] }
+            { feature: 'Frosted Highlands', target: { x: 0.38, y: 0.42 }, overlays: [], micro: [] }
         ]
     };
 
@@ -1710,6 +1850,13 @@
     }
 
     function getOrbBackground(orb) {
+        if (orb?.dataset?.orb === 'saturn') {
+            const saturnBody = orb.querySelector('.saturn-body');
+            if (saturnBody) {
+                const bodyStyle = window.getComputedStyle(saturnBody);
+                return bodyStyle.backgroundImage && bodyStyle.backgroundImage !== 'none' ? bodyStyle.backgroundImage : bodyStyle.background;
+            }
+        }
         const compStyle = window.getComputedStyle(orb);
         return compStyle.backgroundImage && compStyle.backgroundImage !== 'none' ? compStyle.backgroundImage : compStyle.background;
     }
@@ -1769,7 +1916,7 @@
             neptune: 'radial-gradient(circle at 58% 44%, rgba(10,30,120,0.45), transparent 9%), repeating-linear-gradient(180deg, rgba(255,255,255,0.05) 0 24px, rgba(18,58,138,0.06) 24px 46px)',
             europa: 'repeating-linear-gradient(135deg, rgba(128,79,20,0.28) 0 4px, transparent 4px 18px), radial-gradient(circle at 46% 39%, rgba(255,255,255,0.16), transparent 8%)',
             titan: 'radial-gradient(circle at 57% 56%, rgba(59,33,9,0.45), transparent 10%), linear-gradient(180deg, rgba(244,163,57,0.15), rgba(79,45,12,0.05))',
-            pluto: 'radial-gradient(ellipse at 43% 60%, rgba(255,247,226,0.45), transparent 12%), radial-gradient(circle at 60% 44%, rgba(99,39,14,0.18), transparent 8%)'
+            pluto: 'radial-gradient(ellipse at 38% 53%, rgba(255,244,214,0.32) 0 8%, transparent 12%), radial-gradient(ellipse at 52% 63%, rgba(255,235,196,0.28) 0 10%, transparent 15%), radial-gradient(ellipse at 62% 52%, rgba(245,214,176,0.22) 0 7%, transparent 12%), radial-gradient(ellipse at 65% 39%, rgba(90,35,22,0.24) 0 9%, transparent 15%), linear-gradient(168deg, transparent 55%, rgba(94,37,23,0.20) 58%, rgba(236,196,145,0.08) 63%, transparent 69%)'
         };
         return gradients[key] || 'radial-gradient(circle at 56% 46%, rgba(255,255,255,0.14), transparent 9%), radial-gradient(circle at 36% 62%, rgba(0,0,0,0.22), transparent 11%)';
     }
@@ -1800,7 +1947,7 @@
             saturn: 'repeating-linear-gradient(180deg, rgba(255,255,255,0.04) 0 14px, rgba(0,0,0,0.05) 14px 30px)',
             europa: 'repeating-linear-gradient(30deg, rgba(124,78,25,0.24) 0 3px, transparent 3px 16px), repeating-linear-gradient(150deg, rgba(110,74,28,0.15) 0 2px, transparent 2px 22px)',
             mars: 'radial-gradient(circle at 52% 24%, rgba(255,255,255,0.04) 0 10px, transparent 10px), radial-gradient(circle at 62% 68%, rgba(115,25,20,0.18) 0 20px, transparent 22px)',
-            pluto: 'radial-gradient(circle at 46% 60%, rgba(255,255,255,0.1) 0 16px, transparent 17px), radial-gradient(circle at 65% 36%, rgba(120,60,20,0.12) 0 14px, transparent 15px)'
+            pluto: 'radial-gradient(circle at 46% 60%, rgba(255,244,214,0.14) 0 18px, transparent 19px), radial-gradient(circle at 65% 36%, rgba(120,56,30,0.18) 0 16px, transparent 17px), repeating-linear-gradient(20deg, rgba(255,230,190,0.05) 0 3px, rgba(78,38,25,0.06) 3px 15px)'
         };
         return map[key] || genericRock;
     }
@@ -1965,15 +2112,26 @@
         disc.appendChild(rim);
 
 
+        const ringPlane = (position) => {
+            const plane = document.createElement('div');
+            plane.className = `planet-zoom-ring-plane ${position}`;
+            applyBodyShape(plane, key);
+            return plane;
+        };
+
         const backRing = orb.querySelector('.ring-back');
         if (backRing) {
             world.style.overflow = 'visible';
-            world.appendChild(backRing.cloneNode(true));
+            const backPlane = ringPlane('back');
+            backPlane.appendChild(backRing.cloneNode(true));
+            world.insertBefore(backPlane, disc);
         }
 
         const frontRing = orb.querySelector('.ring-front');
         if (frontRing) {
-            world.appendChild(frontRing.cloneNode(true));
+            const frontPlane = ringPlane('front');
+            frontPlane.appendChild(frontRing.cloneNode(true));
+            world.appendChild(frontPlane);
         }
 
         const flash = document.createElement('div');
