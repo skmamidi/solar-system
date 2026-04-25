@@ -16,7 +16,7 @@
                     colors: {
                         space: { 900: '#0a0514', 800: '#1a0b2e', 700: '#2d1b4e', 500: '#4c2882', 100: '#f8fafc' },
                         star: { cyan: '#6ef0ff', gold: '#ffd166', magenta: '#ff5ac6', green: '#4ef0a8', red: '#ff6b6b' },
-                        pluto: { base: '#a855f7', dark: '#581c87', light: '#d8b4fe', ice: '#e9d5ff', rock: '#7e22ce' }
+                        pluto: { base: '#c08457', dark: '#5b2d1d', light: '#f0d2a8', ice: '#fff0d2', rock: '#8a4f32' }
                     },
                     fontFamily: {
                         display: ['Fredoka', 'sans-serif'],
@@ -34,8 +34,8 @@
                             '50%': { transform: 'translateY(-15px)' },
                         },
                         pulseGlow: {
-                            '0%': { boxShadow: '0 0 20px rgba(168, 85, 247, 0.2)' },
-                            '100%': { boxShadow: '0 0 60px rgba(168, 85, 247, 0.5)' },
+                            '0%': { boxShadow: '0 0 20px rgba(192, 132, 87, 0.2)' },
+                            '100%': { boxShadow: '0 0 60px rgba(240, 210, 168, 0.45)' },
                         }
                     }
                 }
@@ -48,37 +48,41 @@
             background-color: #0a0514;
             background-image: 
                 radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
-                radial-gradient(1px 1px at 25% 75%, #a855f7 100%, transparent),
-                radial-gradient(2px 2px at 75% 25%, #d8b4fe 100%, transparent),
-                radial-gradient(1px 1px at 85% 85%, #7e22ce 100%, transparent),
+                radial-gradient(1px 1px at 25% 75%, #c08457 100%, transparent),
+                radial-gradient(2px 2px at 75% 25%, #f0d2a8 100%, transparent),
+                radial-gradient(1px 1px at 85% 85%, #8a4f32 100%, transparent),
                 radial-gradient(1px 1px at 45% 55%, #fff 100%, transparent),
-                radial-gradient(2px 2px at 35% 45%, #a855f7 100%, transparent);
+                radial-gradient(2px 2px at 35% 45%, #c08457 100%, transparent);
             background-size: 250px 250px;
         }
 
         .glass-panel {
-            background: rgba(26, 11, 46, 0.65);
+            background: rgba(29, 18, 15, 0.65);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(168, 85, 247, 0.2);
+            border: 1px solid rgba(192, 132, 87, 0.24);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
 
         .glass-card {
-            background: linear-gradient(145deg, rgba(10, 5, 20, 0.8), rgba(26, 11, 46, 0.9));
-            border: 1px solid rgba(168, 85, 247, 0.3);
+            background: linear-gradient(145deg, rgba(10, 5, 20, 0.8), rgba(33, 22, 18, 0.9));
+            border: 1px solid rgba(192, 132, 87, 0.32);
             transition: all 0.3s ease;
         }
 
         .glass-card:hover {
-            border-color: rgba(168, 85, 247, 0.6);
-            box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+            border-color: rgba(240, 210, 168, 0.58);
+            box-shadow: 0 0 20px rgba(192, 132, 87, 0.3);
             transform: translateY(-5px);
         }
 
         .orb-pluto {
-            background: radial-gradient(circle at 35% 35%, #d8b4fe, #a855f7, #7e22ce, #581c87, #2d1b4e);
-            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(168, 85, 247, 0.4);
+            background:
+                radial-gradient(ellipse at 44% 57%, rgba(255, 240, 210, 0.92) 0 15%, rgba(229, 188, 137, 0.58) 16% 26%, transparent 34%),
+                radial-gradient(ellipse at 62% 42%, rgba(101, 39, 22, 0.34) 0 10%, transparent 20%),
+                linear-gradient(168deg, transparent 55%, rgba(95, 40, 25, 0.26) 58%, rgba(239, 202, 155, 0.10) 64%, transparent 70%),
+                radial-gradient(circle at 35% 35%, #e7c49a 0%, #bf8057 36%, #7b3e2b 68%, #2f211d 100%);
+            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(192, 132, 87, 0.34);
             border-radius: 50%;
             position: relative;
             z-index: 2;
@@ -88,12 +92,17 @@
         .orb-pluto::before {
             content: '';
             position: absolute;
-            top: 28%; left: 45%;
-            width: 30%; height: 28%;
-            background: radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.95) 0%, rgba(233,213,255,0.7) 30%, rgba(168,85,247,0.3) 60%, transparent 80%);
-            clip-path: path('M12,21.35l-1.45,-1.32C5.4,15.36,2,12.28,2,8.5C2,5.42,4.42,3,7.5,3c1.74,0,3.41,0.81,4.5,2.09C13.09,3.81,14.76,3,16.5,3C19.58,3,22,5.42,22,8.5c0,3.78,-3.4,6.86,-8.55,11.54L12,21.35z');
-            transform: scale(0.8) rotate(-10deg);
-            opacity: 0.9;
+            top: 31%; left: 31%;
+            width: 44%; height: 37%;
+            background:
+                radial-gradient(ellipse at 34% 36%, rgba(255,247,225,0.96) 0 20%, transparent 23%),
+                radial-gradient(ellipse at 64% 35%, rgba(255,241,211,0.90) 0 19%, transparent 23%),
+                radial-gradient(ellipse at 50% 66%, rgba(246,220,184,0.76) 0 25%, transparent 30%),
+                radial-gradient(ellipse at 51% 51%, rgba(255,241,210,0.62) 0 46%, transparent 56%);
+            clip-path: polygon(50% 92%, 22% 64%, 14% 42%, 23% 24%, 39% 20%, 50% 32%, 62% 20%, 79% 26%, 87% 44%, 78% 64%);
+            transform: rotate(-10deg);
+            opacity: 0.92;
+            filter: blur(0.25px);
         }
 
         .perspective-1000 { perspective: 1000px; }
@@ -109,13 +118,13 @@
 
         #gameCanvas {
             image-rendering: pixelated;
-            box-shadow: inset 0 0 30px rgba(168, 85, 247, 0.2);
+            box-shadow: inset 0 0 30px rgba(192, 132, 87, 0.2);
         }
 
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #0a0514; }
-        ::-webkit-scrollbar-thumb { background: #4c2882; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a855f7; }
+        ::-webkit-scrollbar-thumb { background: #5b2d1d; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c08457; }
         
         #msgBox { display: none; }
         #msgBox.active { display: flex; }
@@ -125,7 +134,7 @@
 <body class="font-body text-white antialiased overflow-x-hidden">
 
 <div id="msgBox" class="fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4 active:hidden">
-    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-pluto-base shadow-[0_0_40px_rgba(168,85,247,0.3)]">
+    <div class="glass-panel max-w-sm w-full p-6 text-center transform transition-all scale-100 rounded-2xl border-pluto-base shadow-[0_0_40px_rgba(192,132,87,0.3)]">
         <div id="msgIcon" class="text-5xl mb-4">🏆</div>
         <h3 id="msgTitle" class="font-display text-2xl text-star-gold mb-2">Achievement Unlocked!</h3>
         <p id="msgText" class="text-space-100 mb-6">You've successfully completed the task.</p>
@@ -188,7 +197,7 @@
                 <p class="text-space-100 text-lg leading-relaxed mb-8">
                     A distant ice world with a giant heart-shaped plain, five known moons, and a thin atmosphere that freezes onto the surface as it retreats from the Sun. Once the ninth planet, now the king of dwarf planets.
                 </p>
-                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-pluto-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-pluto-light transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(168,85,247,0.5)]">
+                <button onclick="document.getElementById('explore-grid').scrollIntoView()" class="bg-pluto-base text-space-900 px-8 py-3 rounded-full font-bold hover:bg-pluto-light transition-colors transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(192,132,87,0.5)]">
                     Explore Pluto 👇
                 </button>
             </div>
@@ -391,7 +400,7 @@
         </div>
 
         <div class="mb-16">
-            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-pluto-base border-2 shadow-[0_0_30px_rgba(168,85,247,0.2)]">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-pluto-base border-2 shadow-[0_0_30px_rgba(192,132,87,0.2)]">
                 <div class="bg-space-900 p-6 flex flex-col lg:flex-row gap-8 items-center rounded-xl">
                     <div class="flex-1 w-full text-center lg:text-left">
                         <span class="inline-block px-3 py-1 bg-pluto-dark text-white text-xs font-bold rounded-full mb-3 animate-pulse">MINI-GAME</span>
@@ -419,7 +428,7 @@
                             <h3 class="font-display text-2xl text-white mb-1">Targeting Pluto</h3>
                             <p class="text-pluto-light text-sm">Click Start to navigate</p>
                         </div>
-                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#0a0514] via-[#2d1b4e] to-[#4c2882] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-pluto-base"></canvas>
+                        <canvas id="gameCanvas" width="500" height="600" class="bg-gradient-to-b from-[#0a0514] via-[#211612] to-[#5b2d1d] rounded-xl w-full max-w-[400px] h-[400px] md:h-[500px] object-cover border border-pluto-base"></canvas>
                     </div>
                 </div>
             </div>
@@ -792,7 +801,7 @@
         ctx.bezierCurveTo(-size/2, size/4, -size/2, -size/2, 0, -size/4);
         ctx.fillStyle = '#fff';
         ctx.shadowBlur = 15;
-        ctx.shadowColor = '#ff5ac6';
+        ctx.shadowColor = '#f0d2a8';
         ctx.fill();
         ctx.restore();
     }
@@ -800,7 +809,7 @@
     function drawPlayer() {
         ctx.save();
         ctx.translate(player.x + player.width/2, player.y + player.height/2);
-        ctx.fillStyle = (frames % 10 < 5) ? '#a855f7' : '#d8b4fe'; 
+        ctx.fillStyle = (frames % 10 < 5) ? '#c08457' : '#f0d2a8'; 
         ctx.beginPath();
         ctx.moveTo(-4, player.height/2);
         ctx.lineTo(0, player.height/2 + 15 + Math.random()*5);
@@ -810,12 +819,12 @@
         ctx.beginPath();
         ctx.arc(0, -5, player.width/2, Math.PI, 0);
         ctx.fill();
-        ctx.strokeStyle = '#a855f7';
+        ctx.strokeStyle = '#c08457';
         ctx.lineWidth = 2;
         ctx.stroke();
-        ctx.fillStyle = '#581c87';
+        ctx.fillStyle = '#5b2d1d';
         ctx.fillRect(-6, -5, 12, 20);
-        ctx.fillStyle = '#e9d5ff';
+        ctx.fillStyle = '#fff0d2';
         ctx.beginPath();
         ctx.arc(0, -10, 3, 0, Math.PI*2);
         ctx.fill();
@@ -873,7 +882,7 @@
                 if (spaceObjects[i].isData) {
                     dataCollected++;
                     addXP(10); 
-                    ctx.fillStyle = 'rgba(233, 213, 255, 0.4)';
+                    ctx.fillStyle = 'rgba(240, 210, 168, 0.4)';
                     ctx.fillRect(0,0, canvas.width, canvas.height);
                     spaceObjects.splice(i, 1);
                     continue;
@@ -899,7 +908,7 @@
         ctx.fillStyle = "white";
         ctx.font = "16px 'JetBrains Mono', monospace";
         ctx.fillText(`Time: ${secondsAlive}s`, 10, 25);
-        ctx.fillStyle = "#e9d5ff"; 
+        ctx.fillStyle = "#fff0d2"; 
         ctx.fillText(`❤️ Collected: ${dataCollected}/3`, 10, 45);
         ctx.fillStyle = "rgba(255,255,255,0.7)";
         ctx.fillText(`Target: 20s`, canvas.width - 110, 25);
