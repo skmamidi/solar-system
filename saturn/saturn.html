@@ -86,15 +86,29 @@
             transform: translateY(-5px);
         }
 
-        /* Saturn Graphic - Golden/Yellow bands */
+        /* Saturn Graphic - clipped body plus separated back/front ring layers */
         .orb-saturn {
-            background: linear-gradient(
-                to bottom,
-                #a16207 0%, #eab308 15%, #fef08a 25%, #ca8a04 40%, 
-                #fcd34d 55%, #eab308 70%, #854d0e 85%, #d97706 100%
-            );
-            background-size: 200% 200%;
-            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(234, 179, 8, 0.4);
+            height: 90.2% !important;
+            top: 4.9%;
+            background:
+                radial-gradient(circle at 34% 28%, rgba(255,255,255,0.24) 0 9%, transparent 24%),
+                radial-gradient(circle at 34% 32%, transparent 0 46%, rgba(0,0,0,0.62) 82%, rgba(0,0,0,0.88) 100%),
+                repeating-linear-gradient(180deg,
+                    rgba(255, 249, 220, 0.08) 0 5.5%,
+                    rgba(98, 71, 39, 0.04) 5.5% 10.5%,
+                    rgba(255, 238, 194, 0.055) 10.5% 15%),
+                linear-gradient(180deg,
+                    #7b7566 0%,
+                    #a79778 11%,
+                    #e2d1aa 19%,
+                    #b99d72 30%,
+                    #f0ddb6 43%,
+                    #d6bc91 52%,
+                    #a98b5e 63%,
+                    #ddc9a3 75%,
+                    #8c7657 88%,
+                    #514637 100%);
+            box-shadow: inset -25px -25px 50px rgba(0,0,0,0.82), 0 0 34px rgba(234, 179, 8, 0.24);
             border-radius: 50%;
             position: relative;
             overflow: hidden;
@@ -103,28 +117,67 @@
             isolation: isolate;
             background-clip: padding-box;
             backface-visibility: hidden;
-            transform: rotate(26.7deg) scaleY(0.902);
+            transform: none;
             transform-origin: center center;
-            filter: contrast(1.12) saturate(1.1);
-            animation: band-shift 50s linear infinite alternate;
+            filter: contrast(1.07) saturate(1.04);
+            animation: none;
             z-index: 2;
         }
+        .orb-saturn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            clip-path: ellipse(50% 50% at 50% 50%);
+            background:
+                linear-gradient(174deg,
+                    transparent 0 45%,
+                    rgba(22, 14, 6, 0.14) 46.2%,
+                    rgba(22, 14, 6, 0.24) 47.4%,
+                    rgba(255, 242, 207, 0.045) 49.2%,
+                    transparent 51.4%),
+                linear-gradient(174deg,
+                    transparent 0 59%,
+                    rgba(15, 10, 5, 0.12) 60.1%,
+                    rgba(15, 10, 5, 0.18) 61.2%,
+                    transparent 63.4%);
+            filter: blur(0.45px);
+            mix-blend-mode: multiply;
+            opacity: 0.9;
+            pointer-events: none;
+        }
         
-        /* The Rings! */
         .saturn-rings {
             position: absolute;
             top: 50%; left: 50%;
-            transform: translate(-50%, -50%) rotate(-20deg) scaleY(0.3);
-            width: 250%; height: 250%;
-            border: 15px solid rgba(253, 230, 138, 0.8);
+            transform: translate(-50%, -50%) rotate(-20deg) scaleY(0.315);
+            width: 260%; height: 260%;
             border-radius: 50%;
-            box-shadow: 
-                0 0 0 5px rgba(0,0,0,0.2),
-                inset 0 0 0 8px rgba(217, 119, 6, 0.6),
-                inset 0 0 0 12px rgba(0,0,0,0.4),
-                inset 0 0 0 25px rgba(252, 211, 77, 0.5),
-                inset 0 0 0 35px rgba(254, 240, 138, 0.3);
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse at center,
+                    transparent 0 39.6%,
+                    rgba(116, 103, 79, 0.18) 40.2% 43.6%,
+                    rgba(231, 218, 184, 0.92) 44.1% 47.3%,
+                    rgba(255, 237, 187, 0.98) 47.8% 49.7%,
+                    rgba(156, 134, 91, 0.66) 50.3% 54.2%,
+                    rgba(7, 6, 4, 0.96) 54.8% 56.1%,
+                    rgba(209, 194, 157, 0.86) 56.8% 61.2%,
+                    rgba(128, 115, 87, 0.48) 62.1% 66.2%,
+                    transparent 67.1% 100%);
+            -webkit-mask: radial-gradient(ellipse at center, transparent 0 39.5%, #000 40.2% 66.8%, transparent 67.5%);
+            mask: radial-gradient(ellipse at center, transparent 0 39.5%, #000 40.2% 66.8%, transparent 67.5%);
+        }
+        .saturn-rings-back {
             z-index: 1;
+            opacity: 0.56;
+            filter: blur(0.25px) brightness(0.8) contrast(1.04);
+        }
+        .saturn-rings-front {
+            z-index: 3;
+            opacity: 0.98;
+            clip-path: ellipse(50% 19% at 50% 63%);
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.26)) contrast(1.06) saturate(1.03);
         }
         
         /* Hexagon Storm North Pole */
@@ -276,8 +329,9 @@
 
                 <!-- Central Saturn & Rings -->
                 <div class="absolute w-40 h-40 md:w-56 md:h-56 rounded-full animate-pulse-glow z-20 pointer-events-none">
-                    <div class="saturn-rings"></div>
+                    <div class="saturn-rings saturn-rings-back"></div>
                     <div class="w-full h-full orb-saturn"></div>
+                    <div class="saturn-rings saturn-rings-front"></div>
                 </div>
             </div>
         </div>
