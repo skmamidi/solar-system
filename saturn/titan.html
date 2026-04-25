@@ -559,7 +559,7 @@
     }
 
     /* QUIZ LOGIC */
-    const quizQuestions = window.QuizBank.getPageQuizData({ sourcePath: 'saturn/titan.html', format: 'option-strings' });
+    const quizQuestions = window.QuizBank.getPageQuizData({ sourcePath: 'saturn/titan.html', format: 'option-objects' });
 
     let currentQIndex = 0;
     let score = 0;
@@ -579,7 +579,7 @@
 
     function renderQuestion() {
         const q = randomizedQuestions[currentQIndex];
-        document.getElementById('questionText').innerText = `${currentQIndex + 1}. ${q.q}`;
+        document.getElementById('questionText').innerText = `${currentQIndex + 1}. ${q.question}`;
         const optionsContainer = document.getElementById('optionsContainer');
         optionsContainer.innerHTML = '';
         

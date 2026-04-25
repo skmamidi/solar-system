@@ -551,7 +551,7 @@
     }
 
     /* QUIZ LOGIC */
-    const quizQuestions = window.QuizBank.getPageQuizData({ sourcePath: 'saturn/mimas.html', format: 'option-strings' });
+    const quizQuestions = window.QuizBank.getPageQuizData({ sourcePath: 'saturn/mimas.html', format: 'option-objects' });
 
     let currentQIndex = 0;
     let score = 0;
@@ -571,7 +571,7 @@
 
     function renderQuestion() {
         const q = randomizedQuestions[currentQIndex];
-        document.getElementById('questionText').innerText = `${currentQIndex + 1}. ${q.q}`;
+        document.getElementById('questionText').innerText = `${currentQIndex + 1}. ${q.question}`;
         const optionsContainer = document.getElementById('optionsContainer');
         optionsContainer.innerHTML = '';
         
@@ -794,4 +794,114 @@
         // Push Top Obstacle
         obstacles.push({ x: canvas.width, y: 0, width: w, height: topH, speedX: globalSpeed, isTop: true });
         // Push Bottom Obstacle
-        obstacles
+        obstacles.push({ x: canvas.width, y: canvas.height - botH, width: w, height: botH, speedX: globalSpeed, isTop: false });
+    }
+
+    function drawProbe() {
+        ctx.save();
+        ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+        ctx.fillStyle = player.color;
+        ctx.beginPath();
+        ctx.moveTo(-player.width / 2, -player.height / 2);
+        ctx.lineTo(player.width / 2, 0);
+        ctx.lineTo(-player.width / 2, player.height / 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawCollectible(node) {
+        node.pulse += 0.1;
+        const radius = 9 + Math.sin(node.pulse) * 2;
+        ctx.save();
+        ctx.shadowColor = '#4ef0a8';
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = '#4ef0a8';
+        ctx.beginPath();
+        ctx.arc(node.x + node.width / 2, node.y + node.height / 2, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function rectsOverlap(a, b) {
+        return a.x < b.x + b.width &&
+            a.x + a.width > b.x &&
+            a.y < b.y + b.height &&
+            a.y + a.height > b.y;
+    }
+
+    function endGame(success) {
+        gameActive = false;
+        cancelAnimationFrame(gameLoopReq);
+        overlay.classList.remove('hidden');
+        overlay.querySelector('h3').innerText = success ? 'Herschel Scan Complete' : 'Signal Lost';
+        overlay.querySelector('p').innerText = success ? `Collected ${dataCollected} ocean clues` : 'Try another pass through the crater';
+        startBtn.innerText = 'Start Flyby';
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50');
+
+        if(success && !achievements.playedGame) {
+            achievements.playedGame = true;
+            addXP(100);
+            showMsgBox('Crater Survey Complete', 'You skimmed Herschel Crater and collected key Mimas science data! +100 XP', '🛰️');
+        }
+    }
+
+    function gameLoop() {
+        if(!gameActive) return;
+        frames++;
+        scoreFrames++;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#020617';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        if(keys.ArrowUp) player.y -= player.speed;
+        if(keys.ArrowDown) player.y += player.speed;
+        if(isTouching) player.y += (touchTargetY - player.y - player.height / 2) * 0.12;
+        player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+
+        if(frames % 55 === 0) spawnEntity();
+
+        ctx.fillStyle = '#94a3b8';
+        obstacles.forEach(obstacle => {
+            obstacle.x -= obstacle.speedX;
+            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            if(rectsOverlap(player, obstacle)) endGame(false);
+        });
+        obstacles = obstacles.filter(obstacle => obstacle.x + obstacle.width > 0);
+
+        collectibles.forEach(node => {
+            node.x -= node.speedX;
+            drawCollectible(node);
+            if(rectsOverlap(player, node)) {
+                node.collected = true;
+                dataCollected++;
+                addXP(5);
+            }
+        });
+        collectibles = collectibles.filter(node => !node.collected && node.x + node.width > 0);
+
+        drawProbe();
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '700 14px JetBrains Mono';
+        ctx.fillText(`DATA ${dataCollected}/8`, 12, 24);
+        ctx.fillText(`RANGE ${Math.floor(scoreFrames / 10)}`, 12, 44);
+
+        if(scoreFrames >= 1250 || dataCollected >= 8) {
+            endGame(true);
+            return;
+        }
+
+        gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    startBtn.addEventListener('click', initGame);
+</script>
+<script src="../assets/js/global-badges.js"></script>
+</body>
+</html>
