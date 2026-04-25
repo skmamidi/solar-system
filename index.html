@@ -169,16 +169,18 @@
             --axis-tilt: 3.1deg;
             --polar-ratio: 0.9351;
             background: 
-                radial-gradient(circle at 35% 35%, transparent 42%, rgba(0,0,0,0.78) 93%),
+                radial-gradient(circle at 35% 35%, transparent 44%, rgba(0,0,0,0.70) 92%),
+                radial-gradient(ellipse at 58% 32%, rgba(255,244,214,0.16), transparent 17%),
+                radial-gradient(ellipse at 42% 72%, rgba(80,45,28,0.14), transparent 18%),
                 repeating-linear-gradient(180deg,
-                    rgba(255,255,255,0.08) 0 1.8%,
-                    rgba(0,0,0,0.04) 1.8% 3.4%),
+                    rgba(255,255,255,0.035) 0 2.4%,
+                    rgba(0,0,0,0.022) 2.4% 4.8%),
                 linear-gradient(180deg, 
-                    #3b2b20 0%, #c4aa82 8%, #f0ddbf 15%, #8b6548 24%,
-                    #d8bea0 33%, #694b35 43%, #f3dfc2 55%, #aa805d 66%,
-                    #dcc6aa 76%, #6f5843 88%, #342820 100%);
-            box-shadow: inset -25px -25px 60px rgba(0,0,0,0.88), inset 10px 8px 32px rgba(255,255,255,0.22);
-            filter: contrast(1.16) saturate(1.14);
+                    #5b4636 0%, #b39873 9%, #e7d3ad 18%, #a37b5b 29%,
+                    #cfb18f 42%, #8a6449 52%, #ead6b5 63%, #b78963 73%,
+                    #cbb394 84%, #594737 100%);
+            box-shadow: inset -25px -25px 58px rgba(0,0,0,0.84), inset 10px 8px 30px rgba(255,255,255,0.20);
+            filter: contrast(1.08) saturate(1.08);
         }
         .orb-jupiter::after { 
             content: ''; position: absolute; top: 62%; left: 45%;
@@ -226,6 +228,11 @@
             transform: translate(-50%, -50%);
             border-radius: 50%;
             overflow: hidden;
+            clip-path: ellipse(50% 50% at 50% 50%);
+            contain: paint;
+            isolation: isolate;
+            background-clip: padding-box;
+            backface-visibility: hidden;
             background:
                 radial-gradient(circle at 34% 28%, rgba(255,255,255,0.26) 0 9%, transparent 24%),
                 radial-gradient(circle at 34% 32%, transparent 0 46%, rgba(0,0,0,0.62) 82%, rgba(0,0,0,0.88) 100%),
@@ -249,35 +256,45 @@
         .saturn-body::before {
             content: '';
             position: absolute;
-            inset: -4% -2%;
+            inset: 0;
+            border-radius: inherit;
+            clip-path: ellipse(50% 50% at 50% 50%);
             background:
                 repeating-linear-gradient(180deg,
-                    rgba(255, 249, 220, 0.16) 0 4.5%,
-                    rgba(98, 71, 39, 0.08) 4.5% 8%,
-                    rgba(255, 238, 194, 0.10) 8% 12%),
+                    rgba(255, 249, 220, 0.09) 0 5.5%,
+                    rgba(98, 71, 39, 0.045) 5.5% 10.5%,
+                    rgba(255, 238, 194, 0.06) 10.5% 15%),
                 linear-gradient(180deg,
                     transparent 0 34%,
-                    rgba(92, 63, 34, 0.24) 35% 41%,
+                    rgba(92, 63, 34, 0.13) 35% 41%,
                     transparent 42% 70%,
-                    rgba(70, 51, 34, 0.18) 71% 76%,
+                    rgba(70, 51, 34, 0.10) 71% 76%,
                     transparent 77%);
-            filter: blur(0.3px);
+            filter: blur(0.45px);
             mix-blend-mode: multiply;
-            opacity: 0.68;
+            opacity: 0.62;
         }
         .saturn-body::after {
             content: '';
             position: absolute;
-            left: -88%;
-            top: 45%;
-            width: 276%;
-            height: 48%;
-            border-radius: 50%;
-            border-top: 10px solid rgba(18, 13, 7, 0.28);
-            border-bottom: 7px solid rgba(18, 13, 7, 0.16);
-            transform: rotate(0deg);
-            filter: blur(1px);
-            opacity: 0.82;
+            inset: 0;
+            border-radius: inherit;
+            clip-path: ellipse(50% 50% at 50% 50%);
+            background:
+                linear-gradient(174deg,
+                    transparent 0 45%,
+                    rgba(22, 14, 6, 0.16) 46.2%,
+                    rgba(22, 14, 6, 0.26) 47.4%,
+                    rgba(255, 242, 207, 0.045) 49.2%,
+                    transparent 51.4%),
+                linear-gradient(174deg,
+                    transparent 0 59%,
+                    rgba(15, 10, 5, 0.14) 60.1%,
+                    rgba(15, 10, 5, 0.20) 61.2%,
+                    transparent 63.4%);
+            filter: blur(0.45px);
+            mix-blend-mode: multiply;
+            opacity: 0.9;
         }
         .ring-back-saturn,
         .ring-front-saturn {
@@ -317,7 +334,7 @@
             z-index: 5;
             opacity: 0.98;
             clip-path: ellipse(50% 19% at 50% 63%);
-            filter: drop-shadow(0 -1px 2px rgba(0,0,0,0.58)) contrast(1.08) saturate(1.04);
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.28)) contrast(1.06) saturate(1.03);
         }
         [data-wrapper="saturn"].visited .saturn-art,
         [data-wrapper="saturn"].badged .saturn-art,
@@ -338,11 +355,12 @@
             --axis-tilt: 97.8deg;
             --polar-ratio: 0.9771;
             background:
-                radial-gradient(circle at 28% 43%, rgba(255,255,255,0.36) 0 9%, transparent 10%),
-                repeating-linear-gradient(180deg, rgba(255,255,255,0.05) 0 5%, rgba(6,95,120,0.04) 5% 10%),
-                radial-gradient(circle at 25% 50%, #d9ffff 0%, #63d4e8 40%, #1294be 80%, #06364d 100%);
-            box-shadow: inset -15px 0px 30px rgba(0,0,0,0.84), inset 8px 2px 24px rgba(255,255,255,0.18);
+                radial-gradient(ellipse at 34% 46%, rgba(255,255,255,0.38) 0 13%, transparent 25%),
+                radial-gradient(ellipse at 58% 22%, rgba(220,255,255,0.16) 0 18%, transparent 36%),
+                radial-gradient(circle at 34% 44%, #d6ffff 0%, #82e4ed 36%, #27a5bc 72%, #083947 100%);
+            box-shadow: inset -14px 0px 30px rgba(0,0,0,0.78), inset 8px 2px 24px rgba(255,255,255,0.16);
             overflow: visible;
+            filter: contrast(1.04) saturate(1.05);
         }
         .ring-back-uranus, .ring-front-uranus {
             width: 220%; height: 220%;
@@ -361,13 +379,14 @@
             --axis-tilt: 28.3deg;
             --polar-ratio: 0.9829;
             background:
-                radial-gradient(circle at 36% 34%, rgba(255,255,255,0.30) 0 8%, transparent 9%),
-                radial-gradient(ellipse at 64% 48%, rgba(10,24,110,0.55) 0 11%, transparent 19%),
-                repeating-linear-gradient(180deg, rgba(255,255,255,0.06) 0 4%, rgba(10,38,145,0.05) 4% 9%),
-                radial-gradient(circle at 35% 35%, #7ab7ff 0%, #235eea 45%, #0c247a 88%);
+                radial-gradient(circle at 36% 34%, rgba(255,255,255,0.30) 0 8%, transparent 10%),
+                radial-gradient(ellipse at 63% 49%, rgba(5,18,92,0.62) 0 10%, transparent 19%),
+                radial-gradient(ellipse at 42% 62%, rgba(115,186,255,0.22) 0 14%, transparent 31%),
+                linear-gradient(145deg, transparent 34%, rgba(170,219,255,0.13) 40%, transparent 48%),
+                linear-gradient(180deg, #70b8ff 0%, #2469f3 38%, #123ca5 70%, #071b5c 100%);
             box-shadow: inset -15px -15px 30px rgba(0,0,0,0.86), inset 6px 6px 24px rgba(255,255,255,0.18);
             overflow: visible;
-            filter: contrast(1.16) saturate(1.22);
+            filter: contrast(1.18) saturate(1.24);
         }
         .ring-back-neptune, .ring-front-neptune {
             width: 200%; height: 200%;
@@ -453,7 +472,7 @@
 
         /* Visited and Badged Gamification States */
         .planet-wrapper.visited .planet-orb, .moon-wrapper.visited .planet-orb { 
-            box-shadow: 0 0 15px #4ef0a8, inset -5px -5px 15px rgba(0,0,0,0.9); border: 1px solid #4ef0a8; 
+            box-shadow: 0 0 5px rgba(78, 240, 168, 0.22), inset -5px -5px 15px rgba(0,0,0,0.82); border: 1px solid rgba(78, 240, 168, 0.24); 
         }
         .planet-wrapper.badged .planet-orb, .moon-wrapper.badged .planet-orb { 
             box-shadow: 0 0 25px #ffd166, inset -5px -5px 15px rgba(0,0,0,0.9); border: 2px solid #ffd166; 
