@@ -358,6 +358,72 @@
         .anim-seasons .eq.e1 { left: 18px; top: 54px; } .anim-seasons .eq.e2 { right: 18px; top: 42px; }
         .anim-seasons .sol.s1 { left: 56px; top: 18px; } .anim-seasons .sol.s2 { right: 54px; bottom: 18px; }
         @keyframes seasonOrbit { to { transform: rotate(360deg) rotate(-23.5deg); } }
+
+        /* Visual term quiz */
+        .visual-term-quiz svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .visual-term-quiz .diagram-base {
+            stroke: rgba(226, 232, 240, 0.30);
+            stroke-width: 2;
+            fill: none;
+        }
+        .visual-term-quiz .diagram-faint {
+            stroke: rgba(226, 232, 240, 0.16);
+            stroke-width: 1.5;
+            fill: none;
+        }
+        .visual-term-quiz .diagram-fill {
+            fill: rgba(110, 240, 255, 0.06);
+            stroke: rgba(110, 240, 255, 0.15);
+        }
+        .visual-term-quiz .diagram-label {
+            fill: rgba(241, 245, 249, 0.62);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+        }
+        .visual-term-quiz .term-highlight {
+            stroke: #ffd166;
+            stroke-width: 5;
+            fill: none;
+            filter: drop-shadow(0 0 10px rgba(255, 209, 102, 0.85));
+            animation: visualQuizPulse 1.25s ease-in-out infinite alternate;
+        }
+        .visual-term-quiz .term-highlight-fill {
+            fill: rgba(255, 209, 102, 0.20);
+            stroke: #ffd166;
+            stroke-width: 4;
+            filter: drop-shadow(0 0 10px rgba(255, 209, 102, 0.85));
+            animation: visualQuizPulse 1.25s ease-in-out infinite alternate;
+        }
+        .visual-term-quiz .term-highlight-dot {
+            fill: #ffd166;
+            stroke: #fff7cc;
+            stroke-width: 3;
+            filter: drop-shadow(0 0 12px rgba(255, 209, 102, 0.95));
+            animation: visualQuizDotPulse 1.25s ease-in-out infinite alternate;
+        }
+        .visual-quiz-choice.correct {
+            background: rgba(78, 240, 168, 0.16);
+            border-color: #4ef0a8;
+            color: #4ef0a8;
+        }
+        .visual-quiz-choice.wrong {
+            background: rgba(255, 107, 107, 0.16);
+            border-color: #ff6b6b;
+            color: #ffb4b4;
+        }
+        @keyframes visualQuizPulse {
+            from { opacity: 0.68; }
+            to { opacity: 1; }
+        }
+        @keyframes visualQuizDotPulse {
+            from { transform: scale(0.96); transform-origin: center; }
+            to { transform: scale(1.08); transform-origin: center; }
+        }
         
     </style>
     <link rel="stylesheet" href="assets/css/responsive-overrides.css">
@@ -816,6 +882,56 @@
                     </div>
                 </div>
 
+            </div>
+        </div>
+
+        <!-- Visual Term Quiz -->
+        <div id="visual-term-quiz" class="visual-term-quiz mb-12">
+            <div class="glass-panel p-1 rounded-2xl overflow-hidden border-astro-base border-2 shadow-[0_0_30px_rgba(139,92,246,0.22)]">
+                <div class="bg-space-900 p-6 lg:p-8 rounded-xl">
+                    <div class="flex flex-col lg:flex-row gap-8 items-stretch">
+                        <div class="lg:w-[48%]">
+                            <span class="inline-block px-3 py-1 bg-astro-dark text-white text-xs font-bold rounded-full mb-3 uppercase tracking-widest">Visual Quiz</span>
+                            <h2 class="font-display text-3xl md:text-4xl text-white mb-2">Name the Highlighted Sky Feature</h2>
+                            <p class="text-space-100 mb-5">A line, point, angle, or partition on the sky map will glow. Choose the astronomical term that matches the highlighted feature.</p>
+
+                            <div class="grid grid-cols-2 gap-3 mb-5">
+                                <div class="bg-space-800/70 border border-astro-base/30 rounded-xl p-3">
+                                    <p class="text-[11px] font-mono uppercase tracking-wider text-astro-light mb-1">Question</p>
+                                    <p class="text-white font-bold"><span id="visualQuizCurrent">1</span> / <span id="visualQuizTotal">12</span></p>
+                                </div>
+                                <div class="bg-space-800/70 border border-star-gold/30 rounded-xl p-3">
+                                    <p class="text-[11px] font-mono uppercase tracking-wider text-star-gold mb-1">Score</p>
+                                    <p class="text-white font-bold"><span id="visualQuizScore">0</span> correct</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-space-800/60 border border-space-500 rounded-xl p-4 mb-5">
+                                <p id="visualQuizPrompt" class="text-white font-bold text-lg mb-1">Which term matches the glowing feature?</p>
+                                <p id="visualQuizClue" class="text-space-100 text-sm leading-relaxed">Look at the highlighted part of the diagram before choosing.</p>
+                            </div>
+
+                            <div class="lg:hidden bg-gradient-to-b from-[#10152d] to-[#050716] rounded-2xl border border-astro-base/40 p-3 mb-5">
+                                <div id="visualQuizDiagramMobile" class="w-full"></div>
+                            </div>
+
+                            <div id="visualQuizChoices" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5"></div>
+
+                            <div id="visualQuizFeedback" class="hidden rounded-xl border p-4 text-sm leading-relaxed mb-5"></div>
+
+                            <div class="flex flex-wrap gap-3">
+                                <button id="visualQuizNextBtn" type="button" onclick="nextVisualQuizQuestion()" class="hidden bg-astro-base text-white px-6 py-3 rounded-full font-bold hover:bg-astro-light hover:text-space-900 transition-colors">Next Highlight</button>
+                                <button type="button" onclick="restartVisualQuiz()" class="bg-space-700 border border-space-500 text-white px-6 py-3 rounded-full font-bold hover:bg-space-500 transition-colors">Restart Visual Quiz</button>
+                            </div>
+                        </div>
+
+                        <div class="hidden lg:flex flex-1 min-w-0">
+                            <div class="bg-gradient-to-b from-[#10152d] to-[#050716] rounded-2xl border border-astro-base/40 p-3 md:p-5 h-full flex items-center">
+                                <div id="visualQuizDiagram" class="w-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1649,6 +1765,262 @@
 
 
     window.addEventListener('load', initDictionaryAnimations);
+
+    /* =========================================================
+       VISUAL TERM QUIZ
+       ========================================================= */
+    const visualQuizTerms = [
+        {
+            term: 'Zenith',
+            highlight: 'zenith',
+            clue: 'Find the local point directly above the observer.',
+            explanation: 'The zenith is the point exactly overhead, corresponding to +90° altitude.'
+        },
+        {
+            term: 'Horizon',
+            highlight: 'horizon',
+            clue: 'Find the boundary that divides visible sky from the ground.',
+            explanation: 'The horizon is the 0° altitude boundary between the visible sky and Earth.'
+        },
+        {
+            term: 'Celestial Meridian',
+            highlight: 'meridian',
+            clue: 'Find the north-south great circle passing through the top of the sky.',
+            explanation: 'The celestial meridian runs through the north point, zenith, south point, and celestial poles.'
+        },
+        {
+            term: 'Celestial Poles',
+            highlight: 'poles',
+            clue: 'Find the pair of pivot points that the sky appears to rotate around.',
+            explanation: 'The celestial poles are the sky projections of Earth’s rotation axis.'
+        },
+        {
+            term: 'Celestial Equator',
+            highlight: 'equator',
+            clue: 'Find Earth’s equator projected outward onto the celestial sphere.',
+            explanation: 'The celestial equator is the great circle where declination equals 0°.'
+        },
+        {
+            term: 'Ecliptic',
+            highlight: 'ecliptic',
+            clue: 'Find the tilted yearly path of the Sun.',
+            explanation: 'The ecliptic is the Sun’s apparent yearly path, tilted about 23.5° from the celestial equator.'
+        },
+        {
+            term: 'Nadir',
+            highlight: 'nadir',
+            clue: 'Find the point exactly opposite the overhead point.',
+            explanation: 'The nadir is directly below the observer, opposite the zenith, at -90° altitude.'
+        },
+        {
+            term: 'Altitude',
+            highlight: 'altitude',
+            clue: 'Find the angle measured upward from the horizon to an object.',
+            explanation: 'Altitude measures how high an object is above the horizon.'
+        },
+        {
+            term: 'Azimuth',
+            highlight: 'azimuth',
+            clue: 'Find the compass-direction angle measured around the horizon.',
+            explanation: 'Azimuth measures direction around the horizon, commonly from north through east.'
+        },
+        {
+            term: 'Declination',
+            highlight: 'declination',
+            clue: 'Find the sky-latitude offset north or south of the celestial equator.',
+            explanation: 'Declination is angular distance north or south of the celestial equator.'
+        },
+        {
+            term: 'Right Ascension',
+            highlight: 'rightAscension',
+            clue: 'Find the sky-longitude measurement along the celestial equator.',
+            explanation: 'Right Ascension measures eastward along the celestial equator, usually in hours.'
+        },
+        {
+            term: 'Equinoxes & Solstices',
+            highlight: 'seasons',
+            clue: 'Find the four major seasonal points on the Sun’s yearly path.',
+            explanation: 'Equinoxes occur where the ecliptic crosses the celestial equator; solstices occur at the Sun’s greatest north and south declination.'
+        }
+    ];
+
+    const visualQuizTermNames = visualQuizTerms.map(item => item.term);
+    let visualQuizOrder = [];
+    let visualQuizIndex = 0;
+    let visualQuizScore = 0;
+    let visualQuizAnswered = false;
+
+    function getVisualHighlightMarkup(highlight) {
+        const highlightMap = {
+            zenith: '<circle class="term-highlight-dot" cx="320" cy="58" r="12"></circle><line class="term-highlight" x1="320" y1="352" x2="320" y2="68" stroke-linecap="round"></line>',
+            horizon: '<line class="term-highlight" x1="70" y1="350" x2="570" y2="350" stroke-linecap="round"></line>',
+            meridian: '<path class="term-highlight" d="M160 350 C185 164 455 164 480 350" stroke-linecap="round"></path>',
+            poles: '<line class="term-highlight" x1="218" y1="376" x2="430" y2="94" stroke-linecap="round"></line><circle class="term-highlight-dot" cx="430" cy="94" r="10"></circle><circle class="term-highlight-dot" cx="218" cy="376" r="10"></circle>',
+            equator: '<ellipse class="term-highlight" cx="320" cy="256" rx="208" ry="57" transform="rotate(-18 320 256)"></ellipse>',
+            ecliptic: '<ellipse class="term-highlight" cx="320" cy="242" rx="224" ry="64" transform="rotate(-41 320 242)"></ellipse>',
+            nadir: '<circle class="term-highlight-dot" cx="320" cy="432" r="12"></circle><line class="term-highlight" x1="320" y1="352" x2="320" y2="422" stroke-linecap="round"></line>',
+            altitude: '<path class="term-highlight" d="M320 350 L470 350 M320 350 L444 214" stroke-linecap="round"></path><path class="term-highlight" d="M370 350 A50 50 0 0 0 354 313" stroke-linecap="round"></path>',
+            azimuth: '<path class="term-highlight-fill" d="M320 350 L320 276 A74 74 0 0 1 384 313 Z"></path><path class="term-highlight" d="M320 350 L384 313" stroke-linecap="round"></path>',
+            declination: '<line class="term-highlight" x1="444" y1="256" x2="444" y2="214" stroke-linecap="round"></line><path class="term-highlight" d="M431 256 L457 256 M431 214 L457 214" stroke-linecap="round"></path>',
+            rightAscension: '<path class="term-highlight" d="M210 290 C268 260 354 240 444 256" stroke-linecap="round"></path><circle class="term-highlight-dot" cx="210" cy="290" r="7"></circle><circle class="term-highlight-dot" cx="444" cy="256" r="8"></circle>',
+            seasons: '<circle class="term-highlight-dot" cx="162" cy="328" r="9"></circle><circle class="term-highlight-dot" cx="482" cy="156" r="9"></circle><circle class="term-highlight-dot" cx="230" cy="184" r="9"></circle><circle class="term-highlight-dot" cx="410" cy="306" r="9"></circle>'
+        };
+        return highlightMap[highlight] || '';
+    }
+
+    function renderVisualQuizSvg(highlight) {
+        const highlightMarkup = getVisualHighlightMarkup(highlight);
+        return `
+            <svg viewBox="0 0 640 460" role="img" aria-label="Interactive celestial sphere diagram with one highlighted feature">
+                <defs>
+                    <radialGradient id="visualQuizSky" cx="50%" cy="36%" r="65%">
+                        <stop offset="0%" stop-color="#1b2b55" stop-opacity="0.86"></stop>
+                        <stop offset="58%" stop-color="#0f1123" stop-opacity="0.94"></stop>
+                        <stop offset="100%" stop-color="#060412" stop-opacity="1"></stop>
+                    </radialGradient>
+                    <linearGradient id="visualQuizGround" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stop-color="#14322b" stop-opacity="0.72"></stop>
+                        <stop offset="100%" stop-color="#060412" stop-opacity="0.95"></stop>
+                    </linearGradient>
+                </defs>
+
+                <rect x="0" y="0" width="640" height="460" rx="20" fill="url(#visualQuizSky)"></rect>
+                <path class="diagram-fill" d="M70 350 C90 142 550 142 570 350 Z"></path>
+                <path d="M70 350 L570 350 L570 448 L70 448 Z" fill="url(#visualQuizGround)" opacity="0.88"></path>
+                <path class="diagram-faint" d="M70 350 C90 142 550 142 570 350"></path>
+
+                <g opacity="0.78">
+                    <circle cx="118" cy="94" r="1.6" fill="#fff"></circle>
+                    <circle cx="188" cy="146" r="1.2" fill="#6ef0ff"></circle>
+                    <circle cx="520" cy="112" r="1.5" fill="#fff"></circle>
+                    <circle cx="482" cy="236" r="1.4" fill="#ffd166"></circle>
+                    <circle cx="146" cy="252" r="1.1" fill="#fff"></circle>
+                    <circle cx="376" cy="98" r="1.3" fill="#ff5ac6"></circle>
+                </g>
+
+                <line class="diagram-base" x1="70" y1="350" x2="570" y2="350"></line>
+                <path class="diagram-faint" d="M160 350 C185 164 455 164 480 350"></path>
+                <ellipse class="diagram-base" cx="320" cy="256" rx="208" ry="57" transform="rotate(-18 320 256)"></ellipse>
+                <ellipse class="diagram-base" cx="320" cy="242" rx="224" ry="64" transform="rotate(-41 320 242)"></ellipse>
+                <line class="diagram-faint" x1="218" y1="376" x2="430" y2="94"></line>
+
+                <circle cx="320" cy="350" r="16" fill="#6ef0ff" opacity="0.22" stroke="rgba(110,240,255,0.5)" stroke-width="2"></circle>
+                <path d="M309 350 Q320 324 331 350" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="3" stroke-linecap="round"></path>
+                <circle cx="444" cy="214" r="8" fill="#ffffff" opacity="0.88"></circle>
+                <circle cx="430" cy="94" r="5" fill="#ffffff" opacity="0.75"></circle>
+                <circle cx="218" cy="376" r="5" fill="#ffffff" opacity="0.45"></circle>
+                <circle cx="320" cy="58" r="5" fill="#ffffff" opacity="0.7"></circle>
+                <circle cx="320" cy="432" r="5" fill="#ffffff" opacity="0.35"></circle>
+
+                <line class="diagram-faint" x1="320" y1="350" x2="320" y2="58" stroke-dasharray="6 8"></line>
+                <line class="diagram-faint" x1="320" y1="350" x2="320" y2="432" stroke-dasharray="6 8"></line>
+                <line class="diagram-faint" x1="320" y1="350" x2="444" y2="214" stroke-dasharray="5 7"></line>
+                <line class="diagram-faint" x1="444" y1="256" x2="444" y2="214" stroke-dasharray="4 6"></line>
+                <path class="diagram-faint" d="M210 290 C268 260 354 240 444 256" stroke-dasharray="5 7"></path>
+
+                <text class="diagram-label" x="318" y="337" text-anchor="middle">Observer</text>
+                <text class="diagram-label" x="320" y="372" text-anchor="middle">N</text>
+                <text class="diagram-label" x="488" y="372" text-anchor="middle">E</text>
+                <text class="diagram-label" x="152" y="372" text-anchor="middle">W</text>
+                <text class="diagram-label" x="210" y="306" text-anchor="middle">0h</text>
+                <text class="diagram-label" x="456" y="204">Star</text>
+
+                ${highlightMarkup}
+            </svg>
+        `;
+    }
+
+    function getVisualQuizChoices(correctTerm) {
+        const distractors = visualQuizTermNames.filter(term => term !== correctTerm);
+        shuffleArray(distractors);
+        return shuffleArray([correctTerm, ...distractors.slice(0, 3)]);
+    }
+
+    function renderVisualQuizQuestion() {
+        const item = visualQuizOrder[visualQuizIndex];
+        visualQuizAnswered = false;
+        document.getElementById('visualQuizCurrent').innerText = visualQuizIndex + 1;
+        document.getElementById('visualQuizTotal').innerText = visualQuizOrder.length;
+        document.getElementById('visualQuizScore').innerText = visualQuizScore;
+        document.getElementById('visualQuizPrompt').innerText = 'Which term matches the glowing feature?';
+        document.getElementById('visualQuizClue').innerText = item.clue;
+        const visualSvg = renderVisualQuizSvg(item.highlight);
+        const desktopDiagram = document.getElementById('visualQuizDiagram');
+        const mobileDiagram = document.getElementById('visualQuizDiagramMobile');
+        if (desktopDiagram) desktopDiagram.innerHTML = visualSvg;
+        if (mobileDiagram) mobileDiagram.innerHTML = visualSvg;
+        document.getElementById('visualQuizFeedback').classList.add('hidden');
+        document.getElementById('visualQuizNextBtn').classList.add('hidden');
+
+        const choices = document.getElementById('visualQuizChoices');
+        choices.innerHTML = '';
+        getVisualQuizChoices(item.term).forEach(choice => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'visual-quiz-choice w-full text-left p-4 rounded-xl border border-space-500 bg-space-800 hover:bg-space-700 hover:border-star-gold transition-all font-bold';
+            btn.innerText = choice;
+            btn.onclick = () => submitVisualQuizAnswer(btn, choice);
+            choices.appendChild(btn);
+        });
+    }
+
+    function submitVisualQuizAnswer(btn, selectedTerm) {
+        if (visualQuizAnswered) return;
+        visualQuizAnswered = true;
+
+        const item = visualQuizOrder[visualQuizIndex];
+        const isCorrect = selectedTerm === item.term;
+        const buttons = document.querySelectorAll('#visualQuizChoices button');
+        buttons.forEach(button => {
+            button.disabled = true;
+            button.classList.remove('hover:bg-space-700', 'hover:border-star-gold');
+            if (button.innerText === item.term) button.classList.add('correct');
+        });
+
+        if (isCorrect) {
+            btn.classList.add('correct');
+            visualQuizScore++;
+            document.getElementById('visualQuizScore').innerText = visualQuizScore;
+            addXP(4);
+        } else {
+            btn.classList.add('wrong');
+        }
+
+        const feedback = document.getElementById('visualQuizFeedback');
+        feedback.className = `rounded-xl border p-4 text-sm leading-relaxed mb-5 ${isCorrect ? 'border-star-green bg-star-green/10 text-star-green' : 'border-star-red bg-star-red/10 text-white'}`;
+        feedback.innerHTML = `<strong>${isCorrect ? 'Correct.' : `Not quite. It was ${item.term}.`}</strong> ${item.explanation}`;
+        feedback.classList.remove('hidden');
+
+        const nextBtn = document.getElementById('visualQuizNextBtn');
+        nextBtn.innerText = visualQuizIndex === visualQuizOrder.length - 1 ? 'See Result' : 'Next Highlight';
+        nextBtn.classList.remove('hidden');
+    }
+
+    function nextVisualQuizQuestion() {
+        if (visualQuizIndex < visualQuizOrder.length - 1) {
+            visualQuizIndex++;
+            renderVisualQuizQuestion();
+            return;
+        }
+
+        const feedback = document.getElementById('visualQuizFeedback');
+        const perfect = visualQuizScore === visualQuizOrder.length;
+        feedback.className = `rounded-xl border p-4 text-sm leading-relaxed mb-5 ${perfect ? 'border-star-gold bg-star-gold/10 text-star-gold' : 'border-astro-base bg-astro-base/10 text-white'}`;
+        feedback.innerHTML = `<strong>Visual quiz complete: ${visualQuizScore}/${visualQuizOrder.length}.</strong> ${perfect ? 'Every highlighted feature matched its term.' : 'Review the dictionary cards, then run the highlights again.'}`;
+        feedback.classList.remove('hidden');
+        document.getElementById('visualQuizNextBtn').classList.add('hidden');
+        if (perfect) addXP(40);
+    }
+
+    function restartVisualQuiz() {
+        visualQuizOrder = JSON.parse(JSON.stringify(visualQuizTerms));
+        shuffleArray(visualQuizOrder);
+        visualQuizIndex = 0;
+        visualQuizScore = 0;
+        renderVisualQuizQuestion();
+    }
+
+    window.addEventListener('load', restartVisualQuiz);
 
     /* =========================================================
        MINI-GAME 1: TELESCOPE TARGETER

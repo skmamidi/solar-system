@@ -86,7 +86,7 @@
             transform: translateY(-5px);
         }
 
-        /* Saturn Graphic - clipped body plus separated back/front ring layers */
+        /* Saturn Graphic - full back ring plus true near-side front ring */
         .orb-saturn {
             height: 90.2% !important;
             top: 4.9%;
@@ -176,7 +176,7 @@
         .saturn-rings-front {
             z-index: 3;
             opacity: 0.98;
-            clip-path: ellipse(50% 19% at 50% 63%);
+            clip-path: inset(50% 0 0 0);
             filter: drop-shadow(0 1px 1px rgba(0,0,0,0.26)) contrast(1.06) saturate(1.03);
         }
         
@@ -1323,6 +1323,7 @@
     startBtn.addEventListener('click', () => { initGame(); });
 
 </script>
+<script src="../assets/js/physical-feature-quiz.js"></script>
 <script src="../assets/js/quiz-review-helper.js"></script>
 <script src="../assets/js/global-badges.js"></script>
 </body>
