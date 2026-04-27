@@ -616,6 +616,9 @@
     </section>
 </main>
 
+<script src="../assets/js/master-quiz-data.js"></script>
+<script src="../assets/js/quiz-bank.js"></script>
+<script src="../assets/js/interpretive-quiz-questions.js"></script>
 <script>
     /* APP STATE */
     let xp = 0;
@@ -687,158 +690,7 @@
     }
 
     /* QUIZ LOGIC: Science Olympiad (State Level) - 25 Questions */
-    const rawQuizData = [
-        {
-            q: "How was the existence of Neptune first discovered before it was ever observed through a telescope?",
-            options: ["By analyzing ancient Sumerian texts.", "Through mathematical predictions based on anomalies in Uranus's orbit.", "By measuring the gravitational pull on passing comets.", "Through anomalous radio waves picked up by early observatories."],
-            correct: "Through mathematical predictions based on anomalies in Uranus's orbit.",
-            explanation: "Neptune is unique as the first planet discovered by mathematics. Urbain Le Verrier and John Couch Adams independently calculated its exact position by noticing that Uranus was being pulled off its predicted course by an unseen gravitational mass."
-        },
-        {
-            q: "Who was the astronomer that first visually confirmed the existence of Neptune using a telescope in 1846?",
-            options: ["Johann Galle", "William Herschel", "Galileo Galilei", "Christiaan Huygens"],
-            correct: "Johann Galle",
-            explanation: "Using Urbain Le Verrier's mathematical predictions, German astronomer Johann Galle pointed his telescope at the exact coordinates provided and immediately found Neptune on the night of September 23, 1846, within just 1 degree of where Le Verrier said it would be."
-        },
-        {
-            q: "What incredibly extreme weather phenomenon is Neptune famous for?",
-            options: ["Acid rain that melts its rocky surface.", "Global dust storms that last for centuries.", "Supersonic winds reaching 2,100 km/h (1,300 mph).", "Permanent, continent-sized volcanic eruptions."],
-            correct: "Supersonic winds reaching 2,100 km/h (1,300 mph).",
-            explanation: "Neptune boasts the fastest winds in the solar system. Because it has no solid surface to cause friction and a powerful internal heat source to drive convection, its equatorial winds rip through the atmosphere at supersonic speeds."
-        },
-        {
-            q: "What is the bizarre characteristic of the orbit of Neptune's largest moon, Triton?",
-            options: ["It orbits from pole to pole instead of around the equator.", "It has a perfectly square orbit.", "It is the only large moon in the solar system with a retrograde orbit.", "It orbits twice as fast as Neptune rotates."],
-            correct: "It is the only large moon in the solar system with a retrograde orbit.",
-            explanation: "Triton orbits Neptune in the opposite direction of the planet's rotation (retrograde). This strongly suggests it did not form from the original dust disk around Neptune, but is instead a captured Kuiper Belt Object."
-        },
-        {
-            q: "Because of Triton's unusual orbit, what is its ultimate fate predicted to be in a few billion years?",
-            options: ["It will escape Neptune's gravity and become a rogue planet.", "It will spiral inward, pass the Roche limit, and be torn apart to form a massive ring.", "It will crash into Uranus.", "It will ignite into a small star."],
-            correct: "It will spiral inward, pass the Roche limit, and be torn apart to form a massive ring.",
-            explanation: "Triton's retrograde orbit means tidal forces are slowly robbing it of orbital energy. It is gradually spiraling inward. Once it crosses the Roche limit (the point where tidal forces exceed its own gravity), it will shatter and form a magnificent ring system potentially brighter than Saturn's."
-        },
-        {
-            q: "Voyager 2 observed massive, dark plumes erupting on Triton's surface. What is the primary material driving these cryovolcanoes?",
-            options: ["Liquid silicate lava", "Liquid Nitrogen gas and dust", "Boiling sulfuric acid", "Liquid metallic hydrogen"],
-            correct: "Liquid Nitrogen gas and dust",
-            explanation: "Despite a surface temperature of -235°C (-391°F), solar radiation penetrating Triton's translucent surface ice heats subsurface nitrogen. The pressure builds until it erupts through the crust in massive geysers, creating dark streaks across the ice."
-        },
-        {
-            q: "What chemical compound gives Neptune its deep, rich blue color?",
-            options: ["Liquid Water", "Ozone", "Methane", "Ammonia"],
-            correct: "Methane",
-            explanation: "Though its atmosphere is primarily hydrogen and helium, the 1.5% of methane gas absorbs the red and infrared light from the Sun, reflecting back the vivid blue color we observe."
-        },
-        {
-            q: "Unlike Uranus, which radiates almost no excess heat, what is true about Neptune's internal heat generation?",
-            options: ["It is colder internally than Uranus.", "It radiates roughly 2.6 times as much heat as it receives from the Sun.", "Its core is completely frozen solid.", "It relies entirely on solar radiation for heat."],
-            correct: "It radiates roughly 2.6 times as much heat as it receives from the Sun.",
-            explanation: "Despite being much farther from the Sun than Uranus, Neptune has a remarkably active internal heat source. It emits 2.61 times the energy it absorbs from sunlight, which drives its incredibly violent atmospheric weather."
-        },
-        {
-            q: "During the Voyager 2 flyby in 1989, a massive anti-cyclonic storm was observed on Neptune. What was it called?",
-            options: ["The Great Red Spot", "The Great Dark Spot", "The Blue Eye", "The Polar Hexagon"],
-            correct: "The Great Dark Spot",
-            explanation: "The Great Dark Spot was a huge spinning storm roughly the size of Earth. However, unlike Jupiter's Great Red Spot which has lasted centuries, when the Hubble Telescope looked for it in 1994, the Great Dark Spot had completely vanished."
-        },
-        {
-            q: "Neptune has a set of outer rings that feature strange, distinct clumps or 'arcs' of dust rather than complete, even circles. What is keeping these arcs together?",
-            options: ["Magnetic levitation from the core.", "Gravitational resonance with the moon Galatea.", "Constant asteroid impacts localized in one area.", "Solar wind pressure."],
-            correct: "Gravitational resonance with the moon Galatea.",
-            explanation: "The Adams ring features famous arcs (named Courage, Liberté, Egalité, Fraternité, and Espérance). The gravity of the small inner moon Galatea, which orbits just inside the ring, prevents these dust arcs from spreading out evenly."
-        },
-        {
-            q: "What is highly unusual about Neptune's magnetic field?",
-            options: ["It is perfectly aligned with the poles.", "It flips completely every 10 years.", "It is tilted by 47 degrees and offset from the physical center by over half the planet's radius.", "It only exists on the dark side of the planet."],
-            correct: "It is tilted by 47 degrees and offset from the physical center by over half the planet's radius.",
-            explanation: "Like Uranus, Neptune has a bizarrely distorted magnetic field. Because it doesn't originate from a solid iron core, but rather from convective currents in a fluid mantle layer, it is offset from the center by 0.55 radii and tilted wildly."
-        },
-        {
-            q: "In planetary science, why is Neptune classified as an 'Ice Giant' rather than a 'Gas Giant' like Jupiter?",
-            options: ["Because its surface is covered in solid glaciers.", "Because it consists mostly of heavier 'ices' (water, ammonia, methane) rather than just hydrogen and helium.", "Because it is far enough from the Sun to freeze.", "Because it has icy rings."],
-            correct: "Because it consists mostly of heavier 'ices' (water, ammonia, methane) rather than just hydrogen and helium.",
-            explanation: "While they have thick hydrogen/helium atmospheres, the bulk of Uranus and Neptune's mass is composed of a supercritical fluid of water, ammonia, and methane—compounds astronomers refer to as 'ices'—setting them fundamentally apart from Jupiter and Saturn."
-        },
-        {
-            q: "What strange geological feature covers large portions of Triton's western hemisphere, resembling the skin of a fruit?",
-            options: ["Cantaloupe terrain", "Orange peel valleys", "Strawberry fields", "Watermelon craters"],
-            correct: "Cantaloupe terrain",
-            explanation: "Triton features a unique, dimpled surface known as 'cantaloupe terrain' due to its resemblance to the melon. It is believed to be caused by diapirism—the rising of less dense lumps of ice through a more dense crust."
-        },
-        {
-            q: "Deep inside the mantle of Neptune, extreme pressure and temperature are theorized to cause carbon atoms to form what precious substance?",
-            options: ["Liquid Gold", "Diamond rain", "Solid Ruby cores", "Sapphire clouds"],
-            correct: "Diamond rain",
-            explanation: "The intense pressure (millions of times Earth's atmosphere) and heat break methane (CH4) down into hydrogen and carbon. The carbon compresses into diamond crystals that sink through the fluid mantle, releasing frictional heat as they 'rain' down."
-        },
-        {
-            q: "Approximately how long does it take Neptune to complete one orbit around the Sun (a Neptunian year)?",
-            options: ["29 Earth years", "84 Earth years", "165 Earth years", "248 Earth years"],
-            correct: "165 Earth years",
-            explanation: "Because it is so far from the Sun (~30 AU), it takes Neptune 164.8 Earth years to complete one orbit. It actually completed its first full orbit since its discovery (in 1846) back in the year 2011."
-        },
-        {
-            q: "Which of Neptune's moons has one of the most highly eccentric (oval-shaped) orbits of any moon in the solar system, taking 360 Earth days to orbit the planet once?",
-            options: ["Proteus", "Nereid", "Larissa", "Thalassa"],
-            correct: "Nereid",
-            explanation: "Nereid's orbit is incredibly stretched out; its distance from Neptune varies from about 1.3 million to 9.6 million kilometers. This suggests it is a captured asteroid or Kuiper Belt Object, rather than a moon that formed with the planet."
-        },
-        {
-            q: "What is the name of the bright, fast-moving, white cloud group that Voyager 2 observed zipping around Neptune much faster than the Great Dark Spot?",
-            options: ["The Speeder", "The Scooter", "The White Eye", "The Jet Stream"],
-            correct: "The Scooter",
-            explanation: "'The Scooter' is a group of white cirrus clouds situated deeper in the atmosphere than the Great Dark Spot. Because it sits at a different altitude where wind speeds are different, it overtakes the Great Dark Spot every few hours."
-        },
-        {
-            q: "What is the approximate density of Neptune, making it the densest of the giant planets?",
-            options: ["0.68 g/cm³", "1.27 g/cm³", "1.64 g/cm³", "5.51 g/cm³"],
-            correct: "1.64 g/cm³",
-            explanation: "While significantly less dense than Earth (5.51 g/cm³), Neptune (1.64 g/cm³) is denser than Jupiter, Saturn, and Uranus, primarily due to its higher proportion of heavy 'icy' and rocky materials relative to its volume."
-        },
-        {
-            q: "Triton accounts for what percentage of the total mass of all objects orbiting Neptune (including all rings and other moons)?",
-            options: ["50%", "75%", "90%", "99.5%"],
-            correct: "99.5%",
-            explanation: "Triton is utterly dominant in the Neptunian system. Its mass makes up 99.5% of all the mass in orbit around the planet. The remaining 13 moons and all the rings combined account for only 0.5%."
-        },
-        {
-            q: "What happens when ultraviolet light from the Sun interacts with the methane in Neptune's stratosphere?",
-            options: ["It produces a protective ozone layer.", "It triggers massive lightning storms.", "It produces photochemical smog composed of hydrocarbons like ethane and acetylene.", "It causes the methane to catch fire instantly."],
-            correct: "It produces photochemical smog composed of hydrocarbons like ethane and acetylene.",
-            explanation: "Similar to the process that occurs on Saturn's moon Titan, UV light breaks down methane molecules in the upper atmosphere. These reform into heavier hydrocarbons that slowly sink, creating a faint haze or 'smog' above the main cloud decks."
-        },
-        {
-            q: "Which spacecraft is the ONLY one to have visited the Neptune system?",
-            options: ["Cassini", "Voyager 1", "Voyager 2", "Pioneer 10"],
-            correct: "Voyager 2",
-            explanation: "NASA's Voyager 2 flew by Neptune in August 1989. Because no other mission has ever visited the Ice Giants since, almost all of our close-up knowledge of Uranus and Neptune comes from this single historic probe."
-        },
-        {
-            q: "Between 1979 and 1999, what highly unusual astronomical event occurred involving Neptune and Pluto?",
-            options: ["They collided briefly.", "Neptune captured Pluto as a moon.", "Pluto's eccentric orbit brought it closer to the Sun than Neptune, making Neptune the farthest planet.", "They traded magnetic fields."],
-            correct: "Pluto's eccentric orbit brought it closer to the Sun than Neptune, making Neptune the farthest planet.",
-            explanation: "Pluto has a highly elliptical orbit. For 20 years of its 248-year orbit, it actually crosses inside the orbit of Neptune. During this period (1979-1999), Neptune was officially the farthest planet from the Sun."
-        },
-        {
-            q: "Neptune is named after the Roman god of what?",
-            options: ["The Underworld", "The Sky", "The Sea", "War"],
-            correct: "The Sea",
-            explanation: "Following its discovery, several names were proposed. Johann Galle wanted to name it after Le Verrier, but the international community ultimately settled on 'Neptune', the Roman god of the sea, matching the planet's deep blue, oceanic color."
-        },
-        {
-            q: "What are the names of the three main, distinct rings of Neptune?",
-            options: ["Alpha, Beta, Gamma", "Galle, Le Verrier, Adams", "A, B, C", "Titan, Triton, Nereid"],
-            correct: "Galle, Le Verrier, Adams",
-            explanation: "The rings are named after the astronomers who made the greatest contributions to the discovery of the planet: Johann Galle (who first observed it), Urbain Le Verrier, and John Couch Adams (who both mathematically predicted its location)."
-        },
-        {
-            q: "At the core of Neptune lies a solid mass roughly 1.2 times the mass of Earth. What is this core composed of?",
-            options: ["Pure frozen methane", "Iron, nickel, and silicates (rock)", "Solid diamond", "Liquid metallic hydrogen"],
-            correct: "Iron, nickel, and silicates (rock)",
-            explanation: "Beneath the crushing weight of the hydrogen/helium atmosphere and the deep fluid mantle of water/ammonia/methane, Neptune possesses a solid, rocky core made of silicates, iron, and nickel."
-        }
-    ];
+    const rawQuizData = window.QuizBank.getPageQuizData({ sourcePath: 'neptune/neptune.html', format: 'quiz-correct-string' });
 
     let shuffledQuiz = [];
     let currentQIndex = 0;

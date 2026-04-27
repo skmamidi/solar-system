@@ -408,6 +408,214 @@
         }
     ];
 
+    const EXTRA_FEATURES_BY_PATH = {
+        'mercury/mercury.html': [
+            {
+                feature: 'Lobate scarps',
+                visual: 'mercury-scarps',
+                explanation: 'Lobate scarps are long, curved cliffs formed as Mercury cooled, shrank, and wrinkled its crust. They are a strong clue that the small planet contracted after its interior lost heat.'
+            }
+        ],
+        'venus/venus.html': [
+            {
+                feature: 'Coronae',
+                visual: 'venus-coronae',
+                explanation: 'Coronae are circular to oval volcanic-tectonic structures on Venus. Their broken rings and radiating fractures show where hot material pushed upward and warped the crust.'
+            }
+        ],
+        'earth/earth.html': [
+            {
+                feature: 'Hurricane spiral',
+                visual: 'earth-hurricane',
+                isStorm: true,
+                explanation: 'A hurricane spiral is an organized tropical storm system with curved cloud bands around a central eye. From space, it is one of Earth\'s clearest active weather signatures.'
+            }
+        ],
+        'earth/luna.html': [
+            {
+                feature: 'Lunar maria',
+                visual: 'lunar-maria',
+                explanation: 'Lunar maria are dark basaltic plains created by ancient lava flows. They make the Moon\'s near side look patchy and are much smoother than the surrounding highlands.'
+            }
+        ],
+        'mars/mars.html': [
+            {
+                feature: 'Olympus Mons',
+                visual: 'olympus-mons',
+                explanation: 'Olympus Mons is the largest known volcano in the solar system. Its broad shield shape and summit caldera make it a major visual identifier for Mars.'
+            }
+        ],
+        'mars/phobos.html': [
+            {
+                feature: 'Linear grooves',
+                visual: 'phobos-grooves',
+                explanation: 'Phobos is crossed by long grooves and crater chains. Many of them radiate away from the region around Stickney crater or relate to tidal stresses from Mars.'
+            }
+        ],
+        'mars/deimos.html': [
+            {
+                feature: 'Regolith-muted craters',
+                visual: 'deimos-muted-craters',
+                explanation: 'Deimos has many craters softened by a thick blanket of loose regolith. That dusty coating makes its surface look smoother and less sharply battered than Phobos.'
+            }
+        ],
+        'jupiter/jupiter.html': [
+            {
+                feature: 'Zonal cloud belts',
+                visual: 'jupiter-belts',
+                explanation: 'Jupiter\'s alternating bright zones and darker belts are high-speed atmospheric bands. They make the planet recognizable even without the Great Red Spot.'
+            }
+        ],
+        'jupiter/io.html': [
+            {
+                feature: 'Loki Patera lava lake',
+                visual: 'loki-patera',
+                explanation: 'Loki Patera is a huge volcanic depression on Io. Its dark lava lake and bright sulfur-rich surroundings show why Io is the solar system\'s most volcanically active world.'
+            }
+        ],
+        'jupiter/europa.html': [
+            {
+                feature: 'Chaos terrain',
+                visual: 'europa-chaos',
+                explanation: 'Europa\'s chaos terrain looks like broken icy plates that shifted and refroze. It is one of the strongest visual clues that Europa\'s ice shell has been active.'
+            }
+        ],
+        'jupiter/ganymede.html': [
+            {
+                feature: 'Galileo Regio dark terrain',
+                visual: 'galileo-regio',
+                explanation: 'Galileo Regio is a large dark ancient region on Ganymede. The contrast between dark old terrain and brighter grooved terrain helps identify the moon.'
+            }
+        ],
+        'jupiter/callisto.html': [
+            {
+                feature: 'Ancient crater saturation',
+                visual: 'callisto-craters',
+                explanation: 'Callisto is covered with densely packed ancient craters. Its old, dark surface shows little large-scale resurfacing compared with many other icy moons.'
+            }
+        ],
+        'saturn/saturn.html': [
+            {
+                feature: 'Main ring system',
+                visual: 'saturn-rings',
+                explanation: 'Saturn\'s broad bright rings are its most famous identifier. The rings are made mostly of icy particles arranged into many thin bands and gaps.'
+            }
+        ],
+        'saturn/titan.html': [
+            {
+                feature: 'Equatorial dune fields',
+                visual: 'titan-dunes',
+                explanation: 'Titan has long dark dune fields near its equator. They are shaped by winds moving hydrocarbon-rich particles across the cold surface.'
+            }
+        ],
+        'saturn/enceladus.html': [
+            {
+                feature: 'South polar geyser curtain',
+                visual: 'enceladus-geysers',
+                explanation: 'Enceladus vents water vapor and icy grains from its south polar fractures. These geysers feed Saturn\'s E ring and reveal an active interior.'
+            }
+        ],
+        'saturn/mimas.html': [
+            {
+                feature: 'Cratered icy surface',
+                visual: 'mimas-crater-field',
+                explanation: 'Beyond Herschel crater, Mimas has a cold heavily cratered icy surface. Its small size and lack of broad resurfacing leave impact scars easy to see.'
+            }
+        ],
+        'saturn/rhea.html': [
+            {
+                feature: 'Wispy icy chasmata',
+                visual: 'rhea-wisps',
+                explanation: 'Rhea has bright wispy markings that trace fractures and scarps across older terrain. They help distinguish Rhea from smoother icy moons.'
+            }
+        ],
+        'saturn/iapetus.html': [
+            {
+                feature: 'Cassini Regio dark terrain',
+                visual: 'cassini-regio',
+                explanation: 'Cassini Regio is Iapetus\'s dark leading-hemisphere terrain. The strong contrast between dark and bright hemispheres is one of Iapetus\'s signature clues.'
+            }
+        ],
+        'uranus/uranus.html': [
+            {
+                feature: 'Methane-blue disk',
+                visual: 'uranus-blue-disk',
+                explanation: 'Uranus appears pale blue-green because methane in its atmosphere absorbs red light. Its mostly smooth disk is much quieter-looking than Jupiter or Saturn.'
+            }
+        ],
+        'uranus/miranda.html': [
+            {
+                feature: 'Inverness Corona',
+                visual: 'inverness-corona',
+                explanation: 'Inverness Corona is a chevron-shaped region on Miranda. Its ridges and boundaries make Miranda look like a world assembled from mismatched geologic pieces.'
+            }
+        ],
+        'uranus/ariel.html': [
+            {
+                feature: 'Smooth resurfaced plains',
+                visual: 'ariel-plains',
+                explanation: 'Ariel has relatively bright smooth plains in places, suggesting that icy material resurfaced parts of the moon after older craters formed.'
+            }
+        ],
+        'uranus/umbriel.html': [
+            {
+                feature: 'Low-albedo cratered terrain',
+                visual: 'umbriel-dark-terrain',
+                explanation: 'Umbriel is unusually dark for a Uranian moon. Its low-albedo cratered terrain makes bright features like Wunda stand out even more.'
+            }
+        ],
+        'uranus/titania.html': [
+            {
+                feature: 'Gertrude crater',
+                visual: 'gertrude-crater',
+                explanation: 'Gertrude is a very large crater on Titania. Its scale and relaxed-looking icy rim make it one of the moon\'s best-known named features.'
+            }
+        ],
+        'uranus/oberon.html': [
+            {
+                feature: 'Mommur Chasma',
+                visual: 'mommur-chasma',
+                explanation: 'Mommur Chasma is a major canyon-like feature on Oberon. It shows that this dark outer Uranian moon is not only cratered but also fractured.'
+            }
+        ],
+        'neptune/neptune.html': [
+            {
+                feature: 'Scooter bright cloud',
+                visual: 'neptune-scooter',
+                isStorm: true,
+                explanation: 'The Scooter was a fast-moving bright cloud feature seen on Neptune. It highlights how dynamic Neptune\'s blue atmosphere can be.'
+            }
+        ],
+        'neptune/triton.html': [
+            {
+                feature: 'South polar nitrogen cap',
+                visual: 'triton-polar-cap',
+                explanation: 'Triton has a bright south polar cap made largely of nitrogen ice. Its pinkish icy surface and polar deposits help separate it from other large moons.'
+            }
+        ],
+        'neptune/proteus.html': [
+            {
+                feature: 'Angular irregular shape',
+                visual: 'proteus-shape',
+                explanation: 'Proteus is large for an irregular moon, but it is not round. Its angular outline shows that gravity was not strong enough to pull it into a smooth sphere.'
+            }
+        ],
+        'neptune/larissa.html': [
+            {
+                feature: 'Elongated battered silhouette',
+                visual: 'larissa-elongated',
+                explanation: 'Larissa is a small irregular moon with an elongated, battered shape. Limited imaging still shows that it is not a smooth round body.'
+            }
+        ],
+        'neptune/Nereid.html': [
+            {
+                feature: 'Unresolved low-albedo profile',
+                visual: 'nereid-low-albedo',
+                explanation: 'Nereid is so distant and small that detailed surface features are not well resolved. Its useful visual clue is a dark, irregular, low-albedo icy profile rather than a named crater.'
+            }
+        ]
+    };
+
     const MASTER_PATHS = new Set(['master-quiz.html', '/master-quiz.html']);
     const PLANET_PATHS = new Set([
         'mercury/mercury.html',
@@ -428,13 +636,17 @@
         'uranus/uranus.html',
         'neptune/neptune.html'
     ]);
-    const STORM_VISUAL_PATHS = new Set([
-        'jupiter/jupiter.html',
-        'neptune/neptune.html'
+    const STORM_VISUALS = new Set([
+        'earth-hurricane',
+        'great-red-spot',
+        'great-dark-spot',
+        'neptune-scooter'
     ]);
-    const ATMOSPHERIC_PATTERN_PATHS = new Set([
-        'earth/earth.html',
-        'saturn/saturn.html'
+    const ATMOSPHERIC_PATTERN_VISUALS = new Set([
+        'blue-marble',
+        'jupiter-belts',
+        'saturn-hexagon',
+        'uranus-blue-disk'
     ]);
 
     function normalizePath() {
@@ -462,11 +674,44 @@
             .replace(/'/g, '&#039;');
     }
 
-    function getMeta(item) {
+    function getFeatureCards(item) {
+        const primary = {
+            feature: item.feature,
+            visual: item.visual,
+            prompt: item.prompt,
+            options: item.options,
+            explanation: item.explanation
+        };
+
+        return [primary, ...(EXTRA_FEATURES_BY_PATH[item.path] || [])];
+    }
+
+    function getAllFeatureNames() {
+        return FEATURE_ITEMS.flatMap(item => getFeatureCards(item).map(card => card.feature));
+    }
+
+    function makeFeatureOptions(item, card) {
+        if (Array.isArray(card.options) && card.options.length) return card.options;
+
+        const distractors = shuffle(getAllFeatureNames().filter(feature => feature !== card.feature)).slice(0, 3);
+        return shuffle([
+            {
+                text: card.feature,
+                correct: true,
+                feedback: `Correct. ${card.explanation}`
+            },
+            ...distractors.map(feature => ({
+                text: feature,
+                feedback: `Not quite. The scan is showing ${card.feature} on ${item.world}, not ${feature}. Look for the shape, color, and surface context before choosing.`
+            }))
+        ]);
+    }
+
+    function getMeta(item, card = item) {
         const isPlanet = PLANET_PATHS.has(item.path);
         const hasGlobalMagneticField = GLOBAL_MAGNETIC_FIELD_PATHS.has(item.path);
-        const isStormVisual = STORM_VISUAL_PATHS.has(item.path);
-        const isAtmosphericPattern = ATMOSPHERIC_PATTERN_PATHS.has(item.path);
+        const isStormVisual = card.isStorm === true || STORM_VISUALS.has(card.visual);
+        const isAtmosphericPattern = !isStormVisual && ATMOSPHERIC_PATTERN_VISUALS.has(card.visual);
 
         return {
             kind: isPlanet ? 'planet' : 'moon',
@@ -475,10 +720,10 @@
             hasGlobalMagneticField,
             isStormVisual,
             stormExplanation: isStormVisual
-                ? `${item.feature} is an atmospheric storm feature. Its shape appears in clouds rather than in solid surface rock or ice.`
+                ? `${card.feature} is an atmospheric storm feature. Its shape appears in clouds rather than in solid surface rock or ice.`
                 : isAtmosphericPattern
-                    ? `${item.feature} is connected to atmosphere and weather, but this quiz is asking about a distinct storm feature. Treat this as an atmospheric pattern, not a single named storm.`
-                    : `${item.feature} is not an atmospheric storm. The scan shows a solid-surface or non-storm identifying feature instead.`,
+                    ? `${card.feature} is connected to atmosphere and weather, but this quiz is asking about a distinct storm feature. Treat this as an atmospheric pattern, not a single named storm.`
+                    : `${card.feature} is not an atmospheric storm. The scan shows a solid-surface or non-storm identifying feature instead.`,
             magneticExplanation: hasGlobalMagneticField
                 ? `${item.world} has a confirmed global magnetic field of its own. That means the object generates a large-scale magnetosphere rather than only carrying local crustal magnetism or induced signals.`
                 : `${item.world} does not have a confirmed global magnetic field of its own. It may still interact with nearby plasma, have local remnant magnetism, or show induced magnetic effects, but that is not the same as a global self-generated field.`
@@ -486,49 +731,63 @@
     }
 
     function buildRounds(item, isMaster) {
-        const meta = getMeta(item);
+        const cards = getFeatureCards(item);
+        const firstCard = cards[0];
+        const meta = getMeta(item, firstCard);
         const stormYesText = 'Yes, this is showing a storm';
         const stormNoText = 'No, this is not showing a storm';
         const magneticYesText = 'Yes, it has a global magnetic field';
         const magneticNoText = 'No, it lacks a confirmed global magnetic field';
 
-        return [
-            {
-                type: 'feature',
-                item,
-                prompt: isMaster ? item.prompt : item.prompt,
-                options: item.options,
-                explanation: item.explanation,
-                caption: `${item.world} feature identification`
-            },
-            {
+        const featureRounds = cards.map(card => ({
+            type: 'feature',
+            item,
+            card,
+            prompt: isMaster
+                ? `Which ${item.world} feature is shown in this scan?`
+                : card.prompt || `Which ${item.world} feature is shown in this mission scan?`,
+            options: makeFeatureOptions(item, card),
+            explanation: card.explanation,
+            caption: `${item.world} feature identification`
+        }));
+
+        const stormRounds = cards.map(card => {
+            const cardMeta = getMeta(item, card);
+            return {
                 type: 'storm',
                 item,
+                card,
                 prompt: isMaster
                     ? 'Is this visual showing an atmospheric storm on the celestial object?'
                     : `Is this visual showing an atmospheric storm on ${item.world}?`,
                 options: [
                     {
                         text: stormYesText,
-                        correct: meta.isStormVisual,
-                        feedback: meta.isStormVisual
-                            ? `Correct. ${meta.stormExplanation}`
-                            : `Not quite. ${meta.stormExplanation}`
+                        correct: cardMeta.isStormVisual,
+                        feedback: cardMeta.isStormVisual
+                            ? `Correct. ${cardMeta.stormExplanation}`
+                            : `Not quite. ${cardMeta.stormExplanation}`
                     },
                     {
                         text: stormNoText,
-                        correct: !meta.isStormVisual,
-                        feedback: !meta.isStormVisual
-                            ? `Correct. ${meta.stormExplanation}`
-                            : `Not quite. ${meta.stormExplanation}`
+                        correct: !cardMeta.isStormVisual,
+                        feedback: !cardMeta.isStormVisual
+                            ? `Correct. ${cardMeta.stormExplanation}`
+                            : `Not quite. ${cardMeta.stormExplanation}`
                     }
                 ],
-                explanation: meta.stormExplanation,
+                explanation: cardMeta.stormExplanation,
                 caption: `${item.world} storm check`
-            },
+            };
+        });
+
+        return [
+            ...featureRounds,
+            ...stormRounds,
             {
                 type: 'kind',
                 item,
+                card: firstCard,
                 prompt: isMaster
                     ? 'Is the celestial object in this scan a planet or a moon?'
                     : `Is ${item.world} classified as a planet or a moon?`,
@@ -554,6 +813,7 @@
             {
                 type: 'magnetic',
                 item,
+                card: firstCard,
                 prompt: isMaster
                     ? 'Does this object have a confirmed global magnetic field of its own?'
                     : `Does ${item.world} have a confirmed global magnetic field of its own?`,
@@ -860,6 +1120,64 @@
                 return irregularMoon('#555d68', `<circle cx="160" cy="92" r="23" fill="none" stroke="#222832" stroke-width="5" opacity="0.6"/><circle cx="257" cy="159" r="31" fill="none" stroke="#a3acb8" stroke-width="4" opacity="0.48"/><circle cx="312" cy="103" r="14" fill="#2b323b" opacity="0.62"/>`);
             case 'nereid':
                 return irregularMoon('#4e5662', `<circle cx="132" cy="148" r="22" fill="none" stroke="#1f2630" stroke-width="4" opacity="0.5"/><circle cx="272" cy="112" r="18" fill="none" stroke="#a3acb8" stroke-width="3" opacity="0.4"/><path d="M91 95 C157 81 233 89 321 126" stroke="#c8d0dc" stroke-width="4" opacity="0.16" fill="none"/>`);
+            case 'mercury-scarps':
+                return `${baseStart}${planetClip}<rect width="420" height="260" fill="#07101f"/><g clip-path="url(#disk)">${craterField('#947b62', '#e7d2b6')}<path d="M95 173 C128 123 166 151 196 103 C230 52 267 94 313 63" fill="none" stroke="#3f3128" stroke-width="14" stroke-linecap="round"/><path d="M101 166 C135 126 170 151 201 107 C235 65 270 98 315 69" fill="none" stroke="#f4d0a4" stroke-width="5" opacity="0.6"/></g><circle cx="210" cy="130" r="108" fill="url(#shade)"/>${end}`;
+            case 'venus-coronae':
+                return `${baseStart}<rect width="420" height="260" fill="#2a140b"/><rect width="420" height="260" fill="#b7652c" filter="url(#pfqNoise)"/><ellipse cx="214" cy="132" rx="88" ry="52" fill="rgba(255,209,102,0.1)" stroke="#ffd166" stroke-width="6"/><ellipse cx="214" cy="132" rx="52" ry="29" fill="none" stroke="#4b2114" stroke-width="6" opacity="0.55"/><g stroke="#ffcf7a" stroke-width="3" opacity="0.65"><path d="M214 80 L214 41"/><path d="M214 184 L214 225"/><path d="M128 132 L82 132"/><path d="M300 132 L347 132"/><path d="M153 96 L118 66"/><path d="M274 168 L315 203"/></g>${end}`;
+            case 'earth-hurricane':
+                return `${baseStart}${planetClip}<rect width="420" height="260" fill="#07101f"/><g clip-path="url(#disk)"><rect width="420" height="260" fill="#1c66bd"/><path d="M90 172 C150 151 214 170 276 134 C242 180 178 210 117 196 Z" fill="#15965f" opacity="0.75"/><g fill="none" stroke="#f8fafc" stroke-linecap="round"><path d="M249 119 C296 116 325 152 296 182 C258 222 183 195 195 143 C205 101 267 87 302 105" stroke-width="13" opacity="0.82"/><path d="M244 126 C270 126 288 147 273 166 C252 190 213 176 220 146 C226 122 261 116 281 123" stroke-width="9" opacity="0.95"/></g><circle cx="248" cy="150" r="10" fill="#1c66bd"/></g><circle cx="210" cy="130" r="108" fill="url(#shade)"/>${end}`;
+            case 'lunar-maria':
+                return `${baseStart}${planetClip}<rect width="420" height="260" fill="#07101f"/><g clip-path="url(#disk)">${craterField('#a7a8aa', '#e2e4e6')}<path d="M126 72 C169 54 205 86 189 129 C170 176 105 154 94 111 C88 91 103 79 126 72 Z" fill="#565b63" opacity="0.82"/><path d="M224 95 C276 70 327 103 316 151 C302 203 223 198 207 149 C199 124 207 105 224 95 Z" fill="#464b54" opacity="0.78"/><path d="M160 171 C194 157 228 173 226 205 C205 223 169 211 152 190 Z" fill="#555a62" opacity="0.74"/></g><circle cx="210" cy="130" r="108" fill="url(#shade)"/>${end}`;
+            case 'olympus-mons':
+                return `${baseStart}<rect width="420" height="260" fill="#170b08"/><rect width="420" height="260" fill="#a84925" filter="url(#pfqNoise)"/><ellipse cx="218" cy="156" rx="139" ry="56" fill="#c76737"/><ellipse cx="218" cy="138" rx="82" ry="32" fill="#d9824f"/><ellipse cx="218" cy="126" rx="35" ry="16" fill="#522117" stroke="#f3b37d" stroke-width="4"/><path d="M80 170 C151 138 258 139 356 168" stroke="#f6ad55" stroke-width="5" opacity="0.42" fill="none"/>${end}`;
+            case 'phobos-grooves':
+                return irregularMoon('#756b63', `<circle cx="168" cy="123" r="40" fill="#4b4641" stroke="#b7afa7" stroke-width="6" opacity="0.75"/><g stroke="#d7c8b7" stroke-width="5" stroke-linecap="round" opacity="0.62"><path d="M111 69 C156 113 199 151 281 203"/><path d="M143 54 C177 105 221 145 316 178"/><path d="M89 138 C152 151 212 168 300 221"/></g>`);
+            case 'deimos-muted-craters':
+                return irregularMoon('#8b8177', `<g opacity="0.42"><circle cx="130" cy="92" r="28" fill="none" stroke="#d0c6ba" stroke-width="5"/><circle cx="223" cy="148" r="36" fill="none" stroke="#5a534d" stroke-width="5"/><circle cx="292" cy="97" r="20" fill="none" stroke="#d0c6ba" stroke-width="4"/></g><path d="M88 165 C158 190 245 184 326 154" stroke="#d9cec0" stroke-width="7" opacity="0.16"/>`);
+            case 'jupiter-belts':
+                return `${baseStart}<rect width="420" height="260" fill="#07101f"/><g>${bands(['#e6c097','#9d6544','#fff1d0','#c48152','#f7dfb7','#7f513d','#f3cc93'])}<g stroke="#fff3da" stroke-width="5" opacity="0.48"><path d="M20 72 C111 91 218 55 404 82"/><path d="M6 133 C122 110 264 151 420 126"/><path d="M0 190 C100 177 214 204 420 184"/></g></g>${end}`;
+            case 'loki-patera':
+                return `${baseStart}<rect width="420" height="260" fill="#211103"/><rect width="420" height="260" fill="#d8a72f" filter="url(#pfqNoise)"/><ellipse cx="220" cy="135" rx="104" ry="54" fill="#5a1d13" stroke="#f8d94f" stroke-width="7"/><path d="M144 137 C176 103 244 105 294 135 C251 150 192 158 144 137 Z" fill="#111827" opacity="0.88"/><path d="M153 139 C185 126 235 126 283 137" stroke="#ff8a1f" stroke-width="8" opacity="0.85" fill="none"/>${end}`;
+            case 'europa-chaos':
+                return `${baseStart}<rect width="420" height="260" fill="url(#ice)" filter="url(#pfqNoise)"/><g stroke="#7b3f35" stroke-width="4" opacity="0.72"><path d="M92 61 L160 96 L140 164 L79 133 Z"/><path d="M184 76 L260 56 L291 126 L221 159 Z"/><path d="M154 172 L225 151 L276 205 L196 225 Z"/><path d="M290 127 L356 101 L377 181 L312 204 Z"/></g><g fill="rgba(155,77,57,0.18)"><path d="M92 61 L160 96 L140 164 L79 133 Z"/><path d="M184 76 L260 56 L291 126 L221 159 Z"/><path d="M154 172 L225 151 L276 205 L196 225 Z"/></g>${end}`;
+            case 'galileo-regio':
+                return icyDisk('#8d9299', `<path d="M90 64 C147 30 227 56 240 122 C253 188 190 222 126 196 C77 176 55 99 90 64 Z" fill="#34383f" opacity="0.86"/><g stroke="#dce7ef" stroke-width="4" opacity="0.62"><path d="M231 67 C209 113 225 174 278 215"/><path d="M260 54 C240 110 257 163 308 200"/></g>`);
+            case 'callisto-craters':
+                return icyDisk('#4c4c52', `<g fill="none" stroke="#d7d0bd" stroke-width="4" opacity="0.75">${Array.from({ length: 12 }, (_, i) => `<circle cx="${92 + (i % 4) * 76}" cy="${58 + Math.floor(i / 4) * 62}" r="${14 + (i % 3) * 7}"/>`).join('')}</g>`);
+            case 'saturn-rings':
+                return `${baseStart}<rect width="420" height="260" fill="#07101f"/><ellipse cx="210" cy="140" rx="178" ry="42" fill="none" stroke="#f3dfb4" stroke-width="12"/><ellipse cx="210" cy="140" rx="140" ry="31" fill="none" stroke="#a98556" stroke-width="8"/><ellipse cx="210" cy="140" rx="104" ry="24" fill="none" stroke="#f9edce" stroke-width="5"/><circle cx="210" cy="130" r="67" fill="#d7b67e"/><circle cx="210" cy="130" r="67" fill="url(#shade)"/>${end}`;
+            case 'titan-dunes':
+                return `${baseStart}<rect width="420" height="260" fill="#24160a"/><rect width="420" height="260" fill="#c67b2f" filter="url(#pfqNoise)"/><g stroke="#2b1f19" stroke-width="9" stroke-linecap="round" opacity="0.72"><path d="M35 87 C120 71 198 104 292 83 C338 74 379 81 415 92"/><path d="M9 140 C105 124 181 157 280 137 C334 127 379 132 420 145"/><path d="M24 194 C104 178 203 206 291 187 C340 177 380 181 420 192"/></g><rect width="420" height="260" fill="#f6ad55" opacity="0.12"/>${end}`;
+            case 'enceladus-geysers':
+                return `${baseStart}<rect width="420" height="260" fill="#dff9ff" filter="url(#pfqNoise)"/><g stroke="#1689a6" stroke-width="7" stroke-linecap="round"><path d="M128 211 C166 178 210 160 254 100"/><path d="M174 225 C208 190 252 170 297 127"/></g><g stroke="#ffffff" stroke-width="5" opacity="0.82"><path d="M254 100 C248 57 268 30 287 4"/><path d="M297 127 C319 89 350 60 394 31"/><path d="M220 148 C200 102 205 64 225 27"/></g>${end}`;
+            case 'mimas-crater-field':
+                return icyDisk('#8b8f95', `<g fill="none" stroke="#e0e5eb" stroke-width="4" opacity="0.7">${Array.from({ length: 10 }, (_, i) => `<circle cx="${105 + (i % 5) * 49}" cy="${69 + Math.floor(i / 5) * 83}" r="${12 + (i % 4) * 5}"/>`).join('')}</g><circle cx="285" cy="165" r="31" fill="none" stroke="#4f5660" stroke-width="6" opacity="0.55"/>`);
+            case 'rhea-wisps':
+                return icyDisk('#989fa8', `<g stroke="#eef7ff" stroke-width="6" opacity="0.76" stroke-linecap="round"><path d="M98 72 C155 105 180 168 145 221"/><path d="M138 59 C191 98 216 157 190 220"/><path d="M248 51 C225 108 244 174 304 213"/></g>`);
+            case 'cassini-regio':
+                return `${baseStart}${planetClip}<rect width="420" height="260" fill="#07101f"/><g clip-path="url(#disk)"><rect width="420" height="260" fill="#c9c1ab"/><path d="M68 22 C163 58 205 106 209 238 L80 238 Z" fill="#30251f"/><circle cx="263" cy="120" r="25" fill="none" stroke="#847c70" stroke-width="5"/><circle cx="150" cy="148" r="21" fill="none" stroke="#645149" stroke-width="4"/></g><circle cx="210" cy="130" r="108" fill="url(#shade)"/>${end}`;
+            case 'uranus-blue-disk':
+                return `${baseStart}<rect width="420" height="260" fill="#07101f"/><circle cx="210" cy="130" r="94" fill="#79d7df"/><path d="M132 116 C182 95 251 96 292 120" stroke="#caf9ff" stroke-width="10" opacity="0.2" fill="none"/><path d="M146 164 C198 180 250 174 299 153" stroke="#2f98a8" stroke-width="8" opacity="0.18" fill="none"/><circle cx="210" cy="130" r="94" fill="url(#shade)"/>${end}`;
+            case 'inverness-corona':
+                return icyDisk('#8f969d', `<path d="M98 78 L196 111 L154 206 Z" fill="#c8d1d9" stroke="#3e4650" stroke-width="6"/><path d="M196 111 L312 75 L276 203 L154 206 Z" fill="#5e6670" stroke="#e2ebf2" stroke-width="5"/><g stroke="#f8fafc" stroke-width="4" opacity="0.78"><path d="M126 96 L178 126 L156 181"/><path d="M211 121 L281 99 L260 174"/></g>`);
+            case 'ariel-plains':
+                return icyDisk('#a6adb4', `<path d="M91 105 C144 70 236 78 314 103 C331 157 276 205 196 199 C132 195 89 162 91 105 Z" fill="#d5e3ee" opacity="0.5"/><g stroke="#465767" stroke-width="6" opacity="0.42"><path d="M104 174 C155 130 193 136 247 96"/><path d="M183 201 C235 165 287 151 328 107"/></g>`);
+            case 'umbriel-dark-terrain':
+                return icyDisk('#333844', `<g fill="none" stroke="#121821" stroke-width="5" opacity="0.62">${Array.from({ length: 8 }, (_, i) => `<circle cx="${108 + (i % 4) * 64}" cy="${78 + Math.floor(i / 4) * 85}" r="${16 + (i % 3) * 6}"/>`).join('')}</g><circle cx="261" cy="126" r="24" fill="none" stroke="#cbd5e1" stroke-width="4" opacity="0.52"/>`);
+            case 'gertrude-crater':
+                return icyDisk('#858c94', `<circle cx="200" cy="128" r="65" fill="#555e68" stroke="#dbe5ee" stroke-width="7"/><circle cx="206" cy="131" r="22" fill="#323b45" opacity="0.64"/><path d="M144 113 C181 88 225 88 259 113" stroke="#f8fafc" stroke-width="4" opacity="0.42" fill="none"/>`);
+            case 'mommur-chasma':
+                return icyDisk('#5c626c', `<path d="M79 168 C139 118 195 135 242 91 C282 54 330 56 365 34" stroke="#202832" stroke-width="14" fill="none" stroke-linecap="round"/><path d="M85 171 C145 134 197 146 249 106 C290 75 330 73 370 52" stroke="#c8d1dc" stroke-width="4" opacity="0.48" fill="none"/>`);
+            case 'neptune-scooter':
+                return `${baseStart}${planetClip}<rect width="420" height="260" fill="#07101f"/><g clip-path="url(#disk)"><rect width="420" height="260" fill="#1557c8"/><path d="M84 78 C168 48 279 67 344 99" stroke="#6fd3ff" stroke-width="10" opacity="0.34" fill="none"/><ellipse cx="277" cy="155" rx="58" ry="18" fill="#e7fbff" opacity="0.88"/><path d="M219 155 C248 139 300 138 336 151" stroke="#b6f0ff" stroke-width="5" opacity="0.72" fill="none"/></g><circle cx="210" cy="130" r="108" fill="url(#shade)"/>${end}`;
+            case 'triton-polar-cap':
+                return `${baseStart}<rect width="420" height="260" fill="#dbaea7" filter="url(#pfqNoise)"/><ellipse cx="214" cy="188" rx="145" ry="48" fill="#f4edf0" opacity="0.82"/><g fill="none" stroke="#9a7069" stroke-width="4" opacity="0.42">${Array.from({ length: 7 }, (_, i) => `<circle cx="${82 + i * 44}" cy="${78 + (i % 2) * 38}" r="${18 + (i % 3) * 4}"/>`).join('')}</g><path d="M88 188 C151 167 259 173 354 188" stroke="#ffffff" stroke-width="5" opacity="0.55" fill="none"/>${end}`;
+            case 'proteus-shape':
+                return irregularMoon('#59616b', `<path d="M101 81 L177 40 L283 61 L344 132 L304 211 L184 226 L83 173 Z" fill="none" stroke="#d4dde7" stroke-width="6" opacity="0.45"/><circle cx="246" cy="128" r="38" fill="none" stroke="#252b32" stroke-width="6" opacity="0.62"/>`);
+            case 'larissa-elongated':
+                return irregularMoon('#555d68', `<ellipse cx="213" cy="130" rx="128" ry="61" fill="none" stroke="#c2ccd8" stroke-width="6" opacity="0.45"/><circle cx="156" cy="101" r="21" fill="#252c35" opacity="0.65"/><circle cx="278" cy="158" r="27" fill="none" stroke="#202730" stroke-width="5" opacity="0.6"/>`);
+            case 'nereid-low-albedo':
+                return irregularMoon('#3b4350', `<rect x="66" y="28" width="290" height="205" fill="#02030a" opacity="0.18"/><path d="M116 95 C169 76 253 84 315 121" stroke="#9aa5b4" stroke-width="5" opacity="0.17" fill="none"/><circle cx="263" cy="152" r="24" fill="#151b24" opacity="0.58"/>`);
             default:
                 return `${baseStart}<rect width="420" height="260" fill="#07101f"/><circle cx="210" cy="130" r="90" fill="#64748b"/>${end}`;
         }
@@ -912,6 +1230,7 @@
 
     function renderRound(panel, round, state) {
         const item = round.item;
+        const card = round.card || item;
         const question = panel.querySelector('[data-pfq-question]');
         const progress = panel.querySelector('[data-pfq-progress]');
         const optionsWrap = panel.querySelector('[data-pfq-options]');
@@ -925,7 +1244,7 @@
             ? `Random round ${state.roundsAnswered + 1} | Score ${state.score} / ${state.roundsAnswered}`
             : `Question ${state.currentIndex + 1} of ${state.rounds.length} | Score ${state.score} / ${state.currentIndex}`;
         question.textContent = round.prompt;
-        visual.innerHTML = svgFor(item.visual);
+        visual.innerHTML = svgFor(card.visual);
         caption.textContent = round.caption || `${item.world} mission scan`;
         feedback.hidden = true;
         feedback.innerHTML = '';
@@ -954,8 +1273,8 @@
                         <h3 class="pfq-feedback-title ${option.correct ? 'correct' : 'wrong'}">${option.correct ? 'Correct' : 'Not quite'}</h3>
                         <p><strong>Your selection:</strong> ${escapeHtml(option.text)}</p>
                         <p>${escapeHtml(option.feedback)}</p>
-                        <p><strong>Visual context:</strong> ${escapeHtml(item.feature)} on ${escapeHtml(item.world)}.</p>
-                        <p>${escapeHtml(round.explanation || item.explanation)}</p>
+                        <p><strong>Visual context:</strong> ${escapeHtml(card.feature)} on ${escapeHtml(item.world)}.</p>
+                        <p>${escapeHtml(round.explanation || card.explanation || item.explanation)}</p>
                     `;
                     reset.textContent = state.isMaster
                         ? 'Next Random Round'
@@ -1035,7 +1354,63 @@
         panel.querySelector('[data-pfq-reset]').addEventListener('click', nextRound);
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    function getMasterQuestions() {
+        return FEATURE_ITEMS.flatMap(item => buildRounds(item, true).map((round, index) => {
+            const card = round.card || item;
+            const choices = round.options.map(option => option.text);
+            const correctIndex = round.options.findIndex(option => option.correct);
+
+            return {
+                id: `visual-${item.path.replace(/[^a-z0-9]+/gi, '-')}-${index + 1}`,
+                question: round.prompt,
+                choices,
+                correctIndex,
+                explanation: round.explanation || card.explanation || item.explanation,
+                difficulty: round.type === 'feature' ? 'medium' : 'easy',
+                topic: item.world,
+                subtopic: card.feature,
+                topicSlug: item.world.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                subtopicSlug: card.feature.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                sourceTitle: `${item.world} Visual Identification`,
+                sourcePath: item.path,
+                sourceType: 'visual',
+                category: 'visual',
+                visual: card.visual,
+                visualCaption: `${card.feature} on ${item.world}`,
+                tags: ['visual', round.type, item.world.toLowerCase().replace(/[^a-z0-9]+/g, '-')]
+            };
+        }));
+    }
+
+    function installMasterQuestions() {
+        const data = window.MASTER_QUIZ_DATA;
+        if (!data || !Array.isArray(data.questions) || data.__visualQuestionsInstalled) return;
+
+        const visualQuestions = getMasterQuestions();
+        const existingIds = new Set(data.questions.map(question => question.id));
+        const additions = visualQuestions.filter(question => !existingIds.has(question.id));
+        data.questions.push(...additions);
+        data.questionCount = data.questions.length;
+        data.topics = [...new Set(data.questions.map(question => question.topic))].sort();
+        data.difficulties = [...new Set(data.questions.map(question => question.difficulty))].sort();
+        data.categories = [...new Set(data.questions.map(question => question.category || 'fact'))].sort();
+        data.subtopicsByTopic = data.questions.reduce((groups, question) => {
+            if (!groups[question.topic]) groups[question.topic] = [];
+            if (!groups[question.topic].includes(question.subtopic)) groups[question.topic].push(question.subtopic);
+            return groups;
+        }, {});
+        Object.keys(data.subtopicsByTopic).forEach(topic => data.subtopicsByTopic[topic].sort());
+        data.__visualQuestionsInstalled = true;
+    }
+
+    window.PhysicalFeatureQuiz = {
+        getMasterQuestions,
+        renderVisual: svgFor
+    };
+
+    installMasterQuestions();
+
+    function initPhysicalFeatureQuiz() {
         injectStyles();
         const path = normalizePath();
 
@@ -1046,5 +1421,11 @@
 
         const item = FEATURE_ITEMS.find(entry => entry.path === path);
         if (item) mountIndividual(item);
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPhysicalFeatureQuiz);
+    } else {
+        initPhysicalFeatureQuiz();
+    }
 })();

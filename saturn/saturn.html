@@ -696,6 +696,9 @@
     </section>
 </main>
 
+<script src="../assets/js/master-quiz-data.js"></script>
+<script src="../assets/js/quiz-bank.js"></script>
+<script src="../assets/js/interpretive-quiz-questions.js"></script>
 <script>
     /* APP STATE */
     let xp = 0;
@@ -767,158 +770,7 @@
     }
 
     /* QUIZ LOGIC: Science Olympiad (State Level) - 25 Questions */
-    const rawQuizData = [
-        {
-            q: "Which property makes Saturn entirely unique regarding density compared to every other planet in the solar system?",
-            options: ["It is denser than Earth's core", "Its density changes radically by season", "It is less dense than liquid water", "It contains no heavy elements at all"],
-            correct: "It is less dense than liquid water",
-            explanation: "Saturn has an overall density of 0.687 g/cm³. Because this is less than the density of water (1 g/cm³), the entire planet would theoretically float if placed in a sufficiently massive ocean."
-        },
-        {
-            q: "The Cassini Division is a large, dark gap between Saturn's A and B rings. What primarily causes this gap?",
-            options: ["A massive impact event 10,000 years ago", "Gravitational resonance with the moon Mimas", "Intense magnetic field repulsion", "Solar wind sweeping away the dust"],
-            correct: "Gravitational resonance with the moon Mimas",
-            explanation: "Particles within the Cassini Division are in a 2:1 orbital resonance with Mimas. Mimas's gravity systematically tugs on these particles, pulling them into new orbits and clearing out the 4,800-km-wide gap."
-        },
-        {
-            q: "Saturn's moon Titan is the only moon in the solar system known to have:",
-            options: ["Active silicate volcanoes", "A dense atmosphere and stable surface liquid", "An internally generated magnetic field", "A completely retrograde orbit"],
-            correct: "A dense atmosphere and stable surface liquid",
-            explanation: "Titan boasts a thick, nitrogen-rich atmosphere. It also features a complete hydrological cycle, but instead of water, it rains liquid methane and ethane, which form massive lakes on its surface."
-        },
-        {
-            q: "In 2005, the Cassini spacecraft discovered that Saturn's moon Enceladus is geologically active. What phenomena did it observe?",
-            options: ["Massive silicate lava flows", "Geysers erupting water vapor and ice from the south pole", "A constantly shifting ring of active dust storms", "Radioactive geysers emitting uranium vapor"],
-            correct: "Geysers erupting water vapor and ice from the south pole",
-            explanation: "Enceladus hides a global subsurface saltwater ocean beneath its icy crust. Tidal heating causes this water to erupt through massive fissures called 'tiger stripes' near its south pole, which in turn creates Saturn's E ring."
-        },
-        {
-            q: "Saturn possesses a massive, persistent storm pattern at its north pole. What shape does this storm take?",
-            options: ["A perfect circle", "A triangle", "A hexagon", "A figure-eight"],
-            correct: "A hexagon",
-            explanation: "Saturn's North Polar Hexagon is a persistent standing wave pattern in the atmosphere. The sides of the hexagon are about 14,500 km long—wider than Earth—and the entire structure rotates with the planet's interior."
-        },
-        {
-            q: "What defines the 'Roche Limit' in relation to Saturn's rings?",
-            options: ["The distance where solar radiation vaporizes ice", "The maximum distance a moon can orbit before escaping", "The point where tidal forces tear apart a moon to form rings", "The boundary where Saturn's magnetic field ends"],
-            correct: "The point where tidal forces tear apart a moon to form rings",
-            explanation: "The Roche Limit is the minimum distance to which a large satellite can approach its primary body without being torn apart by tidal forces. Saturn's main rings lie entirely inside its Roche Limit, preventing the ice from coalescing into a single moon."
-        },
-        {
-            q: "What is highly unusual about Saturn's magnetic field compared to Earth's and Jupiter's?",
-            options: ["It frequently reverses every 5 years", "It is almost perfectly aligned with its rotational axis", "It is generated entirely by the rings", "It contains no trapped radiation belts"],
-            correct: "It is almost perfectly aligned with its rotational axis",
-            explanation: "Unlike Earth and Jupiter, whose magnetic axes are tilted relative to their rotation axes, Saturn's magnetic axis is tilted by less than 0.01 degrees. This perfect alignment continues to puzzle planetary physicists."
-        },
-        {
-            q: "In 2005, a lander successfully touched down on the surface of Titan, sending back the first photos of its surface. What was its name?",
-            options: ["Viking", "Huygens", "Curiosity", "Rosetta"],
-            correct: "Huygens",
-            explanation: "Built by the European Space Agency, the Huygens probe detached from the Cassini spacecraft and descended by parachute through Titan's thick haze, landing safely on a surface of water-ice 'rocks' washed by liquid methane."
-        },
-        {
-            q: "What role do 'shepherd moons', like Prometheus and Pandora, play in Saturn's ring system?",
-            options: ["They generate the magnetic field that traps the rings", "Their gravity restricts the spreading of ring particles, keeping ring edges sharp", "They constantly crash into each other to create new ice", "They act as shields, absorbing all incoming meteors"],
-            correct: "Their gravity restricts the spreading of ring particles, keeping ring edges sharp",
-            explanation: "Shepherd moons orbit very close to, or within, the rings. Their gravitational influence herds ring particles, confining them into narrow bands and creating sharply defined edges (such as the F ring)."
-        },
-        {
-            q: "Saturn's moon Iapetus has a bizarre, two-toned appearance (one side dark, one side bright). What is the leading theory for this?",
-            options: ["It sweeps up dark dust from the outer moon Phoebe as it orbits", "Half of the moon is constantly burned by solar flares", "A massive volcanic eruption coated one hemisphere in ash", "One side is made of pure exposed iron"],
-            correct: "It sweeps up dark dust from the outer moon Phoebe as it orbits",
-            explanation: "Iapetus is tidally locked. As it orbits, its leading hemisphere plows into a diffuse ring of dark dust shed by the outer, retrograde moon Phoebe. This dark material absorbs heat, causing ice to sublimate and migrate to the trailing (bright) hemisphere."
-        },
-        {
-            q: "While Saturn's ring system extends up to 282,000 kilometers from the planet, approximately how thick are the main rings on average?",
-            options: ["10 meters", "1 kilometer", "100 kilometers", "1,000 kilometers"],
-            correct: "10 meters",
-            explanation: "Incredibly, the main rings are razor-thin. If Saturn were the size of a basketball, its rings would be significantly thinner than a sheet of tissue paper, averaging only about 10 meters thick vertically."
-        },
-        {
-            q: "Like Jupiter, Saturn radiates roughly twice as much energy into space as it receives from the Sun. However, Saturn uses an additional heat-generating mechanism involving:",
-            options: ["Uranium fission in its core", "Helium precipitation (Helium Rain) sinking through hydrogen", "Friction from the rings rubbing against the upper atmosphere", "Constant asteroid impacts"],
-            correct: "Helium precipitation (Helium Rain) sinking through hydrogen",
-            explanation: "Saturn's interior is cold enough that helium condenses out of the hydrogen envelope and rains down toward the core. The friction of these falling helium droplets generates significant internal heat."
-        },
-        {
-            q: "Saturn has a highly noticeable 'oblate' shape. What causes the planet to bulge at the equator and flatten at the poles?",
-            options: ["The gravitational pull of its massive ring system", "Its extremely rapid rotation rate", "A solid inner core shaped like a disk", "Tidal stretching caused by the Sun"],
-            correct: "Its extremely rapid rotation rate",
-            explanation: "Saturn completes a rotation in just 10.7 hours. Because it is mostly gas and liquid, this extreme centrifugal force causes the equator to bulge significantly, making its equatorial diameter almost 10% larger than its polar diameter."
-        },
-        {
-            q: "Saturn's moon Mimas features a colossal impact crater named Herschel. What pop-culture icon is Mimas famous for resembling?",
-            options: ["The Millennium Falcon", "A Pokeball", "The Death Star", "Pac-Man"],
-            correct: "The Death Star",
-            explanation: "The Herschel Crater spans 130 km across Mimas, which itself is only 396 km in diameter. The crater gives it an uncanny resemblance to the Death Star from Star Wars, though the movie was released three years before Voyager 1 photographed the moon!"
-        },
-        {
-            q: "What gas makes up over 95% of the dense atmosphere on Titan?",
-            options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Methane"],
-            correct: "Nitrogen",
-            explanation: "Titan's atmosphere is primarily Nitrogen (roughly 95%), much like Earth's (which is about 78% Nitrogen). It is the only other world in the solar system with a dense, nitrogen-dominated atmosphere."
-        },
-        {
-            q: "What is the name of the most expansive, diffuse ring in Saturn's system, which is constantly resupplied by ice geysers from Enceladus?",
-            options: ["The A Ring", "The B Ring", "The E Ring", "The F Ring"],
-            correct: "The E Ring",
-            explanation: "The E Ring is the second outermost ring and is extremely wide but faint. It consists of microscopic ice and dust particles that are continually ejected by the cryovolcanoes at the south pole of Enceladus."
-        },
-        {
-            q: "In 1610, who became the first person to observe Saturn's rings through a telescope, though he famously described them as 'ears' or 'appendages'?",
-            options: ["Christiaan Huygens", "Johannes Kepler", "Galileo Galilei", "Giovanni Cassini"],
-            correct: "Galileo Galilei",
-            explanation: "Galileo's telescope was not powerful enough to resolve the rings clearly. He wrote that Saturn 'has ears' or was 'a triple planet'. It was Christiaan Huygens in 1655 who first correctly identified them as a flat ring."
-        },
-        {
-            q: "Approximately how long does it take for Saturn to complete one full orbit around the Sun (a Saturnian year)?",
-            options: ["11.8 Earth years", "29.4 Earth years", "84 Earth years", "165 Earth years"],
-            correct: "29.4 Earth years",
-            explanation: "Orbiting at an average distance of 9.5 Astronomical Units, Saturn travels much slower and has a much longer path than Earth, taking almost 30 Earth years to complete a single revolution."
-        },
-        {
-            q: "Which spacecraft concluded its historic 13-year mission at Saturn by deliberately diving into the planet's atmosphere in 2017? (The 'Grand Finale')",
-            options: ["Voyager 2", "Pioneer 11", "New Horizons", "Cassini"],
-            correct: "Cassini",
-            explanation: "Running low on fuel, NASA directed the Cassini spacecraft to dive between Saturn and its rings 22 times before plunging into the atmosphere to burn up, preventing any accidental contamination of potentially habitable moons like Enceladus."
-        },
-        {
-            q: "Saturn experiences a massive, planet-wide storm pattern that erupts roughly once every Saturnian year (30 Earth years). What is this phenomenon called?",
-            options: ["The Great Dark Spot", "The Great White Spot", "The Jovian Cyclone", "The Equatorial Ribbon"],
-            correct: "The Great White Spot",
-            explanation: "The Great White Spot (or Northern Electrostatic Disturbance) is a massive storm of ammonia ice clouds that occasionally erupts in Saturn's northern hemisphere during its summer solstice, spanning thousands of kilometers."
-        },
-        {
-            q: "Because Saturn is tilted on its axis (26.7 degrees), how does our view of its rings from Earth change over its 29-year orbit?",
-            options: ["The rings change from red to blue", "The rings appear to completely disappear when viewed edge-on", "The rings slide to orbit the poles instead of the equator", "The rings constantly shrink and expand"],
-            correct: "The rings appear to completely disappear when viewed edge-on",
-            explanation: "Because the rings are incredibly thin (often just 10 meters thick), when Saturn's equinox aligns with Earth every 14-15 years, we view the rings perfectly edge-on, making them temporarily vanish from view in telescopes."
-        },
-        {
-            q: "Which of Saturn's moons exhibits a massive equatorial ridge that makes the moon look exactly like a walnut?",
-            options: ["Tethys", "Iapetus", "Dione", "Hyperion"],
-            correct: "Iapetus",
-            explanation: "Iapetus features an immense equatorial ridge up to 20 km high and 1,300 km long. The origin is heavily debated, possibly from the collapse of an ancient ring system that once orbited the moon."
-        },
-        {
-            q: "Saturn's winds are among the fastest in the solar system, second only to Neptune. At the equator, how fast do these winds blow?",
-            options: ["300 km/h", "800 km/h", "1,800 km/h", "3,500 km/h"],
-            correct: "1,800 km/h",
-            explanation: "Saturn's equatorial jet stream reaches supersonic speeds of roughly 1,800 km/h (1,100 mph), blowing eastward. These are significantly faster than the winds on Jupiter."
-        },
-        {
-            q: "What causes the yellowish-gold color of Saturn's upper atmosphere?",
-            options: ["Pure sulfur dust", "Ammonia crystals interacting with ultraviolet sunlight", "Burning methane gas", "Reflection from the rings"],
-            correct: "Ammonia crystals interacting with ultraviolet sunlight",
-            explanation: "The upper cloud deck is composed of ammonia ice. When ultraviolet light from the Sun hits these ammonia molecules, it creates complex photochemical smog (tholins) that gives the planet its distinct pale yellow hue."
-        },
-        {
-            q: "As of 2026, Saturn holds the title for the planet with the most known moons. Approximately how many moons does Saturn have?",
-            options: ["95", "115", "146", "292"],
-            correct: "292",
-            explanation: "Recent confirmations of numerous small, irregular satellites have pushed Saturn's known moon count to 292, keeping it ahead of Jupiter's 115."
-        }
-    ];
+    const rawQuizData = window.QuizBank.getPageQuizData({ sourcePath: 'saturn/saturn.html', format: 'quiz-correct-string' });
 
     let shuffledQuiz = [];
     let currentQIndex = 0;

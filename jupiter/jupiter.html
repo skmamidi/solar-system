@@ -623,6 +623,9 @@
     </section>
 </main>
 
+<script src="../assets/js/master-quiz-data.js"></script>
+<script src="../assets/js/quiz-bank.js"></script>
+<script src="../assets/js/interpretive-quiz-questions.js"></script>
 <script>
     /* APP STATE */
     let xp = 0;
@@ -694,158 +697,7 @@
     }
 
     /* QUIZ LOGIC: Science Olympiad (State Level) - 25 Questions */
-    const rawQuizData = [
-        {
-            q: "Which spacecraft intentionally crashed into Jupiter's atmosphere in 2003 to prevent potential contamination of its moons?",
-            options: ["Juno", "Voyager 1", "Cassini", "Galileo"],
-            correct: "Galileo",
-            explanation: "The Galileo probe was deliberately plunged into Jupiter's crushing atmosphere at the end of its 8-year mission. Scientists wanted to ensure it wouldn't accidentally crash into Europa, a moon that may harbor a subsurface ocean and potentially alien life."
-        },
-        {
-            q: "What exotic state of matter makes up the deepest layer of Jupiter's interior and generates its massive magnetic field?",
-            options: ["Supercritical Plasma", "Liquid Metallic Hydrogen", "Solid Iron-Nickel", "Degenerate Helium"],
-            correct: "Liquid Metallic Hydrogen",
-            explanation: "Under the extreme pressure near Jupiter's core (millions of times Earth's atmospheric pressure), hydrogen electrons are squeezed off their atoms, allowing the liquid hydrogen to conduct electricity like a metal."
-        },
-        {
-            q: "Three of Jupiter's moons exhibit a 1:2:4 Laplace orbital resonance. Which moons are they?",
-            options: ["Io, Europa, Ganymede", "Europa, Ganymede, Callisto", "Io, Ganymede, Callisto", "Metis, Adrastea, Amalthea"],
-            correct: "Io, Europa, Ganymede",
-            explanation: "For every orbit Ganymede makes around Jupiter, Europa makes exactly two, and Io makes exactly four. This resonant gravitational tug-of-war prevents their orbits from circularizing, causing immense tidal heating."
-        },
-        {
-            q: "What primary chemical compound condenses to form the bright, white upper cloud layers of Jupiter's atmosphere?",
-            options: ["Water Ice", "Ammonia Ice", "Methane Gas", "Carbon Dioxide Ice"],
-            correct: "Ammonia Ice",
-            explanation: "The highest, coldest cloud deck on Jupiter is composed of ammonia (NH3) crystals. Below that lies a layer of ammonium hydrosulfide, and even deeper are water clouds."
-        },
-        {
-            q: "Jupiter emits more than twice as much energy as it receives from the Sun. What is the primary source of this internal heat?",
-            options: ["Nuclear Fusion", "Radioactive Decay", "Kelvin-Helmholtz Contraction", "Tidal Friction"],
-            correct: "Kelvin-Helmholtz Contraction",
-            explanation: "Jupiter is slowly shrinking (by about 2 cm a year) under its own immense gravity. This gravitational compression, known as the Kelvin-Helmholtz mechanism, converts potential energy into massive amounts of thermal energy."
-        },
-        {
-            q: "What phenomenon drives the extreme volcanic activity on Jupiter's moon, Io?",
-            options: ["Impact Cratering", "Tidal Heating", "Nuclear Decay", "Solar Radiation"],
-            correct: "Tidal Heating",
-            explanation: "Caught in a gravitational tug-of-war between Jupiter and the other Galilean moons, Io is constantly flexed and stretched. This friction generates enormous internal heat, making it the most volcanically active body in the solar system."
-        },
-        {
-            q: "How strong is Jupiter's magnetic moment compared to Earth's?",
-            options: ["About 20 times stronger", "About 500 times stronger", "About 20,000 times stronger", "About 1,000,000 times stronger"],
-            correct: "About 20,000 times stronger",
-            explanation: "Jupiter has the strongest planetary magnetic field in the solar system. Its magnetic moment is roughly 20,000 times stronger than Earth's, creating a magnetosphere so large it would be the largest object in the sky if visible to the naked eye."
-        },
-        {
-            q: "Which of Jupiter's moons is the largest in the solar system and uniquely possesses its own internally generated magnetic field?",
-            options: ["Callisto", "Titan", "Europa", "Ganymede"],
-            correct: "Ganymede",
-            explanation: "Ganymede is larger than the planet Mercury. It is the only known moon to have an internally generated, liquid-iron-core-driven magnetic field, which interacts complexly with Jupiter's own massive field."
-        },
-        {
-            q: "In 1994, which comet famously broke apart and collided with Jupiter's southern hemisphere?",
-            options: ["Halley's Comet", "Comet Hale-Bopp", "Comet Shoemaker-Levy 9", "Comet NEOWISE"],
-            correct: "Comet Shoemaker-Levy 9",
-            explanation: "Shoemaker-Levy 9 provided the first direct observation of an extraterrestrial collision of solar system objects. Jupiter's tidal forces tore the comet into fragments before they slammed into the planet, leaving dark 'scars' in the atmosphere for months."
-        },
-        {
-            q: "What is the approximate rotational period (length of one day) of Jupiter at its equator?",
-            options: ["9 hours, 55 minutes", "24 hours", "58.6 Earth days", "16 hours, 10 minutes"],
-            correct: "9 hours, 55 minutes",
-            explanation: "Jupiter rotates faster than any other planet in the solar system. This extreme rotational speed causes the planet to bulge at the equator and flattens it at the poles."
-        },
-        {
-            q: "The Great Red Spot is a high-pressure region whose cloud tops are significantly colder and higher than surrounding regions. It is technically classified as an:",
-            options: ["Anticyclone", "Hurricane", "Cyclone", "Tornado"],
-            correct: "Anticyclone",
-            explanation: "Because it is a high-pressure system spinning counter-clockwise in the southern hemisphere, it is an anticyclone. Cyclones, on the other hand, spin around low-pressure centers."
-        },
-        {
-            q: "What is the name of the region of Jupiter's magnetosphere, swept back by the solar wind, that stretches all the way past the orbit of Saturn?",
-            options: ["Bow Shock", "Magnetopause", "Magnetotail", "Heliopause"],
-            correct: "Magnetotail",
-            explanation: "The solar wind blows against Jupiter's magnetic field, stretching the 'leeward' side into a long tail. Jupiter's magnetotail is so enormous it extends nearly to Saturn's orbit, some 4 astronomical units away."
-        },
-        {
-            q: "What two light elements primarily make up Jupiter's mass?",
-            options: ["Carbon & Nitrogen", "Hydrogen & Helium", "Oxygen & Silicon", "Iron & Nickel"],
-            correct: "Hydrogen & Helium",
-            explanation: "Jupiter is essentially a failed star in terms of composition. It is made of roughly 75% Hydrogen and 24% Helium by mass, closely matching the primordial composition of the solar nebula."
-        },
-        {
-            q: "Which NASA mission arrived at Jupiter in 2016 and focuses on mapping its deep interior, gravitational, and magnetic fields from a highly elliptical polar orbit?",
-            options: ["Cassini", "Voyager 2", "New Horizons", "Juno"],
-            correct: "Juno",
-            explanation: "Juno's polar orbit allows it to safely avoid the worst of Jupiter's intense radiation belts while taking unprecedented microwave depth-soundings and high-resolution images of the poles."
-        },
-        {
-            q: "What is the primary material composing Jupiter's faint ring system?",
-            options: ["Water ice blocks", "Methane snow", "Microscopic dust", "Metallic iron fragments"],
-            correct: "Microscopic dust",
-            explanation: "Unlike Saturn's brilliant icy rings, Jupiter's 'Gossamer' rings are very faint and primarily composed of tiny dust particles kicked up by meteoroid impacts on its small inner moons (Metis, Adrastea, Amalthea, and Thebe)."
-        },
-        {
-            q: "Europa is a prime target for astrobiology primarily because scientists believe that beneath its icy, cracked crust lies a:",
-            options: ["Layer of liquid methane", "Global liquid saltwater ocean", "Core of pure uranium", "Network of hollow lava tubes"],
-            correct: "Global liquid saltwater ocean",
-            explanation: "Magnetic readings and surface fracture patterns heavily suggest Europa has a vast subsurface ocean of liquid water, kept warm by tidal heating, making it one of the best places to look for extraterrestrial life."
-        },
-        {
-            q: "Because Jupiter spins so incredibly fast and is composed mostly of gas/liquid, its shape is distorted into an:",
-            options: ["Oblate Spheroid", "Prolate Spheroid", "Perfect Sphere", "Asymmetric Ellipsoid"],
-            correct: "Oblate Spheroid",
-            explanation: "The strong centrifugal forces at Jupiter's equator cause it to bulge outward, making its equatorial diameter about 9,000 km wider than its polar diameter."
-        },
-        {
-            q: "Jupiter's atmosphere is organized into light horizontal 'zones' and dark 'belts'. What characterizes the dark belts?",
-            options: ["They are regions of rising, warm gas", "They are regions of descending, cooler gas", "They are shadows cast by the rings", "They are gaps where we see the rocky core"],
-            correct: "They are regions of descending, cooler gas",
-            explanation: "The lighter zones are higher-altitude regions of rising air where ammonia ice clouds form. The darker belts are lower-altitude regions of descending air, revealing darker compounds below."
-        },
-        {
-            q: "What is the approximate escape velocity of Jupiter? (The speed needed to break free from its gravity)",
-            options: ["11.2 km/s", "24.0 km/s", "59.5 km/s", "104.2 km/s"],
-            correct: "59.5 km/s",
-            explanation: "Earth's escape velocity is 11.2 km/s. Because Jupiter is so massive, you must travel at a staggering 59.5 km/s (over 133,000 mph) to escape its gravitational pull."
-        },
-        {
-            q: "Which spacecraft provided humanity's first close-up images of Jupiter during its flyby in the early 1970s?",
-            options: ["Mariner 4", "Pioneer 10", "Voyager 1", "Sputnik 2"],
-            correct: "Pioneer 10",
-            explanation: "Pioneer 10 flew past Jupiter in December 1973, obtaining the first close-up images, measuring its intense radiation belts, and proving that a spacecraft could survive navigating the asteroid belt."
-        },
-        {
-            q: "While the exact chemistry is debated, which element's compounds are primarily hypothesized to cause the distinct red, brown, and orange colors of Jupiter's clouds?",
-            options: ["Iron oxide", "Phosphorus and Sulfur", "Copper sulfate", "Nitric acid"],
-            correct: "Phosphorus and Sulfur",
-            explanation: "Chemicals like ammonium hydrosulfide and complex phosphorus/sulfur compounds are broken down by solar ultraviolet light (photodissociation), reacting to form the colorful 'chromophores' we see."
-        },
-        {
-            q: "Callisto is the second-largest Galilean moon. What distinguishes its surface compared to the other three?",
-            options: ["It is constantly resurfaced by volcanoes", "It has zero impact craters", "It is ancient, heavily cratered, and geologically dead", "It is covered entirely in liquid water"],
-            correct: "It is ancient, heavily cratered, and geologically dead",
-            explanation: "Callisto lacks orbital resonance with the inner moons, meaning it doesn't experience significant tidal heating. As a result, its surface is the most heavily cratered and ancient in the solar system."
-        },
-        {
-            q: "Which of these is a unique feature of Jupiter's massive auroras compared to Earth's auroras?",
-            options: ["They only happen once a decade", "They emit exclusively visible light", "They are permanent and largely internally driven", "They only occur at the equator"],
-            correct: "They are permanent and largely internally driven",
-            explanation: "Earth's auroras are sparked by solar storms. Jupiter's are permanent, primarily powered by the planet's rapid rotation tearing apart particles blasted into space by Io's volcanoes, accelerating them into the poles."
-        },
-        {
-            q: "If you descended deep into Jupiter, the hydrogen gas eventually becomes a 'supercritical fluid'. What does this mean?",
-            options: ["It freezes solid despite extreme heat", "It becomes a highly acidic liquid", "It has properties of both a gas and a liquid without a distinct boundary", "It becomes completely frictionless"],
-            correct: "It has properties of both a gas and a liquid without a distinct boundary",
-            explanation: "Beyond a certain pressure and temperature, the phase boundary between liquid and gas disappears. You would never hit an 'ocean surface'; the gas just gradually becomes thicker until it behaves like a fluid."
-        },
-        {
-            q: "How does the mass of Jupiter compare to the rest of the planets in our solar system combined?",
-            options: ["It is about half the mass of the other planets combined", "It is roughly equal to the mass of all other planets", "It is 2.5 times as massive as all other planets combined", "It is 10 times as massive as all other planets combined"],
-            correct: "It is 2.5 times as massive as all other planets combined",
-            explanation: "Jupiter's mass is staggering—approximately 318 times that of Earth. Even if you combined all the other planets, moons, and asteroids in the solar system, Jupiter would still be more than twice as massive."
-        }
-    ];
+    const rawQuizData = window.QuizBank.getPageQuizData({ sourcePath: 'jupiter/jupiter.html', format: 'quiz-correct-string' });
 
     let shuffledQuiz = [];
     let currentQIndex = 0;

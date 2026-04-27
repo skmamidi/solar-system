@@ -620,6 +620,9 @@
     </section>
 </main>
 
+<script src="../assets/js/master-quiz-data.js"></script>
+<script src="../assets/js/quiz-bank.js"></script>
+<script src="../assets/js/interpretive-quiz-questions.js"></script>
 <script>
     /* APP STATE */
     let xp = 0;
@@ -691,158 +694,7 @@
     }
 
     /* QUIZ LOGIC: Science Olympiad (State Level) - 25 Questions */
-    const rawQuizData = [
-        {
-            q: "Why is Uranus a striking pale blue or cyan color compared to Jupiter and Saturn?",
-            options: ["It is entirely covered in liquid water.", "It is painted that way by solar radiation.", "Methane gas in its upper atmosphere absorbs red light and reflects blue light.", "Its magnetic field glows blue in the vacuum of space."],
-            correct: "Methane gas in its upper atmosphere absorbs red light and reflects blue light.",
-            explanation: "While Uranus is mostly composed of hydrogen and helium, it has a higher percentage of methane than Jupiter or Saturn. Methane molecules absorb the red portion of the visible light spectrum from the Sun, making the planet appear a beautiful cyan blue."
-        },
-        {
-            q: "Which is the ONLY spacecraft from Earth to have ever visited Uranus?",
-            options: ["Cassini", "Voyager 2", "New Horizons", "Pioneer 11"],
-            correct: "Voyager 2",
-            explanation: "Launched in 1977, NASA's Voyager 2 made its closest approach to Uranus in January 1986. During this brief flyby, it discovered 10 new moons, two new rings, and its uniquely tilted magnetic field."
-        },
-        {
-            q: "What is uniquely bizarre about how Uranus rotates on its axis?",
-            options: ["It rotates incredibly slowly, taking 243 Earth days.", "It is tilted at 97.77 degrees, meaning it practically rolls on its side along its orbital path.", "It rotates synchronously with the Sun, so one side is always day.", "It bounces up and down relative to the ecliptic plane."],
-            correct: "It is tilted at 97.77 degrees, meaning it practically rolls on its side along its orbital path.",
-            explanation: "Most planets spin somewhat upright like tops, but Uranus's axis of rotation is tilted sideways (nearly parallel to its orbital plane). Scientists theorize a massive Earth-sized object collided with it long ago, knocking it completely over."
-        },
-        {
-            q: "Who is officially credited with discovering Uranus in 1781?",
-            options: ["Galileo Galilei", "Nicolaus Copernicus", "William Herschel", "Christiaan Huygens"],
-            correct: "William Herschel",
-            explanation: "Sir William Herschel, a British astronomer, discovered Uranus on March 13, 1781, while surveying the night sky with a telescope he built himself. It was the first planet discovered with a telescope."
-        },
-        {
-            q: "Upon its discovery, what was the initially proposed name for the planet Uranus by its discoverer?",
-            options: ["Caelus", "Neptune", "Georgium Sidus (George's Star)", "Herschel"],
-            correct: "Georgium Sidus (George's Star)",
-            explanation: "William Herschel wanted to name his newly discovered planet 'Georgium Sidus' to honor his patron, King George III of Great Britain. The international astronomical community ultimately rejected this in favor of 'Uranus', the Greek god of the sky, to keep with classical mythology."
-        },
-        {
-            q: "What unique naming convention is used for the moons of Uranus?",
-            options: ["They are named after Greek Titans.", "They are named after characters from works by William Shakespeare and Alexander Pope.", "They are named after famous scientists and mathematicians.", "They are named after ocean deities."],
-            correct: "They are named after characters from works by William Shakespeare and Alexander Pope.",
-            explanation: "Unlike the rest of the solar system's moons, which are named after figures in classical mythology associated with their planet, Uranus's moons are named after literary characters (e.g., Oberon, Titania, Miranda, Ariel)."
-        },
-        {
-            q: "Despite being closer to the Sun than Neptune, Uranus holds the record for the coldest planetary atmosphere in the solar system. Why?",
-            options: ["Its rings block most of the incoming sunlight.", "Its methane layer acts as a perfect thermal insulator.", "It lacks a significant internal heat source, radiating very little heat from its core.", "It is constantly pelted by super-cooled comets."],
-            correct: "It lacks a significant internal heat source, radiating very little heat from its core.",
-            explanation: "Jupiter, Saturn, and Neptune all radiate much more heat than they receive from the Sun. Uranus, however, radiates very little excess heat, helping make its atmosphere staggeringly cold at about -224°C (-371°F)."
-        },
-        {
-            q: "Which moon of Uranus features the colossal Verona Rupes, an ice cliff that is up to 20 kilometers deep—the tallest known cliff in the solar system?",
-            options: ["Ariel", "Umbriel", "Titania", "Miranda"],
-            correct: "Miranda",
-            explanation: "Miranda is a heavily deformed, 'frankenstein' moon. Its surface is a bizarre patchwork of broken terrain, leading to the towering Verona Rupes. If you jumped off it, due to low gravity, you would fall for over 10 minutes before hitting the bottom!"
-        },
-        {
-            q: "What is highly unusual about the magnetic field of Uranus?",
-            options: ["It flips polarity every 24 hours.", "It is perfectly aligned with its rotational axis.", "It is offset from the planet's physical center and tilted by 59 degrees.", "It completely lacks a magnetic field."],
-            correct: "It is offset from the planet's physical center and tilted by 59 degrees.",
-            explanation: "Unlike Earth's magnetic field, which is generated in the core and roughly aligns with the poles, Uranus's magnetic field does not originate from its geometric center. It is offset by roughly 1/3 of the planet's radius and tilted at a chaotic 59-degree angle."
-        },
-        {
-            q: "Along with hydrogen and helium, Uranus's mantle is primarily composed of an electrically conductive, hot, dense fluid made of what three 'icy' materials?",
-            options: ["Water, Ammonia, and Methane", "Nitrogen, Oxygen, and Carbon Dioxide", "Silicate, Iron, and Nickel", "Sulfur, Phosphorus, and Neon"],
-            correct: "Water, Ammonia, and Methane",
-            explanation: "In planetary science, 'ices' refer to compounds with freezing points above about 100 K. Uranus is classed as an 'Ice Giant' because its bulk consists of a supercritical fluid of water, ammonia, and methane rather than just gas like Jupiter."
-        },
-        {
-            q: "How fast do the intense, supersonic winds blow in Uranus's upper atmosphere?",
-            options: ["100 km/h", "400 km/h", "900 km/h", "2,100 km/h"],
-            correct: "900 km/h",
-            explanation: "Despite its seemingly featureless and calm blue exterior, Uranus experiences fierce, retrograde winds near its equator that can whip around the planet at speeds up to 900 km/h (560 mph)."
-        },
-        {
-            q: "How long does it take for Uranus to complete a single orbit around the Sun (one Uranian year)?",
-            options: ["29 Earth years", "84 Earth years", "165 Earth years", "248 Earth years"],
-            correct: "84 Earth years",
-            explanation: "Sitting at roughly 19.2 Astronomical Units from the Sun, Uranus takes approximately 84 Earth years to make a single, long journey around our star."
-        },
-        {
-            q: "Because of its extreme 98-degree axial tilt, how long does one pole on Uranus experience continuous sunlight during its summer?",
-            options: ["10.7 hours", "21 Earth years", "42 Earth years", "84 Earth years"],
-            correct: "42 Earth years",
-            explanation: "For half of its 84-year orbit, one pole points almost directly at the Sun, experiencing a 42-year-long 'day' of continuous sunlight, while the other pole is plunged into a 42-year-long, freezing, dark winter."
-        },
-        {
-            q: "Recent spectroscopic observations have detected what foul-smelling chemical compound in the upper cloud deck of Uranus?",
-            options: ["Ozone", "Hydrogen sulfide", "Sulfur dioxide", "Carbon monoxide"],
-            correct: "Hydrogen sulfide",
-            explanation: "In 2018, astronomers confirmed the presence of hydrogen sulfide (H2S) in the cloud tops of Uranus. This is the exact same gas that gives rotten eggs their distinct, terrible smell."
-        },
-        {
-            q: "Uranus is often compared to its twin, Neptune. Uranus has a slightly larger diameter, but how does its mass compare?",
-            options: ["Uranus is twice as massive as Neptune.", "Uranus is more massive but less dense.", "Neptune is more massive than Uranus.", "They have the exact same mass."],
-            correct: "Neptune is more massive than Uranus.",
-            explanation: "Though Uranus is wider in diameter, Neptune is denser and therefore more massive. Uranus's mass is about 14.5 times Earth's, while Neptune's is about 17.1 times Earth's."
-        },
-        {
-            q: "In what direction does Uranus rotate on its axis?",
-            options: ["Prograde (West to East)", "Retrograde (East to West)", "Polar (North to South)", "It does not rotate"],
-            correct: "Retrograde (East to West)",
-            explanation: "Like Venus, Uranus rotates retrograde. If you could stand on the clouds of Uranus and the Sun were visible, it would appear to rise in the west and set in the east."
-        },
-        {
-            q: "How were the dark, narrow rings of Uranus first discovered in 1977 by astronomers on Earth?",
-            options: ["Using the Hubble Space Telescope", "By a flyby from Pioneer 10", "Through stellar occultation (watching a star pass behind the planet)", "By analyzing radio wave reflections"],
-            correct: "Through stellar occultation (watching a star pass behind the planet)",
-            explanation: "Before Voyager 2 arrived, astronomers were watching Uranus pass in front of a distant star. Before the planet hid the star, the star 'blinked' out multiple times, revealing that narrow, invisible rings were blocking its light."
-        },
-        {
-            q: "What incredible theoretical phenomenon is believed to occur deep in the mantles of Ice Giants like Uranus and Neptune due to extreme pressure?",
-            options: ["Diamond rain", "Liquid iron volcanoes", "Supercritical gold fusion", "Anti-matter generation"],
-            correct: "Diamond rain",
-            explanation: "At immense depths, extreme pressures and temperatures are believed to break apart methane molecules (CH4). The carbon atoms condense into solid diamond crystals, which then sink slowly through the fluid mantle toward the core."
-        },
-        {
-            q: "Which is the largest of Uranus's 28 recognized moons, characterized by a dirty ice surface with deep fault valleys?",
-            options: ["Oberon", "Ariel", "Umbriel", "Titania"],
-            correct: "Titania",
-            explanation: "Titania is the largest moon of Uranus and the eighth largest in the solar system. It is covered in long canyons and scarps, suggesting the moon expanded and cracked as its interior froze over its history."
-        },
-        {
-            q: "Which dark, heavily cratered moon of Uranus features a striking, bright 131km-wide ring of material near its equator known as the Wunda crater?",
-            options: ["Umbriel", "Miranda", "Puck", "Juliet"],
-            correct: "Umbriel",
-            explanation: "Umbriel is the darkest of Uranus's major moons, reflecting very little light. The stark contrast of the bright ring of frost/ice inside the Wunda crater makes it the moon's most prominent surface feature."
-        },
-        {
-            q: "Uranus's magnetic field is generated completely differently than Earth's or Jupiter's. Where is it believed to originate?",
-            options: ["From a solid iron-nickel core", "From the convective circulation of its salty, ammonia-water fluid mantle", "From liquid metallic hydrogen at its center", "From solar wind interacting directly with the rings"],
-            correct: "From the convective circulation of its salty, ammonia-water fluid mantle",
-            explanation: "Earth's magnetic field comes from its iron core. Because Uranus's field is wildly offset, scientists believe it is generated in the electrically conductive slush of the ice mantle (a relatively shallow layer) rather than the deep core."
-        },
-        {
-            q: "Astronomers officially classify Jupiter and Saturn as 'Gas Giants', but they put Uranus and Neptune in a separate category called:",
-            options: ["Dwarf Giants", "Terrestrial Giants", "Ice Giants", "Plasma Giants"],
-            correct: "Ice Giants",
-            explanation: "In the 1990s, scientists realized Uranus and Neptune were fundamentally different from Jupiter and Saturn. Their bulk is made of heavier elements (oxygen, carbon, nitrogen) rather than just hydrogen/helium, earning them the 'Ice Giant' moniker."
-        },
-        {
-            q: "Unlike Saturn's broad, bright, dusty rings, what do Uranus's rings look like?",
-            options: ["They are extremely dark, narrow, and composed mostly of larger, boulder-sized chunks.", "They are bright red and made of pure iron oxide.", "They are composed entirely of microscopic glowing plasma.", "There is only one single, massive, solid ring."],
-            correct: "They are extremely dark, narrow, and composed mostly of larger, boulder-sized chunks.",
-            explanation: "Uranus's ring system is very dark (reflecting almost no light) and lacks the fine dust seen in Saturn's rings. The particles are mostly large, macroscopic boulders, likely the shattered remains of a moon destroyed by a high-speed impact."
-        },
-        {
-            q: "Currently, how many officially recognized moons does Uranus have in orbit around it?",
-            options: ["14", "28", "62", "95"],
-            correct: "28",
-            explanation: "As of the most recent astronomical updates, Uranus has 28 recognized moons, all sharing the unique Shakespearean/Pope naming convention. The inner ones are small and icy, while the outer ones are irregular, captured bodies."
-        },
-        {
-            q: "When Voyager 2 flew past Uranus in 1986, the planet's South Pole was pointed almost directly at the Sun. What season was it in the southern hemisphere?",
-            options: ["Winter Solstice", "Vernal Equinox", "Summer Solstice", "Autumnal Equinox"],
-            correct: "Summer Solstice",
-            explanation: "Because of its 98-degree tilt, when a pole points directly at the Sun, it is experiencing its peak Summer Solstice (the middle of its 42-year-long day). This orientation made observing the entire planet highly challenging for the probe."
-        }
-    ];
+    const rawQuizData = window.QuizBank.getPageQuizData({ sourcePath: 'uranus/uranus.html', format: 'quiz-correct-string' });
 
     let shuffledQuiz = [];
     let currentQIndex = 0;

@@ -18,6 +18,9 @@ const PAGE_CONFIG = {
     'dwarf-planets/pluto.html': { declaration: 'const quizQuestions =', format: 'option-strings' },
     'earth/earth.html': { declaration: 'const masterQuizData =', format: 'quiz-answers' },
     'earth/luna.html': { declaration: 'const QUIZ_BANK =', format: 'quiz-bank-choices' },
+    'mercury/mercury.html': { declaration: 'const rawQuizData =', format: 'quiz-a-answers' },
+    'venus/venus.html': { declaration: 'const quizMasterData =', format: 'quiz-correct-wrongs' },
+    'jupiter/jupiter.html': { declaration: 'const rawQuizData =', format: 'quiz-correct-string' },
     'jupiter/callisto.html': { declaration: 'const QUIZ_BANK =', format: 'quiz-bank-choices' },
     'jupiter/europa.html': { declaration: 'const QUIZ_BANK =', format: 'quiz-bank-choices' },
     'jupiter/ganymede.html': { declaration: 'const QUIZ_BANK =', format: 'quiz-bank-choices' },
@@ -28,15 +31,23 @@ const PAGE_CONFIG = {
     'kuiper-belt/quaoar.html': { declaration: 'const quizQuestions =', format: 'option-strings' },
     'kuiper-belt/salacia.html': { declaration: 'const quizQuestions =', format: 'option-strings' },
     'mars/mars.html': { declaration: 'const masterQuizData =', format: 'quiz-opts' },
+    'neptune/neptune.html': { declaration: 'const rawQuizData =', format: 'quiz-correct-string' },
     'neptune/Nereid.html': { declaration: 'const quizQuestions =', format: 'option-strings' },
     'neptune/larissa.html': { declaration: 'const quizQuestions =', format: 'option-strings' },
     'neptune/proteus.html': { declaration: 'const quizQuestions =', format: 'option-strings' },
     'neptune/triton.html': { declaration: 'const quizQuestions =', format: 'option-strings' },
+    'saturn/saturn.html': { declaration: 'const rawQuizData =', format: 'quiz-correct-string' },
     'saturn/enceladus.html': { declaration: 'const quizQuestions =', format: 'option-strings' },
     'saturn/iapetus.html': { declaration: 'const quizQuestions =', format: 'option-strings' },
     'saturn/mimas.html': { declaration: 'const quizQuestions =', format: 'option-strings' },
     'saturn/rhea.html': { declaration: 'const quizQuestions =', format: 'option-strings' },
     'saturn/titan.html': { declaration: 'const quizQuestions =', format: 'option-strings' },
+    'uranus/uranus.html': { declaration: 'const rawQuizData =', format: 'quiz-correct-string' },
+    'uranus/ariel.html': { declaration: 'const quizData =', format: 'quiz-q-option-objects' },
+    'uranus/miranda.html': { declaration: 'const quizData =', format: 'quiz-q-option-objects' },
+    'uranus/oberon.html': { declaration: 'const quizData =', format: 'quiz-q-option-objects' },
+    'uranus/titania.html': { declaration: 'const quizData =', format: 'quiz-q-option-objects' },
+    'uranus/umbriel.html': { declaration: 'const quizData =', format: 'quiz-q-option-objects' },
     'sun.html': { declaration: 'const masterQuizData =', format: 'quiz-correct-incorrect' }
 };
 
@@ -120,8 +131,9 @@ function relativeAssetPath(relPath, assetFile) {
 function ensureSharedScripts(source, relPath, declarationIndex) {
     const dataScript = relativeAssetPath(relPath, 'master-quiz-data.js');
     const helperScript = relativeAssetPath(relPath, 'quiz-bank.js');
+    const interpretiveScript = relativeAssetPath(relPath, 'interpretive-quiz-questions.js');
 
-    if (source.includes(dataScript) && source.includes(helperScript)) {
+    if (source.includes(dataScript) && source.includes(helperScript) && source.includes(interpretiveScript)) {
         return source;
     }
 
@@ -130,7 +142,11 @@ function ensureSharedScripts(source, relPath, declarationIndex) {
         throw new Error(`Could not find inline script tag for ${relPath}`);
     }
 
-    const injection = `    <script src="${dataScript}"></script>\n    <script src="${helperScript}"></script>\n`;
+    const injection = [
+        source.includes(dataScript) ? '' : `    <script src="${dataScript}"></script>\n`,
+        source.includes(helperScript) ? '' : `    <script src="${helperScript}"></script>\n`,
+        source.includes(interpretiveScript) ? '' : `    <script src="${interpretiveScript}"></script>\n`
+    ].join('');
     return source.slice(0, scriptInsertIndex) + injection + source.slice(scriptInsertIndex);
 }
 
@@ -144,6 +160,11 @@ function standardizePage(relPath, config) {
 
     source = ensureSharedScripts(source, relPath, declarationIndex);
     const updatedDeclarationIndex = source.indexOf(config.declaration);
+    const declarationPreview = source.slice(updatedDeclarationIndex, updatedDeclarationIndex + 220);
+    if (declarationPreview.includes('window.QuizBank.getPageQuizData')) {
+        fs.writeFileSync(absPath, source, 'utf8');
+        return;
+    }
     const arrayEnd = findArrayEnd(source, updatedDeclarationIndex);
     const replacement = `${config.declaration} window.QuizBank.getPageQuizData({ sourcePath: '${relPath}', format: '${config.format}' });`;
     const updated = source.slice(0, updatedDeclarationIndex) + replacement + source.slice(arrayEnd);

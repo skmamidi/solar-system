@@ -24,7 +24,9 @@
             explanation: question.explanation,
             difficulty: question.difficulty,
             topic: question.topic,
-            subtopic: question.subtopic
+            subtopic: question.subtopic,
+            category: question.category || 'fact',
+            tags: question.tags || []
         };
     }
 
@@ -36,7 +38,9 @@
             explanation: question.explanation,
             difficulty: question.difficulty,
             topic: question.topic,
-            subtopic: question.subtopic
+            subtopic: question.subtopic,
+            category: question.category || 'fact',
+            tags: question.tags || []
         };
     }
 
@@ -48,7 +52,9 @@
             explanation: question.explanation,
             difficulty: question.difficulty,
             topic: question.topic,
-            subtopic: question.subtopic
+            subtopic: question.subtopic,
+            category: question.category || 'fact',
+            tags: question.tags || []
         };
     }
 
@@ -62,7 +68,25 @@
             explanation: question.explanation,
             difficulty: question.difficulty,
             topic: question.topic,
-            subtopic: question.subtopic
+            subtopic: question.subtopic,
+            category: question.category || 'fact',
+            tags: question.tags || []
+        };
+    }
+
+    function toQuizAAnswers(question) {
+        return {
+            q: question.question,
+            a: question.choices.map((choice, index) => ({
+                t: choice,
+                c: index === question.correctIndex
+            })),
+            exp: question.explanation,
+            difficulty: question.difficulty,
+            topic: question.topic,
+            subtopic: question.subtopic,
+            category: question.category || 'fact',
+            tags: question.tags || []
         };
     }
 
@@ -74,7 +98,9 @@
             exp: question.explanation,
             difficulty: question.difficulty,
             topic: question.topic,
-            subtopic: question.subtopic
+            subtopic: question.subtopic,
+            category: question.category || 'fact',
+            tags: question.tags || []
         };
     }
 
@@ -86,7 +112,53 @@
             exp: question.explanation,
             difficulty: question.difficulty,
             topic: question.topic,
-            subtopic: question.subtopic
+            subtopic: question.subtopic,
+            category: question.category || 'fact',
+            tags: question.tags || []
+        };
+    }
+
+    function toQuizCorrectWrongs(question) {
+        return {
+            q: question.question,
+            c: question.choices[question.correctIndex],
+            w: question.choices.filter((_, index) => index !== question.correctIndex).slice(0, 3),
+            exp: question.explanation,
+            difficulty: question.difficulty,
+            topic: question.topic,
+            subtopic: question.subtopic,
+            category: question.category || 'fact',
+            tags: question.tags || []
+        };
+    }
+
+    function toQuizCorrectString(question) {
+        return {
+            q: question.question,
+            options: [...question.choices],
+            correct: question.choices[question.correctIndex],
+            explanation: question.explanation,
+            difficulty: question.difficulty,
+            topic: question.topic,
+            subtopic: question.subtopic,
+            category: question.category || 'fact',
+            tags: question.tags || []
+        };
+    }
+
+    function toQuizQOptionObjects(question) {
+        return {
+            q: question.question,
+            options: question.choices.map((choice, index) => ({
+                text: choice,
+                isCorrect: index === question.correctIndex
+            })),
+            explanation: question.explanation,
+            difficulty: question.difficulty,
+            topic: question.topic,
+            subtopic: question.subtopic,
+            category: question.category || 'fact',
+            tags: question.tags || []
         };
     }
 
@@ -95,8 +167,12 @@
         'option-strings': toOptionStrings,
         'quiz-bank-choices': toQuizBankChoices,
         'quiz-answers': toQuizAnswers,
+        'quiz-a-answers': toQuizAAnswers,
         'quiz-opts': toQuizOpts,
-        'quiz-correct-incorrect': toQuizCorrectIncorrect
+        'quiz-correct-incorrect': toQuizCorrectIncorrect,
+        'quiz-correct-wrongs': toQuizCorrectWrongs,
+        'quiz-correct-string': toQuizCorrectString,
+        'quiz-q-option-objects': toQuizQOptionObjects
     };
 
     window.QuizBank = {
